@@ -77,6 +77,21 @@ function makeOniModel() {
   return { root, hips, torso, head, eyes, mouth, upLip, loLip, inner, arms, legs, teeth: mouth.children.slice(5) };
 }
 
+// フワッティー: a soft pale slab taller than a man, a wide black grin, two dots for eyes, stubby arms and legs
+function makeFuwatty(root) {
+  const g = new THREE.Group(), pale = new THREE.MeshStandardMaterial({ color: 0xf2eee2, roughness: 0.85, emissive: 0x1c1a14, emissiveIntensity: 0.25 }), ink = new THREE.MeshStandardMaterial({ color: 0x14100c, roughness: 0.6 });
+  const body = new THREE.Mesh(new THREE.BoxGeometry(1.5, 2.3, 0.75, 4, 6, 2), pale); body.position.y = 1.55; g.add(body);
+  { const p = body.geometry.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i), y = p.getY(i), z = p.getZ(i), k = 1 - 0.12 * (y / 1.15) ** 2; p.setXYZ(i, x * k, y, z * (0.85 + 0.15 * k)); } body.geometry.computeVertexNormals(); }
+  for (const sx of [-1, 1]) {
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), ink); eye.position.set(sx * 0.3, 2.15, 0.39); g.add(eye);
+    const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.11, 0.45, 4, 8), pale); arm.position.set(sx * 0.86, 1.35, 0.05); arm.rotation.z = sx * 0.5; g.add(arm);
+    const leg = new THREE.Mesh(new THREE.CapsuleGeometry(0.15, 0.25, 4, 8), pale); leg.position.set(sx * 0.38, 0.3, 0); g.add(leg);
+  }
+  const mouth = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.32, 0.05), ink); mouth.position.set(0, 1.75, 0.385); g.add(mouth);
+  for (let i = 0; i < 8; i++) { const t = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.09, 0.03), pale); t.position.set(-0.42 + i * 0.12, 1.87, 0.405); g.add(t); }
+  g.traverse(o => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
+  g.visible = false; root.add(g); return g;
+}
 // in a room with a closet: time to run from the door to it, and two seconds more, before it comes in after you
 function hideGrace(door) {
   let best = Infinity;
@@ -119,7 +134,7 @@ const ONI = {
   despawn(quiet = false) {
     const was = this.on;
     this.on = false; this.state = 'off'; this.transit = null; this.script = null;
-    if (this.m) { this.show(false); this.setLook(null); }
+    if (this.m) { this.show(false); this.setLook(null); this.m.root.scale.setScalar(1); }
     if (was && !quiet) DIRECTOR.onGone();
   },
   place() { const m = this.m; m.root.position.copy(this.pos); m.root.rotation.y = this.yaw; },
@@ -135,6 +150,18 @@ const ONI = {
       this.m.head.add(hair); this.m.hair = hair; hair.traverse(o => { if (o.isMesh) o.frustumCulled = false; });
     }
     if (this.m.hair) this.m.hair.visible = look === 'mika';
+    // Takeshi turned into it: his spiky blond hair on its head
+    if (look === 'takeshi' && !this.m.tkHair) {
+      const hm = new THREE.MeshStandardMaterial({ color: 0xe8c840, roughness: 0.55 }), hair = new THREE.Group();
+      const cap = new THREE.Mesh(new THREE.SphereGeometry(0.5, 22, 14, 0, Math.PI * 2, 0, Math.PI * 0.55), hm); cap.position.set(0, 0.62, -0.03); hair.add(cap);
+      for (let i = 0; i < 9; i++) { const a = (i / 8 - 0.5) * 2.4, sp = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.42, 8), hm); sp.position.set(Math.sin(a) * 0.36, 0.86 + Math.cos(a) * 0.08, Math.cos(a) * 0.12 - 0.05); sp.rotation.set(-0.5, 0, -a * 0.55); hair.add(sp); }
+      this.m.head.add(hair); this.m.tkHair = hair; hair.traverse(o => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
+    }
+    if (this.m.tkHair) this.m.tkHair.visible = look === 'takeshi';
+    // Fuwatty: not its body at all, a big pale slab like hanpen with a grin, on two stubby legs
+    if (look === 'fuwatty' && !this.m.fw) this.m.fw = makeFuwatty(this.m.root);
+    if (this.m.fw) this.m.fw.visible = look === 'fuwatty';
+    this.m.hips.visible = look !== 'fuwatty';
     this.look = look;
   },
   sameSpace() { const a = this.room(), b = GAME.room; return a && b && b.joined.has(a) && Math.abs(this.pos.y - PLAYER.pos.y) < 3; },
@@ -340,6 +367,21 @@ const ONI = {
         if (this.wait > st.d) { this.pos.y = st.base; next(); }
         return 0;
       }
+      case 'crawl': {   // out of somewhere low (the fireplace): bent double, forward, straightening as it comes out
+        if (st.base == null) { st.base = this.pos.y; st.x0 = this.pos.x; st.z0 = this.pos.z; this.bend = this.bendT = 1; SFX.push(this.pos.clone().setY(this.pos.y + 0.3)); }
+        this.wait += dt; const k = smoothstep(0, 1, this.wait / st.d), dist = st.dist || 1.4;
+        this.pos.x = st.x0 + Math.sin(this.yaw) * dist * k; this.pos.z = st.z0 + Math.cos(this.yaw) * dist * k; this.pos.y = st.base - (st.drop || 0.9) * (1 - k);
+        this.bendT = 1 - 0.75 * k; this.place();
+        if (this.wait > st.d) { this.pos.y = st.base; next(); }
+        return st.d ? dist / st.d : 0;
+      }
+      case 'squeeze': {   // out of a hole in the wall: small (up at the hole), then all of it, down on the floor
+        if (st.base == null) st.base = this.pos.y;
+        this.wait += dt; const k = smoothstep(0, 1, this.wait / st.d); this.m.root.scale.setScalar(0.25 + 0.75 * k);
+        this.pos.y = st.base + (st.lift || 0) * (1 - k); this.place();
+        if (this.wait > st.d) { this.m.root.scale.setScalar(1); this.pos.y = st.base; this.place(); next(); }
+        return 0;
+      }
       case 'gone': this.despawn(true); if (st.fn) st.fn(); return 0;
       default: next(); return 0;
     }
@@ -369,6 +411,7 @@ const ONI = {
   /* ---------- animation ---------- */
   animate(dt, speed = 0) {
     const m = this.m; if (!m) return;
+    if (m.fw && m.fw.visible) { this.phase += dt * (2 + speed * 1.6); m.fw.position.y = Math.abs(Math.sin(this.phase)) * 0.18 * clamp(speed / 3, 0.2, 1); m.fw.rotation.z = Math.sin(this.phase) * 0.06; }
     this.bend = damp(this.bend, this.bendT, 3, dt);
     const k = clamp(speed / 4, 0, 1.2), hunch = 0.28;
     this.phase += dt * (1.8 + speed * 1.25);
@@ -407,12 +450,18 @@ const ONI = {
 
 /* ---------- when it turns up on its own ----------
    Once it has chased you in the library it can turn up anywhere: after a door or a flight of stairs it
-   sometimes comes in behind you, or is already standing in the room; stay put long enough and it opens a door */
+   sometimes comes in behind you, or is already standing in the room; stay put long enough and it opens a door.
+   Rarely, as in the original: about twice in half an hour (the story's own appearances come on top of that) */
+const RAND_FIRST = [480, 720], RAND_GAP = [780, 1080], AFTER_SCRIPT = 120;   // seconds of play
 const DIRECTOR = {
-  enabled: false, cool: 45, idle: 0,
-  reset() { this.enabled = false; this.cool = 45; this.idle = 0; },
+  enabled: false, cool: 45, idle: 0, mine: false,
+  reset() { this.enabled = false; this.cool = 45; this.idle = 0; this.mine = false; },
+  // the library chase: from now on it may turn up by itself, the first time some minutes later
+  start() { this.enabled = true; this.cool = rng.range(RAND_FIRST[0], RAND_FIRST[1]); this.mine = false; },
   onGone() {
-    this.cool = rng.range(35, 70); this.idle = 0;
+    // after one of its own: a long while before the next; after the story's: not straight away
+    this.cool = this.mine ? rng.range(RAND_GAP[0], RAND_GAP[1]) : Math.max(this.cool, AFTER_SCRIPT);
+    this.mine = false; this.idle = 0;
     MUSIC.stop(2.5); GAME.chaseFx = 0;
   },
   // rooms where something else happens (or is still to happen): it does not turn up there by chance
@@ -427,20 +476,20 @@ const DIRECTOR = {
     this.cool -= dt;
     if (this.cool > 0) return;
     this.idle += dt;
-    if (this.idle > 28 && !GAME.busy && this.ready()) this.knock();
+    if (this.idle > 40 && !GAME.busy && this.ready()) this.knock();
   },
   // you went through a door or up/down the stairs
   onPlayerMoved(from, to) {
     this.idle = 0;
     if (!from || !to || !this.ready()) return;
     const k = rng.next();
-    if (k < 0.32) this.followIn(to);
-    else if (k < 0.47) this.ambush(GAME.room);
+    if (k < 0.45) this.followIn(to);
+    else if (k < 0.65) this.ambush(GAME.room);
   },
   // a few seconds later it comes through after you
   followIn(to) {
-    this.cool = 999;
-    const here = GAME.room, retry = () => { this.cool = 25; };
+    this.cool = 999; this.mine = true;
+    const here = GAME.room, retry = () => { this.cool = 25; this.mine = false; };
     if (to.front) {
       GAME.later(Math.max(rng.range(2.5, 4.5), hideGrace(to) - 1.0), () => { if (!ONI.on && PLAYER.alive && GAME.room === here && !STORY.busy) { SFX.oniStep(to.front, 0.8); ONI.enterVia(to, 1.0); } else retry(); });
       return;
@@ -460,7 +509,7 @@ const DIRECTOR = {
     }
     if (!ok.length) return;
     const q = ok[(rng.next() * ok.length) | 0];
-    this.cool = 999;
+    this.cool = 999; this.mine = true;
     ONI.spawn(q.x, q.y, q.z, Math.atan2(P.x - q.x, P.z - q.z), 'appear'); ONI.appearFor = 1.2;
     GAME.later(0.25, () => { if (ONI.on) { SFX.oniSpot(); POST.shake = 0.3; } });
   },
@@ -469,7 +518,7 @@ const DIRECTOR = {
     const P = PLAYER.pos, ds = MAN.doorList.filter(d => d.area === GAME.room && d.to && !GAME.doorShut(d) && Math.hypot(d.front.x - P.x, d.front.z - P.z) > 4.5);
     if (!ds.length) { this.ambush(GAME.room); if (!ONI.on) this.cool = 20; return; }
     const d = ds[(rng.next() * ds.length) | 0];
-    this.cool = 999; this.idle = 0;
+    this.cool = 999; this.idle = 0; this.mine = true;
     SFX.oniStep(d.front, 0.7); GAME.later(0.6, () => SFX.oniStep(d.front, 0.85));
     ONI.enterVia(d, 1.6);
   },

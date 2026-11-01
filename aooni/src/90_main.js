@@ -247,7 +247,7 @@ const EVENTS = {
     STORY.flags.libChase = true;
     ONI.spawn(x, FLOORS.F1, z, yawTo({ x, z }, PLAYER.pos), 'appear'); ONI.appearFor = 1.3;
     SFX.oniSpot(); POST.shake = 0.35;
-    DIRECTOR.enabled = true; DIRECTOR.cool = 999;
+    DIRECTOR.start();
     STORY.save();
   },
   afterChase() {   // called when it is gone
@@ -867,7 +867,7 @@ GAME.start = async function (save = null) {
     applyState();
     PLAYER.reset(new THREE.Vector3(save.pos[0], save.pos[1], save.pos[2]), save.pos[3]);
     GAME.time = save.time || 0; GAME.caughtN = save.caught || 0;
-    DIRECTOR.enabled = !!STORY.flags.libChase; DIRECTOR.cool = 30;
+    DIRECTOR.enabled = !!STORY.flags.libChase; DIRECTOR.cool = rng.range(300, 600);   // (after loading: not straight away)
   } else { STORY.flags.code = newCode(); for (const fn of BUILT_HOOKS) fn(); }
   GAME.room = WORLD.roomAt(PLAYER.pos);
   if (!GAME.room && save) {   // (a save from before a room was rebuilt can stand where there is no floor now: the nearest floor)

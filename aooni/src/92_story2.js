@@ -3,7 +3,7 @@
    The story after the main building (6.23): the basement, the first annex, the walk outside, the second
    annex and the way out. Items other than keys are used from the item screen, on what you were facing.
    ========================================================================= */
-CHASES.push('mikaOni', 'hidChase', 'sproutChase');
+CHASES.push('mikaOni', 'hidChase', 'sproutChase', 'tkOni', 'backOni', 'fireOni', 'mikaCl1', 'mikaCl2', 'fuwatty', 's2Rise', 'codeOni');
 const say2 = (...l) => GAME.say(l.map(x => (typeof x === 'string' ? ['', x] : x)));
 const near2 = (o, d) => Math.hypot(PLAYER.pos.x - o.x, PLAYER.pos.z - o.z) < d;
 const canvasImg = (w, h, draw) => { const c = newCanvas(w, h); draw(c.getContext('2d'), w, h); return `<img class="vimg" src="${c.toDataURL()}" alt="">`; };
@@ -112,7 +112,7 @@ Object.assign(EVENTS, {
   a1Panel() {
     const f = STORY.flags;
     if (!f.dollPanel) { say2('人形の絵が描かれたパネルがある。', '絵の人形には、頭の部分がない。'); return; }
-    UI.dials({ msg: '壁に埋めこまれた金庫。', n: 3, code: f.code.poster, onOpen: () => { SFX.unlock(PLAYER.pos.clone()); GAME.take('k_ab', null); } });
+    UI.dials({ msg: '壁に埋めこまれた金庫。', n: 3, code: f.code.poster, onOpen: () => { SFX.unlock(PLAYER.pos.clone()); GAME.take('k_ab', null, () => { f.tkDropArmed = true; STORY.save(); }); } });
   },
   crate() {
     const f = STORY.flags, c = MAN.crate; if (f.crateIn || c.moving) return;
@@ -279,6 +279,118 @@ Object.assign(EVENTS, {
   escape() { if (!STORY.flags.piecesSet) return; GAME.ending(); },
 });
 
+/* ---------- the story's own appearances (6.23 / ひろし編) ---------- */
+// it opens a door and comes in after you
+function oniThrough(doorId, look, delay = 0.6) {
+  const d = MAN.doors[doorId]; if (!d) return;
+  SFX.oniStep(d.front, 0.9); ONI.enterVia(d, delay, 'chase'); ONI.setLook(look || null);
+}
+// Takeshi, hanging from the rope in the room of dolls (his neck in the loop, his feet off the floor)
+function tkHang() {
+  const t = MAN.areas.a1bl.tkHang, c = CAST.place('takeshi', t.x, FLOORS.A1 + 0.44, t.z, t.yaw), u = c.m.userData;
+  c.m.rotation.order = 'XYZ'; c.base = null; c.dead = true; c.hang = true; c.shiver = 0;
+  u.arms.forEach((a, i) => a.rotation.set(0.05, 0, (i ? -1 : 1) * 0.03)); u.legs.forEach((l, i) => l.rotation.set(i ? 0.06 : -0.03, 0, 0)); u.head.rotation.set(0.5, 0.15, 0.28);
+  return c;
+}
+SFX.thud = pos => { if (!AU.ok) return; AU.burst({ pos, dur: 0.32, f: 200, q: 0.6, type: 'lowpass', vol: 1, brown: true, rev: 0.35 }); AU.tone({ pos, f: 85, f2: 38, dur: 0.32, vol: 0.7 }); AU.burst({ pos, t0: AU.t + 0.02, dur: 0.05, f: 1400, q: 1, vol: 0.18, rev: 0.2 }); };
+SFX.squeak = (pos, t0 = 0) => { if (!AU.ok) return; const t = AU.t + t0; for (let i = 0; i < 3; i++) AU.tone({ pos, t0: t + i * 0.07, type: 'sine', f: 3200 + Math.random() * 900, f2: 2400, dur: 0.05, vol: 0.09, rev: 0.25 }); };
+Object.assign(EVENTS, {
+  tkDrop() {
+    const f = STORY.flags, c = CAST.list.takeshi, r = MAN.areas.a1bl, t = r.tkDown; if (f.tkFell || !c) return;
+    f.tkFell = true; c.hang = false; STORY.save();
+    const m = c.m, y0 = m.position.y, t0 = performance.now(), p = m.position.clone();
+    animate(() => { const k = Math.min(1, (performance.now() - t0) / 300); m.position.y = y0 - (y0 - FLOORS.A1) * k * k; return k < 1; });
+    GAME.later(0.3, () => { CAST.lie('takeshi', t.x, FLOORS.A1, t.z, t.yaw); MAN.a1Blood.visible = true; SFX.thud(p); POST.shake = 0.35; });
+    GAME.later(0.7, () => GAME.say([['', 'ドサッ……'], ['ひろし', '……！']]));
+  },
+  fireOni() {
+    const f = STORY.flags, a = MAN.fireAt; if (f.fireOni) return;
+    f.fireOni = true; STORY.save(); SFX.push(new THREE.Vector3(a.x, FLOORS.A2 + 0.5, a.z)); POST.shake = 0.2;
+    GAME.later(0.6, () => {
+      ONI.spawn(a.x, FLOORS.A2, a.z - 0.25, a.yaw, 'script'); POST.shake = 0.35;
+      ONI.script = { i: 0, steps: [{ t: 'crawl', d: 1.8, dist: 1.6, drop: 1.1 }, { t: 'call', fn: () => { ONI.bendT = 0; ONI.state = 'appear'; ONI.wait = 0; ONI.appearFor = 0.4; SFX.oniSpot(); POST.shake = 0.4; } }] };
+    });
+  },
+  // the closet doors rattle; then fly open and it comes out, bent double, with Mika's hair
+  closetMika(h, flag) {
+    const f = STORY.flags;
+    if (!h || f[flag] || !PLAYER.alive || GAME.room !== h.room || ONI.on || PLAYER.hidden || STORY.busy) return;
+    f[flag] = true; STORY.save();
+    const t0 = performance.now(), base = h.doors.map(d => d.userData.baseRy);
+    for (let i = 0; i < 5; i++) SFX.knock(h.cam, AU.ok ? AU.t + i * 0.17 : 0, 140, 500, 0.5);
+    animate(() => { const k = (performance.now() - t0) / 900; h.doors.forEach((d, i) => { d.rotation.y = base[i] + (i ? 1 : -1) * Math.abs(Math.sin(k * 18)) * 0.07; }); if (k >= 1) h.doors.forEach((d, i) => (d.rotation.y = base[i])); return k < 1; });
+    setTimeout(() => {
+      if (!PLAYER.alive) return;
+      SFX.slam(h.cam); POST.shake = 0.4;
+      const t1 = performance.now();
+      animate(() => { const k = Math.min(1, (performance.now() - t1) / 160); h.doors.forEach((d, i) => { d.rotation.y = base[i] + (i ? 1 : -1) * 1.45 * k; }); return k < 1; });
+      const fwd = new THREE.Vector3(-Math.sin(h.yaw), 0, -Math.cos(h.yaw)), p = h.exitP.clone().addScaledVector(fwd, -0.95);
+      ONI.spawn(p.x, h.exitP.y, p.z, h.yaw + Math.PI, 'script'); ONI.setLook('mika');
+      ONI.script = { i: 0, steps: [{ t: 'crawl', d: 0.7, dist: 1.25, drop: 0 }, { t: 'call', fn: () => { ONI.bendT = 0; ONI.state = 'appear'; ONI.wait = 0; ONI.appearFor = 0.35; SFX.oniSpot(); } }] };
+      setTimeout(() => { const t2 = performance.now(); animate(() => { const k = Math.min(1, (performance.now() - t2) / 500); h.doors.forEach((d, i) => { d.rotation.y = base[i] + (i ? 1 : -1) * 1.45 * (1 - k); }); return k < 1; }); }, 2600);
+    }, 950);
+  },
+  s2Rise() {
+    const f = STORY.flags, r = MAN.areas.s2back; if (f.s2Rise) return;
+    f.s2Rise = true; STORY.save();
+    const hid = () => PLAYER.hidden && PLAYER.hidden.room === r;
+    GAME.later(2.4, () => { if (GAME.room !== r && !hid()) return; SFX.heartbeat && SFX.heartbeat(0.8); SFX.push(PLAYER.pos.clone()); POST.shake = 0.15; });
+    GAME.later(5.0, () => {
+      if (!PLAYER.alive || ONI.on || (GAME.room !== r && !hid())) { f.s2RiseDone = true; STORY.save(); return; }
+      const x = cx(23), z = cx(-9);
+      ONI.spawn(x, FLOORS.S2, z, yawTo({ x, z }, PLAYER.pos), 'script');
+      ONI.script = { i: 0, steps: [{ t: 'rise', d: 1.8 }, { t: 'call', fn: () => {
+        // you hid in time: it looks round the room, goes to the desk, and is gone
+        if (hid()) { ONI.script = { i: 0, steps: [{ t: 'look', d: 3.0 }, { t: 'go', p: new THREE.Vector3(cx(23.5), FLOORS.S2, cx(-10.6)), sp: 1.6 }, { t: 'look', d: 1.6 }, { t: 'gone', fn: () => { f.s2RiseDone = true; STORY.save(); } }] }; return; }
+        ONI.state = 'appear'; ONI.wait = 0; ONI.appearFor = 0.4; SFX.oniSpot(); POST.shake = 0.4;
+      } }] };
+    });
+  },
+  codeOni() {
+    const f = STORY.flags, r = MAN.areas.abcorC; if (f.codeOni) return;
+    f.codeOni = true; STORY.save();
+    GAME.later(1.4, () => {
+      if (!PLAYER.alive || ONI.on || GAME.room !== r) { f.codeOni = false; STORY.save(); return; }
+      const x = cx(22), z = cx(-18), q = new THREE.Vector3(x, FLOORS.AB, z);
+      SFX.oniStep(q, 0.9); ONI.spawn(x, FLOORS.AB, z, yawTo(q, PLAYER.pos), 'appear'); ONI.appearFor = 1.0;
+      GAME.later(0.3, () => { if (ONI.on) { SFX.oniSpot(); POST.shake = 0.3; } });
+      GAME.later(0.8, () => { const d = MAN.doors.abcorC_B; SFX.oniStep(d.front, 0.95); SFX.locked(d.center); });
+    });
+  },
+  // the study, after the screws in the hole: rats run out of it, then something white squeezes out after them
+  fuwatty() {
+    const f = STORY.flags, hole = MAN.studyHole, r = MAN.areas.s2study;
+    if (f.fuwatty || !hole || GAME.room !== r || !PLAYER.alive) return;
+    f.fuwatty = true; STORY.save();
+    const hp = hole.getWorldPosition(new THREE.Vector3()), fy = FLOORS.S2, mat = new THREE.MeshStandardMaterial({ color: 0x3a3632, roughness: 0.9 });
+    const rats = [];
+    for (let i = 0; i < 3; i++) {
+      const g = new THREE.Group(), b = new THREE.Mesh(new THREE.SphereGeometry(0.1, 10, 8), mat); b.scale.set(0.8, 0.65, 1.5); b.position.y = 0.07; g.add(b);
+      const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.004, 0.28, 4), mat); tail.rotation.x = Math.PI / 2 - 0.15; tail.position.set(0, 0.05, -0.27); g.add(tail);
+      g.position.set(hp.x, hp.y - 0.2, hp.z + 0.12); g.visible = false; scene.add(g); rats.push(g);
+    }
+    const t0 = performance.now();
+    animate(() => {
+      const t = (performance.now() - t0) / 1000;
+      rats.forEach((g, i) => {
+        const s = t - i * 0.35; if (s < 0) return; g.visible = s < 2.6;
+        if (s < 0.25) { const k = s / 0.25; g.position.set(hp.x + i * 0.05, hp.y - 0.2 - (hp.y - 0.2 - fy) * k * k, hp.z + 0.12 + 0.25 * k); g.rotation.y = 0; }
+        else { const k = s - 0.25, a = -Math.PI / 2 + 0.3 * Math.sin(k * 6 + i); g.rotation.y = a; g.position.set(hp.x + i * 0.05 - k * 3.4, fy, hp.z + 0.37 + 0.4 * Math.sin(k * 3 + i) + i * 0.15); }
+      });
+      if (t > 4) { rats.forEach(g => scene.remove(g)); return false; }
+      return true;
+    });
+    for (let i = 0; i < 4; i++) SFX.squeak(hp, i * 0.3);
+    GAME.later(0.8, () => say2('チュー、チュー……', '穴から、ネズミが出てきた。'));
+    GAME.later(2.4, () => {
+      if (!PLAYER.alive) return;
+      SFX.push(hp.clone()); POST.shake = 0.25;
+      ONI.spawn(hp.x, fy, hp.z + 0.4, 0, 'script'); ONI.setLook('fuwatty');
+      ONI.script = { i: 0, steps: [{ t: 'squeeze', d: 0.9, lift: 0.95 }, { t: 'crawl', d: 0.6, dist: 0.9, drop: 0 }, { t: 'call', fn: () => { ONI.bendT = 0; ONI.state = 'appear'; ONI.wait = 0; ONI.appearFor = 0.5; SFX.oniSpot(); POST.shake = 0.3; } }] };
+    });
+  },
+});
+
 /* ---------- light, shadow, Takuro at your side ---------- */
 function abLightsOn() {
   for (const r of MAN.list) if (r.fl === 'AB') { r.dark = false; for (const fx of r.fixtures) if (fx.kind !== 'candle') fx.state = 'on'; }
@@ -323,7 +435,8 @@ STORY.useItem2 = function (id, t) {
   if (isDriver && tag === 'studyHole' && !f.studyScrews) {
     f.studyScrews = true; SFX.unlock(PLAYER.pos.clone());
     GAME.later(0.6, () => { framesFall(true); SFX.crash && SFX.crash(PLAYER.pos.clone().setY(PLAYER.pos.y + 2)); POST.shake = 0.3; });
-    say2('ドライバーでネジを外した。', '……ガシャン！', 'どこかで、何かが割れる音がした。'); this.save(); return true;
+    say2('ドライバーでネジを外した。', '……ガシャン！', 'どこかで、何かが割れる音がした。'); this.save();
+    GAME.later(1.6, () => EVENTS.fuwatty()); return true;
   }
   // lighting things
   if (id === 'lighter' && tag && /^candle(B1|A1|SBJ|SBD)$/.test(tag)) {
@@ -441,6 +554,10 @@ DIRECTOR.quiet = function (r) {
   const f = STORY.flags;
   if (prevQuiet(r)) return true;
   if (!r) return true;
+  if ((r.id === 'a1bl' || r.id === 'a1corB') && f.tkDropArmed && !f.tkOniDone) return true;
+  if ((r.id === 'back' && STORY.hasGot('k_annex') && !f.backOniDone) || (r.id === 'a2fire' && !f.fireOniDone && !f.fireLit)) return true;
+  if ((r.id === 's1bl' && !f.mikaCl1Done) || (r.id === 'back' && f.lit_bjCandle && !f.mikaCl2Done) || (r.id === 's2back' && !f.s2RiseDone) || (r.id === 's2study' && f.studyScrews && !f.fuwattyDone)) return true;
+  if ((r.id === 'abcorC' || r.id === 'abfront') && f.codeOpen && !f.codeOniDone) return true;
   return (r.id === 'big' && f.mikaB1 && !f.mikaOniDone) || r.id === 'a1left' || r.id === 'abback' || ((r.id === 'abhidA' || r.id === 'abhidB') && !f.hidChaseDone) || (r.id === 's2tl' && !f.sproutChaseDone) || r.id === 'sboni' || r.id === 'cloister';
 };
 
@@ -451,8 +568,29 @@ ROOM_HOOKS.push((r, via, quiet) => {
   if (r.id === 'big') {
     if (f.mikaB1 && !f.mikaOni) { const m = r.mikaAt; CAST.place('mika', m.x, FLOORS.B1, m.z, Math.PI); }
   } else if (r.fl === 'B1') CAST.hide('mika');
-  if (r.id === 'a1bl' && f.takeshiRan) { const t = r.tkDown; CAST.lie('takeshi', t.x, FLOORS.A1, t.z, t.yaw); MAN.a1Blood.visible = true; if (!f.tkFound) { f.tkFound = true; GAME.later(0.4, () => say2('……！', 'たけしが、倒れている。')); } }
-  else if (r.fl === 'A1' && !FOLLOW.id) CAST.hide('takeshi');
+  // the room of dolls: the empty noose; then (once he ran, and you are back with the doll's head) Takeshi hanging from it;
+  // after the safe, on the floor; once it has come after you, only the blood
+  if (r.id === 'a1bl') {
+    if (f.tkOni) { CAST.hide('takeshi'); MAN.a1Blood.visible = true; }
+    else if (f.tkFell) { const t = r.tkDown; CAST.lie('takeshi', t.x, FLOORS.A1, t.z, t.yaw); MAN.a1Blood.visible = true; }
+    else if (f.takeshiRan && f.dollHeadOff) {
+      tkHang();
+      if (!f.tkFound) { f.tkFound = true; STORY.save(); GAME.later(0.6, () => GAME.say([['', '……！'], ['ひろし', 'た……たけし……！'], ['', 'たけしが、天井から下がった縄で首をつっている。']])); }
+    } else CAST.hide('takeshi');
+  } else if (r.fl === 'A1' && !FOLLOW.id) CAST.hide('takeshi');
+  // out of the room of dolls after the body dropped: it comes out after you, with Takeshi's hair
+  if (r.id === 'a1corB' && f.tkFell && !f.tkOni && !quiet) {
+    f.tkOni = true; STORY.save(); CAST.hide('takeshi');
+    GAME.later(1.5, () => { if (PLAYER.alive && !ONI.on) oniThrough('corB1_bl', 'takeshi', 0.6); });
+  }
+  // Mika-oni bursts out of a closet, twice: the back exit's, on your way back from the jail (she has only just turned);
+  // and the room bottom left downstairs in the second annex
+  if (r.id === 'back' && !f.mikaCl2 && f.mikaOni && f.lit_bjCandle && !STORY.hasGot('k_annex') && !quiet) GAME.later(1.6, () => EVENTS.closetMika(MAN.backCloset, 'mikaCl2'));
+  if (r.id === 's1bl' && !f.mikaCl1 && !quiet) GAME.later(2.2, () => EVENTS.closetMika(MAN.s1Closet, 'mikaCl1'));
+  // the room behind the graffiti: a while after you come in it rises out of the floor (hide in the closet before it does)
+  if (r.id === 's2back' && !f.s2Rise && !quiet) EVENTS.s2Rise();
+  // through the door with the code: it is in the corridor ahead (and something at the door behind you)
+  if (r.id === 'abcorC' && f.codeOpen && !f.codeOni && !quiet) EVENTS.codeOni();
   if (r.id === 'abhidB' && f.takuroWith && !f.hidChase) GAME.later(0.8, () => EVENTS.hidChase());
   // the crate goes back to where it was whenever you come in (so it can never be stuck in a corner)
   if (r.id === 'a3crate' && !f.crateIn) { MAN.crate.place(cx(20), cx(-1)); MAN.crate.tile = [20, -1]; f.crateAt = null; }
@@ -474,6 +612,16 @@ TICK_HOOKS.push(dt => {
   if (!r || !PLAYER.alive) return;
   FOLLOW.tick(dt);
   if (f.hidChaseDone && !STORY.hasGot('k_back') && MAN.props.k_back && !MAN.props.k_back.visible) MAN.props.k_back.visible = true;
+  // Takeshi, hanging: a slow sway; after the safe, as you go for the door, he drops
+  const tk = CAST.list.takeshi;
+  if (tk && tk.hang && tk.m.visible && r.id === 'a1bl') { tk.m.rotation.y = MAN.areas.a1bl.tkHang.yaw + Math.sin(GAME.time * 0.45) * 0.12; tk.m.rotation.z = Math.sin(GAME.time * 0.9) * 0.025; }
+  if (r.id === 'a1bl' && f.tkDropArmed && !f.tkFell && tk && tk.hang && !GAME.busy && !GAME.modal && !STORY.busy && near2(MAN.doors.bl_corB1.front, 3.2)) EVENTS.tkDrop();
+  // the back way out of the basement, with the annex key: it comes in from the big room behind you
+  if (r.id === 'back' && STORY.hasGot('k_annex') && !f.backOni && !ONI.on && !GAME.busy && !GAME.modal && !STORY.busy && near2(MAN.doors.back_bridge.front, 2.6)) {
+    f.backOni = true; STORY.save(); oniThrough('back_big', null, 0.5);
+  }
+  // the fireplace, when you come up to it with the doll to burn: it crawls out of it
+  if (r.id === 'a2fire' && !f.fireOni && !f.fireLit && STORY.hasGot('doll') && !ONI.on && !GAME.busy && !GAME.modal && !STORY.busy && near2(MAN.fireAt, 3.8)) EVENTS.fireOni();
   // Mika at the back of the big room
   if (r.id === 'big' && f.mikaB1 && !f.mikaOni && !GAME.busy && !GAME.modal && CAST.list.mika && near2(CAST.list.mika.m.position, 4.6)) EVENTS.mikaTurn();
   // the statue, pushed into the stairs of the way between the buildings: down it goes
@@ -540,6 +688,8 @@ STATE_HOOKS.push(f => {
   if (f.a1Dark) for (const fx of MAN.areas.a1br.fixtures) if (fx !== MAN.doll3Fx) fx.state = 'off';
   a1Shadow();
   if (f.dollPanel) MAN.a1Panel.visible = false;
+  if (got('k_ab') && !f.tkFell) f.tkDropArmed = true;   // (a game saved before he hung there)
+  if (f.fireLit) f.fireOni = f.fireOniDone = true;
   if (f.a1Fell) { const h = MAN.a1Hole; h.m.visible = true; if (f.a1HoleZ) h.m.position.z = h.z = f.a1HoleZ; }
   if (got('bulb')) MAN.a2Bulb.state = 'off';
   if (f.crateIn) { const c = MAN.crate, h = MAN.crateHole; c.place(h.x, h.z); c.g.position.y = -0.93; c.col.on = false; h.col.on = false; h.m.visible = false; }

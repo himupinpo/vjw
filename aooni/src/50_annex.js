@@ -22,7 +22,7 @@ AREAS.push(
   { id: 'a1br', name: '奥右の部屋', fl: 'A1', cells: [[30, -12, 8, 7]], wall: 'wallBlue', floor: 'floorBlood', lamps: [[34, -8.5]] },
   { id: 'a2cor', name: '２階 廊下', fl: 'A2', cells: [[10, 0, 6, 3]], wall: 'wallBlue', floor: 'floorBlood', lamps: [[13, 1.5]] },
   { id: 'a2left', name: '左の部屋', fl: 'A2', cells: [[0, -3, 8, 7]], wall: 'wallBlue', floor: 'floorBlood', lamps: [] },
-  { id: 'a2fire', name: '暖炉の部屋', fl: 'A2', cells: [[18, -3, 8, 8]], wall: 'wallBlue', floor: 'floorBlood', lamps: [[22, 1]] },
+  { id: 'a2fire', name: '暖炉の部屋', fl: 'A2', cells: [[18, -3, 8, 8]], wall: 'wallBlue', floor: 'floorBlood', lamps: [[22, -0.5], [22, 3]] },
   { id: 'a3cor', name: '３階 廊下', fl: 'A3', cells: [[14, 0, 2, 6]], wall: 'wallBlue', floor: 'floorBlood', lamps: [[15, 2.5]] },
   { id: 'a3crate', name: '木箱の部屋', fl: 'A3', cells: [[18, -4, 5, 7], [18, -6, 1, 2], [22, -6, 1, 2]], wall: 'wallBlue', floor: 'floorBlood', lamps: [[20.5, -2.5], [20.5, 1]] },   // 6.23: five by seven, a nook top left and top right
   // the first annex's basement (dark until the lever in the room bottom left)
@@ -106,7 +106,7 @@ DOORDEFS.push(
   { id: 'stair1_corA', fl: 'A1', x: 20, z: 0, side: 'S', to: 'corA1_stair', unstick: 'a1stairOpen' },
   { id: 'corA2_stair', fl: 'A1', x: 28, z: 2, side: 'N', to: 'stair2_corA', stuck: 'a1stairOpen' },
   { id: 'stair2_corA', fl: 'A1', x: 26, z: 0, side: 'S', to: 'corA2_stair', unstick: 'a1stairOpen' },
-  { id: 'br_cloister', fl: 'A1', x: 37, z: -9, side: 'E', to: 'k_a1', kind: 'hidden2', reveal: 'shadowCut', lock: 'k_back' },
+  { id: 'br_cloister', fl: 'A1', x: 37, z: -7, side: 'E', to: 'k_a1', kind: 'hidden2', reveal: 'shadowCut', lock: 'k_back' },
   { id: 'a2cor_left', fl: 'A2', x: 10, z: 1, side: 'W', to: 'a2left_cor' },
   { id: 'a2left_cor', fl: 'A2', x: 7, z: 1, side: 'E', to: 'a2cor_left' },
   { id: 'a2cor_fire', fl: 'A2', x: 15, z: 1, side: 'E', to: 'fire_cor' },
@@ -304,15 +304,25 @@ FURNISH.big = r => {
   r.mikaAt = { x: tm(3), z: tm(1.4) };
 };
 FURNISH.b1left = r => {
-  addBookshelf(r, tm(-4.4), tm(1) + 0.3, 0, tm(1.6), 2.6, { mat: MAT.crateWood });
-  shineAt(r, tm(-4.4), 2.62, tm(1) + 0.3, 'bitMinus');
-  examine(r, tm(-4.4), 1.8, tm(1) + 0.5, tm(1.6), 2.6, 0.6, () => (STORY.hasGot('bitMinus') ? null : '棚の上を調べる'), () => STORY.event('b1High', 'bitMinus'));
-  chairInteract(MAN.b1Chair = addChairW(r, tm(-7.6), tm(5.6), 0.4, MAT.wood), 'b1');
-  for (const [x, z, s] of [[-8.4, 1.6, 0.8], [-8.4, 7.4, 0.7], [-3.6, 7.3, 0.8]]) addCrate(r, tm(x), tm(z), s, 0.3);
+  // 6.23 / ひろし編: a full bookcase top left, a tall plain shelf top middle with the bit on top of it (a chair to reach
+  // it), a cabinet top right, the chair loose in the room, and a low table under a red cloth bottom left
+  addBookshelf(r, tm(-8) + 0.1, tm(1) + 0.3, 0, tm(1.7), 2.6);
+  addBookshelf(r, tm(-5.5), tm(1) + 0.3, 0, tm(1.2), 2.6, { mat: MAT.crateWood });
+  shineAt(r, tm(-5.5), 2.62, tm(1) + 0.3, 'bitMinus');
+  examine(r, tm(-5.5), 1.8, tm(1) + 0.5, tm(1.2), 2.6, 0.6, () => (STORY.hasGot('bitMinus') ? null : '棚の上を調べる'), () => STORY.event('b1High', 'bitMinus'));
+  addDresser(r, tm(-3) - 0.75, tm(1) + 0.3, 0, { w: 1.3, h: 1.3, d: 0.5, rows: 4, cols: 1, mat: MAT.darkWood, still: true });
+  chairInteract(MAN.b1Chair = addChairW(r, tm(-4.3), tm(4.6), -0.5, MAT.wood), 'b1');
+  const lt = new Frame(r, tm(-7.6), 0, tm(6.4), 0), red = std({ color: 0x8a1a1a, roughness: 0.9 });
+  lt.box(1.9, 0.05, 1.1, MAT.darkWood, 0, 0.42, 0); for (const sx of [-1, 1]) for (const sz of [-1, 1]) lt.box(0.06, 0.4, 0.06, MAT.darkWood, sx * 0.85, 0.2, sz * 0.45);
+  lt.box(1.96, 0.012, 1.16, red, 0, 0.452, 0); for (const sz of [-1, 1]) lt.box(1.96, 0.18, 0.012, red, 0, 0.36, sz * 0.58); for (const sx of [-1, 1]) lt.box(0.012, 0.18, 1.16, red, sx * 0.98, 0.36, 0);
+  lt.collide(-0.98, 0.98, 0, 0.46, -0.58, 0.58);
 };
 FURNISH.back = r => {
+  // 6.23 / ひろし編: a big pale rug in the middle, a small chest of drawers top left, the wardrobe top right, the way
+  // out in the middle of the top wall
+  paleRug(r, tm(17.5), tm(4.8), tm(3.6), tm(3.4));
+  addDresser(r, tm(14) + 0.75, tm(1) + 0.3, 0, { w: 1.3, h: 0.95, d: 0.5, rows: 3, cols: 1, mat: MAT.darkWood, still: true });
   MAN.backCloset = addTansu(r, tm(21) - 0.6, tm(1) + 0.5, 0);
-  for (const [x, z, s] of [[14.6, 1.6, 0.8], [14.7, 7.4, 0.8], [15.6, 7.4, 0.6]]) addCrate(r, tm(x), tm(z), s, 0.2);
 };
 FURNISH.bjail = r => {
   // the cell along the top; inside it a candle and, on its back wall, two scrawls
@@ -337,19 +347,30 @@ FURNISH.a1hall = r => {
   addPlant(r, tm(10) + 0.5, tm(5) + 1.2, 1.1); addPlant(r, tm(19) - 0.5, tm(0) + 0.5, 1.0);
   addRug(r, tm(14.5), tm(3), tm(4), tm(2.4), 0, 11);
 };
+// a plain pale rug with a darker edge (the original's rooms in the annexes)
+function paleRug(r, x, z, w, d, col = 0xd6d2c6) {
+  const F = new Frame(r, x, r.fy + 0.006, z, 0), g0 = new THREE.PlaneGeometry(w, d); g0.rotateX(-Math.PI / 2);
+  const g1 = new THREE.PlaneGeometry(w - 0.24, d - 0.24); g1.rotateX(-Math.PI / 2);
+  F.geo(g0, std({ color: 0x9a968a, roughness: 1 }), 0, 0, 0); F.geo(g1, std({ color: col, roughness: 1 }), 0, 0.002, 0);
+}
 FURNISH.a1bl = r => {
-  // a table of dolls, and things that should not be in a room
-  const tb = new Frame(r, tm(4), 0, tm(-1), 0); tb.box(2.4, 0.06, 1.0, MAT.darkWood, 0, 0.78, 0); for (const sx of [-1, 1]) for (const sz of [-1, 1]) tb.box(0.07, 0.76, 0.07, MAT.darkWood, sx * 1.1, 0.38, sz * 0.42); tb.collide(-1.2, 1.2, 0, 0.82, -0.5, 0.5);
+  // 6.23 / ひろし編: a pale rug in the middle with a rope hanging over it from the ceiling; the door top middle,
+  // the panel with a doll drawn on it top left, and a low table of dolls along the left wall at the bottom
+  paleRug(r, tm(4), tm(-0.3), tm(2.8), tm(2.6));
+  const tb = new Frame(r, tm(0) + 0.65, 0, tm(1.5), Math.PI / 2); tb.box(2.6, 0.06, 0.8, MAT.darkWood, 0, 0.62, 0); for (const sx of [-1, 1]) for (const sz of [-1, 1]) tb.box(0.07, 0.6, 0.07, MAT.darkWood, sx * 1.2, 0.3, sz * 0.32); tb.collide(-1.3, 1.3, 0, 0.66, -0.4, 0.4);
   MAN.dolls = [];
-  for (let i = 0; i < 5; i++) { const d = makeDoll(1.3, { dress: [0x8a1c2a, 0x2a3a8a, 0x5a2a6a, 0x2a6a3a, 0x8a6a1c][i] }); d.position.copy(tb.pt(-0.9 + i * 0.45, 0.81, i === 2 ? 0.28 : -0.15)); d.rotation.y = 0.15 * (i - 2); r.group.add(d); MAN.dolls.push(d); }
-  MAN.props.doll = MAN.dolls[2];   // the one at the front (the "bottom" one on the original's screen)
-  interactBox(r, tm(4), 1.0, tm(-1) + 0.28, 0.5, 0.5, 0.5, () => (STORY.hasGot('doll') ? null : '人形を調べる'), () => GAME.take('doll', MAN.props.doll), { icon: 'hand' });
-  examine(r, tm(4), 1.0, tm(-1) - 0.15, 2.4, 0.5, 0.4, () => '人形が並んでいる', () => GAME.say([['', 'テーブルに人形が並んでいる。']]));
-  for (let i = 0; i < 4; i++) { const bl = new THREE.Mesh(new THREE.CircleGeometry(0.2 + Math.random() * 0.35, 16), new THREE.MeshStandardMaterial({ color: 0x2a0303, roughness: 0.3 })); bl.userData.ownMat = true; bl.rotation.x = -Math.PI / 2; bl.position.set(tm(1 + i * 1.6), 0.006, tm(1.6 - (i % 2) * 3.4)); r.group.add(bl); }
-  const rope = new Frame(r, tm(6.5), 0, tm(-3.2), 0); rope.cyl(0.015, 0.015, 1.6, std({ color: 0x8a7a5a, roughness: 1 }), 0, WALL_H - 0.8, 0, 6); rope.geo(new THREE.TorusGeometry(0.16, 0.02, 6, 16), std({ color: 0x8a7a5a, roughness: 1 }), 0, WALL_H - 1.75, 0);
-  // where he is found later; the panel top left with a doll drawn on it, and the safe behind it
-  r.tkDown = { x: tm(5.5), z: tm(1.2), yaw: 0.6 };
-  const bl = MAN.a1Blood = new THREE.Mesh(new THREE.CircleGeometry(0.9, 24), new THREE.MeshStandardMaterial({ color: 0x3a0505, roughness: 0.2 })); bl.userData.ownMat = true; bl.rotation.x = -Math.PI / 2; bl.scale.set(1.5, 0.9, 1); bl.position.set(tm(5.2), 0.009, tm(1.4)); bl.visible = false; r.group.add(bl);
+  for (let i = 0; i < 5; i++) { const d = makeDoll(1.3, { dress: [0x8a1c2a, 0x2a3a8a, 0x5a2a6a, 0x2a6a3a, 0x8a6a1c][i] }); d.position.copy(tb.pt(1.0 - i * 0.5, 0.65, 0.05)); d.rotation.y = Math.PI / 2 + 0.15 * (i - 2); r.group.add(d); MAN.dolls.push(d); }
+  MAN.props.doll = MAN.dolls[4];   // the one at the bottom end (the original: "the doll bottom left")
+  const dp = MAN.props.doll.position;
+  interactBox(r, dp.x, 0.9, dp.z, 0.5, 0.5, 0.5, () => (STORY.hasGot('doll') ? null : '人形を調べる'), () => GAME.take('doll', MAN.props.doll), { icon: 'hand' });
+  examine(r, tm(0) + 0.65, 0.9, tm(1.2), 0.5, 0.5, 2.2, () => '人形が並んでいる', () => GAME.say([['', 'テーブルに人形が並んでいる。']]));
+  for (let i = 0; i < 3; i++) { const bl = new THREE.Mesh(new THREE.CircleGeometry(0.2 + Math.random() * 0.3, 16), new THREE.MeshStandardMaterial({ color: 0x2a0303, roughness: 0.3 })); bl.userData.ownMat = true; bl.rotation.x = -Math.PI / 2; bl.position.set(tm(6.6 - i * 0.7), 0.006, tm(1.4 + (i % 2) * 0.6)); r.group.add(bl); }
+  // the rope: from the ceiling down to a loop at the height of a neck
+  const ropeM = std({ color: 0x8a7a5a, roughness: 1 }), rp = new Frame(r, tm(4), 0, tm(-0.3), 0);
+  rp.cyl(0.016, 0.016, WALL_H - 2.0, ropeM, 0, (WALL_H + 2.0) / 2, 0, 6); rp.geo(new THREE.TorusGeometry(0.14, 0.022, 6, 16), ropeM, 0, 1.86, 0, Math.PI / 2 - 0.25);
+  r.tkHang = { x: tm(4), z: tm(-0.3) + 0.04, yaw: 0 };   // he hangs there (after he ran from the left room)
+  r.tkDown = { x: tm(4.2), z: tm(0.5), yaw: 0.6 };        // and drops there
+  const bl = MAN.a1Blood = new THREE.Mesh(new THREE.CircleGeometry(0.9, 24), new THREE.MeshStandardMaterial({ color: 0x3a0505, roughness: 0.2 })); bl.userData.ownMat = true; bl.rotation.x = -Math.PI / 2; bl.scale.set(1.4, 0.9, 1); bl.position.set(tm(4.1), 0.009, tm(0.6)); bl.visible = false; r.group.add(bl);
   const wz = tm(-4) + WT + 0.012;
   MAN.a1SafeFace = wallPic(r, tm(1.2), 1.5, wz, 0, 0.8, 0.6, (g, w, h) => { g.fillStyle = '#141414'; g.fillRect(0, 0, w, h); g.strokeStyle = '#777'; g.lineWidth = 6; g.strokeRect(6, 6, w - 12, h - 12); g.fillStyle = '#555'; g.beginPath(); g.arc(w / 2, h / 2, 40, 0, TAU); g.fill(); }, { cw: 256, ch: 192 });
   MAN.a1Panel = wallPic(r, tm(1.2), 1.5, wz + 0.01, 0, 0.9, 0.7, (g, w, h) => { g.fillStyle = '#d8ccb0'; g.fillRect(0, 0, w, h); g.strokeStyle = '#6a5a40'; g.lineWidth = 6; g.strokeRect(4, 4, w - 8, h - 8); drawDollPicture(g, w / 2, h / 2 + 10, 1.4); }, { cw: 256, ch: 200 });
@@ -367,21 +388,25 @@ FURNISH.a1left = r => {
 FURNISH.a1corA = r => { MAN.a1Hole = floorHole(r, cx(24), cx(2)); MAN.a1Hole.m.visible = false; MAN.a1Hole.col.on = false; };   // (between the two doors, as on 6.23's map)
 FURNISH.a1stair = r => { addCrate(r, tm(19) + 0.5, tm(-4) + 0.5, 0.8, 0.3); };
 FURNISH.a1br = r => {
-  const tb = new Frame(r, tm(34), 0, tm(-9), 0); tb.box(2.2, 0.06, 1.0, MAT.darkWood, 0, 0.78, 0); for (const sx of [-1, 1]) for (const sz of [-1, 1]) tb.box(0.07, 0.76, 0.07, MAT.darkWood, sx * 1.0, 0.38, sz * 0.42); tb.collide(-1.1, 1.1, 0, 0.82, -0.5, 0.5);
-  for (let i = 0; i < 4; i++) { if (i === 2) continue; const d = makeDoll(1.3, { dress: [0x2a3a8a, 0x5a2a6a, 0, 0x8a6a1c][i] }); d.position.copy(tb.pt(-0.75 + i * 0.5, 0.81, -0.1)); r.group.add(d); }
+  // 6.23 / ひろし編: a pale rug in the middle, the door top middle with the light switch left of it, a small chest of
+  // drawers top left, and the doll with no eyes alone on a little stand at the bottom right, by the right-hand wall
+  paleRug(r, tm(33.6), tm(-8.6), tm(2.6), tm(2.4));
+  addDresser(r, tm(30) + 0.7, tm(-12) + 0.3, 0, { w: 1.2, h: 0.9, d: 0.5, rows: 3, cols: 1, mat: MAT.wood, still: true });
+  const DZ = cx(-7), st = new Frame(r, tm(36.2), 0, DZ, 0);
+  st.cyl(0.3, 0.3, 0.04, MAT.darkWood, 0, 0.7, 0, 18); st.cyl(0.05, 0.07, 0.68, MAT.darkWood, 0, 0.34, 0, 10); st.cyl(0.22, 0.24, 0.03, MAT.darkWood, 0, 0.015, 0, 14); st.collide(-0.3, 0.3, 0, 0.72, -0.3, 0.3);
   // the doll with no eyes (and later, no head, and later a light bulb for one)
-  const d3 = MAN.doll3 = makeDoll(1.5, { noEyes: true, dress: 0xd0d0c8 }); d3.position.copy(tb.pt(0.25, 0.81, 0.15)); r.group.add(d3);
+  const d3 = MAN.doll3 = makeDoll(1.5, { noEyes: true, dress: 0xd0d0c8 }); d3.position.copy(st.pt(0, 0.72, 0)); d3.rotation.y = -Math.PI / 2 + 0.3; r.group.add(d3);
   const bulb = MAN.doll3Bulb = new THREE.Group(); bulb.visible = false; bulb.position.y = 0.36; d3.add(bulb);
   const bm = MAN.doll3BulbMat = new THREE.MeshStandardMaterial({ color: 0xfff4c0, emissive: 0xffe8a0, emissiveIntensity: 0.2, roughness: 0.2 });
   const glass = new THREE.Mesh(new THREE.SphereGeometry(0.075, 14, 12), bm); glass.scale.y = 1.25; bulb.add(glass);
   const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.05, 10), MAT.brass); cap.position.y = -0.1; bulb.add(cap);
-  interactBox(r, tb.pt(0.25, 0, 0).x, 1.05, tb.pt(0, 0, 0.15).z, 0.4, 0.5, 0.4, () => (STORY.flags.bulbHead ? (STORY.flags.shadowCut ? null : '人形を調べる') : '人形を調べる'), () => STORY.event('doll3'), { icon: 'eye', tag: 'doll3' });
-  // the switch by the door
-  const sw = new Frame(r, tm(32) + 0.25, 0, tm(-12) + WT + 0.02, 0); sw.box(0.12, 0.18, 0.03, AOM.white, 0, 1.25, 0); sw.box(0.03, 0.07, 0.04, MAT.black, 0, 1.25, 0.02);
-  interactBox(r, tm(32) + 0.25, 1.25, tm(-12) + 0.25, 0.3, 0.3, 0.3, () => 'スイッチを押す', () => STORY.event('a1Switch'), { icon: 'hand' });
+  interactBox(r, d3.position.x, 0.95, d3.position.z, 0.4, 0.5, 0.4, () => (STORY.flags.bulbHead ? (STORY.flags.shadowCut ? null : '人形を調べる') : '人形を調べる'), () => STORY.event('doll3'), { icon: 'eye', tag: 'doll3' });
+  // the switch, left of the door
+  const sw = new Frame(r, tm(31) - 0.2, 0, tm(-12) + WT + 0.02, 0); sw.box(0.12, 0.18, 0.03, AOM.white, 0, 1.25, 0); sw.box(0.03, 0.07, 0.04, MAT.black, 0, 1.25, 0.02);
+  interactBox(r, tm(31) - 0.2, 1.25, tm(-12) + 0.25, 0.3, 0.3, 0.3, () => 'スイッチを押す', () => STORY.event('a1Switch'), { icon: 'hand' });
   // the doll's shadow, thrown along the floor to the right-hand wall once the room is dark and its head is lit
-  const dx = tb.pt(0.25, 0, 0).x, ex = tm(38) - WT - 0.05, shw = ex - dx + 0.9;
-  MAN.dollShadow = wallPic(r, (dx - 0.9 + ex) / 2, 0.016, tm(-9), 0, shw, 2.4, (g, w, h) => {
+  const dx = d3.position.x, ex = tm(38) - WT - 0.05, shw = ex - dx + 0.9;
+  MAN.dollShadow = wallPic(r, (dx - 0.9 + ex) / 2, 0.016, DZ, 0, shw, 2.4, (g, w, h) => {
     const k = 0.9 / shw, x0 = w * k;   // where the doll stands along it
     const pool = g.createRadialGradient(x0, h / 2, 4, x0, h / 2, w * 0.42); pool.addColorStop(0, 'rgba(255,214,150,.55)'); pool.addColorStop(1, 'rgba(255,200,130,0)');
     g.fillStyle = 'rgba(0,0,0,.92)'; g.beginPath(); g.moveTo(x0 + 6, h / 2 - 10); g.lineTo(w * 0.86, h / 2 - 34); g.lineTo(w, h / 2 - 22); g.lineTo(w, h / 2 + 22); g.lineTo(w * 0.86, h / 2 + 34); g.lineTo(x0 + 6, h / 2 + 10); g.closePath(); g.fill();
@@ -389,7 +414,7 @@ FURNISH.a1br = r => {
   }, { cw: 640, ch: 256, transparent: true, rx: -Math.PI / 2 });
   MAN.dollShadow.material = new THREE.MeshBasicMaterial({ map: MAN.dollShadow.material.map, transparent: true, depthWrite: false });
   // and its shadow standing up on the right-hand wall, where the hidden door is
-  MAN.dollWallShadow = wallPic(r, tm(38) - WT - 0.025, 1.2, cx(-9), -Math.PI / 2, 2.0, 2.4, (g, w, h) => {
+  MAN.dollWallShadow = wallPic(r, tm(38) - WT - 0.025, 1.2, DZ, -Math.PI / 2, 2.0, 2.4, (g, w, h) => {
     const halo = g.createRadialGradient(w / 2, h * 0.5, 10, w / 2, h * 0.5, w * 0.62); halo.addColorStop(0, 'rgba(255,205,130,.5)'); halo.addColorStop(1, 'rgba(255,190,110,0)');
     g.fillStyle = halo; g.fillRect(0, 0, w, h);
     g.fillStyle = 'rgba(0,0,0,.9)'; g.beginPath(); g.ellipse(w / 2, h * 0.28, w * 0.2, w * 0.22, 0, 0, TAU); g.fill();
@@ -407,12 +432,19 @@ FURNISH.a2left = r => {
   addDresser(r, tm(6), tm(-3) + 0.3, 0, { w: 1.2, h: 0.9, d: 0.5, rows: 3, cols: 1, mat: MAT.wood, still: true });
 };
 FURNISH.a2fire = r => {
-  MAN.fire = addFireplace(r, tm(26) - 0.3, tm(1), -Math.PI / 2); MAN.fire.state = 'off'; MAN.fire.level = 0;
-  shineAt(r, tm(26) - 0.55, 0.12, tm(1), 'stoneRed', false);
-  interactBox(r, tm(26) - 0.6, 0.6, tm(1), 0.6, 0.9, 1.2, () => (MAN.fire.state === 'on' ? (STORY.hasGot('stoneRed') ? null : '火を調べる') : '暖炉を調べる'), () => STORY.event('fireplace'), { icon: 'eye', tag: 'fireplace' });
-  MAN.fireDoll = makeDoll(1.3); MAN.fireDoll.visible = false; MAN.fireDoll.position.set(tm(26) - 0.6, 0.06, tm(1)); MAN.fireDoll.rotation.y = -Math.PI / 2; r.group.add(MAN.fireDoll);
-  addSofa(r, tm(21), tm(1), Math.PI / 2, MAT.velvetRed, 2.0);
-  addRug(r, tm(23), tm(1), tm(2.2), tm(3), 0, 13);
+  // 6.23 / ひろし編: a dining room. The fireplace in the middle of the top wall (it comes crawling out of it), a bust
+  // on a pedestal top left, and a long table under a white cloth down the middle of the room, chairs along both sides
+  const fx = tm(22), fz = tm(-3) + 0.28;
+  MAN.fire = addFireplace(r, fx, fz, 0); MAN.fire.state = 'off'; MAN.fire.level = 0;
+  MAN.fireAt = { x: fx, z: fz + 0.15, yaw: 0 };   // where it comes out, facing into the room
+  shineAt(r, fx, 0.12, fz + 0.3, 'stoneRed', false);
+  interactBox(r, fx, 0.6, fz + 0.4, 1.2, 0.9, 0.6, () => (MAN.fire.state === 'on' ? (STORY.hasGot('stoneRed') ? null : '火を調べる') : '暖炉を調べる'), () => STORY.event('fireplace'), { icon: 'eye', tag: 'fireplace' });
+  MAN.fireDoll = makeDoll(1.3); MAN.fireDoll.visible = false; MAN.fireDoll.position.set(fx, 0.06, fz + 0.3); MAN.fireDoll.rotation.y = 0; r.group.add(MAN.fireDoll);
+  const bust = new Frame(r, tm(18) + 0.7, 0, tm(-3) + 0.7, 0);
+  bust.box(0.6, 1.0, 0.6, MAT.marble, 0, 0.5, 0); bust.box(0.66, 0.06, 0.66, MAT.marble, 0, 1.03, 0); bust.cyl(0.2, 0.26, 0.3, MAT.marble, 0, 1.2, 0, 14); bust.sph(0.2, MAT.marble, 0, 1.52, 0, 18); bust.collide(-0.33, 0.33, 0, 1.75, -0.33, 0.33);
+  const L = tm(4.6), cz = tm(1.3), tb = addTable(r, fx, cz, Math.PI / 2, L, 1.5, 0.78, MAT.wood, false);
+  tb.F.box(L + 0.06, 0.006, 1.58, MAT.sheet, 0, 0.784, 0);
+  for (let i = 0; i < 4; i++) { const z = cz - L / 2 + L * (i + 0.5) / 4; addChair(r, fx - 1.12, z, Math.PI / 2); addChair(r, fx + 1.12, z, -Math.PI / 2); }
 };
 FURNISH.a3crate = r => {
   // 6.23: the crate in the room; the nook top right has a hole in its mouth and the oil at its back ("move the crate
