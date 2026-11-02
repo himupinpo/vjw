@@ -12,7 +12,7 @@
    ========================================================================= */
 const NET_CAP = 4;
 const NET_SHIRTS = [0x4f7fd8, 0xd84f4f, 0x4fae5c, 0xd8b04f, 0x9b5fd8, 0x4fc4c8, 0xe07a3a, 0xc8c8c8];
-const NET_FLOOR = { F1: '本館1F', F2: '本館2F', F3: '本館3F', B1: '本館地下', A1: '別館1F', A2: '別館2F', A3: '別館3F', AB: '別館地下', K: '回廊', S1: '第2別館1F', S2: '第2別館2F', SB: '第2別館地下' };
+const NET_FLOOR = { F1: '本館1F', F2: '本館2F', F3: '本館3F', B1: '本館地下', A1: '別館1F', A2: '別館2F', A3: '別館3F', AB: '別館地下', K: '回廊', S1: '第2別館1F', S2: '第2別館2F', SB: '第2別館地下', Y: '外' };
 const netClean = s => String(s == null ? '' : s).replace(/[\u0000-\u001f\u007f-\u009f​-‏‪-‮⁠-⁯﻿]/g, '').trim();
 const nr2 = v => Math.round(v * 100) / 100, nr3 = v => Math.round(v * 1000) / 1000;
 const netNum = (a, n) => Array.isArray(a) && a.length === n && a.every(Number.isFinite);

@@ -768,7 +768,7 @@ const UI = {
     ['hud', 'touch', 'over', 'end', 'pause', 'loading', 'settings', 'how', 'msg', 'items', 'files', 'specBar', 'online'].forEach(i => UI.show(i, false)); UI._files = null;
     UI.show('title'); NET.render();
     $('bCont').disabled = !UI.anySave();
-    MUSIC.stop(1); if (GAME.amb) { GAME.amb.stop(1); GAME.amb = null; }
+    MUSIC.stop(1); if (GAME.amb) { GAME.amb.stop(1); GAME.amb = null; } if (globalThis.rainOff) globalThis.rainOff();
     GAME.room = null; ONI.reset(); CAST.hideAll(); UI._msg = null; UI._choice = null; $('msgChs').innerHTML = ''; CHAIRS.held = null; PUSH.obj = null; VIEW.chair.visible = false; GAME.modal = null; GAME.cine = null; GAME.busy = 0; GAME.lighterOn = false;
     $('fxBlack').style.transition = 'opacity .6s'; $('fxBlack').style.opacity = 0;
   },
@@ -781,6 +781,7 @@ const UI = {
     $('oCont').disabled = !UI.anySave(); NET.overUI();
     setTimeout(() => { $('overBtns').style.opacity = 1; $('overBtns').style.pointerEvents = 'auto'; $('fxBlack').style.transition = 'opacity .6s'; $('fxBlack').style.opacity = 0; }, 1400);
     if (GAME.amb) { GAME.amb.stop(1); GAME.amb = null; }
+    if (globalThis.rainOff) globalThis.rainOff();
   },
   settings(back) {
     UI.show('settings');
@@ -957,7 +958,9 @@ GAME.ending = function () {
   setTimeout(() => {
     UI.show('hud', false); UI.show('touch', false); UI.show('end');
     if (GAME.amb) { GAME.amb.stop(1); GAME.amb = null; }
-    const lines = ['階段を上りきると、外の冷たい空気が流れこんできた。', 'ひろしとたくろうは、ふり返らずに走った。', '洋館は、夜の闇の中に黙って立っていた。', '― 脱出 ―'];
+    const lines = STORY.flags.takuroOni ? ['門をくぐり抜けると、追ってくる足音がとだえた。', 'ひろしは雨の中を、ふり返らずに走りつづけた。', '洋館は、夜の闇の中に黙って立っていた。', '― 脱出 ―']
+      : ['門をくぐり抜けると、外の冷たい空気が流れこんできた。', 'ひろしとたくろうは、ふり返らずに走った。', '洋館は、夜の闇の中に黙って立っていた。', '― 脱出 ―'];
+    if (globalThis.rainOff) globalThis.rainOff();
     const box = $('endText'); box.innerHTML = '';
     lines.forEach((l, i) => { const p = document.createElement('div'); p.className = 'gl'; p.textContent = l; box.appendChild(p); setTimeout(() => p.classList.add('on'), 600 + i * 1900); });
     $('endStats').innerHTML = `プレイ時間 ${Math.floor(play / 60)}分${String(Math.floor(play % 60)).padStart(2, '0')}秒　/　つかまった回数 ${caught}回`;

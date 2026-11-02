@@ -158,6 +158,16 @@ const ONI = {
       this.m.head.add(hair); this.m.tkHair = hair; hair.traverse(o => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
     }
     if (this.m.tkHair) this.m.tkHair.visible = look === 'takeshi';
+    // Takuro turned into it: his red hair, tied back in a ponytail
+    if (look === 'takuro' && !this.m.tkrHair) {
+      const hm = new THREE.MeshStandardMaterial({ color: 0xc8482c, roughness: 0.6 }), hair = new THREE.Group();
+      const cap = new THREE.Mesh(new THREE.SphereGeometry(0.5, 22, 14, 0, Math.PI * 2, 0, Math.PI * 0.52), hm); cap.position.set(0, 0.6, -0.04); hair.add(cap);
+      const tie = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 8), hm); tie.position.set(0, 0.62, -0.5); hair.add(tie);
+      const tail = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.75, 10), hm); tail.position.set(0, 0.3, -0.58); tail.rotation.x = Math.PI + 0.35; hair.add(tail);
+      for (let i = 0; i < 5; i++) { const a = (i / 4 - 0.5) * 1.6, f = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.26, 7), hm); f.position.set(Math.sin(a) * 0.3, 0.86, 0.22 + Math.cos(a) * 0.05); f.rotation.set(0.9, 0, -a * 0.5); hair.add(f); }
+      this.m.head.add(hair); this.m.tkrHair = hair; hair.traverse(o => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
+    }
+    if (this.m.tkrHair) this.m.tkrHair.visible = look === 'takuro';
     // Fuwatty: not its body at all, a big pale slab like hanpen with a grin, on two stubby legs
     if (look === 'fuwatty' && !this.m.fw) this.m.fw = makeFuwatty(this.m.root);
     if (this.m.fw) this.m.fw.visible = look === 'fuwatty';

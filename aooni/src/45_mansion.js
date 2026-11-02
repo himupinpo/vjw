@@ -9,7 +9,7 @@
    ========================================================================= */
 const T = 1.7, WALL_H = 4.2, DR_H = 2.7, DW = 1.45, WT = 0.16;   // DW: the width of a doorway
 // the main building's three floors, its basement, and (each on a level of its own) the annexes and the way between them
-const FLOORS = { F1: 0, F2: 40, F3: 80, B1: -40, A1: 120, A2: 160, A3: 200, AB: 240, K: 280, S1: 320, S2: 360, SB: 400 };
+const FLOORS = { F1: 0, F2: 40, F3: 80, B1: -40, A1: 120, A2: 160, A3: 200, AB: 240, K: 280, S1: 320, S2: 360, SB: 400, Y: 440 };
 const cx = x => (x + 0.5) * T;             // centre of tile x (or z)
 const tm = v => v * T;                      // tiles -> metres
 const MAN = { areas: {}, list: [], doors: {}, doorList: [], stairs: {}, hides: [], props: {}, grid: new Map(), open: new Set(), doorEdges: new Set(), nodes: [], veils: [] };
@@ -54,6 +54,8 @@ function aoMaterials() {
   AOM.wallWhiteB = std({ ...genNoiseSurface(S / 2, 0xeeeeea, 0.03, 6, 0.2), roughness: 0.85 }, 2);
   AOM.floorPath = std({ ...genStoneBlocks(S, 0x6c6a62, 6, 15), roughness: 0.95 }, 1.4);
   AOM.hedge = std({ ...genNoiseSurface(S / 2, 0x1d3a1f, 0.25, 9, 0.8), roughness: 1 }, 1.4);
+  AOM.floorDirt = std({ ...genNoiseSurface(S / 2, 0x4a3a26, 0.32, 10, 1.2), roughness: 1 }, 1.6);   // the muddy path out
+  AOM.forest = std({ ...genNoiseSurface(S / 2, 0x0d130e, 0.4, 7, 0.6), roughness: 1 }, 1.2);       // the dark wood either side of it
   AOM.ready = true;
 }
 function tatamiTex() {

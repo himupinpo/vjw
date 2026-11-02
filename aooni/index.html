@@ -2504,7 +2504,7 @@ function addTallGrass(room, x, z, w, d, n = 30) {
    ========================================================================= */
 const T = 1.7, WALL_H = 4.2, DR_H = 2.7, DW = 1.45, WT = 0.16;   // DW: the width of a doorway
 // the main building's three floors, its basement, and (each on a level of its own) the annexes and the way between them
-const FLOORS = { F1: 0, F2: 40, F3: 80, B1: -40, A1: 120, A2: 160, A3: 200, AB: 240, K: 280, S1: 320, S2: 360, SB: 400 };
+const FLOORS = { F1: 0, F2: 40, F3: 80, B1: -40, A1: 120, A2: 160, A3: 200, AB: 240, K: 280, S1: 320, S2: 360, SB: 400, Y: 440 };
 const cx = x => (x + 0.5) * T;             // centre of tile x (or z)
 const tm = v => v * T;                      // tiles -> metres
 const MAN = { areas: {}, list: [], doors: {}, doorList: [], stairs: {}, hides: [], props: {}, grid: new Map(), open: new Set(), doorEdges: new Set(), nodes: [], veils: [] };
@@ -2549,6 +2549,8 @@ function aoMaterials() {
   AOM.wallWhiteB = std({ ...genNoiseSurface(S / 2, 0xeeeeea, 0.03, 6, 0.2), roughness: 0.85 }, 2);
   AOM.floorPath = std({ ...genStoneBlocks(S, 0x6c6a62, 6, 15), roughness: 0.95 }, 1.4);
   AOM.hedge = std({ ...genNoiseSurface(S / 2, 0x1d3a1f, 0.25, 9, 0.8), roughness: 1 }, 1.4);
+  AOM.floorDirt = std({ ...genNoiseSurface(S / 2, 0x4a3a26, 0.32, 10, 1.2), roughness: 1 }, 1.6);   // the muddy path out
+  AOM.forest = std({ ...genNoiseSurface(S / 2, 0x0d130e, 0.4, 7, 0.6), roughness: 1 }, 1.2);       // the dark wood either side of it
   AOM.ready = true;
 }
 function tatamiTex() {
@@ -3444,6 +3446,8 @@ AREAS.push(
   { id: 'sbjail', name: '牢屋', fl: 'SB', cells: [[0, 5, 8, 6]], wall: 'wallStain', floor: 'floorOlive', dark: true, lamps: [] },
   { id: 'sbdark', name: '暗闇の部屋', fl: 'SB', cells: [[10, 5, 8, 6]], wall: 'wallStain', floor: 'floorOlive', dark: true, lamps: [] },
   { id: 'sboni', name: '青鬼の部屋', fl: 'SB', cells: [[0, 14, 11, 6]], wall: 'wallStain', floor: 'floorOlive', lamps: [[5.5, 14.5]] },
+  // out: up the last stairs, a straight muddy path through a dead wood in the rain, to the gate
+  { id: 'outpath', name: '森の道', fl: 'Y', cells: [[40, -40, 5, 34]], wall: 'forest', floor: 'floorDirt', outdoor: true, lamps: [] },
 );
 STAIRS.push(
   { id: 'stB1up', fl: 'B1', area: 'bridge', r: [16, -12, 3, 5], dir: 'N', rise: 3.2, to: 'stA1dn' },
@@ -3982,16 +3986,52 @@ FURNISH.s2study = r => {
   interactBox(r, tm(16), 2.45, wz + 0.2, 0.8, 0.6, 0.4, () => (STORY.flags.framesFell && !STORY.hasGot('k_sbase') ? '金庫を調べる' : null), () => STORY.event('studySafe'), { icon: 'eye', dist: 3.0 });
 };
 FURNISH.s2front = r => {
-  // scrawl along the top wall that stops short of the right-hand part
-  const wz = tm(-4) + WT + 0.012;
-  wallPic(r, tm(22), 1.6, wz, 0, tm(4), 1.6, drawGraffitiRun, { cw: 900, ch: 360, transparent: true });
-  examine(r, tm(22), 1.6, wz + 0.2, tm(4), 1.6, 0.3, () => '落書きを調べる', () => GAME.say([['', '壁一面に落書きがある。'], ['', '右のほうで、ぷっつりと途切れている。']]));
+  // 6.23 / ひろし編: blue ink scrawled over every wall, except one stretch of the top wall at the right (the wall
+  // with something behind it); a bookcase top left and a dark red rug
+  const wz = tm(-4) + WT + 0.012, ez = tm(2) - WT - 0.012, wx = tm(20) + WT + 0.012, ex = tm(27) - WT - 0.012, H = 2.6;
+  wallPic(r, tm(22), 1.75, wz, 0, tm(4), H, (g, w, h) => drawBlueScrawl(g, w, h, 5, 1), { cw: 1024, ch: 400, transparent: true });
+  wallPic(r, wx, 1.75, tm(-1.5), Math.PI / 2, tm(5), H, (g, w, h) => drawBlueScrawl(g, w, h, 7, 0), { cw: 1024, ch: 400, transparent: true });
+  wallPic(r, ex, 1.75, tm(-1), -Math.PI / 2, tm(6), H, (g, w, h) => drawBlueScrawl(g, w, h, 9, 0), { cw: 1024, ch: 400, transparent: true });
+  wallPic(r, tm(23.5), 1.75, ez, Math.PI, tm(7), H, (g, w, h) => drawBlueScrawl(g, w, h, 11, 0), { cw: 1024, ch: 400, transparent: true });
+  examine(r, tm(22), 1.6, wz + 0.2, tm(4), 1.6, 0.3, () => '落書きを調べる', () => GAME.say([['', '青いインクで、壁一面に落書きがしてある。'], ['', '右のほうだけ、ぷっつりと途切れている。']]));
+  addBookshelf(r, tm(20) + 1.0, tm(-4) + 0.3, 0, tm(1.1), 2.4);
+  paleRug(r, tm(22), tm(-0.6), tm(3.4), tm(3.4), 0x4a1612);
 };
 FURNISH.s2back = r => {
-  const dk = new Frame(r, tm(23.5), 0, tm(-12) + 0.6, 0); dk.box(1.6, 0.05, 0.75, MAT.wood, 0, 0.76, 0); for (const sx of [-1, 1]) for (const sz of [-1, 1]) dk.box(0.05, 0.74, 0.05, MAT.wood, sx * 0.75, 0.37, sz * 0.32); dk.collide(-0.8, 0.8, 0, 0.8, -0.38, 0.38);
-  shineAt(r, tm(23.5), 0.8, tm(-12) + 0.6, 'dice');
-  interactBox(r, tm(23.5), 0.95, tm(-12) + 0.6, 0.6, 0.3, 0.5, () => (STORY.hasGot('dice') ? null : '机の上を調べる'), () => GAME.take('dice', MAN.props.dice), { icon: 'hand' });
+  // 6.23 / ひろし編, the room behind the wall: a bookcase top left, the wardrobe top right (to hide in when it comes up
+  // from below, through the door you came in by), a dark red rug, and the desk against the left wall with the dice on it
+  addBookshelf(r, tm(20) + 1.0, tm(-12) + 0.3, 0, tm(1.1), 2.4);
   MAN.s2Closet = addTansu(r, tm(27) - 0.6, tm(-12) + 0.5, 0);
+  paleRug(r, tm(22.4), tm(-9.6), tm(3.2), tm(3.0), 0x4a1612);
+  const dx = tm(20) + 0.52, dz = cx(-8.6), dk = new Frame(r, dx, 0, dz, Math.PI / 2);
+  dk.box(1.5, 0.05, 0.72, MAT.wood, 0, 0.76, 0); for (const sx of [-1, 1]) for (const sz of [-1, 1]) dk.box(0.05, 0.74, 0.05, MAT.wood, sx * 0.7, 0.37, sz * 0.31); dk.collide(-0.75, 0.75, 0, 0.8, -0.36, 0.36);
+  shineAt(r, dx, 0.8, dz, 'dice');
+  interactBox(r, dx, 0.95, dz, 0.5, 0.3, 0.6, () => (STORY.hasGot('dice') ? null : '机の上を調べる'), () => GAME.take('dice', MAN.props.dice), { icon: 'hand' });
+};
+// the way out: dead trees either side of the mud, a few graves, three stone lanterns, the gate at the far end
+function deadTree(r, x, z, h, seed) {
+  const rnd = mulberry32(seed), bark = AOM.bark || (AOM.bark = std({ color: 0x241b14, roughness: 1 })), F = new Frame(r, x, 0, z, rnd() * TAU);
+  F.cyl(0.11, 0.2, h, bark, 0, h / 2, 0, 7); F.collide(-0.17, 0.17, 0, h, -0.17, 0.17);
+  for (let i = 0; i < 5; i++) { const y = h * (0.45 + i * 0.12), a = rnd() * TAU, L = 0.7 + rnd() * 1.1, tilt = 0.7 + rnd() * 0.5;
+    const B = new Frame(r, x, 0, z, a); B.cyl(0.025, 0.07, L, bark, Math.sin(tilt) * L / 2, y + Math.cos(tilt) * L / 2, 0, 5, 0, 0, -tilt);
+    B.cyl(0.012, 0.03, L * 0.55, bark, Math.sin(tilt) * L * 0.85, y + Math.cos(tilt) * L * 0.85 + 0.2, 0, 4, 0, 0, -tilt + 0.7); }
+}
+FURNISH.outpath = r => {
+  const grass = std({ color: 0x1f2a17, roughness: 1 }), stone = std({ color: 0x5e5d58, roughness: 0.95 });
+  for (const sx of [0, 1]) { const F = new Frame(r, sx ? tm(44.15) : tm(40.85), 0.008, tm(-23), 0), g = new THREE.PlaneGeometry(tm(1.7), tm(34)); g.rotateX(-Math.PI / 2); F.geo(g, grass, 0, 0, 0); }
+  for (let i = 0, z = -39; z < -7; i++, z += 2.3) { const left = i % 2 === 0; deadTree(r, left ? tm(40) + 0.55 + (i % 3) * 0.25 : tm(45) - 0.55 - (i % 3) * 0.25, tm(z), 3.4 + (i % 4) * 0.5, 31 + i); }
+  for (const [x, z] of [[40.6, -33], [44.4, -27], [40.5, -19], [44.5, -13], [44.4, -36]]) { const F = new Frame(r, tm(x), 0, tm(z), x < 42 ? Math.PI / 2 : -Math.PI / 2); F.box(0.55, 0.7, 0.14, stone, 0, 0.35, 0); F.cyl(0.275, 0.275, 0.14, stone, 0, 0.7, 0, 12, Math.PI / 2, 0, 0); F.collide(-0.3, 0.3, 0, 0.85, -0.1, 0.1); }
+  for (const [x, z] of [[40.7, -12], [44.3, -24], [40.7, -34]]) {
+    const F = new Frame(r, tm(x), 0, tm(z), 0); F.box(0.3, 0.6, 0.3, stone, 0, 0.3, 0); F.box(0.46, 0.34, 0.46, stone, 0, 0.77, 0); F.box(0.56, 0.08, 0.56, stone, 0, 0.98, 0); F.collide(-0.28, 0.28, 0, 1.0, -0.28, 0.28);
+    const glow = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.2, 0.47), emissiveMat(0xffb060, 2.2, 0xffd8a0)); glow.position.copy(F.pt(0, 0.78, 0)); r.group.add(glow);
+    r.addFixture({ local: F.pt(0, 0.8, 0), color: 0xffa860, intensity: 3.2, range: 9, kind: 'lantern', shadow: false });
+  }
+  for (const z of [-35, -26, -17, -9]) r.addFixture({ local: new THREE.Vector3(tm(42.5), 6, tm(z)), color: 0x8a9cc4, intensity: 6, range: 22, kind: 'moon', shadow: false });
+  // the gate
+  const G = new Frame(r, tm(42.5), 0, tm(-40) + 0.4, 0);
+  for (const sx of [-1, 1]) { G.box(0.6, 2.6, 0.6, stone, sx * 3.6, 1.3, 0); G.box(0.72, 0.12, 0.72, stone, sx * 3.6, 2.66, 0); G.collide(sx * 3.6 - 0.3, sx * 3.6 + 0.3, 0, 2.7, -0.3, 0.3); }
+  for (const sx of [-1, 1]) { for (let i = 0; i < 8; i++) G.cyl(0.022, 0.022, 2.1, MAT.black, sx * 3.25, 1.05, 0.32 + i * 0.17, 6); for (const y of [0.25, 2.05]) G.box(0.04, 0.05, 1.3, MAT.black, sx * 3.25, y, 0.92); }   // the two leaves, swung open
+  r.gateZ = tm(-37);
 };
 FURNISH.sbinf = r => {
   // four beds behind curtains; each curtain has a shape scrawled on it; one is drawn
@@ -4117,6 +4157,20 @@ function drawCurtain(g, w, h, shape) {
   if (shape === 'circle') g.arc(cxp, cyp, R, 0, TAU);
   else { const n = { tri: 3, square: 4, penta: 5 }[shape]; for (let i = 0; i <= n; i++) { const a = -Math.PI / 2 + i * TAU / n + (n === 4 ? Math.PI / 4 : 0); (i ? g.lineTo : g.moveTo).call(g, cxp + Math.cos(a) * R, cyp + Math.sin(a) * R); } }
   g.stroke();
+}
+// blue ink, scrawled: loops and zigzags in tangles along the wall (side 1: stops a little before the right-hand end)
+function drawBlueScrawl(g, w, h, seed, stopRight) {
+  g.clearRect(0, 0, w, h); const rnd = mulberry32(seed), x1 = stopRight ? w * 0.9 : w; g.lineCap = 'round'; g.lineJoin = 'round';
+  for (let i = 0; i < 170; i++) {
+    let x = rnd() * x1, y = h * 0.08 + rnd() * h * 0.8; const col = rnd() < 0.7 ? [52, 64, 196] : [92, 70, 190];
+    g.strokeStyle = `rgba(${col[0]},${col[1]},${col[2]},${0.45 + rnd() * 0.45})`; g.lineWidth = 2 + rnd() * 6; g.beginPath(); g.moveTo(x, y);
+    const n = 4 + (rnd() * 8 | 0), loop = rnd() < 0.5;
+    for (let k = 0; k < n; k++) {
+      if (loop) { const a = k * 1.7, rr = 10 + rnd() * 22; x += 9 + rnd() * 14; g.lineTo(Math.min(x1, x + Math.cos(a) * rr), y + Math.sin(a) * rr); }
+      else { x += 14 + rnd() * 26; y += (rnd() - 0.5) * 70; g.lineTo(Math.min(x1, x), Math.max(4, Math.min(h - 4, y))); }
+    }
+    g.stroke();
+  }
 }
 function drawGraffitiRun(g, w, h) {
   g.clearRect(0, 0, w, h); g.strokeStyle = 'rgba(40,20,20,.8)'; g.lineWidth = 7; g.lineCap = 'round';
@@ -4946,6 +5000,16 @@ const ONI = {
       this.m.head.add(hair); this.m.tkHair = hair; hair.traverse(o => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
     }
     if (this.m.tkHair) this.m.tkHair.visible = look === 'takeshi';
+    // Takuro turned into it: his red hair, tied back in a ponytail
+    if (look === 'takuro' && !this.m.tkrHair) {
+      const hm = new THREE.MeshStandardMaterial({ color: 0xc8482c, roughness: 0.6 }), hair = new THREE.Group();
+      const cap = new THREE.Mesh(new THREE.SphereGeometry(0.5, 22, 14, 0, Math.PI * 2, 0, Math.PI * 0.52), hm); cap.position.set(0, 0.6, -0.04); hair.add(cap);
+      const tie = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 8), hm); tie.position.set(0, 0.62, -0.5); hair.add(tie);
+      const tail = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.75, 10), hm); tail.position.set(0, 0.3, -0.58); tail.rotation.x = Math.PI + 0.35; hair.add(tail);
+      for (let i = 0; i < 5; i++) { const a = (i / 4 - 0.5) * 1.6, f = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.26, 7), hm); f.position.set(Math.sin(a) * 0.3, 0.86, 0.22 + Math.cos(a) * 0.05); f.rotation.set(0.9, 0, -a * 0.5); hair.add(f); }
+      this.m.head.add(hair); this.m.tkrHair = hair; hair.traverse(o => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
+    }
+    if (this.m.tkrHair) this.m.tkrHair.visible = look === 'takuro';
     // Fuwatty: not its body at all, a big pale slab like hanpen with a grin, on two stubby legs
     if (look === 'fuwatty' && !this.m.fw) this.m.fw = makeFuwatty(this.m.root);
     if (this.m.fw) this.m.fw.visible = look === 'fuwatty';
@@ -5397,7 +5461,7 @@ MUSIC_DEFS.aochase = {
    ========================================================================= */
 const NET_CAP = 4;
 const NET_SHIRTS = [0x4f7fd8, 0xd84f4f, 0x4fae5c, 0xd8b04f, 0x9b5fd8, 0x4fc4c8, 0xe07a3a, 0xc8c8c8];
-const NET_FLOOR = { F1: '本館1F', F2: '本館2F', F3: '本館3F', B1: '本館地下', A1: '別館1F', A2: '別館2F', A3: '別館3F', AB: '別館地下', K: '回廊', S1: '第2別館1F', S2: '第2別館2F', SB: '第2別館地下' };
+const NET_FLOOR = { F1: '本館1F', F2: '本館2F', F3: '本館3F', B1: '本館地下', A1: '別館1F', A2: '別館2F', A3: '別館3F', AB: '別館地下', K: '回廊', S1: '第2別館1F', S2: '第2別館2F', SB: '第2別館地下', Y: '外' };
 const netClean = s => String(s == null ? '' : s).replace(/[\u0000-\u001f\u007f-\u009f​-‏‪-‮⁠-⁯﻿]/g, '').trim();
 const nr2 = v => Math.round(v * 100) / 100, nr3 = v => Math.round(v * 1000) / 1000;
 const netNum = (a, n) => Array.isArray(a) && a.length === n && a.every(Number.isFinite);
@@ -6727,7 +6791,7 @@ const UI = {
     ['hud', 'touch', 'over', 'end', 'pause', 'loading', 'settings', 'how', 'msg', 'items', 'files', 'specBar', 'online'].forEach(i => UI.show(i, false)); UI._files = null;
     UI.show('title'); NET.render();
     $('bCont').disabled = !UI.anySave();
-    MUSIC.stop(1); if (GAME.amb) { GAME.amb.stop(1); GAME.amb = null; }
+    MUSIC.stop(1); if (GAME.amb) { GAME.amb.stop(1); GAME.amb = null; } if (globalThis.rainOff) globalThis.rainOff();
     GAME.room = null; ONI.reset(); CAST.hideAll(); UI._msg = null; UI._choice = null; $('msgChs').innerHTML = ''; CHAIRS.held = null; PUSH.obj = null; VIEW.chair.visible = false; GAME.modal = null; GAME.cine = null; GAME.busy = 0; GAME.lighterOn = false;
     $('fxBlack').style.transition = 'opacity .6s'; $('fxBlack').style.opacity = 0;
   },
@@ -6740,6 +6804,7 @@ const UI = {
     $('oCont').disabled = !UI.anySave(); NET.overUI();
     setTimeout(() => { $('overBtns').style.opacity = 1; $('overBtns').style.pointerEvents = 'auto'; $('fxBlack').style.transition = 'opacity .6s'; $('fxBlack').style.opacity = 0; }, 1400);
     if (GAME.amb) { GAME.amb.stop(1); GAME.amb = null; }
+    if (globalThis.rainOff) globalThis.rainOff();
   },
   settings(back) {
     UI.show('settings');
@@ -6916,7 +6981,9 @@ GAME.ending = function () {
   setTimeout(() => {
     UI.show('hud', false); UI.show('touch', false); UI.show('end');
     if (GAME.amb) { GAME.amb.stop(1); GAME.amb = null; }
-    const lines = ['階段を上りきると、外の冷たい空気が流れこんできた。', 'ひろしとたくろうは、ふり返らずに走った。', '洋館は、夜の闇の中に黙って立っていた。', '― 脱出 ―'];
+    const lines = STORY.flags.takuroOni ? ['門をくぐり抜けると、追ってくる足音がとだえた。', 'ひろしは雨の中を、ふり返らずに走りつづけた。', '洋館は、夜の闇の中に黙って立っていた。', '― 脱出 ―']
+      : ['門をくぐり抜けると、外の冷たい空気が流れこんできた。', 'ひろしとたくろうは、ふり返らずに走った。', '洋館は、夜の闇の中に黙って立っていた。', '― 脱出 ―'];
+    if (globalThis.rainOff) globalThis.rainOff();
     const box = $('endText'); box.innerHTML = '';
     lines.forEach((l, i) => { const p = document.createElement('div'); p.className = 'gl'; p.textContent = l; box.appendChild(p); setTimeout(() => p.classList.add('on'), 600 + i * 1900); });
     $('endStats').innerHTML = `プレイ時間 ${Math.floor(play / 60)}分${String(Math.floor(play % 60)).padStart(2, '0')}秒　/　つかまった回数 ${caught}回`;
@@ -7042,7 +7109,7 @@ window.__AO = { NET, OCHAT, glassPaint, drainTub, GAME, STORY, ONI, DIRECTOR, MA
    The story after the main building (6.23): the basement, the first annex, the walk outside, the second
    annex and the way out. Items other than keys are used from the item screen, on what you were facing.
    ========================================================================= */
-CHASES.push('mikaOni', 'hidChase', 'sproutChase', 'tkOni', 'backOni', 'fireOni', 'mikaCl1', 'mikaCl2', 'fuwatty', 's2Rise', 'codeOni');
+CHASES.push('mikaOni', 'hidChase', 'sproutChase', 'tkOni', 'backOni', 'fireOni', 'mikaCl1', 'mikaCl2', 'fuwatty', 's2Rise', 'codeOni', 'takuroOni');
 const say2 = (...l) => GAME.say(l.map(x => (typeof x === 'string' ? ['', x] : x)));
 const near2 = (o, d) => Math.hypot(PLAYER.pos.x - o.x, PLAYER.pos.z - o.z) < d;
 const canvasImg = (w, h, draw) => { const c = newCanvas(w, h); draw(c.getContext('2d'), w, h); return `<img class="vimg" src="${c.toDataURL()}" alt="">`; };
@@ -7315,8 +7382,74 @@ Object.assign(EVENTS, {
     });
   },
   pieceFrame() { const n = STORY.flags.piecesN || 0; say2(n ? `額のくぼみに、青いピースが${n}つはまっている。` : '額に、３つのくぼみがある。'); },
-  escape() { if (!STORY.flags.piecesSet) return; GAME.ending(); },
+  // Takuro, behind you at the frame: he is not himself; then he is it
+  takuroTurn() {
+    const f = STORY.flags; if (f.takuroOni || !PLAYER.alive) return;
+    if (!CAST.list.takuro || !CAST.list.takuro.m.visible) FOLLOW.place();
+    const c = CAST.get('takuro'), m = c.m;
+    f.takuroOni = true; FOLLOW.id = null; STORY.busy = true; PLAYER.frozen = true; c.moving = false; STORY.save();
+    // he stands a little way back down the corridor
+    const back = pushAt(PLAYER.pos, PLAYER.yaw, -3.4); m.position.set(back.x, PLAYER.pos.y, back.z); WORLD.collide(m.position, 0.3, m.position.y, 1.6);
+    m.rotation.y = yawTo(m.position, PLAYER.pos); c.base = m.position.clone(); c.dead = false;
+    const t0 = GAME.time; animate(() => { if (!STORY.busy || GAME.time - t0 > 8) return false; lookAtPoint(tmpV.set(m.position.x, m.position.y + 1.3, m.position.z), 0.07); return true; });
+    GAME.later(0.5, () => GAME.say([['たくろう', '……ひろし。'], ['ひろし', 'たくろう？　どうしたの、顔色が……'], ['たくろう', 'う……ぐ……あ、ああああ……！']], () => {
+      c.shiver = 3; SFX.heartbeat && SFX.heartbeat(1);
+      GAME.later(1.3, () => {
+        POST.flash = 0.9; POST.shake = 0.7; SFX.oniSpot();
+        const p = m.position.clone(); CAST.hide('takuro'); c.shiver = 0;
+        ONI.spawn(p.x, p.y, p.z, yawTo(p, PLAYER.pos), 'appear'); ONI.setLook('takuro'); ONI.appearFor = 1.6;
+        STORY.save();
+        GAME.later(0.3, () => GAME.say([['ひろし', 'た……たくろうが、青鬼に……！']], () => { PLAYER.frozen = false; STORY.busy = false; }));
+      });
+    }));
+  },
+  // up the last stairs: out into the rain, onto the path through the wood
+  escape() { if (!STORY.flags.piecesSet) return; EVENTS.toOutside(); },
+  toOutside() {
+    if (GAME.busy) return;
+    const r = MAN.areas.outpath; GAME.busy = 1; ONI.despawn(true); MUSIC.stop(1); SFX.door(PLAYER.pos.clone().setY(PLAYER.pos.y + 1.5), 1.0);
+    GAME.fade(0.7, () => {
+      PLAYER.onChair = null; PLAYER.pos.set(cx(42), FLOORS.Y, cx(-10)); PLAYER.camY = FLOORS.Y + 1.58; PLAYER.yaw = 0; PLAYER.pitch = 0; PLAYER.vel.set(0, 0, 0);
+      GAME.room = r; GAME.onEnterRoom(r);
+    }, () => { GAME.busy = 0; STORY.save(); });
+  },
+  // a moment to take it in, then it comes after you from behind: run to the gate
+  finalRun() {
+    const f = STORY.flags, r = MAN.areas.outpath; if (f.escaped || EVENTS._run) return;
+    EVENTS._run = true;
+    GAME.later(0.9, () => { if (GAME.room === r && PLAYER.alive) say2('……外だ！', '雨の中、森の道がまっすぐのびている。'); });
+    GAME.later(2.4, () => { if (GAME.room === r && PLAYER.alive && !ONI.on) SFX.oniStep(new THREE.Vector3(cx(42), FLOORS.Y, cx(-7)), 1); });
+    GAME.later(3.0, () => {
+      EVENTS._run = false; if (GAME.room !== r || !PLAYER.alive || ONI.on || f.escaped) return;
+      const x = cx(42), z = cx(-7); ONI.spawn(x, FLOORS.Y, z, Math.PI, 'appear'); ONI.setLook(f.takuroOni ? 'takuro' : null); ONI.appearFor = 0.5;
+      GAME.later(0.15, () => { if (ONI.on) { SFX.oniSpot(); POST.shake = 0.35; } });
+      GAME.later(0.7, () => UI.hint('うしろから追ってくる！　門まで走れ！', 2200));
+    });
+  },
 });
+
+/* ---------- rain, outside: streaks falling round you, and its hiss ---------- */
+const RAIN = {
+  mesh: null, snd: null, ofs: 0,
+  set(on) {
+    if (on && !this.mesh) {
+      const n = 1100, pos = new Float32Array(n * 12);
+      for (let i = 0; i < n; i++) { const x = (Math.random() - 0.5) * 26, y = Math.random() * 9, z = (Math.random() - 0.5) * 26;
+        for (const k of [0, 9]) pos.set([x, y + k, z, x + 0.04, y + k - 0.5, z + 0.02], i * 12 + (k ? 6 : 0)); }
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      this.mesh = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: 0x9aa8c0, transparent: true, opacity: 0.4, depthWrite: false })); this.mesh.frustumCulled = false; scene.add(this.mesh);
+    }
+    if (this.mesh) this.mesh.visible = on;
+    if (on && !this.snd && AU.ok) { this.snd = LOOPS.rain(); this.snd.setVol(0.9, 1.2); }
+    if (!on && this.snd) { this.snd.stop(1.2); this.snd = null; }
+  },
+  tick(dt) {
+    if (!this.mesh || !this.mesh.visible) return;
+    this.ofs = (this.ofs + dt * 16) % 9; this.mesh.position.set(PLAYER.pos.x, PLAYER.pos.y - 1 - this.ofs, PLAYER.pos.z);
+  },
+};
+
+globalThis.rainOff = () => RAIN.set(false);   // (for the title, game over and the ending, in the main file)
 
 /* ---------- the story's own appearances (6.23 / ひろし編) ---------- */
 // it opens a door and comes in after you
@@ -7369,20 +7502,21 @@ Object.assign(EVENTS, {
       setTimeout(() => { const t2 = performance.now(); animate(() => { const k = Math.min(1, (performance.now() - t2) / 500); h.doors.forEach((d, i) => { d.rotation.y = base[i] + (i ? 1 : -1) * 1.45 * (1 - k); }); return k < 1; }); }, 2600);
     }, 950);
   },
+  // the room behind the graffiti (6.23 / ひろし編): a little while after you come in, footsteps come up from below and it
+  // comes in through the door you used. Hidden in the wardrobe, you see it look round the room and go; out in the room, it
+  // has you
   s2Rise() {
-    const f = STORY.flags, r = MAN.areas.s2back; if (f.s2Rise) return;
+    const f = STORY.flags, r = MAN.areas.s2back, d = MAN.doors.s2back_front; if (f.s2Rise) return;
     f.s2Rise = true; STORY.save();
-    const hid = () => PLAYER.hidden && PLAYER.hidden.room === r;
-    GAME.later(2.4, () => { if (GAME.room !== r && !hid()) return; SFX.heartbeat && SFX.heartbeat(0.8); SFX.push(PLAYER.pos.clone()); POST.shake = 0.15; });
-    GAME.later(5.0, () => {
-      if (!PLAYER.alive || ONI.on || (GAME.room !== r && !hid())) { f.s2RiseDone = true; STORY.save(); return; }
-      const x = cx(23), z = cx(-9);
-      ONI.spawn(x, FLOORS.S2, z, yawTo({ x, z }, PLAYER.pos), 'script');
-      ONI.script = { i: 0, steps: [{ t: 'rise', d: 1.8 }, { t: 'call', fn: () => {
-        // you hid in time: it looks round the room, goes to the desk, and is gone
-        if (hid()) { ONI.script = { i: 0, steps: [{ t: 'look', d: 3.0 }, { t: 'go', p: new THREE.Vector3(cx(23.5), FLOORS.S2, cx(-10.6)), sp: 1.6 }, { t: 'look', d: 1.6 }, { t: 'gone', fn: () => { f.s2RiseDone = true; STORY.save(); } }] }; return; }
-        ONI.state = 'appear'; ONI.wait = 0; ONI.appearFor = 0.4; SFX.oniSpot(); POST.shake = 0.4;
-      } }] };
+    const here = () => PLAYER.alive && (GAME.room === r || (PLAYER.hidden && PLAYER.hidden.room === r));
+    [[1.8, 0.4], [2.6, 0.55], [3.4, 0.7], [4.2, 0.85], [4.9, 1]].forEach(([t, v]) => GAME.later(t, () => { if (here() && !ONI.on) SFX.oniStep(d.front, v); }));
+    GAME.later(2.6, () => { if (here() && !ONI.on) { UI.hint('……下から、足音が近づいてくる', 2400); SFX.heartbeat && SFX.heartbeat(0.7); } });
+    GAME.later(5.8, () => {
+      if (!here() || ONI.on) { f.s2Rise = false; STORY.save(); return; }   // (gone before it came: it comes the next time)
+      ONI.enterVia(d, 0, 'script');
+      const P = (x, z) => new THREE.Vector3(cx(x), FLOORS.S2, cx(z));
+      ONI.script = { i: 0, breakOnSight: true, steps: [{ t: 'go', p: P(23.6, -9.2), sp: 1.7 }, { t: 'look', d: 2.6 }, { t: 'go', p: P(25.2, -10.4), sp: 1.4 }, { t: 'face', yaw: Math.PI, d: 1.6 }, { t: 'look', d: 1.4 },
+        { t: 'go', p: d.front.clone(), sp: 1.8 }, { t: 'gone', fn: () => { animateDoor(d, 1.1, 650); SFX.door(d.center, 0.9); setTimeout(() => SFX.doorShut(d.center), 520); f.s2RiseDone = true; STORY.save(); } }] };
     });
   },
   codeOni() {
@@ -7526,11 +7660,14 @@ STORY.useItem2 = function (id, t) {
   if (id === 'ladder' && tag === 'hole') { this.use('ladder'); f.ladderHung = true; MAN.ropeS1.visible = true; MAN.ropeDark.visible = true; say2('縄ばしごを穴にかけた。'); this.save(); return true; }
   if (id === 'stick' && tag === 'jailBars' && !this.hasGot('k_study')) { this.use('stick'); GAME.take('k_study', MAN.props.k_study); return true; }
   if (id === 'dice' && tag === 'diceWall' && !f.diceUsed) { this.use('dice'); f.diceUsed = true; MAN.diceWall.redraw((g, w, h) => drawDiceWall(g, w, h, f.code.dice)); say2('サイコロの絵に、サイコロを当てた。', '黒丸が、１つずつ白く変わった。'); this.save(); return true; }
+  // one piece at a time; at the first, Takuro turns (the rest go in while it is after you)
   if (/^piece[123]$/.test(id) && tag === 'pieceFrame' && !f.piecesSet) {
-    const ps = this.inv.filter(x => /^piece[123]$/.test(x)); ps.forEach(x => this.use(x)); f.piecesN = (f.piecesN || 0) + ps.length;
+    this.use(id); f.piecesN = (f.piecesN || 0) + 1;
     MAN.pieceFrame.redraw((g, w, h) => drawPieceFrame(g, w, h, f.piecesN)); SFX.unlock(PLAYER.pos.clone());
-    if (f.piecesN >= 3) { f.piecesSet = true; say2('青いピースを、額にはめた。', 'ガチャッ', '奥の扉の鍵が開いた。'); } else say2('青いピースを、額にはめた。');
-    this.save(); return true;
+    if (f.piecesN >= 3) { f.piecesSet = true; say2('青いピースを、額にはめた。', 'ガチャッ', '奥の扉の鍵が開いた。'); } else say2('青いピースを、額にはめた。', `あと${3 - f.piecesN}つ。`);
+    this.save();
+    if (f.takuroWith2 && !f.takuroOni && f.piecesN < 3) GAME.later(0.4, () => EVENTS.takuroTurn());
+    return true;
   }
   return false;
 };
@@ -7564,7 +7701,7 @@ STORY.doorHook = function (d) {
   if (d.kind === 'hidden2' && !f[df.reveal]) {
     if (d.id === 'corBAB_hid') return { prompt: f.abShelf ? '切れ目を調べる' : null, use: () => { f.abHidDoor = true; showHiddenDoor(d, true); SFX.push(d.center); say2('壁を押すと、隠し扉が開いた。'); this.save(); } };
     if (d.id === 'br_cloister') return { prompt: f.shadowSeen ? '影がさしている壁を調べる' : null, use: () => say2('人形の影が、この壁をさしている。') };
-    if (d.id === 's2front_back') return { prompt: '壁を調べる', use: () => say2('ここだけ、落書きがない。') };
+    if (d.id === 's2front_back') return { prompt: '壁を調べる', use: () => say2('壁に違和感を感じる……', 'ここだけ、青いインクの落書きがない。') };
     return { prompt: null, use: () => {} };
   }
   if (d.kind === 'code' && !f.codeOpen) return { prompt: '扉を調べる', use: () => { SFX.locked(d.center); say2('扉に、４色の棒のような模様が描かれている。', '鍵がかかっている。横に装置がある。'); } };
@@ -7597,6 +7734,7 @@ DIRECTOR.quiet = function (r) {
   if ((r.id === 'back' && STORY.hasGot('k_annex') && !f.backOniDone) || (r.id === 'a2fire' && !f.fireOniDone && !f.fireLit)) return true;
   if ((r.id === 's1bl' && !f.mikaCl1Done) || (r.id === 'back' && f.lit_bjCandle && !f.mikaCl2Done) || (r.id === 's2back' && !f.s2RiseDone) || (r.id === 's2study' && f.studyScrews && !f.fuwattyDone)) return true;
   if ((r.id === 'abcorC' || r.id === 'abfront') && f.codeOpen && !f.codeOniDone) return true;
+  if (r.id === 'outpath' || (r.fl === 'SB' && f.takuroOni)) return true;
   return (r.id === 'big' && f.mikaB1 && !f.mikaOniDone) || r.id === 'a1left' || r.id === 'abback' || ((r.id === 'abhidA' || r.id === 'abhidB') && !f.hidChaseDone) || (r.id === 's2tl' && !f.sproutChaseDone) || r.id === 'sboni' || r.id === 'cloister';
 };
 
@@ -7639,6 +7777,10 @@ ROOM_HOOKS.push((r, via, quiet) => {
     const x = cx(5.5), z = cx(-10.5);
     GAME.later(0.8, () => { ONI.spawn(x, FLOORS.S2, z, yawTo({ x, z }, PLAYER.pos), 'script'); ONI.script = { i: 0, steps: [{ t: 'rise', d: 1.8 }, { t: 'call', fn: () => { ONI.state = 'appear'; ONI.wait = 0; ONI.appearFor = 0.4; SFX.oniSpot(); POST.shake = 0.4; } }] }; });
   }
+  // outside: rain over the walk to the second annex and over the way out; the last run
+  RAIN.set(!!r.def.outdoor);
+  if (r.id === 'outpath' && !f.escaped) EVENTS.finalRun();
+  if (f.takuroOni && r.fl === 'SB') CAST.hide('takuro');
   // the room of them, the first time: a narrow way past the bars
   if (r.id === 'sboni' && !f.oniRoom1) MAN.oniCrowd.forEach(m => (m.root.visible = true));
   if (r.id === 'sboni' && f.oniRoom1 && !f.oniRoom2) { f.oniRoom2 = true; MAN.oniCrowd.forEach(m => (m.root.visible = false)); STORY.save(); }
@@ -7683,6 +7825,9 @@ TICK_HOOKS.push(dt => {
       h.m.visible = true; f.a1Fell = true; dropTo('abstair', cx(13), cx(12), Math.PI, f.a1FellOnce ? null : '床が抜けて、下に落ちてしまった。'); f.a1FellOnce = true;
     }
   }
+  RAIN.tick(dt);
+  // the gate at the end of the path: out
+  if (r.id === 'outpath' && !f.escaped && !GAME.busy && P.z < r.gateZ) { f.escaped = true; STORY.save(); GAME.ending(); }
   // the hole in the room top left upstairs in the second annex
   if (r.id === 's2tl' && !GAME.busy && !GAME.modal) { const h = MAN.s2Hole; if (Math.hypot(P.x - h.x, P.z - h.z) < 0.6) { const L = MAN.areas.s1tl.landing; dropTo('s1tl', L.x, L.z, Math.PI, f.s2FellOnce ? null : '穴から、下の階に落ちた。'); f.s2FellOnce = true; } }
   // the crowd behind the bars: as you get to the end of the narrow way they all turn to you
@@ -7754,7 +7899,7 @@ STATE_HOOKS.push(f => {
   if (f.framesFell) framesFall(false);
   if (f.oniRoom1) f.oniRoom2 = true;
   if (f.piecesN) MAN.pieceFrame.redraw((g, w, h) => drawPieceFrame(g, w, h, f.piecesN));
-  if (f.takuroWith2) FOLLOW.id = 'takuro';
+  if (f.takuroWith2 && !f.takuroOni) FOLLOW.id = 'takuro';
   if (f.mikaOni) f.mikaOniDone = true;
   if (f.sproutChase) f.sproutChaseDone = true;
 });

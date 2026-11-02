@@ -3,7 +3,7 @@
    The story after the main building (6.23): the basement, the first annex, the walk outside, the second
    annex and the way out. Items other than keys are used from the item screen, on what you were facing.
    ========================================================================= */
-CHASES.push('mikaOni', 'hidChase', 'sproutChase', 'tkOni', 'backOni', 'fireOni', 'mikaCl1', 'mikaCl2', 'fuwatty', 's2Rise', 'codeOni');
+CHASES.push('mikaOni', 'hidChase', 'sproutChase', 'tkOni', 'backOni', 'fireOni', 'mikaCl1', 'mikaCl2', 'fuwatty', 's2Rise', 'codeOni', 'takuroOni');
 const say2 = (...l) => GAME.say(l.map(x => (typeof x === 'string' ? ['', x] : x)));
 const near2 = (o, d) => Math.hypot(PLAYER.pos.x - o.x, PLAYER.pos.z - o.z) < d;
 const canvasImg = (w, h, draw) => { const c = newCanvas(w, h); draw(c.getContext('2d'), w, h); return `<img class="vimg" src="${c.toDataURL()}" alt="">`; };
@@ -276,8 +276,74 @@ Object.assign(EVENTS, {
     });
   },
   pieceFrame() { const n = STORY.flags.piecesN || 0; say2(n ? `額のくぼみに、青いピースが${n}つはまっている。` : '額に、３つのくぼみがある。'); },
-  escape() { if (!STORY.flags.piecesSet) return; GAME.ending(); },
+  // Takuro, behind you at the frame: he is not himself; then he is it
+  takuroTurn() {
+    const f = STORY.flags; if (f.takuroOni || !PLAYER.alive) return;
+    if (!CAST.list.takuro || !CAST.list.takuro.m.visible) FOLLOW.place();
+    const c = CAST.get('takuro'), m = c.m;
+    f.takuroOni = true; FOLLOW.id = null; STORY.busy = true; PLAYER.frozen = true; c.moving = false; STORY.save();
+    // he stands a little way back down the corridor
+    const back = pushAt(PLAYER.pos, PLAYER.yaw, -3.4); m.position.set(back.x, PLAYER.pos.y, back.z); WORLD.collide(m.position, 0.3, m.position.y, 1.6);
+    m.rotation.y = yawTo(m.position, PLAYER.pos); c.base = m.position.clone(); c.dead = false;
+    const t0 = GAME.time; animate(() => { if (!STORY.busy || GAME.time - t0 > 8) return false; lookAtPoint(tmpV.set(m.position.x, m.position.y + 1.3, m.position.z), 0.07); return true; });
+    GAME.later(0.5, () => GAME.say([['たくろう', '……ひろし。'], ['ひろし', 'たくろう？　どうしたの、顔色が……'], ['たくろう', 'う……ぐ……あ、ああああ……！']], () => {
+      c.shiver = 3; SFX.heartbeat && SFX.heartbeat(1);
+      GAME.later(1.3, () => {
+        POST.flash = 0.9; POST.shake = 0.7; SFX.oniSpot();
+        const p = m.position.clone(); CAST.hide('takuro'); c.shiver = 0;
+        ONI.spawn(p.x, p.y, p.z, yawTo(p, PLAYER.pos), 'appear'); ONI.setLook('takuro'); ONI.appearFor = 1.6;
+        STORY.save();
+        GAME.later(0.3, () => GAME.say([['ひろし', 'た……たくろうが、青鬼に……！']], () => { PLAYER.frozen = false; STORY.busy = false; }));
+      });
+    }));
+  },
+  // up the last stairs: out into the rain, onto the path through the wood
+  escape() { if (!STORY.flags.piecesSet) return; EVENTS.toOutside(); },
+  toOutside() {
+    if (GAME.busy) return;
+    const r = MAN.areas.outpath; GAME.busy = 1; ONI.despawn(true); MUSIC.stop(1); SFX.door(PLAYER.pos.clone().setY(PLAYER.pos.y + 1.5), 1.0);
+    GAME.fade(0.7, () => {
+      PLAYER.onChair = null; PLAYER.pos.set(cx(42), FLOORS.Y, cx(-10)); PLAYER.camY = FLOORS.Y + 1.58; PLAYER.yaw = 0; PLAYER.pitch = 0; PLAYER.vel.set(0, 0, 0);
+      GAME.room = r; GAME.onEnterRoom(r);
+    }, () => { GAME.busy = 0; STORY.save(); });
+  },
+  // a moment to take it in, then it comes after you from behind: run to the gate
+  finalRun() {
+    const f = STORY.flags, r = MAN.areas.outpath; if (f.escaped || EVENTS._run) return;
+    EVENTS._run = true;
+    GAME.later(0.9, () => { if (GAME.room === r && PLAYER.alive) say2('……外だ！', '雨の中、森の道がまっすぐのびている。'); });
+    GAME.later(2.4, () => { if (GAME.room === r && PLAYER.alive && !ONI.on) SFX.oniStep(new THREE.Vector3(cx(42), FLOORS.Y, cx(-7)), 1); });
+    GAME.later(3.0, () => {
+      EVENTS._run = false; if (GAME.room !== r || !PLAYER.alive || ONI.on || f.escaped) return;
+      const x = cx(42), z = cx(-7); ONI.spawn(x, FLOORS.Y, z, Math.PI, 'appear'); ONI.setLook(f.takuroOni ? 'takuro' : null); ONI.appearFor = 0.5;
+      GAME.later(0.15, () => { if (ONI.on) { SFX.oniSpot(); POST.shake = 0.35; } });
+      GAME.later(0.7, () => UI.hint('うしろから追ってくる！　門まで走れ！', 2200));
+    });
+  },
 });
+
+/* ---------- rain, outside: streaks falling round you, and its hiss ---------- */
+const RAIN = {
+  mesh: null, snd: null, ofs: 0,
+  set(on) {
+    if (on && !this.mesh) {
+      const n = 1100, pos = new Float32Array(n * 12);
+      for (let i = 0; i < n; i++) { const x = (Math.random() - 0.5) * 26, y = Math.random() * 9, z = (Math.random() - 0.5) * 26;
+        for (const k of [0, 9]) pos.set([x, y + k, z, x + 0.04, y + k - 0.5, z + 0.02], i * 12 + (k ? 6 : 0)); }
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      this.mesh = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: 0x9aa8c0, transparent: true, opacity: 0.4, depthWrite: false })); this.mesh.frustumCulled = false; scene.add(this.mesh);
+    }
+    if (this.mesh) this.mesh.visible = on;
+    if (on && !this.snd && AU.ok) { this.snd = LOOPS.rain(); this.snd.setVol(0.9, 1.2); }
+    if (!on && this.snd) { this.snd.stop(1.2); this.snd = null; }
+  },
+  tick(dt) {
+    if (!this.mesh || !this.mesh.visible) return;
+    this.ofs = (this.ofs + dt * 16) % 9; this.mesh.position.set(PLAYER.pos.x, PLAYER.pos.y - 1 - this.ofs, PLAYER.pos.z);
+  },
+};
+
+globalThis.rainOff = () => RAIN.set(false);   // (for the title, game over and the ending, in the main file)
 
 /* ---------- the story's own appearances (6.23 / ひろし編) ---------- */
 // it opens a door and comes in after you
@@ -330,20 +396,21 @@ Object.assign(EVENTS, {
       setTimeout(() => { const t2 = performance.now(); animate(() => { const k = Math.min(1, (performance.now() - t2) / 500); h.doors.forEach((d, i) => { d.rotation.y = base[i] + (i ? 1 : -1) * 1.45 * (1 - k); }); return k < 1; }); }, 2600);
     }, 950);
   },
+  // the room behind the graffiti (6.23 / ひろし編): a little while after you come in, footsteps come up from below and it
+  // comes in through the door you used. Hidden in the wardrobe, you see it look round the room and go; out in the room, it
+  // has you
   s2Rise() {
-    const f = STORY.flags, r = MAN.areas.s2back; if (f.s2Rise) return;
+    const f = STORY.flags, r = MAN.areas.s2back, d = MAN.doors.s2back_front; if (f.s2Rise) return;
     f.s2Rise = true; STORY.save();
-    const hid = () => PLAYER.hidden && PLAYER.hidden.room === r;
-    GAME.later(2.4, () => { if (GAME.room !== r && !hid()) return; SFX.heartbeat && SFX.heartbeat(0.8); SFX.push(PLAYER.pos.clone()); POST.shake = 0.15; });
-    GAME.later(5.0, () => {
-      if (!PLAYER.alive || ONI.on || (GAME.room !== r && !hid())) { f.s2RiseDone = true; STORY.save(); return; }
-      const x = cx(23), z = cx(-9);
-      ONI.spawn(x, FLOORS.S2, z, yawTo({ x, z }, PLAYER.pos), 'script');
-      ONI.script = { i: 0, steps: [{ t: 'rise', d: 1.8 }, { t: 'call', fn: () => {
-        // you hid in time: it looks round the room, goes to the desk, and is gone
-        if (hid()) { ONI.script = { i: 0, steps: [{ t: 'look', d: 3.0 }, { t: 'go', p: new THREE.Vector3(cx(23.5), FLOORS.S2, cx(-10.6)), sp: 1.6 }, { t: 'look', d: 1.6 }, { t: 'gone', fn: () => { f.s2RiseDone = true; STORY.save(); } }] }; return; }
-        ONI.state = 'appear'; ONI.wait = 0; ONI.appearFor = 0.4; SFX.oniSpot(); POST.shake = 0.4;
-      } }] };
+    const here = () => PLAYER.alive && (GAME.room === r || (PLAYER.hidden && PLAYER.hidden.room === r));
+    [[1.8, 0.4], [2.6, 0.55], [3.4, 0.7], [4.2, 0.85], [4.9, 1]].forEach(([t, v]) => GAME.later(t, () => { if (here() && !ONI.on) SFX.oniStep(d.front, v); }));
+    GAME.later(2.6, () => { if (here() && !ONI.on) { UI.hint('……下から、足音が近づいてくる', 2400); SFX.heartbeat && SFX.heartbeat(0.7); } });
+    GAME.later(5.8, () => {
+      if (!here() || ONI.on) { f.s2Rise = false; STORY.save(); return; }   // (gone before it came: it comes the next time)
+      ONI.enterVia(d, 0, 'script');
+      const P = (x, z) => new THREE.Vector3(cx(x), FLOORS.S2, cx(z));
+      ONI.script = { i: 0, breakOnSight: true, steps: [{ t: 'go', p: P(23.6, -9.2), sp: 1.7 }, { t: 'look', d: 2.6 }, { t: 'go', p: P(25.2, -10.4), sp: 1.4 }, { t: 'face', yaw: Math.PI, d: 1.6 }, { t: 'look', d: 1.4 },
+        { t: 'go', p: d.front.clone(), sp: 1.8 }, { t: 'gone', fn: () => { animateDoor(d, 1.1, 650); SFX.door(d.center, 0.9); setTimeout(() => SFX.doorShut(d.center), 520); f.s2RiseDone = true; STORY.save(); } }] };
     });
   },
   codeOni() {
@@ -487,11 +554,14 @@ STORY.useItem2 = function (id, t) {
   if (id === 'ladder' && tag === 'hole') { this.use('ladder'); f.ladderHung = true; MAN.ropeS1.visible = true; MAN.ropeDark.visible = true; say2('縄ばしごを穴にかけた。'); this.save(); return true; }
   if (id === 'stick' && tag === 'jailBars' && !this.hasGot('k_study')) { this.use('stick'); GAME.take('k_study', MAN.props.k_study); return true; }
   if (id === 'dice' && tag === 'diceWall' && !f.diceUsed) { this.use('dice'); f.diceUsed = true; MAN.diceWall.redraw((g, w, h) => drawDiceWall(g, w, h, f.code.dice)); say2('サイコロの絵に、サイコロを当てた。', '黒丸が、１つずつ白く変わった。'); this.save(); return true; }
+  // one piece at a time; at the first, Takuro turns (the rest go in while it is after you)
   if (/^piece[123]$/.test(id) && tag === 'pieceFrame' && !f.piecesSet) {
-    const ps = this.inv.filter(x => /^piece[123]$/.test(x)); ps.forEach(x => this.use(x)); f.piecesN = (f.piecesN || 0) + ps.length;
+    this.use(id); f.piecesN = (f.piecesN || 0) + 1;
     MAN.pieceFrame.redraw((g, w, h) => drawPieceFrame(g, w, h, f.piecesN)); SFX.unlock(PLAYER.pos.clone());
-    if (f.piecesN >= 3) { f.piecesSet = true; say2('青いピースを、額にはめた。', 'ガチャッ', '奥の扉の鍵が開いた。'); } else say2('青いピースを、額にはめた。');
-    this.save(); return true;
+    if (f.piecesN >= 3) { f.piecesSet = true; say2('青いピースを、額にはめた。', 'ガチャッ', '奥の扉の鍵が開いた。'); } else say2('青いピースを、額にはめた。', `あと${3 - f.piecesN}つ。`);
+    this.save();
+    if (f.takuroWith2 && !f.takuroOni && f.piecesN < 3) GAME.later(0.4, () => EVENTS.takuroTurn());
+    return true;
   }
   return false;
 };
@@ -525,7 +595,7 @@ STORY.doorHook = function (d) {
   if (d.kind === 'hidden2' && !f[df.reveal]) {
     if (d.id === 'corBAB_hid') return { prompt: f.abShelf ? '切れ目を調べる' : null, use: () => { f.abHidDoor = true; showHiddenDoor(d, true); SFX.push(d.center); say2('壁を押すと、隠し扉が開いた。'); this.save(); } };
     if (d.id === 'br_cloister') return { prompt: f.shadowSeen ? '影がさしている壁を調べる' : null, use: () => say2('人形の影が、この壁をさしている。') };
-    if (d.id === 's2front_back') return { prompt: '壁を調べる', use: () => say2('ここだけ、落書きがない。') };
+    if (d.id === 's2front_back') return { prompt: '壁を調べる', use: () => say2('壁に違和感を感じる……', 'ここだけ、青いインクの落書きがない。') };
     return { prompt: null, use: () => {} };
   }
   if (d.kind === 'code' && !f.codeOpen) return { prompt: '扉を調べる', use: () => { SFX.locked(d.center); say2('扉に、４色の棒のような模様が描かれている。', '鍵がかかっている。横に装置がある。'); } };
@@ -558,6 +628,7 @@ DIRECTOR.quiet = function (r) {
   if ((r.id === 'back' && STORY.hasGot('k_annex') && !f.backOniDone) || (r.id === 'a2fire' && !f.fireOniDone && !f.fireLit)) return true;
   if ((r.id === 's1bl' && !f.mikaCl1Done) || (r.id === 'back' && f.lit_bjCandle && !f.mikaCl2Done) || (r.id === 's2back' && !f.s2RiseDone) || (r.id === 's2study' && f.studyScrews && !f.fuwattyDone)) return true;
   if ((r.id === 'abcorC' || r.id === 'abfront') && f.codeOpen && !f.codeOniDone) return true;
+  if (r.id === 'outpath' || (r.fl === 'SB' && f.takuroOni)) return true;
   return (r.id === 'big' && f.mikaB1 && !f.mikaOniDone) || r.id === 'a1left' || r.id === 'abback' || ((r.id === 'abhidA' || r.id === 'abhidB') && !f.hidChaseDone) || (r.id === 's2tl' && !f.sproutChaseDone) || r.id === 'sboni' || r.id === 'cloister';
 };
 
@@ -600,6 +671,10 @@ ROOM_HOOKS.push((r, via, quiet) => {
     const x = cx(5.5), z = cx(-10.5);
     GAME.later(0.8, () => { ONI.spawn(x, FLOORS.S2, z, yawTo({ x, z }, PLAYER.pos), 'script'); ONI.script = { i: 0, steps: [{ t: 'rise', d: 1.8 }, { t: 'call', fn: () => { ONI.state = 'appear'; ONI.wait = 0; ONI.appearFor = 0.4; SFX.oniSpot(); POST.shake = 0.4; } }] }; });
   }
+  // outside: rain over the walk to the second annex and over the way out; the last run
+  RAIN.set(!!r.def.outdoor);
+  if (r.id === 'outpath' && !f.escaped) EVENTS.finalRun();
+  if (f.takuroOni && r.fl === 'SB') CAST.hide('takuro');
   // the room of them, the first time: a narrow way past the bars
   if (r.id === 'sboni' && !f.oniRoom1) MAN.oniCrowd.forEach(m => (m.root.visible = true));
   if (r.id === 'sboni' && f.oniRoom1 && !f.oniRoom2) { f.oniRoom2 = true; MAN.oniCrowd.forEach(m => (m.root.visible = false)); STORY.save(); }
@@ -644,6 +719,9 @@ TICK_HOOKS.push(dt => {
       h.m.visible = true; f.a1Fell = true; dropTo('abstair', cx(13), cx(12), Math.PI, f.a1FellOnce ? null : '床が抜けて、下に落ちてしまった。'); f.a1FellOnce = true;
     }
   }
+  RAIN.tick(dt);
+  // the gate at the end of the path: out
+  if (r.id === 'outpath' && !f.escaped && !GAME.busy && P.z < r.gateZ) { f.escaped = true; STORY.save(); GAME.ending(); }
   // the hole in the room top left upstairs in the second annex
   if (r.id === 's2tl' && !GAME.busy && !GAME.modal) { const h = MAN.s2Hole; if (Math.hypot(P.x - h.x, P.z - h.z) < 0.6) { const L = MAN.areas.s1tl.landing; dropTo('s1tl', L.x, L.z, Math.PI, f.s2FellOnce ? null : '穴から、下の階に落ちた。'); f.s2FellOnce = true; } }
   // the crowd behind the bars: as you get to the end of the narrow way they all turn to you
@@ -715,7 +793,7 @@ STATE_HOOKS.push(f => {
   if (f.framesFell) framesFall(false);
   if (f.oniRoom1) f.oniRoom2 = true;
   if (f.piecesN) MAN.pieceFrame.redraw((g, w, h) => drawPieceFrame(g, w, h, f.piecesN));
-  if (f.takuroWith2) FOLLOW.id = 'takuro';
+  if (f.takuroWith2 && !f.takuroOni) FOLLOW.id = 'takuro';
   if (f.mikaOni) f.mikaOniDone = true;
   if (f.sproutChase) f.sproutChaseDone = true;
 });

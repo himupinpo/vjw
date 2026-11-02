@@ -57,6 +57,8 @@ AREAS.push(
   { id: 'sbjail', name: '牢屋', fl: 'SB', cells: [[0, 5, 8, 6]], wall: 'wallStain', floor: 'floorOlive', dark: true, lamps: [] },
   { id: 'sbdark', name: '暗闇の部屋', fl: 'SB', cells: [[10, 5, 8, 6]], wall: 'wallStain', floor: 'floorOlive', dark: true, lamps: [] },
   { id: 'sboni', name: '青鬼の部屋', fl: 'SB', cells: [[0, 14, 11, 6]], wall: 'wallStain', floor: 'floorOlive', lamps: [[5.5, 14.5]] },
+  // out: up the last stairs, a straight muddy path through a dead wood in the rain, to the gate
+  { id: 'outpath', name: '森の道', fl: 'Y', cells: [[40, -40, 5, 34]], wall: 'forest', floor: 'floorDirt', outdoor: true, lamps: [] },
 );
 STAIRS.push(
   { id: 'stB1up', fl: 'B1', area: 'bridge', r: [16, -12, 3, 5], dir: 'N', rise: 3.2, to: 'stA1dn' },
@@ -595,16 +597,52 @@ FURNISH.s2study = r => {
   interactBox(r, tm(16), 2.45, wz + 0.2, 0.8, 0.6, 0.4, () => (STORY.flags.framesFell && !STORY.hasGot('k_sbase') ? '金庫を調べる' : null), () => STORY.event('studySafe'), { icon: 'eye', dist: 3.0 });
 };
 FURNISH.s2front = r => {
-  // scrawl along the top wall that stops short of the right-hand part
-  const wz = tm(-4) + WT + 0.012;
-  wallPic(r, tm(22), 1.6, wz, 0, tm(4), 1.6, drawGraffitiRun, { cw: 900, ch: 360, transparent: true });
-  examine(r, tm(22), 1.6, wz + 0.2, tm(4), 1.6, 0.3, () => '落書きを調べる', () => GAME.say([['', '壁一面に落書きがある。'], ['', '右のほうで、ぷっつりと途切れている。']]));
+  // 6.23 / ひろし編: blue ink scrawled over every wall, except one stretch of the top wall at the right (the wall
+  // with something behind it); a bookcase top left and a dark red rug
+  const wz = tm(-4) + WT + 0.012, ez = tm(2) - WT - 0.012, wx = tm(20) + WT + 0.012, ex = tm(27) - WT - 0.012, H = 2.6;
+  wallPic(r, tm(22), 1.75, wz, 0, tm(4), H, (g, w, h) => drawBlueScrawl(g, w, h, 5, 1), { cw: 1024, ch: 400, transparent: true });
+  wallPic(r, wx, 1.75, tm(-1.5), Math.PI / 2, tm(5), H, (g, w, h) => drawBlueScrawl(g, w, h, 7, 0), { cw: 1024, ch: 400, transparent: true });
+  wallPic(r, ex, 1.75, tm(-1), -Math.PI / 2, tm(6), H, (g, w, h) => drawBlueScrawl(g, w, h, 9, 0), { cw: 1024, ch: 400, transparent: true });
+  wallPic(r, tm(23.5), 1.75, ez, Math.PI, tm(7), H, (g, w, h) => drawBlueScrawl(g, w, h, 11, 0), { cw: 1024, ch: 400, transparent: true });
+  examine(r, tm(22), 1.6, wz + 0.2, tm(4), 1.6, 0.3, () => '落書きを調べる', () => GAME.say([['', '青いインクで、壁一面に落書きがしてある。'], ['', '右のほうだけ、ぷっつりと途切れている。']]));
+  addBookshelf(r, tm(20) + 1.0, tm(-4) + 0.3, 0, tm(1.1), 2.4);
+  paleRug(r, tm(22), tm(-0.6), tm(3.4), tm(3.4), 0x4a1612);
 };
 FURNISH.s2back = r => {
-  const dk = new Frame(r, tm(23.5), 0, tm(-12) + 0.6, 0); dk.box(1.6, 0.05, 0.75, MAT.wood, 0, 0.76, 0); for (const sx of [-1, 1]) for (const sz of [-1, 1]) dk.box(0.05, 0.74, 0.05, MAT.wood, sx * 0.75, 0.37, sz * 0.32); dk.collide(-0.8, 0.8, 0, 0.8, -0.38, 0.38);
-  shineAt(r, tm(23.5), 0.8, tm(-12) + 0.6, 'dice');
-  interactBox(r, tm(23.5), 0.95, tm(-12) + 0.6, 0.6, 0.3, 0.5, () => (STORY.hasGot('dice') ? null : '机の上を調べる'), () => GAME.take('dice', MAN.props.dice), { icon: 'hand' });
+  // 6.23 / ひろし編, the room behind the wall: a bookcase top left, the wardrobe top right (to hide in when it comes up
+  // from below, through the door you came in by), a dark red rug, and the desk against the left wall with the dice on it
+  addBookshelf(r, tm(20) + 1.0, tm(-12) + 0.3, 0, tm(1.1), 2.4);
   MAN.s2Closet = addTansu(r, tm(27) - 0.6, tm(-12) + 0.5, 0);
+  paleRug(r, tm(22.4), tm(-9.6), tm(3.2), tm(3.0), 0x4a1612);
+  const dx = tm(20) + 0.52, dz = cx(-8.6), dk = new Frame(r, dx, 0, dz, Math.PI / 2);
+  dk.box(1.5, 0.05, 0.72, MAT.wood, 0, 0.76, 0); for (const sx of [-1, 1]) for (const sz of [-1, 1]) dk.box(0.05, 0.74, 0.05, MAT.wood, sx * 0.7, 0.37, sz * 0.31); dk.collide(-0.75, 0.75, 0, 0.8, -0.36, 0.36);
+  shineAt(r, dx, 0.8, dz, 'dice');
+  interactBox(r, dx, 0.95, dz, 0.5, 0.3, 0.6, () => (STORY.hasGot('dice') ? null : '机の上を調べる'), () => GAME.take('dice', MAN.props.dice), { icon: 'hand' });
+};
+// the way out: dead trees either side of the mud, a few graves, three stone lanterns, the gate at the far end
+function deadTree(r, x, z, h, seed) {
+  const rnd = mulberry32(seed), bark = AOM.bark || (AOM.bark = std({ color: 0x241b14, roughness: 1 })), F = new Frame(r, x, 0, z, rnd() * TAU);
+  F.cyl(0.11, 0.2, h, bark, 0, h / 2, 0, 7); F.collide(-0.17, 0.17, 0, h, -0.17, 0.17);
+  for (let i = 0; i < 5; i++) { const y = h * (0.45 + i * 0.12), a = rnd() * TAU, L = 0.7 + rnd() * 1.1, tilt = 0.7 + rnd() * 0.5;
+    const B = new Frame(r, x, 0, z, a); B.cyl(0.025, 0.07, L, bark, Math.sin(tilt) * L / 2, y + Math.cos(tilt) * L / 2, 0, 5, 0, 0, -tilt);
+    B.cyl(0.012, 0.03, L * 0.55, bark, Math.sin(tilt) * L * 0.85, y + Math.cos(tilt) * L * 0.85 + 0.2, 0, 4, 0, 0, -tilt + 0.7); }
+}
+FURNISH.outpath = r => {
+  const grass = std({ color: 0x1f2a17, roughness: 1 }), stone = std({ color: 0x5e5d58, roughness: 0.95 });
+  for (const sx of [0, 1]) { const F = new Frame(r, sx ? tm(44.15) : tm(40.85), 0.008, tm(-23), 0), g = new THREE.PlaneGeometry(tm(1.7), tm(34)); g.rotateX(-Math.PI / 2); F.geo(g, grass, 0, 0, 0); }
+  for (let i = 0, z = -39; z < -7; i++, z += 2.3) { const left = i % 2 === 0; deadTree(r, left ? tm(40) + 0.55 + (i % 3) * 0.25 : tm(45) - 0.55 - (i % 3) * 0.25, tm(z), 3.4 + (i % 4) * 0.5, 31 + i); }
+  for (const [x, z] of [[40.6, -33], [44.4, -27], [40.5, -19], [44.5, -13], [44.4, -36]]) { const F = new Frame(r, tm(x), 0, tm(z), x < 42 ? Math.PI / 2 : -Math.PI / 2); F.box(0.55, 0.7, 0.14, stone, 0, 0.35, 0); F.cyl(0.275, 0.275, 0.14, stone, 0, 0.7, 0, 12, Math.PI / 2, 0, 0); F.collide(-0.3, 0.3, 0, 0.85, -0.1, 0.1); }
+  for (const [x, z] of [[40.7, -12], [44.3, -24], [40.7, -34]]) {
+    const F = new Frame(r, tm(x), 0, tm(z), 0); F.box(0.3, 0.6, 0.3, stone, 0, 0.3, 0); F.box(0.46, 0.34, 0.46, stone, 0, 0.77, 0); F.box(0.56, 0.08, 0.56, stone, 0, 0.98, 0); F.collide(-0.28, 0.28, 0, 1.0, -0.28, 0.28);
+    const glow = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.2, 0.47), emissiveMat(0xffb060, 2.2, 0xffd8a0)); glow.position.copy(F.pt(0, 0.78, 0)); r.group.add(glow);
+    r.addFixture({ local: F.pt(0, 0.8, 0), color: 0xffa860, intensity: 3.2, range: 9, kind: 'lantern', shadow: false });
+  }
+  for (const z of [-35, -26, -17, -9]) r.addFixture({ local: new THREE.Vector3(tm(42.5), 6, tm(z)), color: 0x8a9cc4, intensity: 6, range: 22, kind: 'moon', shadow: false });
+  // the gate
+  const G = new Frame(r, tm(42.5), 0, tm(-40) + 0.4, 0);
+  for (const sx of [-1, 1]) { G.box(0.6, 2.6, 0.6, stone, sx * 3.6, 1.3, 0); G.box(0.72, 0.12, 0.72, stone, sx * 3.6, 2.66, 0); G.collide(sx * 3.6 - 0.3, sx * 3.6 + 0.3, 0, 2.7, -0.3, 0.3); }
+  for (const sx of [-1, 1]) { for (let i = 0; i < 8; i++) G.cyl(0.022, 0.022, 2.1, MAT.black, sx * 3.25, 1.05, 0.32 + i * 0.17, 6); for (const y of [0.25, 2.05]) G.box(0.04, 0.05, 1.3, MAT.black, sx * 3.25, y, 0.92); }   // the two leaves, swung open
+  r.gateZ = tm(-37);
 };
 FURNISH.sbinf = r => {
   // four beds behind curtains; each curtain has a shape scrawled on it; one is drawn
@@ -730,6 +768,20 @@ function drawCurtain(g, w, h, shape) {
   if (shape === 'circle') g.arc(cxp, cyp, R, 0, TAU);
   else { const n = { tri: 3, square: 4, penta: 5 }[shape]; for (let i = 0; i <= n; i++) { const a = -Math.PI / 2 + i * TAU / n + (n === 4 ? Math.PI / 4 : 0); (i ? g.lineTo : g.moveTo).call(g, cxp + Math.cos(a) * R, cyp + Math.sin(a) * R); } }
   g.stroke();
+}
+// blue ink, scrawled: loops and zigzags in tangles along the wall (side 1: stops a little before the right-hand end)
+function drawBlueScrawl(g, w, h, seed, stopRight) {
+  g.clearRect(0, 0, w, h); const rnd = mulberry32(seed), x1 = stopRight ? w * 0.9 : w; g.lineCap = 'round'; g.lineJoin = 'round';
+  for (let i = 0; i < 170; i++) {
+    let x = rnd() * x1, y = h * 0.08 + rnd() * h * 0.8; const col = rnd() < 0.7 ? [52, 64, 196] : [92, 70, 190];
+    g.strokeStyle = `rgba(${col[0]},${col[1]},${col[2]},${0.45 + rnd() * 0.45})`; g.lineWidth = 2 + rnd() * 6; g.beginPath(); g.moveTo(x, y);
+    const n = 4 + (rnd() * 8 | 0), loop = rnd() < 0.5;
+    for (let k = 0; k < n; k++) {
+      if (loop) { const a = k * 1.7, rr = 10 + rnd() * 22; x += 9 + rnd() * 14; g.lineTo(Math.min(x1, x + Math.cos(a) * rr), y + Math.sin(a) * rr); }
+      else { x += 14 + rnd() * 26; y += (rnd() - 0.5) * 70; g.lineTo(Math.min(x1, x), Math.max(4, Math.min(h - 4, y))); }
+    }
+    g.stroke();
+  }
 }
 function drawGraffitiRun(g, w, h) {
   g.clearRect(0, 0, w, h); g.strokeStyle = 'rgba(40,20,20,.8)'; g.lineWidth = 7; g.lineCap = 'round';
