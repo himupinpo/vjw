@@ -206,6 +206,7 @@ const FX = {
     spark: new THREE.MeshBasicMaterial({ color: 0xffd080, transparent: true, opacity: 1, depthWrite: false, blending: THREE.AdditiveBlending }),
     dust: new THREE.MeshBasicMaterial({ color: 0xcdb48a, transparent: true, opacity: 0.5, depthWrite: false }),
     flash: new THREE.MeshBasicMaterial({ color: 0xffe0a0, transparent: true, opacity: 1, depthWrite: false, blending: THREE.AdditiveBlending }),
+    blood: new THREE.MeshBasicMaterial({ color: 0x6e0f0c, transparent: true, opacity: 0.85, depthWrite: false }),
   },
   add(kind, x, y, z, o) {
     if (this.list.length > 220) return;
@@ -219,6 +220,11 @@ const FX = {
   sparks(x, y, z, n = 8) { for (let i = 0; i < n; i++) this.add('spark', x, y, z, { life: 0.35, vx: rr(-5, 5), vy: rr(1, 5), vz: rr(-5, 5), g: 12, s0: 0.04, s1: 0.02 }); },
   dust(x, y, z) { for (let i = 0; i < 4; i++) this.add('dust', x, y, z, { life: 0.7, vx: rr(-1, 1), vy: rr(.3, 1.2), vz: rr(-1, 1), s0: 0.08, s1: 0.35 }); },
   muzzle(x, y, z) { this.add('flash', x, y, z, { life: 0.06, s0: 0.12, s1: 0.18 }); },
+  // 弾が人に当たった：弾の向きに小さなしぶき
+  blood(x, y, z, d) {
+    this.add('blood', x, y, z, { life: 0.25, s0: 0.06, s1: 0.22 });
+    for (let i = 0; i < 5; i++) this.add('blood', x, y, z, { life: 0.4, vx: d.x * rr(1, 3) + rr(-.8, .8), vy: rr(0, 1.6), vz: d.z * rr(1, 3) + rr(-.8, .8), g: 9, s0: 0.035, s1: 0.02 });
+  },
   explosion(x, y, z) {
     for (let i = 0; i < 26; i++) this.add('fire', x, y, z, { life: 0.9, vx: rr(-6, 6), vy: rr(1, 8), vz: rr(-6, 6), s0: 0.8, s1: 0.2, g: 4 });
     for (let i = 0; i < 18; i++) this.add('smoke', x, y, z, { life: 3, vx: rr(-3, 3), vy: rr(2, 5), vz: rr(-3, 3), s0: 0.8, s1: 3 });

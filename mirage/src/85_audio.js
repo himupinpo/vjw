@@ -44,6 +44,8 @@ const AUDIO = {
   horn(x, z, k) { if (!this.ok()) return; const t = this.ac.currentTime, d = this.at(x, z, 0.32 * k); this.tone(d, t, 0.45, 392, null, 'square', 0.5, 0.01); this.tone(d, t, 0.45, 494, null, 'square', 0.4, 0.01); },
   boom(x, z) { if (!this.ok()) return; const t = this.ac.currentTime, d = this.at(x, z, 1.6); this.noise(d, t, 1.8, 400, 0.4, 'lowpass', 1, 0.005); this.noise(d, t, 0.6, 1800, 0.5, 'bandpass', 0.5); this.tone(d, t, 1.2, 70, 25, 'sine', 1); },
   coin() { if (!this.ok()) return; const t = this.ac.currentTime; this.tone(this.sfx, t, 0.12, 988, null, 'square', 0.12); this.tone(this.sfx, t + 0.08, 0.3, 1319, null, 'square', 0.12); },
+  // 弾が人に当たった（倒したら低め）
+  hit(kill) { if (!this.ok()) return; const t = this.ac.currentTime; this.tone(this.sfx, t, 0.05, kill ? 1250 : 1900, kill ? 800 : 1650, 'square', kill ? 0.16 : 0.1); if (kill) this.tone(this.sfx, t + 0.05, 0.08, 700, 520, 'square', 0.12); },
   click() { if (!this.ok()) return; this.noise(this.sfx, this.ac.currentTime, 0.04, 3000, 2, 'bandpass', 0.3); },
   reload() { if (!this.ok()) return; const t = this.ac.currentTime; this.noise(this.sfx, t, 0.05, 2500, 2, 'bandpass', 0.4); this.noise(this.sfx, t + 0.5, 0.06, 1800, 2, 'bandpass', 0.5); },
   door(x, z) { if (!this.ok()) return; const t = this.ac.currentTime, d = this.at(x, z, 0.8); this.noise(d, t, 0.15, 500, 0.8, 'lowpass', 0.8); this.tone(d, t, 0.12, 120, 70, 'sine', 0.4); },

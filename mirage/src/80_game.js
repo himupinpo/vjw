@@ -60,6 +60,7 @@ const UI = {
   _money: 0, subQ: [], subT: 0,
   money(snap) { if (snap) this._money = PLAYER.money; },
   stars() { const bs = $('stars').children; for (let i = 0; i < 5; i++) bs[i].classList.toggle('on', i < WANTED.level); $('stars').style.visibility = WANTED.level ? 'visible' : 'hidden'; },
+  hitMark(kill) { this.hitT = 0.3; $('hitm').className = kill ? 'kill' : ''; AUDIO.hit(kill); },
   weapon() { const W = PLAYER.weaponDef; $('weapon').innerHTML = PLAYER.car ? '' : W.id === 'fist' ? '素手' : `${W.name}<small>${PLAYER.mag[W.id]} / ${PLAYER.ammo[W.id]}</small>`; },
   obj(html) { $('obj').innerHTML = html ? `<span>${html}</span>` : ''; },
   say(lines) { this.subQ.push(...lines); if (this.subT <= 0) this.nextSub(); },
@@ -80,10 +81,17 @@ const UI = {
     if (!PLAYER.car && PLAYER.alive && GAME.state === 'play') { const c = PLAYER.nearCar(); if (c) { pr.style.display = 'block'; pr.textContent = (IS_TOUCH ? '「乗る」ボタンで' : 'F：') + (c.ai ? '運転手を引きずり出す' : c.police ? 'パトカーに乗る' : '車に乗る'); $('bEnter').classList.add('on'); } else { pr.style.display = 'none'; $('bEnter').classList.remove('on'); } }
     else pr.style.display = 'none';
     // 照準
-    const cr = $('cross'), W = PLAYER.weaponDef, show = !PLAYER.car && PLAYER.alive && W.id !== 'fist' && (PLAYER.aiming || (!IS_TOUCH && IN.locked) || PLAYER.target);
-    cr.style.display = show ? 'block' : 'none'; cr.classList.toggle('lock', !!PLAYER.target);
-    if (PLAYER.target) { const v = new THREE.Vector3(PLAYER.target.x, PLAYER.target.y, PLAYER.target.z).project(camera); cr.style.left = ((v.x + 1) / 2 * 100) + '%'; cr.style.top = ((1 - v.y) / 2 * 100) + '%'; }
-    else { cr.style.left = '50%'; cr.style.top = '45%'; }
+    // 照準：構えているときだけ。人に重なると赤、すき間は今の弾のばらつき（反動で広がる）
+    const cr = $('cross'), W = PLAYER.weaponDef, show = !PLAYER.car && PLAYER.alive && W.id !== 'fist' && PLAYER.gunUp;
+    cr.style.display = show ? 'block' : 'none';
+    if (show) {
+      cr.classList.toggle('lock', !!(PLAYER.aimHit && PLAYER.aimHit.kind === 'ped'));
+      const gap = clamp(PLAYER.spreadNow() / Math.tan(camera.fov * Math.PI / 360) * VH() / 2, 3, 46);
+      cr.style.setProperty('--gap', gap.toFixed(1) + 'px');
+    }
+    // 当たった印
+    this.hitT = Math.max(0, (this.hitT || 0) - dt); const hm = $('hitm'); hm.style.opacity = this.hitT > 0 ? Math.min(1, this.hitT / 0.12) : 0;
+    if (this.hitT > 0) hm.style.transform = `scale(${1 + (0.3 - this.hitT) * 0.8})`;
     // 画面効果
     GAME.hurtFx = Math.max(0, GAME.hurtFx - dt * 0.8); $('hurt').style.opacity = Math.max(GAME.hurtFx, PLAYER.hp < 25 && PLAYER.alive ? 0.35 + Math.sin(GAME.t * 5) * 0.15 : 0);
     GAME.flash = Math.max(0, GAME.flash - dt * 2.5); $('flash').style.opacity = GAME.flash * 0.6;

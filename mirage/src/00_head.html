@@ -21,10 +21,18 @@ html, body { margin: 0; height: 100%; background: var(--ground); color: var(--in
 #flash { position: absolute; inset: 0; pointer-events: none; background: #fff; opacity: 0; }
 #hurt { position: absolute; inset: 0; pointer-events: none; opacity: 0; background: radial-gradient(ellipse at 50% 50%, transparent 45%, rgba(170,20,10,.55) 100%); }
 .hud { position: absolute; pointer-events: none; font-variant-numeric: tabular-nums; text-shadow: 0 1px 2px rgba(0,0,0,.7), 0 0 6px rgba(0,0,0,.35); }
-#cross { position: absolute; left: 50%; top: 45%; width: 26px; height: 26px; margin: -13px 0 0 -13px; pointer-events: none; display: none; }
-#cross:before, #cross:after { content: ""; position: absolute; background: var(--ink); box-shadow: 0 0 0 1px rgba(0,0,0,.45); }
-#cross:before { left: 12px; top: 0; width: 2px; height: 26px; } #cross:after { top: 12px; left: 0; height: 2px; width: 26px; }
-#cross.lock:before, #cross.lock:after { background: var(--red); }
+/* 照準：画面のまん中。4本の線のすき間＝弾のばらつき、人に重なると赤。当たると×（倒すと赤い×） */
+#cross { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; display: none; --gap: 6px; --c: rgba(255,255,255,.95); }
+#cross i, #cross b { position: absolute; background: var(--c); box-shadow: 0 0 0 1px rgba(0,0,0,.5); }
+#cross i.t, #cross i.b { width: 2px; height: 8px; left: -1px; } #cross i.t { bottom: var(--gap); } #cross i.b { top: var(--gap); }
+#cross i.l, #cross i.r { height: 2px; width: 8px; top: -1px; } #cross i.l { right: var(--gap); } #cross i.r { left: var(--gap); }
+#cross b { left: -2px; top: -2px; width: 4px; height: 4px; border-radius: 50%; }
+#cross.lock { --c: #ff4a3c; }
+#hitm { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; opacity: 0; }
+#hitm i { position: absolute; width: 7px; height: 2px; background: #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.45); }
+#hitm i:nth-child(1) { left: 4px; top: 4px; transform: rotate(45deg); } #hitm i:nth-child(2) { right: 4px; top: 4px; transform: rotate(-45deg); }
+#hitm i:nth-child(3) { left: 4px; bottom: 4px; transform: rotate(-45deg); } #hitm i:nth-child(4) { right: 4px; bottom: 4px; transform: rotate(45deg); }
+#hitm.kill i { background: #ff3b30; }
 #tr { right: calc(14px + env(safe-area-inset-right, 0px)); top: calc(10px + env(safe-area-inset-top, 0px)); text-align: right; }
 #money { font-size: 26px; font-weight: 700; color: #9fe08c; letter-spacing: .02em; }
 #stars { font-size: 22px; letter-spacing: 3px; height: 28px; }
@@ -79,13 +87,13 @@ input[type=range] { width: 100%; }
 #load h1 { font-size: 26px; font-weight: 600; letter-spacing: .14em; margin: 0 0 10px; }
 #load p { margin: 0; color: var(--ink-dim); font-size: 13px; letter-spacing: .06em; }
 body.short #obj { font-size: 15px; } body.short #big h1 { font-size: 40px; }
-body:not(.playing) .hud, body:not(.playing) #tbtns, body:not(.playing) #pauseB, body:not(.playing) #cross { display: none !important; }
+body:not(.playing) .hud, body:not(.playing) #tbtns, body:not(.playing) #pauseB, body:not(.playing) #cross, body:not(.playing) #hitm { display: none !important; }
 @media (prefers-reduced-motion: reduce) { #hint, #big, #sub { transition: none; } }
 </style></head><body>
 <div id="rot">
 <canvas id="c"></canvas>
 <div id="vignette"></div><div id="hurt"></div><div id="flash"></div>
-<div id="cross"></div>
+<div id="cross"><i class="t"></i><i class="b"></i><i class="l"></i><i class="r"></i><b></b></div><div id="hitm"><i></i><i></i><i></i><i></i></div>
 <div class="hud" id="fps"></div>
 <div class="hud" id="tr"><div id="money">$0</div><div id="stars"><b>★</b><b>★</b><b>★</b><b>★</b><b>★</b></div><div id="weapon">素手</div></div>
 <div class="hud" id="mm"><canvas id="mmc" width="344" height="344"></canvas></div>
@@ -136,8 +144,8 @@ body:not(.playing) .hud, body:not(.playing) #tbtns, body:not(.playing) #pauseB, 
 <div class="screen" id="how"><div class="panel">
   <h1 style="font-size:28px">操作方法</h1>
   <div class="how">
-  <b>スマホ</b>：左側をドラッグで移動（車ではハンドル）、右側をドラッグで視点。右下のボタンで攻撃・ジャンプ・走る・乗る／降りる・武器・狙う。車ではアクセル・ブレーキ（止まると後ろへ）・サイドブレーキ・ホーン・ラジオ。<br>
-  <b>PC</b>：WASDで移動、マウスで視点（クリックでマウスを固定）、Shiftで走る、Spaceでジャンプ、Fで車に乗る・降りる、左クリックで攻撃、右クリックで狙う、ホイールか1〜3で武器、Mで地図を大きく。車ではW/Sでアクセル・ブレーキ、A/Dでハンドル、Spaceでサイドブレーキ、Hでホーン、Rでラジオ、Cでカメラ。Escで一時停止。<br>
+  <b>スマホ</b>：左側をドラッグで移動（車ではハンドル）、右側をドラッグで視点。右下のボタンで攻撃・ジャンプ・走る・乗る／降りる・武器・狙う。「狙う」で肩越しに構え、照準の近くの人に照準が吸いつく（右側をなぞると外れる）。車ではアクセル・ブレーキ（止まると後ろへ）・サイドブレーキ・ホーン・ラジオ。<br>
+  <b>PC</b>：WASDで移動、マウスで視点（クリックでマウスを固定）、Shiftで走る、Spaceでジャンプ、Fで車に乗る・降りる、左クリックで攻撃、右クリック長押しで肩越しに狙う（弾は照準の先へ飛ぶ。人に重なると照準が赤）、Rでリロード、ホイールか1〜3で武器、Mで地図を大きく。車ではW/Sでアクセル・ブレーキ、A/Dでハンドル、Spaceでサイドブレーキ、Hでホーン、Rでラジオ、Cでカメラ。Escで一時停止。<br>
   <b>手配度</b>：人や車を傷つけたり、警察の前で車を盗んだりすると★がつき、警察が追ってくる。見つからないところへ逃げると★が消える。<br>
   <b>仕事</b>：地図の <b>N</b>（ナビールの店）へ行くと仕事がもらえる。$ の袋は街のあちこちに落ちている。
   </div>

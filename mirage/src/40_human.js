@@ -23,7 +23,7 @@ function partsBuilder() {
       v.fromBufferAttribute(P, i).applyMatrix4(m); n.fromBufferAttribute(N, i).applyMatrix3(nm).normalize();
       pos.push(v.x, v.y, v.z); nor.push(n.x, n.y, n.z);
       const c = typeof color === 'function' ? color(v) : color; col.push(c[0], c[1], c[2]);
-      const b = typeof bone === 'function' ? bone(v) : [[bone, 1]];
+      const b = typeof bone === 'function' ? bone(v) : Array.isArray(bone) ? bone : [[bone, 1]];   // 骨は 番号 / [[骨, 重み], …] / 関数
       for (let j = 0; j < 4; j++) { si.push(b[j] ? b[j][0] : 0); sw.push(b[j] ? b[j][1] : 0); }
     }
   }
@@ -57,7 +57,12 @@ function buildHumanGeo(o) {
   const P = partsBuilder(), S = o.skin;
   const legBone = side => v => { // ローブの裾は左右の脚に分けて結ぶ（真ん中はなかば）
     const w = smooth(-0.06, 0.06, v.x); const up = smooth(0.95, 0.75, v.y);
-    if (side === 'robe') return [[B.legL, w * up], [B.legR, (1 - w) * up], [B.hips, 1 - up]];
+    // ひざより下はすねの骨に結ぶ（座る・しゃがむと、裾がももの上からすねにそって垂れる）。上（0.75m より上）は腰とももだけ
+    if (side === 'robe') {
+      if (up < 1) return [[B.legL, w * up], [B.legR, (1 - w) * up], [B.hips, 1 - up]];
+      const k = smooth(0.58, 0.4, v.y);
+      return [[B.legL, w * (1 - k)], [B.legR, (1 - w) * (1 - k)], [B.kneeL, w * k], [B.kneeR, (1 - w) * k]];
+    }
     return [[B.legL, 1]];
   };
   const torsoBone = v => (v.y > 1.25 ? [[B.chest, 1]] : v.y > 1.05 ? [[B.spine, 1]] : [[B.hips, 1]]);
@@ -147,10 +152,18 @@ function poseHuman(h, dt, sp = 0) {
     b.armL.rotation.x = b.armR.rotation.x = -1.05; b.foreL.rotation.x = b.foreR.rotation.x = -0.55;
     b.armL.rotation.z = -0.25; b.armR.rotation.z = 0.25; b.spine.rotation.x = -0.12;
   } else if (a === 'aim') {
-    b.armR.rotation.x = -1.5; b.armR.rotation.z = 0.15; b.foreR.rotation.x = -0.05;
-    b.armL.rotation.x = -1.35; b.armL.rotation.z = -0.55; b.foreL.rotation.x = -0.35;
-    b.spine.rotation.y = 0.15; b.head.rotation.y = -0.1;
-    b.legL.rotation.x = -0.12; b.legR.rotation.x = 0.12;
+    // 両手で構える。aimPitch=狙う高さ（上が+）、recoil=撃った直後のはね
+    const ap = h.aimPitch || 0, rc = h.recoil || 0;
+    b.armR.rotation.x = -1.5 - ap - rc * 0.25; b.armR.rotation.z = 0.15; b.foreR.rotation.x = -0.05 - rc * 0.15;
+    b.armL.rotation.x = -1.38 - ap - rc * 0.2; b.armL.rotation.z = -0.55; b.foreL.rotation.x = -0.35;
+    b.spine.rotation.y = 0.15; b.spine.rotation.x = -ap * 0.15; b.head.rotation.y = -0.1;
+    if (sp > 0.3) {   // 構えたまま歩く（上半身はそのまま、足だけ）
+      h.phase += dt * (1.0 + sp * 0.9) * Math.PI * 2 * 0.62;
+      const s = Math.sin(h.phase), c = Math.cos(h.phase), amp = Math.min(0.55, 0.25 + sp * 0.06);
+      b.legL.rotation.x = -s * amp; b.legR.rotation.x = s * amp;
+      b.kneeL.rotation.x = Math.max(0, c) * 0.7 + 0.05; b.kneeR.rotation.x = Math.max(0, -c) * 0.7 + 0.05;
+      b.hips.position.y = 0.93 + Math.abs(c) * 0.025;
+    } else { b.legL.rotation.x = -0.12; b.legR.rotation.x = 0.12; b.kneeL.rotation.x = b.kneeR.rotation.x = 0.08; b.hips.position.y = 0.93; }
   } else if (a === 'punch') {
     const k = Math.min(1, h.t / 0.12), back = h.t > 0.22 ? smooth(0.22, 0.4, h.t) : 0, hit = k * (1 - back);
     const R_ = h.punchSide ? b.armL : b.armR, F_ = h.punchSide ? b.foreL : b.foreR;

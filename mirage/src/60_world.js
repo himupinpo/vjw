@@ -73,11 +73,12 @@ const WORLD = {
     return null;
   },
   removePed(p) { disposeHuman(p.h); this.peds.splice(this.peds.indexOf(p), 1); },
-  scare(x, z, r, from) { for (const p of this.peds) if (p.kind !== 'police' && p.state !== 'lie' && p.state !== 'fall' && Math.hypot(p.x - x, p.z - z) < r) { p.state = 'flee'; p.st = 0; p.fleeT = rr(6, 10); p.fx = from ? from.x : x; p.fz = from ? from.z : z; } },
-  hurtPed(p, dmg, by, push) {
+  scare(x, z, r, from) { for (const p of this.peds) if (p.kind !== 'police' && p.state !== 'lie' && p.state !== 'fall' && p.state !== 'dead' && Math.hypot(p.x - x, p.z - z) < r) { p.state = 'flee'; p.st = 0; p.fleeT = rr(6, 10); p.fx = from ? from.x : x; p.fz = from ? from.z : z; } },
+  hurtPed(p, dmg, by, push, hitDir) {
     if (p.state === 'dead') return;
     p.hp -= dmg;
     if (push) { p.x += push.x; p.z += push.z; }
+    if (hitDir) { p.x += hitDir.x * 0.12; p.z += hitDir.z * 0.12; }   // 弾が当たると少しよろける
     if (p.hp <= 0) { p.state = 'dead'; p.h.anim = 'fall'; p.h.t = 0; p.st = 0; if (by === PLAYER) crime(p.kind === 'police' ? 'killCop' : 'killPed', p.x, p.z); }
     else if (dmg >= 25 || push) { p.state = 'fall'; p.h.anim = 'fall'; p.h.t = 0; p.st = 0; if (by === PLAYER) crime(p.kind === 'police' ? 'hitCop' : 'hitPed', p.x, p.z); }
     else if (by === PLAYER) { crime(p.kind === 'police' ? 'hitCop' : 'hitPed', p.x, p.z); if (p.kind !== 'police') { p.state = 'flee'; p.fleeT = 8; p.fx = PLAYER.pos.x; p.fz = PLAYER.pos.z; } }

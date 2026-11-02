@@ -3,14 +3,18 @@
 // =========================================================================================
 const WEAPONS = [
   { id: 'fist', name: '素手' },
-  { id: 'pistol', name: 'ピストル', dmg: 34, rate: 0.26, mag: 12, range: 60, spread: 0.012 },
-  { id: 'smg', name: 'サブマシンガン', dmg: 17, rate: 0.085, mag: 30, range: 50, spread: 0.03 },
+  // spread=ばらつき（ラジアン）、bloom=1発ごとに広がる量、recoil=カメラが跳ね上がる量
+  { id: 'pistol', name: 'ピストル', dmg: 34, rate: 0.26, mag: 12, range: 70, spread: 0.010, bloom: 0.012, recoil: 0.034 },
+  { id: 'smg', name: 'サブマシンガン', dmg: 17, rate: 0.085, mag: 30, range: 55, spread: 0.022, bloom: 0.0065, recoil: 0.015 },
 ];
-const CAM = { yaw: Math.PI, pitch: -0.18, dist: 4.4, idleT: 0, carLookT: 0, x: 0, y: 0, z: 0, fov: 0, mode: 0 };
+// ots: 0=ふつう 1=銃を構えている（腰だめ） 2=狙っている（肩越し）。kick=反動でカメラが跳ねた分（戻っていく）
+const CAM = { yaw: Math.PI, pitch: -0.18, dist: 4.4, idleT: 0, carLookT: 0, x: 0, y: 0, z: 0, fov: 0, mode: 0, ots: 0, kick: 0, kickYaw: 0 };
 const PLAYER = {
   pos: new THREE.Vector3(), vy: 0, yaw: 0, speed: 0, h: null, car: null, alive: true, down: 0, hp: 100, armor: 0, hurtT: 9,
   money: 0, weapon: 0, owned: { fist: true, pistol: true, smg: false }, ammo: { pistol: 48, smg: 0 }, mag: { pistol: 12, smg: 0 }, fireT: 0, reloadT: 0, punchT: 0, punchSide: 0,
   enterT: 0, aiming: false, target: null, gun: null, onGround: true, kx: 0, kz: 0,
+  // 撃つ：gunUp=銃を構えている、ready=撃ったあと構えたままの残り時間、aimPt=照準（画面の真ん中）が指している所
+  gunUp: false, ready: 0, aimPt: new THREE.Vector3(), aimHit: null, lock: null, lockT: 0, snapY: 0, snapP: 0, offY: 0, offP: 0, bloom: 0, wasAim: false, atkWas: false,
   init() {
     this.h = makeHuman('player');
     // 銃（手に持たせる）
@@ -113,13 +117,17 @@ const PLAYER = {
     const cy = CAM.yaw, fx = -Math.sin(cy), fz = -Math.cos(cy), rx = Math.cos(cy), rz = -Math.sin(cy);
     let dx = fx * my + rx * mx, dz = fz * my + rz * mx; const dl = Math.hypot(dx, dz) || 1; dx /= dl; dz /= dl;
     this.aiming = (IN.aim || IN.aimToggle) && W.id !== 'fist';
+    if (W.id !== 'fist' && IN.atk) this.ready = 1.4; else this.ready = Math.max(0, this.ready - dt);
+    this.gunUp = W.id !== 'fist' && (this.aiming || this.ready > 0);
+    if (IN.pressed.has('radio') && W.id !== 'fist') this.reload();   // R：リロード（車の中ではラジオ）
+    this.updateAim(dt);
     const sprint = IN.run || !!IN.keys.ShiftLeft || !!IN.keys.ShiftRight;
     let sp = 0;
-    if (mag > 0.08) sp = this.aiming ? 2.0 : sprint ? 6.6 : (IS_TOUCH ? (mag < 0.6 ? 1.6 : 4.2) : 4.2);
+    if (mag > 0.08) sp = this.aiming ? 2.2 : this.gunUp ? (sprint ? 5.2 : 3.4) : sprint ? 6.6 : (IS_TOUCH ? (mag < 0.6 ? 1.6 : 4.2) : 4.2);
     this.speed = damp(this.speed, sp, 10, dt);
     if (mag > 0.08) { this.pos.x += dx * this.speed * dt; this.pos.z += dz * this.speed * dt; }
     // 向き
-    if (this.aiming || (IN.atk && W.id !== 'fist')) this.yaw += clamp(angDiff(this.yaw, cy + Math.PI), -12 * dt, 12 * dt);
+    if (this.gunUp) this.yaw += clamp(angDiff(this.yaw, Math.atan2(this.aimPt.x - this.pos.x, this.aimPt.z - this.pos.z)), -16 * dt, 16 * dt);   // 照準の先を向く
     else if (mag > 0.08) this.yaw += clamp(angDiff(this.yaw, Math.atan2(dx, dz)), -10 * dt, 10 * dt);
     // ジャンプ
     if (IN.pressed.has('jump') && this.onGround) { this.vy = 4.6; this.onGround = false; AUDIO.step(0.6); }
@@ -129,7 +137,7 @@ const PLAYER = {
     this.attack(dt);
     // アニメ
     if (h.anim === 'punch' && h.t < 0.42) { /* 殴っている途中 */ }
-    else if (this.aiming || (W.id !== 'fist' && IN.atk)) h.anim = 'aim';
+    else if (this.gunUp) h.anim = 'aim';
     else h.anim = this.speed > 3 ? 'run' : this.speed > 0.4 ? 'walk' : 'idle';
     this.place(dt, this.speed);
     // 足音
@@ -150,34 +158,63 @@ const PLAYER = {
     }
     this.pos.x = q.x; this.pos.z = q.z;
     const h = this.h; h.root.position.copy(this.pos); h.root.rotation.y = this.yaw;
-    h.lookPitch = this.aiming ? clamp(-CAM.pitch * 0.6, -0.5, 0.5) : 0;
+    const ap = this.gunUp ? clamp(Math.atan2(this.aimPt.y - (this.pos.y + 1.4), Math.hypot(this.aimPt.x - this.pos.x, this.aimPt.z - this.pos.z) || 1), -0.9, 0.9) : 0;
+    h.aimPitch = ap; h.lookPitch = this.gunUp ? clamp(-ap * 0.7, -0.5, 0.5) : 0;
+    h.recoil = Math.max(0, (h.recoil || 0) - dt * 9);
     poseHuman(h, dt, sp);
     // 銃を手に
     const W = this.weaponDef, gun = this.gun;
     gun.visible = W.id !== 'fist' && !this.car && this.alive; gun.userData.smgPart.visible = W.id === 'smg';
-    if (gun.visible) { handPos(h, gun.position); gun.rotation.set(h.anim === 'aim' ? -CAM.pitch * 0.6 : 0.9, this.yaw, 0, 'YXZ'); }
+    if (gun.visible) { handPos(h, gun.position); if (h.anim === 'aim' && this.gunUp) gun.lookAt(this.aimPt); else gun.rotation.set(0.9, this.yaw, 0, 'YXZ'); }
   },
   cycleWeapon(d) {
     const ids = WEAPONS.map((w, i) => i).filter(i => this.owned[WEAPONS[i].id]);
     const k = ids.indexOf(this.weapon); this.weapon = ids[(k + d + ids.length) % ids.length]; UI.weapon(); AUDIO.click();
   },
-  // 狙い：PCで右クリック中は画面の中心へ。それ以外は前にいる相手を自動で
-  pickTarget() {
-    const P = this.pos, cf = camFwd(); let best = null, bs = -1e9;
-    const consider = (o, x, y, z, hostile) => {
-      const dx = x - P.x, dz = z - P.z, d = Math.hypot(dx, dz); if (d > 38 || d < 0.5) return;
-      const dot = (dx * cf.x + dz * cf.z) / d; if (dot < 0.72) return;
-      if (segBlock(P.x, P.z, x, z, 1.2) < 1) return;
-      const s = dot * 2 - d / 30 + (hostile ? 1.5 : 0);
-      if (s > bs) { bs = s; best = { o, x, y, z }; }
+  // ---------- 銃：照準（画面の真ん中）の先を撃つ ----------
+  // 毎フレーム、カメラから画面の真ん中へ光線を飛ばして「照準が指している所」を出す。弾は銃口からそこへ飛ぶ
+  updateAim(dt) {
+    const W = this.weaponDef;
+    // スマホ（とマウスを固定していないとき）は、狙う・撃つを押した瞬間に照準の近くの人へ吸いつき、ゆるく追う
+    const assist = IS_TOUCH || !IN.locked;
+    const aimStart = this.aiming && !this.wasAim, fireStart = IN.atk && !this.atkWas && !this.aiming;
+    this.wasAim = this.aiming; this.atkWas = IN.atk;
+    this.bloom = Math.max(0, this.bloom - dt * (this.fireT > -0.05 ? 0.02 : 0.09));
+    if (!this.gunUp) { this.lock = null; this.aimHit = null; return; }
+    if (assist && (aimStart || (fireStart && !this.lock))) { const L = this.findLock(aimStart ? 0.38 : 0.55, W.range); if (L) { this.lock = L; this.lockT = 0; this.snapY = null; this.offY = this.offP = 0; } }
+    if (this.lock) {
+      this.lockT += dt;
+      const o = this.lock.p || this.lock.c;
+      if ((this.lock.p ? o.state === 'dead' : o.dead) || Math.hypot(o.x - this.pos.x, o.z - this.pos.z) > W.range) this.lock = null;
+    }
+    camera.getWorldDirection(_aimDir);
+    const r = aimCast(camera.position, _aimDir, W.range + 6);
+    this.aimHit = r; this.aimPt.copy(camera.position).addScaledVector(_aimDir, r.t);
+  },
+  // 吸いつく相手：照準からの角度が小さい・近い・見えている人（★があるときは警官を優先）。パトカーも
+  findLock(maxAng, range) {
+    const C = camera.position; camera.getWorldDirection(_aimDir); let best = null, bs = 1e9;
+    const consider = (o, x, y, z, hostile, isPed) => {
+      const dx = x - C.x, dy = y - C.y, dz = z - C.z, d = Math.hypot(dx, dy, dz); if (d > range + 4 || d < 1) return;
+      const ang = Math.acos(clamp((dx * _aimDir.x + dy * _aimDir.y + dz * _aimDir.z) / d, -1, 1)); if (ang > maxAng) return;
+      _aimTo.set(dx / d, dy / d, dz / d); const r = aimCast(C, _aimTo, d + 1.5);   // 壁のうしろは狙えない
+      if (isPed ? r.p !== o : r.c !== o) return;
+      const sc = ang + d * 0.004 - (hostile ? 0.12 : 0);
+      if (sc < bs) { bs = sc; best = isPed ? { p: o } : { c: o }; }
     };
-    for (const p of WORLD.peds) if (p.state !== 'dead' && p.state !== 'lie') consider(p, p.x, p.y + 1.2, p.z, p.kind === 'police' && WANTED.level > 0);
-    for (const c of WORLD.cars) if (!c.dead && c !== this.car && (c.police || this.aiming)) consider(c, c.x, c.y + 0.9, c.z, c.police && WANTED.level > 0);
+    for (const p of WORLD.peds) if (p.state !== 'dead') consider(p, p.x, p.y + lockHeight(p), p.z, p.kind === 'police' && WANTED.level > 0, true);
+    for (const c of WORLD.cars) if (!c.dead && c.police && WANTED.level > 0) consider(c, c.x, c.y + 0.9, c.z, true, false);
     return best;
+  },
+  spreadNow() { const W = this.weaponDef; return !W.spread ? 0 : W.spread * (this.aiming ? 0.5 : 1) + (this.speed > 0.6 ? 0.006 : 0) + (this.onGround ? 0 : 0.02) + this.bloom; },
+  reload() {
+    const W = this.weaponDef; if (W.id === 'fist' || this.reloadT > 0) return false;
+    const n = Math.min(W.mag - this.mag[W.id], this.ammo[W.id]); if (n <= 0) return false;
+    this.reloadT = 1.1; this.ammo[W.id] -= n; this.mag[W.id] += n; AUDIO.reload(); UI.weapon(); return true;
   },
   attack(dt) {
     const W = this.weaponDef, h = this.h;
-    this.target = (W.id !== 'fist' && (IN.atk || this.aiming) && !(IN.locked && IN.aim)) ? this.pickTarget() : null;
+    this.target = this.lock ? (this.lock.p || this.lock.c) : null;
     if (!IN.atk) return;
     if (W.id === 'fist') {
       if (this.punchT > 0) return;
@@ -193,55 +230,107 @@ const PLAYER = {
     }
     if (this.reloadT > 0 || this.fireT > 0) return;
     if (this.mag[W.id] <= 0) {
-      if (this.ammo[W.id] > 0) { this.reloadT = 1.1; const n = Math.min(W.mag, this.ammo[W.id]); this.ammo[W.id] -= n; this.mag[W.id] = n; AUDIO.reload(); UI.weapon(); }
-      else { this.fireT = 0.4; AUDIO.click(); }
+      if (!this.reload()) { this.fireT = 0.4; AUDIO.click(); }
       return;
     }
+    if (this.lock && this.lockT < 0.25) return;   // スマホ：照準が相手に吸いつき終わってから撃つ
+    // 体が照準の方を向いてから撃つ（振り向くのは一瞬）
+    if (Math.abs(angDiff(this.yaw, Math.atan2(this.aimPt.x - this.pos.x, this.aimPt.z - this.pos.z))) > 0.5) return;
     this.fireT = W.rate; this.mag[W.id]--; UI.weapon();
-    // 弾の向き
-    const from = handPos(h, new THREE.Vector3()); from.y = Math.max(from.y, this.pos.y + 1.2);
-    let dir;
-    if (this.target) { dir = new THREE.Vector3(this.target.x - from.x, this.target.y - from.y, this.target.z - from.z).normalize(); }
-    else { dir = new THREE.Vector3(); camera.getWorldDirection(dir); }
-    dir.x += rr(-1, 1) * W.spread; dir.y += rr(-1, 1) * W.spread; dir.z += rr(-1, 1) * W.spread; dir.normalize();
-    shootRay(from, dir, W.range, W.dmg, PLAYER);
-    FX.muzzle(from.x + dir.x * 0.3, from.y + dir.y * 0.3, from.z + dir.z * 0.3); AUDIO.gun(from.x, from.z, W.id === 'smg' ? 0.8 : 1);
-    GAME.shake = Math.max(GAME.shake, 0.08);
+    // 当たるかどうかは照準の線（カメラから画面の真ん中）で決める＝照準が赤ならその人に当たる（ばらつきの分はずれる）。
+    // 銃口からその点までの間に壁や車があれば、そちらに当たる
+    const cdir = new THREE.Vector3(); camera.getWorldDirection(cdir);
+    const s = this.spreadNow(), a = Math.random() * Math.PI * 2, m = Math.sqrt(Math.random()) * s;   // ばらつき（円の中に一様）
+    _aimTo.set(-cdir.z, 0, cdir.x).normalize(); const up = new THREE.Vector3().crossVectors(_aimTo, cdir).normalize();
+    cdir.addScaledVector(_aimTo, Math.cos(a) * m).addScaledVector(up, Math.sin(a) * m).normalize();
+    const C = camera.position, t0 = Math.max(0, (this.pos.x - C.x) * cdir.x + (this.pos.y + 1.4 - C.y) * cdir.y + (this.pos.z - C.z) * cdir.z);   // 自分より前から
+    const cs = C.clone().addScaledVector(cdir, t0), rc = aimCast(cs, cdir, W.range);
+    const end = cs.clone().addScaledVector(cdir, rc.t);
+    const from = this.gun.position.clone(); from.y = Math.max(from.y, this.pos.y + 1.05);
+    const dir = end.clone().sub(from); const dl = dir.length(); dir.multiplyScalar(1 / (dl || 1));
+    from.addScaledVector(dir, 0.28);
+    const rm = aimCast(from, dir, Math.max(0.05, dl - 0.6));   // 銃口と当たる点の間に何かあるか
+    const hit = rm.kind ? applyShot(from, dir, rm, W.dmg, PLAYER) : applyShot(from, dir, Object.assign({}, rc, { t: dl - 0.28 }), W.dmg, PLAYER);
+    if (hit && hit.p) UI.hitMark(hit.killed || hit.head);
+    FX.muzzle(from.x, from.y, from.z); AUDIO.gun(from.x, from.z, W.id === 'smg' ? 0.8 : 1);
+    // 反動：カメラが跳ね上がって戻る・照準が広がる・腕がはねる
+    CAM.kick += W.recoil * (this.aiming ? 0.75 : 1); CAM.kickYaw += rr(-1, 1) * W.recoil * 0.3;
+    this.bloom = Math.min(0.07, this.bloom + W.bloom); h.recoil = 1;
+    GAME.shake = Math.max(GAME.shake, W.id === 'smg' ? 0.03 : 0.05);
     crime('shoot', this.pos.x, this.pos.z); WORLD.scare(this.pos.x, this.pos.z, 45, this.pos);
   },
 };
-// 弾：人（円柱）・車（球）・建物（箱）のうち、いちばん手前に当たる
-function shootRay(from, dir, range, dmg, by) {
-  let bestT = range, hit = null;
-  const bx = from.x + dir.x * range, bz = from.z + dir.z * range;
-  const tb = segBlock(from.x, from.z, bx, bz, from.y + dir.y * range * 0.5); if (tb < 1) bestT = tb * range;
-  for (const p of WORLD.peds) {
-    if (p.state === 'dead') continue;
-    const ox = p.x - from.x, oz = p.z - from.z, t = ox * dir.x + oz * dir.z;   // 水平方向の最近点
-    const hl = Math.hypot(dir.x, dir.z) || 1, tt = t / (hl * hl); if (tt < 0 || tt > bestT) continue;
-    const cx = from.x + dir.x * tt - p.x, cz = from.z + dir.z * tt - p.z, y = from.y + dir.y * tt - p.y;
-    if (cx * cx + cz * cz < 0.36 * 0.36 && y > 0 && y < 1.85) { bestT = tt; hit = { p, head: y > 1.5 }; }
+const _aimDir = new THREE.Vector3(), _aimTo = new THREE.Vector3();
+// 人の狙う高さ（胸）：倒れている・しゃがんでいるときは低い
+function lockHeight(p) { const a = p.h.anim; return a === 'fall' || a === 'lie' ? 0.3 : a === 'cower' ? 0.8 : 1.25; }
+// 光線と箱（軸にそった）：入った所の t（なければ null）
+function rayBox(ox, oy, oz, dx, dy, dz, x0, y0, z0, x1, y1, z1, tmax) {
+  let t0 = 0, t1 = tmax;
+  for (const [o, d, lo, hi] of [[ox, dx, x0, x1], [oy, dy, y0, y1], [oz, dz, z0, z1]]) {
+    if (Math.abs(d) < 1e-9) { if (o < lo || o > hi) return null; continue; }
+    let ta = (lo - o) / d, tb = (hi - o) / d; if (ta > tb) { const q = ta; ta = tb; tb = q; }
+    if (ta > t0) t0 = ta; if (tb < t1) t1 = tb; if (t0 > t1) return null;
+  }
+  return t0;
+}
+// 光線がいちばん手前で当たるもの：建物・柱など（箱）、地面、車（向きのある箱）、人（円柱。頭は上の方）
+// 返り値 { t, kind: 'wall' | 'ground' | 'car' | 'ped' | null, p, c, head }
+function aimCast(from, dir, range) {
+  let res = { t: range, kind: null };
+  const ex = from.x + dir.x * range, ez = from.z + dir.z * range;
+  for (const c of colNear((from.x + ex) / 2, (from.z + ez) / 2, Math.hypot(ex - from.x, ez - from.z) / 2 + 2)) {
+    const t = rayBox(from.x, from.y, from.z, dir.x, dir.y, dir.z, c.x0, -1, c.z0, c.x1, c.h, c.z1, res.t);
+    if (t !== null && t < res.t) res = { t, kind: 'wall' };
+  }
+  if (dir.y < -1e-4) {   // 地面（高さが場所で変わるので2回なおす）
+    let t = (from.y - groundH(from.x, from.z)) / -dir.y;
+    for (let k = 0; k < 3; k++) t = (from.y - groundH(from.x + dir.x * t, from.z + dir.z * t)) / -dir.y;
+    if (t > 0 && t < res.t) res = { t, kind: 'ground' };
   }
   for (const c of WORLD.cars) {
-    if (c === PLAYER.car) continue;
-    for (const [cx, cz] of c.circles()) {
-      const ox = cx - from.x, oy = c.y + 0.8 - from.y, oz = cz - from.z, t = ox * dir.x + oy * dir.y + oz * dir.z;
-      if (t < 0 || t > bestT) continue;
-      const qx = ox - dir.x * t, qy = oy - dir.y * t, qz = oz - dir.z * t;
-      if (qx * qx + qy * qy + qz * qz < 1.05 * 1.05) { bestT = t; hit = { c }; }
-    }
+    if (c === PLAYER.car || Math.abs(c.x - from.x) > range + 4 || Math.abs(c.z - from.z) > range + 4) continue;
+    const s = Math.sin(c.yaw), co = Math.cos(c.yaw), ox = from.x - c.x, oz = from.z - c.z, T = c.T;
+    const t = rayBox(ox * co - oz * s, from.y - c.y, ox * s + oz * co, dir.x * co - dir.z * s, dir.y, dir.x * s + dir.z * co, -T.W / 2, 0.22, -T.L / 2, T.W / 2, T.roof, T.L / 2, res.t);
+    if (t !== null && t < res.t) res = { t, kind: 'car', c };
   }
-  const end = new THREE.Vector3(from.x + dir.x * bestT, from.y + dir.y * bestT, from.z + dir.z * bestT);
+  const hl2 = dir.x * dir.x + dir.z * dir.z;
+  for (const p of WORLD.peds) {
+    if (p.state === 'dead') continue;
+    const a = p.h.anim, lying = a === 'fall' || a === 'lie', H = lying ? 0.45 : a === 'cower' ? 1.2 : 1.85, R = lying ? 0.8 : 0.34;
+    const ox = p.x - from.x, oz = p.z - from.z; if (Math.abs(ox) > range + 2 || Math.abs(oz) > range + 2) continue;
+    // 円柱の側面に入る t と、そこでの高さ
+    const b = ox * dir.x + oz * dir.z, c2 = ox * ox + oz * oz - R * R; if (hl2 < 1e-9) continue;
+    const disc = b * b - hl2 * c2; if (disc < 0) continue;
+    const sq = Math.sqrt(disc); let t = (b - sq) / hl2; const tOut = (b + sq) / hl2;
+    if (tOut < 0 || t > res.t) continue;
+    if (t < 0) t = 0;
+    // 側面の高さが外れていたら、上から入るか（頭のてっぺん）を見る
+    let y = from.y + dir.y * t - p.y;
+    if (y > H && dir.y < 0) { const tt = (from.y - (p.y + H)) / -dir.y; if (tt <= tOut && tt >= t) { t = tt; y = H; } }
+    if (y < 0 || y > H || t > res.t) continue;
+    res = { t, kind: 'ped', p, head: !lying && a !== 'cower' && y > 1.52 };
+  }
+  return res;
+}
+// 弾を1発：いちばん手前に当たったものにダメージと効果。頭は一撃
+function shootRay(from, dir, range, dmg, by) { return applyShot(from, dir, aimCast(from, dir, range), dmg, by); }
+// 当たったもの r（aimCast の結果）に効果を。弾の線は from から dir へ r.t の所まで
+function applyShot(from, dir, r, dmg, by) {
+  const end = new THREE.Vector3(from.x + dir.x * r.t, from.y + dir.y * r.t, from.z + dir.z * r.t);
+  if (by === PLAYER) PLAYER.lastShot = { from: from.clone(), dir: dir.clone(), kind: r.kind, t: r.t };   // 確かめる用
   FX.tracer(from.clone(), end);
-  if (hit && hit.p) { WORLD.hurtPed(hit.p, hit.head ? dmg * 2.5 : dmg, by); FX.sparks(end.x, end.y, end.z, 2); }
-  else if (hit && hit.c) { hit.c.damage(dmg * 2.2, by); FX.sparks(end.x, end.y, end.z, 4); if (hit.c.ai && hit.c.ai.mode === 'traffic') hit.c.ai.panic = 8; if (hit.c.police && by === PLAYER) crime('hitCop', hit.c.x, hit.c.z); }
-  else if (bestT < range) FX.dust(end.x, end.y, end.z);
-  return hit;
+  if (r.kind === 'ped') {
+    const p = r.p; WORLD.hurtPed(p, r.head ? dmg * 3.6 : dmg, by, null, dir); FX.blood(end.x, end.y, end.z, dir);
+    return { p, head: r.head, killed: p.state === 'dead' };
+  }
+  if (r.kind === 'car') { const c = r.c; c.damage(dmg * 2.2, by); FX.sparks(end.x, end.y, end.z, 4); if (c.ai && c.ai.mode === 'traffic') c.ai.panic = 8; if (c.police && by === PLAYER) crime('hitCop', c.x, c.z); return { c }; }
+  if (r.kind) FX.dust(end.x - dir.x * 0.05, end.y - dir.y * 0.05, end.z - dir.z * 0.05);
+  return null;
 }
 // ---------- カメラ ----------
 const _ct = new THREE.Vector3();
 function updateCamera(dt) {
-  const sens = SET.sens * HUB.sens;
+  const sens = SET.sens * HUB.sens * (PLAYER.aiming && !PLAYER.car ? 0.6 : 1);   // ズームしている間はゆっくり
   const lx = IN.lookX * sens, ly = IN.lookY * sens; IN.lookX = 0; IN.lookY = 0;
   const looking = Math.abs(lx) + Math.abs(ly) > 1e-4;
   CAM.yaw -= lx; CAM.pitch = clamp(CAM.pitch - ly, -1.1, 0.75);
@@ -255,10 +344,23 @@ function updateCamera(dt) {
   } else {
     const P = PLAYER.pos;
     if (looking) CAM.idleT = 0; else CAM.idleT += dt;
-    if (CAM.idleT > 2 && PLAYER.speed > 2.5 && !PLAYER.aiming) CAM.yaw += angDiff(CAM.yaw, PLAYER.yaw + Math.PI) * Math.min(1, dt * 1.2);
-    if (PLAYER.target && !IN.locked) { const t = PLAYER.target, want = Math.atan2(-(t.x - P.x), -(t.z - P.z)); CAM.yaw += angDiff(CAM.yaw, want) * Math.min(1, dt * 6); }
-    tx = P.x; ty = P.y + (PLAYER.alive ? 1.55 : 0.6); tz = P.z;
-    dist = PLAYER.aiming ? 2.3 : 4.3; side = PLAYER.aiming ? 0.62 : 0;
+    if (CAM.idleT > 2 && PLAYER.speed > 2.5 && !PLAYER.gunUp) CAM.yaw += angDiff(CAM.yaw, PLAYER.yaw + Math.PI) * Math.min(1, dt * 1.2);
+    // 吸いついた相手（スマホ）：カメラの向き＝相手の胸への向き＋ずれ。ずれ＝吸いつく前の向きの残り（0.25秒で0になる）
+    // ＋指でなぞった分（頭を狙うなど）。なぞった分が 12° をこえたら外れる。相手が動けばそのままついていく
+    if (PLAYER.lock && PLAYER.gunUp) {
+      const o = PLAYER.lock.p || PLAYER.lock.c, ly2 = PLAYER.lock.p ? o.y + lockHeight(o) : o.y + 0.9;
+      const dx = o.x - CAM.x, dz = o.z - CAM.z, wantY = Math.atan2(-dx, -dz), wantP = Math.atan2(ly2 - CAM.y, Math.hypot(dx, dz));
+      if (PLAYER.snapY === null) { PLAYER.snapY = angDiff(wantY, CAM.yaw + lx); PLAYER.snapP = CAM.pitch + ly - wantP; }   // 吸いつく前の向き
+      PLAYER.offY -= lx; PLAYER.offP -= ly;
+      const sk = PLAYER.lockT < 0.25 ? Math.exp(-18 * dt) : 0; PLAYER.snapY *= sk; PLAYER.snapP *= sk;
+      CAM.yaw = wantY + PLAYER.snapY + PLAYER.offY; CAM.pitch = clamp(wantP + PLAYER.snapP + PLAYER.offP, -1.1, 0.75);
+      if (Math.abs(PLAYER.offY) > 0.22 || Math.abs(PLAYER.offP) > 0.22) PLAYER.lock = null;
+    }
+    // 構えると肩越し（右肩）に寄る。狙うともっと寄ってズーム
+    CAM.ots = damp(CAM.ots, !PLAYER.alive ? 0 : PLAYER.aiming ? 2 : PLAYER.gunUp ? 1 : 0, 9, dt);
+    const o = CAM.ots;
+    tx = P.x; ty = P.y + (PLAYER.alive ? 1.55 + Math.min(1, o) * 0.07 : 0.6); tz = P.z;
+    dist = o < 1 ? lerp(4.3, 2.75, o) : lerp(2.75, 1.7, o - 1); side = o < 1 ? lerp(0, 0.5, o) : lerp(0.5, 0.6, o - 1);
     if (!PLAYER.alive) dist = 6;
   }
   const cp = Math.cos(CAM.pitch), sp = Math.sin(CAM.pitch);
@@ -272,9 +374,11 @@ function updateCamera(dt) {
   const k = 1 - Math.exp(-(PLAYER.car ? 14 : 18) * dt);
   CAM.x = lerp(CAM.x, wx, k); CAM.y = lerp(CAM.y, wy, k); CAM.z = lerp(CAM.z, wz, k);
   camera.position.set(CAM.x, CAM.y, CAM.z);
-  camera.rotation.set(CAM.pitch, CAM.yaw, 0);
+  // 反動：跳ね上がった分は少しずつ戻る
+  const kd = Math.exp(-9 * dt); CAM.kick *= kd; CAM.kickYaw *= kd;
+  camera.rotation.set(CAM.pitch + CAM.kick, CAM.yaw + CAM.kickYaw, 0);
   // 揺れ
   if (GAME.shake > 0) { camera.position.x += rr(-1, 1) * GAME.shake * 0.12; camera.position.y += rr(-1, 1) * GAME.shake * 0.12; GAME.shake = Math.max(0, GAME.shake - dt * 2.5); }
-  const baseFov = VW() < VH() ? 78 : 66, wantFov = baseFov + (PLAYER.car ? Math.min(14, PLAYER.car.speed * 0.28) : 0) - (PLAYER.aiming ? 8 : 0);
+  const baseFov = VW() < VH() ? 78 : 66, wantFov = baseFov + (PLAYER.car ? Math.min(14, PLAYER.car.speed * 0.28) : 0) - (PLAYER.car ? 0 : PLAYER.aiming ? 15 * Math.max(0, CAM.ots - 1) : PLAYER.gunUp ? 4 : 0);
   CAM.fov = damp(CAM.fov || baseFov, wantFov, 4, dt); if (Math.abs(camera.fov - CAM.fov) > 0.05) { camera.fov = CAM.fov; camera.updateProjectionMatrix(); }
 }
