@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>ミラージュ・シティ</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&display=swap">
+<style>
+/* 全画面3D + 隅にHUD。ゲーム画面なので単一の暗いテーマで固定（画質の土台は「砂の路地」） */
+:root {
+  --ink: #f2ede4; --ink-dim: rgba(242,237,228,.66); --shade: rgba(14,13,11,.55); --line: rgba(242,237,228,.28);
+  --ground: #16140f; --accent: #e8c27a; --green: #7fd36a; --blue: #6fb4ff; --red: #ff5a4a;
+  --f-ui: "Chakra Petch", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+  --sw: 1vw; --sh: 1vh;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--ground); color: var(--ink); overflow: hidden; font-family: var(--f-ui);
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: none; overscroll-behavior: none; }
+#rot { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; transform-origin: 0 0; overflow: hidden; }
+#c { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+#vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 55%, transparent 55%, rgba(0,0,0,.36) 100%); }
+#flash { position: absolute; inset: 0; pointer-events: none; background: #fff; opacity: 0; }
+#hurt { position: absolute; inset: 0; pointer-events: none; opacity: 0; background: radial-gradient(ellipse at 50% 50%, transparent 45%, rgba(170,20,10,.55) 100%); }
+.hud { position: absolute; pointer-events: none; font-variant-numeric: tabular-nums; text-shadow: 0 1px 2px rgba(0,0,0,.7), 0 0 6px rgba(0,0,0,.35); }
+#cross { position: absolute; left: 50%; top: 45%; width: 26px; height: 26px; margin: -13px 0 0 -13px; pointer-events: none; display: none; }
+#cross:before, #cross:after { content: ""; position: absolute; background: var(--ink); box-shadow: 0 0 0 1px rgba(0,0,0,.45); }
+#cross:before { left: 12px; top: 0; width: 2px; height: 26px; } #cross:after { top: 12px; left: 0; height: 2px; width: 26px; }
+#cross.lock:before, #cross.lock:after { background: var(--red); }
+#tr { right: calc(14px + env(safe-area-inset-right, 0px)); top: calc(10px + env(safe-area-inset-top, 0px)); text-align: right; }
+#money { font-size: 26px; font-weight: 700; color: #9fe08c; letter-spacing: .02em; }
+#stars { font-size: 22px; letter-spacing: 3px; height: 28px; }
+#stars b { color: rgba(255,255,255,.18); font-weight: 400; } #stars b.on { color: #f4f0e6; } #stars.blink b.on { animation: blink .5s steps(2) infinite; }
+@keyframes blink { 50% { opacity: .25; } }
+#weapon { margin-top: 2px; font-size: 15px; color: var(--ink); } #weapon small { color: var(--ink-dim); margin-left: 6px; font-size: 13px; }
+#mm { left: calc(12px + env(safe-area-inset-left, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); width: 172px; height: 172px; }
+#mm canvas { width: 100%; height: 100%; display: block; }
+#obj { left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: min(640px, calc(70 * var(--sw))); text-align: center; font-size: 17px; line-height: 1.45; font-weight: 600; }
+#obj span { background: rgba(10,9,7,.42); padding: 3px 10px; border-radius: 6px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+#sub { left: 50%; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: min(720px, calc(80 * var(--sw))); text-align: center; font-size: 17px; line-height: 1.5; opacity: 0; transition: opacity .3s; }
+#sub b { color: var(--accent); }
+#big { left: 0; right: 0; top: 34%; text-align: center; opacity: 0; transition: opacity .6s; }
+#big h1 { margin: 0; font-size: min(64px, calc(11 * var(--sw))); font-weight: 700; letter-spacing: .08em; color: var(--accent); text-shadow: 0 3px 0 rgba(0,0,0,.55), 0 0 22px rgba(0,0,0,.6); }
+#big p { margin: 6px 0 0; font-size: 20px; font-weight: 600; }
+#prompt { left: 50%; top: 62%; transform: translateX(-50%); background: var(--shade); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; font-size: 14px; display: none; }
+#hint { left: 50%; top: calc(54px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); background: var(--shade); border: 1px solid var(--line); border-radius: 8px; padding: 9px 14px; font-size: 13px; line-height: 1.5; text-align: center; width: max-content; max-width: calc(100% - 40px); transition: opacity 1s; opacity: 0; }
+#speed { right: calc(16px + env(safe-area-inset-right, 0px)); bottom: calc(196px + env(safe-area-inset-bottom, 0px)); font-size: 30px; font-weight: 700; display: none; }
+#speed small { font-size: 13px; color: var(--ink-dim); margin-left: 3px; }
+#fps { left: calc(14px + env(safe-area-inset-left, 0px)); top: calc(10px + env(safe-area-inset-top, 0px)); font-size: 11px; color: var(--ink-dim); }
+#radio { left: calc(14px + env(safe-area-inset-left, 0px)); top: calc(28px + env(safe-area-inset-top, 0px)); font-size: 13px; color: var(--ink-dim); display: none; }
+body.hub #fps, body.hub #radio { left: calc(60px + env(safe-area-inset-left, 0px)); }   /* 3dgame のホームの ⚙ が左上にくるので、その右へ */
+#pauseB { position: absolute; right: calc(12px + env(safe-area-inset-right, 0px)); top: calc(96px + env(safe-area-inset-top, 0px)); font: 600 13px var(--f-ui); color: var(--ink); background: var(--shade); border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; cursor: pointer; }
+/* タッチ操作 */
+.joy { position: absolute; width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%; border: 1.5px solid var(--line); background: rgba(14,13,11,.2); pointer-events: none; display: none; }
+.joy i { position: absolute; left: 50%; top: 50%; width: 48px; height: 48px; margin: -24px 0 0 -24px; border-radius: 50%; background: rgba(242,237,228,.38); }
+#tbtns { position: absolute; right: calc(10px + env(safe-area-inset-right, 0px)); bottom: calc(10px + env(safe-area-inset-bottom, 0px)); width: 250px; height: 250px; display: none; pointer-events: none; }
+.tb { position: absolute; width: 64px; height: 64px; border-radius: 50%; border: 1.5px solid rgba(242,237,228,.45); background: rgba(14,13,11,.34); color: var(--ink);
+  font: 700 13px var(--f-ui); display: flex; align-items: center; justify-content: center; text-align: center; line-height: 1.1; pointer-events: auto; touch-action: none; }
+.tb.on { background: rgba(232,194,122,.42); }
+.tb.big { width: 84px; height: 84px; font-size: 15px; }
+.tb.hide { display: none; }
+body.touch #tbtns { display: block; }
+/* 画面（タイトル・一時停止・読み込み） */
+.screen { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(12,11,9,.72); z-index: 5; overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
+.screen.on { display: flex; }
+.panel { width: min(460px, calc(92 * var(--sw))); padding: 22px 22px 18px; text-align: center; }
+.panel h1 { font-size: min(40px, calc(7 * var(--sw)), calc(9 * var(--sh))); letter-spacing: .1em; margin: 0 0 4px; font-weight: 700; white-space: nowrap; }
+.panel .tag { color: var(--accent); letter-spacing: .3em; font-size: 13px; margin-bottom: 18px; }
+.panel p { color: var(--ink-dim); font-size: 13px; line-height: 1.6; margin: 6px 0; }
+.mb { display: block; width: 100%; margin: 9px 0; padding: 12px; font: 600 16px var(--f-ui); color: var(--ink); background: rgba(242,237,228,.08); border: 1px solid var(--line); border-radius: 8px; cursor: pointer; letter-spacing: .06em; }
+.mb:hover, .mb:focus-visible { background: rgba(232,194,122,.2); outline: none; }
+.mb:disabled { opacity: .4; }
+.row { display: flex; gap: 8px; } .row .mb { flex: 1; }
+.seg { display: flex; gap: 6px; margin: 4px 0 10px; } .seg button { flex: 1; padding: 8px 4px; font: 600 14px var(--f-ui); color: var(--ink); background: rgba(242,237,228,.06); border: 1px solid var(--line); border-radius: 6px; }
+.seg button.on { background: rgba(232,194,122,.32); border-color: var(--accent); }
+.lab { text-align: left; font-size: 13px; color: var(--ink-dim); margin-top: 10px; }
+input[type=range] { width: 100%; }
+.how { text-align: left; font-size: 13px; line-height: 1.7; color: var(--ink); }
+.how b { color: var(--accent); }
+#load { z-index: 9; background: var(--ground); flex-direction: column; }
+#load h1 { font-size: 26px; font-weight: 600; letter-spacing: .14em; margin: 0 0 10px; }
+#load p { margin: 0; color: var(--ink-dim); font-size: 13px; letter-spacing: .06em; }
+body.short #obj { font-size: 15px; } body.short #big h1 { font-size: 40px; }
+body:not(.playing) .hud, body:not(.playing) #tbtns, body:not(.playing) #pauseB, body:not(.playing) #cross { display: none !important; }
+@media (prefers-reduced-motion: reduce) { #hint, #big, #sub { transition: none; } }
+</style></head><body>
+<div id="rot">
+<canvas id="c"></canvas>
+<div id="vignette"></div><div id="hurt"></div><div id="flash"></div>
+<div id="cross"></div>
+<div class="hud" id="fps"></div>
+<div class="hud" id="tr"><div id="money">$0</div><div id="stars"><b>★</b><b>★</b><b>★</b><b>★</b><b>★</b></div><div id="weapon">素手</div></div>
+<div class="hud" id="mm"><canvas id="mmc" width="344" height="344"></canvas></div>
+<div class="hud" id="radio"></div>
+<div class="hud" id="speed">0<small>km/h</small></div>
+<div class="hud" id="obj"></div>
+<div class="hud" id="sub"></div>
+<div class="hud" id="big"><h1></h1><p></p></div>
+<div class="hud" id="prompt"></div>
+<div class="hud" id="hint"></div>
+<button id="pauseB" type="button">Ⅱ</button>
+<div class="joy" id="joy"><i></i></div>
+<div id="tbtns">
+  <div class="tb big" id="bAtk" style="right:0;bottom:88px">攻撃</div>
+  <div class="tb" id="bJump" style="right:98px;bottom:4px">ジャンプ</div>
+  <div class="tb" id="bRun" style="right:4px;bottom:0">走る</div>
+  <div class="tb" id="bEnter" style="right:92px;bottom:96px">乗る</div>
+  <div class="tb" id="bWeap" style="right:12px;bottom:184px">武器</div>
+  <div class="tb" id="bAim" style="right:96px;bottom:178px">狙う</div>
+  <div class="tb big hide" id="bGas" style="right:0;bottom:0">アクセル</div>
+  <div class="tb big hide" id="bBrake" style="right:98px;bottom:0">ブレーキ</div>
+  <div class="tb hide" id="bHand" style="right:10px;bottom:96px">サイド</div>
+  <div class="tb hide" id="bHorn" style="right:178px;bottom:90px">ホーン</div>
+  <div class="tb hide" id="bRadio" style="right:178px;bottom:10px">ラジオ</div>
+</div>
+<div class="screen on" id="load"><h1>ミラージュ・シティ</h1><p id="loadmsg">素材を準備しています…</p></div>
+<div class="screen" id="title"><div class="panel">
+  <h1>ミラージュ・シティ</h1><div class="tag">MIRAGE CITY</div>
+  <p>砂の色をした海辺の街。盗んだ車で走り回り、仕事をこなして、警察から逃げきれ。</p>
+  <button class="mb" id="tCont" type="button">つづきから</button>
+  <button class="mb" id="tNew" type="button">はじめから</button>
+  <div class="row"><button class="mb" id="tSet" type="button">設定</button><button class="mb" id="tHow" type="button">操作方法</button></div>
+</div></div>
+<div class="screen" id="pause"><div class="panel">
+  <h1>一時停止</h1><div class="tag" id="pStat"></div>
+  <button class="mb" id="pRes" type="button">つづける</button>
+  <div class="row"><button class="mb" id="pSet" type="button">設定</button><button class="mb" id="pHow" type="button">操作方法</button></div>
+  <button class="mb" id="pTitle" type="button">タイトルへ（セーブします）</button>
+</div></div>
+<div class="screen" id="settings"><div class="panel">
+  <h1 style="font-size:28px">設定</h1>
+  <div class="lab">画質</div><div class="seg" id="sQ"><button data-v="low">低</button><button data-v="std">標準</button><button data-v="high">高</button></div>
+  <div class="lab">視点の速さ</div><input type="range" id="sSens" min="0.4" max="2.2" step="0.05">
+  <div class="lab">音量</div><input type="range" id="sVol" min="0" max="1" step="0.05">
+  <div class="lab">FPS表示</div><div class="seg" id="sFps"><button data-v="0">なし</button><button data-v="1">あり</button></div>
+  <button class="mb" id="sBack" type="button">もどる</button>
+</div></div>
+<div class="screen" id="how"><div class="panel">
+  <h1 style="font-size:28px">操作方法</h1>
+  <div class="how">
+  <b>スマホ</b>：左側をドラッグで移動（車ではハンドル）、右側をドラッグで視点。右下のボタンで攻撃・ジャンプ・走る・乗る／降りる・武器・狙う。車ではアクセル・ブレーキ（止まると後ろへ）・サイドブレーキ・ホーン・ラジオ。<br>
+  <b>PC</b>：WASDで移動、マウスで視点（クリックでマウスを固定）、Shiftで走る、Spaceでジャンプ、Fで車に乗る・降りる、左クリックで攻撃、右クリックで狙う、ホイールか1〜3で武器、Mで地図を大きく。車ではW/Sでアクセル・ブレーキ、A/Dでハンドル、Spaceでサイドブレーキ、Hでホーン、Rでラジオ、Cでカメラ。Escで一時停止。<br>
+  <b>手配度</b>：人や車を傷つけたり、警察の前で車を盗んだりすると★がつき、警察が追ってくる。見つからないところへ逃げると★が消える。<br>
+  <b>仕事</b>：地図の <b>N</b>（ナビールの店）へ行くと仕事がもらえる。$ の袋は街のあちこちに落ちている。
+  </div>
+  <button class="mb" id="hBack" type="button">もどる</button>
+</div></div>
+</div>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
