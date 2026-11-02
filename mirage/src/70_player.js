@@ -67,7 +67,7 @@ const PLAYER = {
     this.pos.set(c.x + cz * 1.7, c.y, c.z - sx * 1.7); this.yaw = c.yaw; this.vy = 0;
     const q = { x: this.pos.x, z: this.pos.z }; pushOut(q, 0.4, 0); this.pos.x = q.x; this.pos.z = q.z;
     if (!force) { AUDIO.door(c.x, c.z); if (c.speed > 9) { this.knock(c.vx * 0.3, c.vz * 0.3); this.hurt(c.speed * 0.6); } }
-    c.input.th = 0; c.input.br = 0; c.input.hb = true; c.keep = false;
+    c.input.th = 0; c.input.br = 0; c.input.st = 0; c.input.hb = false; c.rollT = 0; c.keep = false;   // 走ったまま降りたら、少し進んでから自動で止まる（WORLD.update）
     AUDIO.engineOff();
     this.car = null; setTouchMode(false); UI.weapon();
     CAM.yaw = c.yaw + Math.PI;
@@ -82,6 +82,7 @@ const PLAYER = {
   },
   drive(dt) {
     const c = this.car, I = c.input, k = keyAxes();
+    I.stop = 0;   // 運転中は自動ブレーキなし
     let th = IN.gas || (k.y > 0 ? 1 : 0), br = IN.brake || (k.y < 0 ? 1 : 0), st = -(k.x || 0);
     if (IS_TOUCH) { st = -IN.mx * Math.min(1, Math.abs(IN.mx) * 1.3); if (IN.my > 0.35 && !IN.gas) th = Math.max(th, IN.my); if (IN.my < -0.35 && !IN.brake) br = Math.max(br, -IN.my); }
     I.th = th; I.br = br; I.st = st; I.hb = IN.hand || !!IN.keys.Space;

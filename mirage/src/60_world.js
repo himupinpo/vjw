@@ -117,8 +117,13 @@ const WORLD = {
     for (const p of this.peds.slice()) { const d = Math.hypot(p.x - P.x, p.z - P.z); if ((d > 125 && !p.keep) || (p.state === 'dead' && p.st > 25)) this.removePed(p); }
     // 車：AI と物理
     for (const c of this.cars) {
-      if (c.ai && !c.dead) aiDrive(c, dt);
-      else if (c !== PLAYER.car) { c.input.th = 0; c.input.br = c.speed > 0.3 ? 0.6 : 0; c.input.st = 0; c.input.hb = c.speed < 0.3; }
+      if (c.ai && !c.dead) { c.input.stop = 0; aiDrive(c, dt); }
+      else if (c !== PLAYER.car) {
+        // 誰も乗っていない車：降りた直後は少し惰性で進み、そのあと自動でブレーキがだんだん強くかかって止まる
+        const I = c.input, t = c.rollT = c.rollT == null ? 9 : c.rollT + dt;
+        I.th = 0; I.br = 0; I.st = 0; I.hb = c.speed < 0.3;
+        I.stop = t < 0.6 ? 0.8 : Math.min(6.5, 2 + (t - 0.6) * 6);
+      }
       const far = Math.hypot(c.x - P.x, c.z - P.z) > 100;
       if (far && c.ai && c !== PLAYER.car) { c.update(dt); } else c.update(dt);
       if (c.m.siren) { const on = ((this.t * 6) | 0) % 2 === 0; c.m.siren[0].material = on ? CAR_MAT.sirenR : CAR_MAT.sirenOff; c.m.siren[1].material = on ? CAR_MAT.sirenOff : CAR_MAT.sirenB; }

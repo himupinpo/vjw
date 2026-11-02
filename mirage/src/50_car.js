@@ -131,6 +131,7 @@ class Car {
     if (I.br > 0) { if (vf > 0.6) vf -= 15 * I.br * dt; else vf = Math.max(-11, vf - 6 * I.br * dt); }
     if (!I.th && !I.br) vf -= Math.sign(vf) * Math.min(Math.abs(vf), (1.2 + Math.abs(vf) * 0.04) * dt);
     if (I.hb) vf -= Math.sign(vf) * Math.min(Math.abs(vf), 5 * dt);
+    if (I.stop > 0) vf -= Math.sign(vf) * Math.min(Math.abs(vf), I.stop * dt);   // 誰も乗っていない車：前でも後ろでも 0 に向かって減速（逆には走らない）
     vf -= vf * Math.abs(vf) * 0.0009 * dt;
     // ハンドル（速いほど切れない）
     const maxSt = 0.62 / (1 + Math.abs(vf) / 22);
