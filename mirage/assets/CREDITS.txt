@@ -1,0 +1,9 @@
+ミラージュ・シティ — assets
+
+cars.json / cars.bin
+  Car models from "Cars Pack" by Quaternius (https://quaternius.com/packs/cars.html)
+  License: CC0 1.0 Universal (public domain) — https://creativecommons.org/publicdomain/zero/1.0/
+  Converted from the pack's OBJ/MTL files (geometry and material names only) by tools/cars_pack.py.
+
+sky_rgbe.png, hardwood2_*.jpg
+  Same files as used by 砂の路地 (see that project for their sources).

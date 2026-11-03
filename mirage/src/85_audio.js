@@ -71,7 +71,7 @@ const AUDIO = {
     const a = this.ac, o1 = a.createOscillator(), o2 = a.createOscillator(), f = a.createBiquadFilter(), g = a.createGain();
     o1.type = 'sawtooth'; o2.type = 'square'; f.type = 'lowpass'; f.frequency.value = 600; f.Q.value = 2; g.gain.value = 0;
     o1.connect(f); o2.connect(f); f.connect(g); g.connect(this.sfx); o1.start(); o2.start();
-    this.eng = { o1, o2, f, g, rpm: 0.2, sports: c.type === 'sports' };
+    this.eng = { o1, o2, f, g, rpm: 0.2, sports: c.type === 'sports' || c.type === 'sports2' };
     if (RADIO.on) RADIO.start();
   },
   engineOff() { if (this.eng) { const e = this.eng; e.g.gain.setTargetAtTime(0, this.ac.currentTime, 0.1); setTimeout(() => { e.o1.stop(); e.o2.stop(); }, 400); this.eng = null; } RADIO.stop(); },

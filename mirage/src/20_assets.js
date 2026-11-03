@@ -258,6 +258,15 @@ async function loadAll(say) {
     console.warn('sky / wood not found, using fallbacks', e);
     TEX.hdr = fallbackSky(); TEX.wood = { map: TEX.pavers.map };
   }
+  // 車のモデル（Quaternius「Cars Pack」CC0）：このページの最後に埋めこんであるデータを読む。なければ前の作り方の車
+  say('車を準備しています…'); await nextFrame();
+  try {
+    const j = $('carsjson'), b = $('carsbin');
+    if (j && b) {
+      const s = atob(b.textContent.trim()), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i);
+      CAR_DATA.models = JSON.parse(j.textContent).models; CAR_DATA.bin = u.buffer; prepareCarTypes();
+    }
+  } catch (e) { console.warn('car models unavailable, using the built-in cars', e); CAR_DATA.models = null; }
   makeMaterials();
 }
 // 外壁：しっくいの上に、窓のアトラスを2つめのUV（auv）で重ねる。透明な所はしっくい

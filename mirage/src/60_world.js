@@ -8,7 +8,7 @@ const laneOff = d => ({ x: -d.dz * LANE, z: d.dx * LANE });
 function seatHuman(car, kind, o) {
   const h = makeHuman(kind, o); h.anim = 'sit';
   scene.remove(h.root); car.m.g.add(h.root);
-  h.root.position.set(car.T.W * 0.22, (car.type === 'suv' || car.type === 'pickup' ? 0.72 : car.type === 'sports' ? 0.3 : 0.42) + 0.08 - 0.95, -0.1);
+  h.root.position.set(car.T.W * 0.22, (car.type === 'suv' || car.type === 'pickup' ? 0.72 : car.type === 'sports' || car.type === 'sports2' ? 0.3 : 0.42) + 0.08 - 0.95, -0.1);
   h.mesh.castShadow = false; poseHuman(h, 0);
   return h;
 }
@@ -27,8 +27,8 @@ const WORLD = {
     if (c.parkKey != null) this.parked.delete(c.parkKey);
   },
   trafficCar(x, z, from, to) {
-    const r = Math.random(), type = r < 0.42 ? 'sedan' : r < 0.72 ? 'suv' : r < 0.86 ? 'pickup' : 'sports';
-    const taxi = type === 'sedan' && Math.random() < 0.25;
+    const r = Math.random(), type = r < 0.27 ? 'sedan' : r < 0.45 ? 'compact' : r < 0.65 ? 'suv' : r < 0.79 ? 'taxi' : r < 0.9 ? 'sports' : 'sports2';
+    const taxi = type === 'taxi';
     const d = segDir(from, to), c = this.spawnCar(type, x, z, Math.atan2(d.dx, d.dz), taxi ? { taxi: true, paint: [.96, .95, .9] } : {});
     c.ai = { from, to, cruise: rr(10, 14), stuckT: 0, honkT: 0, mode: 'traffic' };
     c.vx = d.dx * 8; c.vz = d.dz * 8;
@@ -108,7 +108,7 @@ const WORLD = {
     for (let k = 0; k < PARK.length; k++) {
       const s = PARK[k], d = Math.hypot(s.x - P.x, s.z - P.z);
       if (d < 130 && !this.parked.has(k) && !s.used) {
-        const r = Math.random(), c = this.spawnCar(r < 0.4 ? 'sedan' : r < 0.7 ? 'suv' : r < 0.85 ? 'pickup' : 'sports', s.x, s.z, s.yaw);
+        const r = Math.random(), c = this.spawnCar(r < 0.32 ? 'sedan' : r < 0.56 ? 'compact' : r < 0.8 ? 'suv' : r < 0.9 ? 'sports' : 'sports2', s.x, s.z, s.yaw);
         c.parkKey = k; this.parked.set(k, c);
       }
     }
@@ -381,7 +381,7 @@ const WANTED = {
     if (have < want && this.spawnT <= 0) {
       this.spawnT = 2.5;
       const s = WORLD.laneSpot(70, 150);
-      if (s) { const d = segDir(s.a, s.b), c = WORLD.spawnCar('suv', s.x, s.z, Math.atan2(d.dx, d.dz), { police: true }); c.ai = { mode: 'pursuit', to: null }; c.T = Object.assign({}, c.T, { max: 46, acc: 10.5 }); c.driverH = seatHuman(c, 'police'); }
+      if (s) { const d = segDir(s.a, s.b), c = WORLD.spawnCar('police', s.x, s.z, Math.atan2(d.dx, d.dz), { police: true }); c.ai = { mode: 'pursuit', to: null }; c.driverH = seatHuman(c, 'police'); }
     }
   },
 };

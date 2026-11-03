@@ -229,7 +229,7 @@ const MISSIONS = [
   { name: 'ひったくり', start(m) {
       UI.say([['ナビール', 'うちの売上を持ったやつが、ピックアップで逃げた！'], ['ナビール', '広場のあたりだ。車をぶつけるか撃って止めろ。']]);
       const pz = PLACES.plaza, s = WORLD.laneSpot(30, 140) || { x: pz.x, z: pz.z, a: 0, b: 1 };
-      m.car = missionCar('pickup', s.x, s.z, 0, { paint: [.55, .2, .15] }); m.car.ai = { mode: 'flee', speed: 24 }; m.car.driverH = seatHuman(m.car, 'casual');
+      m.car = missionCar('suv', s.x, s.z, 0, { paint: [.55, .2, .15] }); m.car.ai = { mode: 'flee', speed: 24 }; m.car.driverH = seatHuman(m.car, 'casual');
       m.step = 0; m.blip = { x: m.car.x, z: m.car.z, col: '#ff5a4a' }; UI.obj('赤いピックアップを止めろ');
     }, update(m) {
       if (m.step === 0) {

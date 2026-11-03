@@ -57,7 +57,7 @@ const PLAYER = {
     }
     if (c.parkKey != null) { PARK[c.parkKey].used = true; WORLD.parked.delete(c.parkKey); c.parkKey = null; }
     this.car = c; c.keep = true;
-    const h = this.h; scene.remove(h.root); c.m.g.add(h.root); h.anim = 'sit'; h.root.position.set(c.T.W * 0.22, (c.type === 'suv' || c.type === 'pickup' ? 0.72 : c.type === 'sports' ? 0.3 : 0.42) + 0.08 - 0.95, -0.1); h.root.rotation.set(0, 0, 0);
+    const h = this.h; scene.remove(h.root); c.m.g.add(h.root); h.anim = 'sit'; h.root.position.set(c.T.W * 0.22, (c.type === 'suv' || c.type === 'pickup' ? 0.72 : c.type === 'sports' || c.type === 'sports2' ? 0.3 : 0.42) + 0.08 - 0.95, -0.1); h.root.rotation.set(0, 0, 0);
     h.mesh.castShadow = false;
     this.gun.visible = false; AUDIO.door(c.x, c.z); AUDIO.engineOn(c);
     CAM.yaw = c.yaw + Math.PI; CAM.carLookT = 0;
