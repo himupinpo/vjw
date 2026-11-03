@@ -78,6 +78,11 @@ const PLAYER = {
   },
   // ---------- 毎フレーム ----------
   update(dt) {
+    // 守り：向きや位置が数でなくなったら（NaN）、最後に正しかった値にもどす（自分が消える・画面が白くなるのを防ぐ）
+    if (!isFinite(this.yaw)) this.yaw = isFinite(CAM.yaw) ? CAM.yaw + Math.PI : 0;
+    if (!isFinite(this.pos.x) || !isFinite(this.pos.y) || !isFinite(this.pos.z)) { if (this.goodPos) this.pos.copy(this.goodPos); else this.pos.set(0, 0, 0); this.vy = 0; }
+    else (this.goodPos || (this.goodPos = new THREE.Vector3())).copy(this.pos);
+    if (!isFinite(this.aimPt.x) || !isFinite(this.aimPt.y) || !isFinite(this.aimPt.z)) this.aimPt.set(this.pos.x + Math.sin(this.yaw) * 10, this.pos.y + 1.4, this.pos.z + Math.cos(this.yaw) * 10);
     this.hurtT += dt;
     if (this.hurtT > 6 && this.hp < 50 && this.alive) this.hp = Math.min(50, this.hp + 2 * dt);
     if (!this.alive) { this.h.anim = 'lie'; poseHuman(this.h, dt); return; }
@@ -101,10 +106,11 @@ const PLAYER = {
     if (c.dead && c.burnT > 2.5) { this.leaveCar(true); this.knock(0, 0); }
   },
   walk(dt) {
-    const h = this.h, k = keyAxes(), W = this.weaponDef;
-    // 武器の持ちかえ
+    const h = this.h, k = keyAxes();
+    // 武器の持ちかえ（このあとで今の武器を読む。持ちかえる前の武器のまま進むと、素手で照準を計算して向きが壊れた）
     if (IN.pressed.has('wnext') || IN.pressed.has('wprev') || IN.pressed.has('weapon')) this.cycleWeapon(IN.pressed.has('wprev') ? -1 : 1);
     for (const [key, i] of [['w1', 0], ['w2', 1], ['w3', 2]]) if (IN.pressed.has(key) && this.owned[WEAPONS[i].id]) { this.weapon = i; UI.weapon(); }
+    const W = this.weaponDef;
     // 倒れている
     if (this.down > 0) {
       this.down -= dt; this.pos.x += this.kx * dt; this.pos.z += this.kz * dt; this.kx *= Math.exp(-3 * dt); this.kz *= Math.exp(-3 * dt);
@@ -182,9 +188,11 @@ const PLAYER = {
     this.nudgeT = Math.max(0, this.nudgeT - dt);
     if (!this.gunUp) { this.assist = null; this.aimHit = null; return; }
     if (useAssist && aimStart) this.nudgeT = 0.15;   // 構えた瞬間だけ、近くの人へ少し強めに寄せる
-    this.assist = useAssist ? this.findAssist(W.range, this.nudgeT > 0 ? 1.6 : 1) : null;
+    const range = W.range || 60;   // 素手には射程がない
+    this.assist = useAssist ? this.findAssist(range, this.nudgeT > 0 ? 1.6 : 1) : null;
     camera.getWorldDirection(_aimDir);
-    const r = aimCast(camera.position, _aimDir, W.range + 6);
+    const r = aimCast(camera.position, _aimDir, range + 6);
+    if (!isFinite(r.t)) { this.aimHit = null; return; }
     this.aimHit = r; this.aimPt.copy(camera.position).addScaledVector(_aimDir, r.t);
   },
   // アシストする相手：照準のすぐ近く（遠いほど小さな円、3〜9°ほど）にいて、見えている人。★があるときは警官・パトカーを優先
@@ -332,6 +340,12 @@ function applyShot(from, dir, r, dmg, by) {
 // ---------- カメラ ----------
 const _ct = new THREE.Vector3();
 function updateCamera(dt) {
+  // 守り：カメラの向き・位置が数でなくなったら作り直す（画面が真っ白になるのを防ぐ）
+  if (!isFinite(CAM.yaw)) CAM.yaw = isFinite(PLAYER.yaw) ? PLAYER.yaw + Math.PI : Math.PI;
+  if (!isFinite(CAM.pitch)) CAM.pitch = -0.18;
+  if (!isFinite(CAM.kick) || !isFinite(CAM.kickYaw)) CAM.kick = CAM.kickYaw = 0;
+  if (!isFinite(CAM.ots)) CAM.ots = 0;
+  if (!isFinite(CAM.x) || !isFinite(CAM.y) || !isFinite(CAM.z)) CAM.snap = true;
   // エイムアシスト①：照準が人に近いほど、指で動かしたときの照準がゆっくりになる（通りすぎにくい）
   const A = !PLAYER.car && PLAYER.gunUp ? PLAYER.assist : null;
   const fr = A ? lerp(PLAYER.aiming ? 0.5 : 0.7, 1, clamp(Math.hypot(angDiff(CAM.yaw, A.wantY) * Math.cos(CAM.pitch), clamp(CAM.pitch, A.pLo, A.pHi) - CAM.pitch) / A.cone, 0, 1)) : 1;

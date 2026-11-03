@@ -506,7 +506,7 @@ function buildRoads() {
     for (let t = 9; t < P - 2 * HR - 6; t += 22) {
       if (j === 0 || (j + i) % 2 === 0) streetLamp(x0 + t, z0 + 1.2, Math.PI);
       if (i === 3 || i === 4) streetLamp(x1 - 1.2, z0 + t, Math.PI / 2);
-      if (j === 7) streetLamp(x0 + t + 11, z1 - 1.2, 0);
+      if (j === 7 && t + 11 < x1 - x0 - 4) streetLamp(x0 + t + 11, z1 - 1.2, 0);   // 区画の歩道の中だけ（はみ出すと交差点の横断歩道に立っていた）
     }
     const boulevard = i === 3 || i === 4 || j === 3 || j === 4 || j === 7 || D === 'tower' || D === 'hotel';
     if (boulevard) for (let t = 6; t < P - 2 * HR - 4; t += 15) {
