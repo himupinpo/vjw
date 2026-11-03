@@ -8,7 +8,7 @@ const laneOff = d => ({ x: -d.dz * LANE, z: d.dx * LANE });
 function seatHuman(car, kind, o) {
   const h = makeHuman(kind, o); h.anim = 'sit';
   scene.remove(h.root); car.m.g.add(h.root);
-  h.root.position.set(car.T.W * 0.22, (car.type === 'suv' || car.type === 'pickup' ? 0.72 : car.type === 'sports' || car.type === 'sports2' ? 0.3 : 0.42) + 0.08 - 0.95, -0.1);
+  h.root.position.set(car.T.W * 0.22, (car.type === 'suv' || car.type === 'pickup' ? 0.72 : car.type === 'sports' || car.type === 'sports2' ? 0.3 : 0.42) + 0.08 - (h.hipY || 0.95), -0.1);
   h.mesh.castShadow = false; poseHuman(h, 0);
   return h;
 }

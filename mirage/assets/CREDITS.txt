@@ -5,5 +5,12 @@ cars.json / cars.bin
   License: CC0 1.0 Universal (public domain) — https://creativecommons.org/publicdomain/zero/1.0/
   Converted from the pack's OBJ/MTL files (geometry and material names only) by tools/cars_pack.py.
 
+humans.json / humans.bin
+  Character models and animations from "Ultimate Modular Men" and "Ultimate Modular Women" by Quaternius
+  (https://quaternius.com/packs/ultimatemodularcharacters.html, https://quaternius.com/packs/ultimatemodularwomen.html)
+  License: CC0 1.0 Universal (public domain) — https://creativecommons.org/publicdomain/zero/1.0/
+  16 characters (glTF "Individual Characters"); meshes welded, positions quantised, 13 animation clips per gender,
+  converted by tools/humans_pack.py. Robes and head coverings (thobe, ghutra, abaya, hijab) are added in code.
+
 sky_rgbe.png, hardwood2_*.jpg
   Same files as used by 砂の路地 (see that project for their sources).

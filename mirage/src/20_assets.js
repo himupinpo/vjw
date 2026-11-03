@@ -267,6 +267,15 @@ async function loadAll(say) {
       CAR_DATA.models = JSON.parse(j.textContent).models; CAR_DATA.bin = u.buffer; prepareCarTypes();
     }
   } catch (e) { console.warn('car models unavailable, using the built-in cars', e); CAR_DATA.models = null; }
+  // 人のモデル（Quaternius「Ultimate Modular Men / Women」CC0）：同じく埋めこみ。なければ前の作り方の人
+  say('人を準備しています…'); await nextFrame();
+  try {
+    const j = $('humansjson'), b = $('humansbin');
+    if (j && b) {
+      const s = atob(b.textContent.trim()), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i);
+      const json = JSON.parse(j.textContent); HUMAN_DATA.bin = u.buffer; buildHumanClips(json); HUMAN_DATA.chars = json.chars;
+    }
+  } catch (e) { console.warn('human models unavailable, using the built-in people', e); HUMAN_DATA.chars = null; }
   makeMaterials();
 }
 // 外壁：しっくいの上に、窓のアトラスを2つめのUV（auv）で重ねる。透明な所はしっくい

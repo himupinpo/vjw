@@ -75,5 +75,5 @@ async function boot() {
     console.error(err);
   }
 }
-window.__MC = { loop: v => (RUN = v), step: (sec, d = 1 / 30) => { for (let t = 0; t < sec; t += d) tick(d); }, THREE, scene, camera, renderer, __composer: composer, gtao, GAME, PLAYER, WORLD, WANTED, CAM, IN, MAP, CITY, PLACES, PARK, CASH, COL, ROAD, MISSIONS, PICK, UI, AUDIO, RADIO, SET, applyQuality, groundH, segBlock, FX, crime, writeSave, loadSave, MAT, TEX, POP, aimCast, poseHuman };
+window.__MC = { loop: v => (RUN = v), step: (sec, d = 1 / 30) => { for (let t = 0; t < sec; t += d) tick(d); }, THREE, scene, camera, renderer, __composer: composer, gtao, GAME, PLAYER, WORLD, WANTED, CAM, IN, MAP, CITY, PLACES, PARK, CASH, COL, ROAD, MISSIONS, PICK, UI, AUDIO, RADIO, SET, applyQuality, groundH, segBlock, FX, crime, writeSave, loadSave, MAT, TEX, POP, aimCast, poseHuman, makeHuman, HUMAN_DATA };
 boot();
