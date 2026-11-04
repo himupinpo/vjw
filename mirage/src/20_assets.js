@@ -70,6 +70,18 @@ function makeStone() {
   const rough = canvasOf(S, i => { const g = 210 + 40 * N[i]; return [g, g, g]; });
   return { map: tex(col, true), normalMap: tex(normalCanvas(H, S, 5), false), roughnessMap: tex(rough, false) };
 }
+// 山の岩肌：ごつごつした起伏と細いひび（石畳ではない自然の岩）
+function makeRock() {
+  const S = 512, r = rng(71), N = fbm(S, [4, 8, 16, 32, 64, 128], [.35, .25, .18, .12, .08, .05], r), M = fbm(S, [6, 24, 96], [.5, .3, .2], r), H = new Float32Array(S * S);
+  const col = canvasOf(S, i => {
+    const rid = 1 - Math.abs(2 * N[i] - 1), crack = smooth(0.93, 0.99, rid);
+    H[i] = N[i] * 0.8 + M[i] * 0.3 - crack * 0.3;
+    const t = (0.74 + 0.4 * M[i]) * (1 - crack * 0.45) * (0.9 + 0.2 * N[i]);
+    return [176 * t, 146 * t, 118 * t];
+  });
+  const rough = canvasOf(S, i => { const g = 205 + 45 * M[i]; return [g, g, g]; });
+  return { map: tex(col, true), normalMap: tex(normalCanvas(H, S, 9), false), roughnessMap: tex(rough, false) };
+}
 // 布（屋台と商店のひさし）：織り目。色は頂点色で
 function makeFabric() {
   const S = 256, r = rng(61), N = fbm(S, [16, 64], [.5, .5], r), H = new Float32Array(S * S);
@@ -241,7 +253,7 @@ async function loadAll(say) {
   TEX.plaster = makePlaster(); await nextFrame();
   TEX.sand = makeSand(); await nextFrame();
   TEX.asphalt = makeAsphalt(); TEX.pavers = makePavers(); await nextFrame();
-  TEX.stone = makeStone(); TEX.fabric = makeFabric(); TEX.frond = makeFrond(); TEX.waves = makeWaves(); TEX.glass = makeTowerGlass(); await nextFrame();
+  TEX.stone = makeStone(); TEX.rock = makeRock(); TEX.fabric = makeFabric(); TEX.frond = makeFrond(); TEX.waves = makeWaves(); TEX.glass = makeTowerGlass(); await nextFrame();
   say('窓と扉を描いています…'); await nextFrame();
   TEX.atlas = makeAtlas(); await nextFrame();
   say('空と木材を読み込んでいます…'); await nextFrame();
@@ -277,6 +289,24 @@ async function loadAll(say) {
     }
   } catch (e) { console.warn('human models unavailable, using the built-in people', e); HUMAN_DATA.chars = null; }
   makeMaterials();
+}
+// 地面（街の外）：砂と岩肌を頂点ごとの重み rk でまぜる（急な斜面・山の上が岩）
+function terrainMaterial() {
+  const A = TEX.sand, R = TEX.rock;
+  const m = new THREE.MeshStandardMaterial({ vertexColors: true, map: A.map, normalMap: A.normalMap, roughnessMap: A.roughnessMap });
+  m.onBeforeCompile = sh => {
+    sh.uniforms.rockMap = { value: R.map }; sh.uniforms.rockNorm = { value: R.normalMap }; sh.uniforms.rockRough = { value: R.roughnessMap };
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float rk;\nvarying float vRk;')
+      .replace('#include <uv_vertex>', '#include <uv_vertex>\nvRk = rk;');
+    const nfm = THREE.ShaderChunk.normal_fragment_maps.replace('normal = normalize( tbn * mapN );',
+      'vec3 rN = texture2D( rockNorm, vRUv ).xyz * 2.0 - 1.0; mapN = normalize( mix( mapN, rN, vRk ) ); normal = normalize( tbn * mapN );');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform sampler2D rockMap;\nuniform sampler2D rockNorm;\nuniform sampler2D rockRough;\nvarying float vRk;')
+      .replace('#include <map_fragment>', '#include <map_fragment>\nvec2 vRUv = vMapUv * 0.27;\nvec4 rC = texture2D( rockMap, vRUv ) * mix( 1.0, texture2D( rockMap, vRUv * 0.13 + 0.31 ).r * 1.6, 0.5 );\ndiffuseColor.rgb = mix( diffuseColor.rgb, rC.rgb, vRk );')
+      .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = mix( roughnessFactor, texture2D( rockRough, vRUv ).g, vRk );')
+      .replace('#include <normal_fragment_maps>', nfm);
+  };
+  m.customProgramCacheKey = () => 'terrain';
+  return m;
 }
 // 外壁：しっくいの上に、窓のアトラスを2つめのUV（auv）で重ねる。透明な所はしっくい
 function facadeMaterial() {
@@ -317,6 +347,7 @@ function makeMaterials() {
     asphalt: std({ map: TEX.asphalt.map, normalMap: TEX.asphalt.normalMap, roughnessMap: TEX.asphalt.roughnessMap }),
     pavers: std({ map: TEX.pavers.map, normalMap: TEX.pavers.normalMap, roughnessMap: TEX.pavers.roughnessMap }),
     sand: std({ map: TEX.sand.map, normalMap: TEX.sand.normalMap, roughnessMap: TEX.sand.roughnessMap }),
+    terrain: terrainMaterial(),
     paint: std({ color: 0xeee8da, roughness: 0.6, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }),
     bark: std({ map: P.map, normalMap: P.normalMap, color: 0x8a7558, roughness: 1 }),
     frond: new THREE.MeshStandardMaterial({ map: TEX.frond, alphaTest: 0.45, side: THREE.DoubleSide, roughness: 0.75, vertexColors: true }),

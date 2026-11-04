@@ -3,17 +3,34 @@
 // =========================================================================================
 const GAME = {
   state: 'load', shake: 0, flash: 0, hurtFx: 0, mission: null, done: 0, cash: [], saveT: 0, t: 0,
+  stunts: [], found: [], slow: 1,   // 成功したジャンプ台、見つけた場所、スローモーション（1=ふつう）
+  // ジャンプ台から飛んで着地した（主人公の車）：遠くまで飛べば成功。はじめての台はお金
+  onLand(car) {
+    const t = car.takeoff; if (!t || t.ramp < 0) return;
+    const dist = Math.hypot(car.x - t.x, car.z - t.z); if (dist < 15 || car.dead) return;
+    const first = !this.stunts.includes(t.ramp);
+    if (first) { this.stunts.push(t.ramp); PLAYER.money += 500; UI.money(); AUDIO.coin(); writeSave(); }
+    UI.big('スタントジャンプ！', `${dist.toFixed(0)} m${first ? '　+$500' : ''}　（${this.stunts.length} / ${REG.ramps.length}）`, 2.6);
+  },
+  // 新しい場所に着いた（山頂・オアシスの村・港）：はじめてならお金
+  discover() {
+    const P = PLAYER.car || PLAYER.pos;
+    for (const key of ['summit', 'oasis', 'port']) {
+      const pl = PLACES[key]; if (!pl || this.found.includes(key) || Math.hypot(P.x - pl.x, P.z - pl.z) > (key === 'summit' ? 30 : 60)) continue;
+      this.found.push(key); PLAYER.money += 250; UI.money(); AUDIO.coin(); UI.big('発見：' + pl.name, `+$250　（${this.found.length} / 3）`, 2.6); writeSave();
+    }
+  },
   start(fresh) {
     WORLD.reset(); clearMission(); PICK.reset();
     const s = fresh ? null : loadSave();
     if (s) {
       Object.assign(PLAYER, { money: s.money || 0 }); PLAYER.owned = Object.assign({ fist: true, pistol: true, smg: false }, s.owned || {});
       PLAYER.ammo = Object.assign({ pistol: 48, smg: 0 }, s.ammo || {}); PLAYER.mag = Object.assign({ pistol: 12, smg: 0 }, s.mag || {});
-      this.done = s.done || 0; this.cash = s.cash || [];
+      this.done = s.done || 0; this.cash = s.cash || []; this.stunts = s.stunts || []; this.found = s.found || [];
       const p = s.pos || {}; PLAYER.reset(p.x != null ? p.x : PLACES.garage.x, p.z != null ? p.z : PLACES.garage.z, p.yaw || 0);
     } else {
       PLAYER.money = 150; PLAYER.owned = { fist: true, pistol: true, smg: false }; PLAYER.ammo = { pistol: 36, smg: 0 }; PLAYER.mag = { pistol: 12, smg: 0 };
-      this.done = 0; this.cash = [];
+      this.done = 0; this.cash = []; this.stunts = []; this.found = [];
       PLAYER.reset(PLACES.garage.x + 2, PLACES.garage.z + 0.6, 0);
     }
     PLAYER.weapon = 0; PLAYER.armor = s && s.armor || 0; PLAYER.hp = 100;
@@ -102,7 +119,10 @@ const UI = {
 const mmc = $('mmc'), mmg = mmc.getContext('2d');
 function drawMinimap() {
   const S = mmc.width, R2 = S / 2, g = mmg, P = PLAYER.car || PLAYER.pos, px = P.x, pz = P.z;
-  const scale = (PLAYER.car ? 1.35 : 1.9) * (S / 344);   // 1m あたりの点
+  // 1m あたりの点：歩きは近く、車は速いほど遠くまで見える
+  const zWant = PLAYER.car ? clamp(1.35 - Math.abs(PLAYER.car.speed) * 0.026, 0.55, 1.35) : 1.9;
+  UI.mmZ = UI.mmZ ? UI.mmZ + (zWant - UI.mmZ) * 0.04 : zWant;
+  const scale = UI.mmZ * (S / 344);
   g.clearRect(0, 0, S, S); g.save();
   g.beginPath(); g.arc(R2, R2, R2 - 10, 0, TAU); g.clip();
   g.fillStyle = '#9a835c'; g.fillRect(0, 0, S, S);
@@ -120,6 +140,8 @@ function drawMinimap() {
   for (const c of WORLD.cars) if (c.police && !c.dead) blip(c.x, c.z, ((GAME.t * 4) | 0) % 2 ? '#ff4040' : '#4080ff', 6);
   for (const p of WORLD.peds) if (p.kind === 'police' && p.state !== 'dead' && WANTED.level) blip(p.x, p.z, '#ff6a6a', 4);
   for (const k of PICK.list) if (k.mesh.visible && k.kind === 'cash' && Math.hypot(k.x - px, k.z - pz) < 90) blip(k.x, k.z, '#7fe06a', 6, '$');
+  // 街の外の場所（山頂・村・港）：見つけるまでは灰色
+  for (const [key, lab] of [['summit', '山'], ['oasis', '村'], ['port', '港']]) { const pl = PLACES[key]; if (pl) blip(pl.x, pl.z, GAME.found.includes(key) ? '#f0d9a8' : '#b8b0a0', 9, lab); }
   if (PLACES.hospital) blip(PLACES.hospital.x, PLACES.hospital.z, '#e8e8e8', 8, '+');
   if (GAME.done < MISSIONS.length && !GAME.mission) blip(PLACES.garage.x, PLACES.garage.z, '#e8c27a', 10, 'N');
   if (GAME.mission && GAME.mission.blip) { const b = GAME.mission.blip; blip(b.x, b.z, b.col || '#ffd84a', 10, b.label || ''); }
@@ -249,8 +271,8 @@ const MISSIONS = [
       }
     } },
   { name: '砂漠の取引', start(m) {
-      UI.say([['ナビール', '最後の大仕事だ。北西の砂漠の外れで、荷物を受けとってこい。'], ['ナビール', '警察が嗅ぎつけてるかもしれん。気をつけろ。']]);
-      const d = PLACES.desertEdge; MARK.set(d.x, d.z, 5); m.blip = { x: d.x, z: d.z }; m.step = 0; UI.obj('砂漠の外れ（黄色の印）へ行け');
+      UI.say([['ナビール', '最後の大仕事だ。東の砂漠ハイウェイの先、オアシスの村のガソリンスタンドで荷物を受けとってこい。'], ['ナビール', '遠いぞ、速い車で行け。警察が嗅ぎつけてるかもしれん。気をつけろ。']]);
+      const d = PLACES.desertEdge; MARK.set(d.x, d.z, 5); m.blip = { x: d.x, z: d.z }; m.step = 0; UI.obj('オアシスの村のガソリンスタンド（黄色の印）へ行け');
       m.crate = new THREE.Mesh(new THREE.BoxGeometry(1, 0.8, 0.8), MAT.wood); m.crate.position.set(d.x, groundH(d.x, d.z) + 0.4, d.z); m.crate.castShadow = true; scene.add(m.crate);
     }, cleanup(m) { if (m.crate) scene.remove(m.crate); }, update(m) {
       if (m.step === 0 && MARK.inside(PLAYER.pos.x, PLAYER.pos.z)) {
@@ -269,6 +291,7 @@ function missionTick(dt) {
     GAME.mission = m; UI.big(def.name, `仕事 ${GAME.done + 1} / ${MISSIONS.length}`, 2.5); def.start(m);
   }
   if (GAME.mission) GAME.mission.def.update(GAME.mission, dt);
+  GAME.discT = (GAME.discT || 0) + dt; if (GAME.discT > 0.5 && PLAYER.alive) { GAME.discT = 0; GAME.discover(); }
   // 店の前の目印（仕事がまだあるとき）
   if (!GAME.mission && GAME.done < MISSIONS.length) { if (!MARK.mesh || !MARK.mesh.visible || MARK.x !== g.x) MARK.set(g.x, g.z, 1.6, 0xe8c27a); }
   else if (!GAME.mission && MARK.mesh && MARK.mesh.visible && MARK.x === g.x) MARK.hide();
@@ -279,7 +302,7 @@ function loadSave() { try { const s = JSON.parse(localStorage.getItem('mirage-sa
 function writeSave() {
   if (GAME.state !== 'play' && GAME.state !== 'pause') return;
   const P = PLAYER.car ? { x: PLAYER.car.x - Math.cos(PLAYER.car.yaw) * 2, z: PLAYER.car.z + Math.sin(PLAYER.car.yaw) * 2 } : PLAYER.pos;
-  const s = { v: 1, money: PLAYER.money, owned: PLAYER.owned, ammo: PLAYER.ammo, mag: PLAYER.mag, armor: Math.round(PLAYER.armor), done: GAME.done, cash: GAME.cash, pos: PLAYER.alive ? { x: +P.x.toFixed(1), z: +P.z.toFixed(1), yaw: +PLAYER.yaw.toFixed(2) } : null, at: Date.now() };
+  const s = { v: 1, money: PLAYER.money, owned: PLAYER.owned, ammo: PLAYER.ammo, mag: PLAYER.mag, armor: Math.round(PLAYER.armor), done: GAME.done, cash: GAME.cash, stunts: GAME.stunts, found: GAME.found, pos: PLAYER.alive ? { x: +P.x.toFixed(1), z: +P.z.toFixed(1), yaw: +PLAYER.yaw.toFixed(2) } : null, at: Date.now() };
   try { localStorage.setItem('mirage-save', JSON.stringify(s)); } catch (e) { /* 保存できない */ }
 }
 // ---------- メニュー ----------

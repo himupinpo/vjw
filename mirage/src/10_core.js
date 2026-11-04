@@ -84,10 +84,10 @@ renderer.toneMappingExposure = 1.05;
 maxAniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(66, 1, 0.1, 1400);
+const camera = new THREE.PerspectiveCamera(66, 1, 0.12, 3200);
 camera.rotation.order = 'YXZ';
 scene.add(camera);
-scene.fog = new THREE.Fog(0xcdbfa6, 140, 1000);
+scene.fog = new THREE.Fog(0xcdbfa6, 220, 2000);
 
 const SUN_DIR = new THREE.Vector3(0.62, 0.72, 0.3).normalize();
 const sun = new THREE.DirectionalLight(0xfff1dc, 3.4);
@@ -103,6 +103,7 @@ const gtao = new GTAOPass(scene, camera, 1, 1);
 gtao.blendIntensity = 1.0;
 gtao.updateGtaoMaterial({ radius: 0.9, distanceExponent: 1.5, thickness: 1.6, scale: 1.2, samples: 12 });
 composer.addPass(gtao);
+{ const ov = gtao.overrideVisibility.bind(gtao); gtao.overrideVisibility = () => { ov(); if (typeof CITY !== 'undefined' && CITY.skirt) CITY.skirt.visible = false; }; }   // 地平線の幕は影（AO）の計算に入れない
 composer.addPass(new OutputPass());
 
 function applyQuality() {

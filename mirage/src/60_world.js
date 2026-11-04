@@ -30,7 +30,7 @@ const WORLD = {
     const r = Math.random(), type = r < 0.27 ? 'sedan' : r < 0.45 ? 'compact' : r < 0.65 ? 'suv' : r < 0.79 ? 'taxi' : r < 0.9 ? 'sports' : 'sports2';
     const taxi = type === 'taxi';
     const d = segDir(from, to), c = this.spawnCar(type, x, z, Math.atan2(d.dx, d.dz), taxi ? { taxi: true, paint: [.96, .95, .9] } : {});
-    c.ai = { from, to, cruise: rr(10, 14), stuckT: 0, honkT: 0, mode: 'traffic' };
+    c.ai = { from, to, cruise: rr(10, 14), ck: rr(0.85, 1.05), stuckT: 0, honkT: 0, mode: 'traffic' };
     c.vx = d.dx * 8; c.vz = d.dz * 8;
     c.driverH = seatHuman(c, Math.random() < 0.5 ? 'thobe' : 'casual');
     return c;
@@ -39,7 +39,10 @@ const WORLD = {
   laneSpot(minD, maxD) {
     const P = PLAYER.pos, cf = camFwd();
     for (let tries = 0; tries < 30; tries++) {
-      const a = (Math.random() * ROAD.nodes.length) | 0, nb = ROAD.adj[a], b = nb[(Math.random() * nb.length) | 0];
+      // 近くのノードから選ぶ（街の外の道は長く、ノードが多いので、全部から選ぶと遠くばかりになる）
+      if (!tries) this._near = ROAD.nodes.map((n, k) => k).filter(k => { const n = ROAD.nodes[k]; return Math.abs(n.x - P.x) < maxD + 20 && Math.abs(n.z - P.z) < maxD + 20; });
+      if (!this._near.length) return null;
+      const a = this._near[(Math.random() * this._near.length) | 0], nb = ROAD.adj[a], b = nb[(Math.random() * nb.length) | 0];
       const d = segDir(a, b), t = rr(0.25, 0.75), A = ROAD.nodes[a], o = laneOff(d);
       const x = A.x + d.dx * d.l * t + o.x, z = A.z + d.dz * d.l * t + o.z, dist = Math.hypot(x - P.x, z - P.z);
       if (dist < minD || dist > maxD) continue;
@@ -208,7 +211,8 @@ function aiDrive(c, dt) {
   }
   steerTo(c, tx, tz);
   // 前の車・人・主人公を見て止まる
-  let want = ai.panic > 0 ? 19 : (turn ? 6.5 : ai.cruise);
+  const vmax = ROAD.nodes[ai.to].vmax;   // 街の外の道：道ごとの速さ（ハイウェイは速く、山道はゆっくり）
+  let want = ai.panic > 0 ? 19 : (turn ? 6.5 : vmax ? vmax * (ai.ck || 1) : ai.cruise);
   if (ai.panic > 0) ai.panic -= dt;
   const fx = Math.sin(c.yaw), fz = Math.cos(c.yaw), half = c.T.L / 2;
   let block = 99;

@@ -131,7 +131,11 @@ const PLAYER = {
     let sp = 0;
     if (mag > 0.08) sp = this.aiming ? 2.2 : this.gunUp ? (sprint ? 5.2 : 3.4) : sprint ? 6.6 : (IS_TOUCH ? (mag < 0.6 ? 1.6 : 4.2) : 4.2);
     this.speed = damp(this.speed, sp, 10, dt);
-    if (mag > 0.08) { this.pos.x += dx * this.speed * dt; this.pos.z += dz * this.speed * dt; }
+    if (mag > 0.08) {
+      // 急な岩の斜面（45°より急）は登れない（1.2m 先の高さで見る。縁石くらいの段は上がれる）
+      const up = groundH(this.pos.x + dx * 1.2, this.pos.z + dz * 1.2) - groundH(this.pos.x, this.pos.z);
+      if (up < 1.2 || !this.onGround) { this.pos.x += dx * this.speed * dt; this.pos.z += dz * this.speed * dt; } else this.speed = 0;
+    }
     // 向き
     if (this.gunUp) this.yaw += clamp(angDiff(this.yaw, Math.atan2(this.aimPt.x - this.pos.x, this.aimPt.z - this.pos.z)), -16 * dt, 16 * dt);   // 照準の先を向く
     else if (mag > 0.08) this.yaw += clamp(angDiff(this.yaw, Math.atan2(dx, dz)), -10 * dt, 10 * dt);

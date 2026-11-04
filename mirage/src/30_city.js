@@ -28,14 +28,13 @@ function duneH(x, z) {
 }
 function groundH(x, z) {
   const e0 = -CITY.IN, e1 = CITY.E + CITY.IN;
-  if (z > e1) {   // 南：遊歩道 → 砂浜 → 海
-    if (x < e0 - 30 || x > e1 + 30) { /* 砂丘のまま */ } else {
-      if (z < CITY.SEA) return 0.15;
-      return lerp(0.1, -2.6, smooth(CITY.SEA, CITY.SHORE + 30, z));
-    }
+  if (z > e1 && x >= e0 - 30 && x <= e1 + 30) {   // 南：遊歩道 → 砂浜 → 海
+    if (z < CITY.SEA) return 0.15;
+    return lerp(0.1, -2.6, smooth(CITY.SEA, CITY.SHORE + 30, z));
   }
-  const out = Math.max(e0 - x, x - e1, e0 - z, 0);
-  if (out <= 0) {
+  // 街の中（外まわりの道路の外がわの帯は街の外：外へ出る道路がそこを通る）
+  const o0 = -CITY.HR, o1 = CITY.E + CITY.HR;
+  if (x >= o0 && x <= o1 && z >= o0 && z <= e1) {
     // 歩道（区画の外まわり2.5m）は15cm高い
     const P = CITY.P, lx = ((x % P) + P) % P, lz = ((z % P) + P) % P;
     const dx = Math.min(lx, P - lx), dz = Math.min(lz, P - lz);
@@ -43,9 +42,10 @@ function groundH(x, z) {
     if (dx < CITY.IN || dz < CITY.IN) return 0.15;     // 歩道
     return 0.12;                                       // 区画の中
   }
-  return Math.max(0, duneH(x, z)) * smooth(26, 120, out);
+  return regionH(x, z, false);   // 街の外：砂丘・山・道路（35_regions.js）
 }
-const WORLD_LIM = { x0: -CITY.IN - 230, x1: CITY.E + CITY.IN + 230, z0: -CITY.IN - 230, z1: CITY.SHORE - 6 };
+// 世界のはし（南は海：seaZ）。街のまわりの砂漠・北の山・東の砂漠・西の港まで
+const WORLD_LIM = { x0: -1150, x1: 1950, z0: -1750 };
 
 // ---------- 当たり判定：AABBを32mのマスに入れておく ----------
 const COL = { list: [], grid: new Map(), cell: 32 };
@@ -83,7 +83,8 @@ function pushOut(p, r, y = 0, hit) {
     }
     moved = true;
   }
-  p.x = clamp(p.x, WORLD_LIM.x0, WORLD_LIM.x1); p.z = clamp(p.z, WORLD_LIM.z0, WORLD_LIM.z1);
+  if (r > 0.6 && REG.rails.length && pushRails(p, r, y, hit)) moved = true;   // ガードレール（車だけ。y は車の高さ）
+  p.x = clamp(p.x, WORLD_LIM.x0, WORLD_LIM.x1); p.z = clamp(p.z, WORLD_LIM.z0, seaZ(p.x));
   return moved;
 }
 // 線分と建物（視線・弾・カメラ用）：さえぎる位置（0〜1）か、なければ 1
@@ -532,21 +533,76 @@ function buildRoads() {
   for (let z = pz1 + 2; z < pz1 + 60; z += 6) for (const s of [-1, 1]) addGeo('wood', new THREE.CylinderGeometry(0.18, 0.18, 3, 8), [E - 40 + s * 1.8, -0.9, z], 0, null, [.55, .45, .35], { uv: 'keep' });
 }
 // ---------- 地形（砂丘・砂浜・海） ----------
-function buildTerrain() {
-  const S = 1600, n = 160, g = new THREE.PlaneGeometry(S, S, n, n); g.rotateX(-Math.PI / 2); g.translate(CITY.E / 2, 0, CITY.E / 2);
-  const p = g.attributes.position, uv = g.attributes.uv, col = new Float32Array(p.count * 3), r = rng(5), macro = fbm(64, [4, 8, 16], [.5, .3, .2], r);
-  for (let i = 0; i < p.count; i++) {
-    const x = p.getX(i), z = p.getZ(i);
-    const inCity = x > -CITY.IN + 1 && x < CITY.E + CITY.IN - 1 && z > -CITY.IN + 1 && z < CITY.E + CITY.IN - 1;
-    p.setY(i, inCity ? -0.3 : groundH(x, z) - 0.02);
-    const mi = ((((z / S + 0.5) * 64) | 0) & 63) * 64 + ((((x / S + 0.5) * 64) | 0) & 63), k = 0.86 + 0.24 * macro[mi];
-    col[i * 3] = k; col[i * 3 + 1] = k * 0.99; col[i * 3 + 2] = k * 0.97;
-    uv.setXY(i, x / 2.6, z / 2.6);
+// 世界ぜんたいを 10m の格子で。500m ごとのタイルに分けて、見えない所は描かない。法線は格子の高さから（タイルのつなぎ目が出ない）
+// 地形の1枚（格子 cx×cz、間隔 SP）：高さ hAt(ix,iz)、色と岩の重みは terrCol、skip(ix,iz) の升目は作らない
+function terrTile(x0, z0, SP, cx, cz, hAt, skip) {
+  const n = (cx + 1) * (cz + 1), P = new Float32Array(n * 3), N = new Float32Array(n * 3), U = new Float32Array(n * 2), C = new Float32Array(n * 3), K = new Float32Array(n), I = [];
+  let v = 0;
+  for (let iz = 0; iz <= cz; iz++) for (let ix = 0; ix <= cx; ix++, v++) {
+    const x = x0 + ix * SP, z = z0 + iz * SP, y = hAt(ix, iz);
+    P[v * 3] = x; P[v * 3 + 1] = y; P[v * 3 + 2] = z;
+    const ddx = (hAt(ix + 1, iz) - hAt(ix - 1, iz)) / (2 * SP), ddz = (hAt(ix, iz + 1) - hAt(ix, iz - 1)) / (2 * SP), l = Math.hypot(ddx, 1, ddz);
+    N[v * 3] = -ddx / l; N[v * 3 + 1] = 1 / l; N[v * 3 + 2] = -ddz / l;
+    U[v * 2] = x / 2.6; U[v * 2 + 1] = z / 2.6;
+    const c = terrCol(x, z, y, Math.hypot(ddx, ddz));
+    C[v * 3] = c[0]; C[v * 3 + 1] = c[1]; C[v * 3 + 2] = c[2]; K[v] = c[3];
   }
-  g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.computeVertexNormals();
-  const m = new THREE.Mesh(g, MAT.sand); m.receiveShadow = true; scene.add(m);
-  const water = new THREE.Mesh(new THREE.PlaneGeometry(3000, 1400), MAT.water); water.rotation.x = -Math.PI / 2; water.position.set(CITY.E / 2, -0.55, CITY.SHORE + 680); scene.add(water);
+  for (let iz = 0; iz < cz; iz++) for (let ix = 0; ix < cx; ix++) { if (skip && skip(ix, iz)) continue; const a = iz * (cx + 1) + ix, b = a + cx + 1; I.push(a, b, a + 1, a + 1, b, b + 1); }
+  if (!I.length) return;
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.BufferAttribute(N, 3)); g.setAttribute('uv', new THREE.BufferAttribute(U, 2)); g.setAttribute('color', new THREE.BufferAttribute(C, 3)); g.setAttribute('rk', new THREE.BufferAttribute(K, 1)); g.setIndex(I);
+  g.computeBoundingSphere();
+  const m = new THREE.Mesh(g, MAT.terrain); m.receiveShadow = true; scene.add(m);
+}
+// 色：砂の濃淡、急な斜面と山の上は岩肌（rk）、オアシスの池のまわりは緑、港は灰色、道路の路肩は砂利
+let _macro = null;
+function terrCol(x, z, y, slope) {
+  if (!_macro) _macro = fbm(64, [4, 8, 16], [.5, .3, .2], rng(5));
+  const mi = (((Math.floor(z / 25) % 64) + 64) % 64) * 64 + (((Math.floor(x / 25) % 64) + 64) % 64), mac = _macro[mi], k = 0.86 + 0.24 * mac;
+  let c = [k, k * 0.99, k * 0.97];
+  const steep = smooth(0.28, 0.62, slope), high = smooth(22, 85, y) * smooth(-300, -650, z);
+  let rk = clamp(Math.max(steep, high * (0.55 + 0.6 * mac)) * 1.15, 0, 1);
+  const pd = Math.hypot(x - OASIS.pond.x, z - OASIS.pond.z);
+  if (pd < OASIS.pond.r + 45) c = c.map((q, i) => lerp(q, [0.42, 0.56, 0.28][i], smooth(OASIS.pond.r + 45, OASIS.pond.r + 4, pd) * (y > -0.2 ? 1 : 0)));
+  if (x > PORT.x0 && x < PORT.x1 && z > PORT.z0 && z < PORT.z1) { c = [0.62, 0.62, 0.6]; rk = 0; }
+  if (REG.built) { const r = roadNear(x, z); if (r && r.d < r.hw + 15) { c = c.map(q => q * 0.82); rk *= 0.4; } }
+  return [c[0], c[1], c[2], rk];
+}
+async function buildTerrain(say) {
+  // まんなか（遊べる所＋まわり 260m 以上）は 10m 格子、その外は 40m 格子で地平線まで。境目は 40m の線にそろえる
+  const SP = 10, G = 40, X0 = Math.floor((WORLD_LIM.x0 - 260) / G) * G, X1 = Math.ceil((WORLD_LIM.x1 + 260) / G) * G, Z0 = Math.floor((WORLD_LIM.z0 - 260) / G) * G;
+  const Z1 = Z0 + Math.ceil((CITY.SHORE + 220 - Z0) / G) * G;
+  const nx = (X1 - X0) / SP, nz = (Z1 - Z0) / SP, W = nx + 1, H = new Float32Array(W * (nz + 1));
+  const e0 = -CITY.IN, e1 = CITY.E + CITY.IN;
+  const meshH = (x, z) => {
+    if (x > -CITY.HR + 1.5 && x < CITY.E + CITY.HR - 1.5 && z > -CITY.HR + 1.5 && z < e1 - 1) return -0.3;   // 街の下（街の道路・歩道がのる）
+    if (z > e1 - 1 && x >= e0 - 30 && x <= e1 + 30) return groundH(x, z) - 0.02;                          // 遊歩道・砂浜
+    return regionH(x, z, true) - 0.02;
+  };
+  for (let iz = 0; iz <= nz; iz++) { for (let ix = 0; ix <= nx; ix++) H[iz * W + ix] = meshH(X0 + ix * SP, Z0 + iz * SP); if (iz % 60 === 59) await nextFrame(); }
+  REG.tg = { H, W, nx, nz, X0, Z0, SP };
+  const hAt = (ix, iz) => H[clamp(iz, 0, nz) * W + clamp(ix, 0, nx)];
+  const TILE = 50;
+  for (let tz = 0; tz < nz; tz += TILE) for (let tx = 0; tx < nx; tx += TILE)
+    terrTile(X0 + tx * SP, Z0 + tz * SP, SP, Math.min(TILE, nx - tx), Math.min(TILE, nz - tz), (ix, iz) => hAt(tx + ix, tz + iz));
+  await nextFrame();
+  // 外まわり（40m 格子）：まんなかの四角の中の升目は作らない
+  const OX0 = X0 - 1800, OX1 = X1 + 1800, OZ0 = Z0 - 1800, onx = (OX1 - OX0) / G, onz = (Z1 - OZ0) / G, OW = onx + 1, OH = new Float32Array(OW * (onz + 1));
+  for (let iz = 0; iz <= onz; iz++) for (let ix = 0; ix <= onx; ix++) { const x = OX0 + ix * G, z = OZ0 + iz * G; OH[iz * OW + ix] = x >= X0 && x <= X1 && z >= Z0 ? hAt((x - X0) / SP, (z - Z0) / SP) : natH(x, z) - 0.02; }
+  const oAt = (ix, iz) => OH[clamp(iz, 0, onz) * OW + clamp(ix, 0, onx)];
+  for (let tz = 0; tz < onz; tz += TILE) for (let tx = 0; tx < onx; tx += TILE)
+    terrTile(OX0 + tx * G, OZ0 + tz * G, G, Math.min(TILE, onx - tx), Math.min(TILE, onz - tz), (ix, iz) => oAt(tx + ix, tz + iz), (ix, iz) => { const x = OX0 + (tx + ix) * G, z = OZ0 + (tz + iz) * G; return x >= X0 && x + G <= X1 && z >= Z0 && z + G <= Z1; });
+  const water = new THREE.Mesh(new THREE.PlaneGeometry(9000, 3400), MAT.water); water.rotation.x = -Math.PI / 2; water.position.set(400, -0.55, CITY.SHORE + 1680); scene.add(water);
   CITY.waterMesh = water;
+  // 地平線の幕：カメラのまわりの遠い所（2.2km より先）を霧の色でふさぐ（空の写真の地面が見えないように）
+  const R0 = 2200, R1 = 3000, NR = 12, NS = 64, sp = [], si = [], sa = [];
+  for (let k = 0; k <= NR; k++) { const t = k / NR, r = R0 + (R1 - R0) * t; for (let j = 0; j <= NS; j++) { const a = j / NS * TAU; sp.push(Math.cos(a) * r, t * t, Math.sin(a) * r); sa.push(1, 1, 1, 1 - smooth(0.55, 1, t)); } }
+  for (let k = 0; k < NR; k++) for (let j = 0; j < NS; j++) { const a = k * (NS + 1) + j, b = a + NS + 1; si.push(a, a + 1, b, a + 1, b + 1, b); }
+  const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.Float32BufferAttribute(sp, 3)); sg.setAttribute('normal', new THREE.Float32BufferAttribute(sp.map((v, i) => (i % 3 === 1 ? 1 : 0)), 3)); sg.setAttribute('color', new THREE.Float32BufferAttribute(sa, 4)); sg.setIndex(si);
+  const smat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, vertexColors: true, transparent: true, depthWrite: false });   // 上のはしは空にとける
+  smat.onBeforeCompile = sh => { sh.fragmentShader = sh.fragmentShader.replace('#include <fog_fragment>', '#ifdef USE_FOG\n gl_FragColor.rgb = fogColor;\n#endif'); };
+  smat.customProgramCacheKey = () => 'skirt';
+  const sk = new THREE.Mesh(sg, smat); sk.frustumCulled = false; sk.renderOrder = -1; scene.add(sk); CITY.skirt = sk;
 }
 // ---------- まとめて Mesh に ----------
 function finishBuckets() {
@@ -580,15 +636,34 @@ function buildGraph() {
 const nearestNode = (x, z) => { let best = 0, bd = 1e9; ROAD.nodes.forEach((n, k) => { const d = Math.hypot(n.x - x, n.z - z); if (d < bd) { bd = d; best = k; } }); return best; };
 // 地図の下絵
 let MAPC = null;
-const MAP = { x0: -260, z0: -260, size: 1100, px: 1024 };
+const MAP = { x0: -1250, z0: -1850, size: 3400, px: 1536 };   // 世界ぜんたい（1点 ≒ 2.2m）
 function buildMapCanvas() {
   const c = newCanvas(MAP.px, MAP.px), g = c.getContext('2d'), s = MAP.px / MAP.size, X = x => (x - MAP.x0) * s, Z = z => (z - MAP.z0) * s;
-  g.fillStyle = '#b89a6a'; g.fillRect(0, 0, MAP.px, MAP.px);
-  g.fillStyle = '#2f6f86'; g.fillRect(0, Z(CITY.SHORE), MAP.px, MAP.px);
-  g.fillStyle = '#d8c39a'; g.fillRect(0, Z(CITY.SEA), MAP.px, Z(CITY.SHORE) - Z(CITY.SEA));
+  g.fillStyle = '#2f6f86'; g.fillRect(0, 0, MAP.px, MAP.px);
+  // 地形：高さの格子から色と陰影（北西から光）を作って、地図の大きさに広げる
+  const T = REG.tg;
+  if (T) {
+    const img = newCanvas(T.W, T.nz + 1), ig = img.getContext('2d'), id = ig.createImageData(T.W, T.nz + 1), D = id.data;
+    for (let iz = 0; iz <= T.nz; iz++) for (let ix = 0; ix < T.W; ix++) {
+      const h = T.H[iz * T.W + ix], x = T.X0 + ix * T.SP, z = T.Z0 + iz * T.SP, k = (iz * T.W + ix) * 4;
+      if (h < -0.4 && !(x > -CITY.HR && x < CITY.E + CITY.HR && z < CITY.E + CITY.IN)) { D[k] = 47; D[k + 1] = 111; D[k + 2] = 134; D[k + 3] = 255; continue; }
+      const hx = T.H[iz * T.W + Math.min(T.W - 1, ix + 1)] - h, hz = T.H[Math.min(T.nz, iz + 1) * T.W + ix] - h, shade = clamp(1 - (hx + hz) * 0.06, 0.62, 1.25);
+      const m = smooth(15, 150, h);
+      let col = [lerp(196, 150, m), lerp(170, 108, m), lerp(124, 82, m)];
+      if (Math.hypot(x - OASIS.pond.x, z - OASIS.pond.z) < OASIS.pond.r + 30) col = [118, 150, 84];
+      if (x > PORT.x0 && x < PORT.x1 && z > PORT.z0 && z < PORT.z1) col = [150, 150, 146];
+      D[k] = col[0] * shade; D[k + 1] = col[1] * shade; D[k + 2] = col[2] * shade; D[k + 3] = 255;
+    }
+    ig.putImageData(id, 0, 0);
+    g.imageSmoothingEnabled = true; g.drawImage(img, X(T.X0), Z(T.Z0), T.W * T.SP * s, (T.nz + 1) * T.SP * s);
+  }
+  g.fillStyle = '#d8c39a'; g.fillRect(X(-CITY.IN - 30), Z(CITY.SEA), (CITY.E + 2 * CITY.IN + 60) * s, (CITY.SHORE - CITY.SEA) * s);
   g.fillStyle = '#cfc4b0'; g.fillRect(X(-CITY.IN), Z(-CITY.IN), (CITY.E + 2 * CITY.IN) * s, (CITY.SEA + CITY.IN) * s);
-  for (const c2 of COL.list) { if (c2.kind !== 'bld') continue; g.fillStyle = c2.h > 30 ? '#8e98a2' : '#a99d88'; g.fillRect(X(c2.x0), Z(c2.z0), (c2.x1 - c2.x0) * s, (c2.z1 - c2.z0) * s); }
-  g.strokeStyle = '#3b3b3e'; g.lineWidth = CITY.HR * 2 * s;
+  for (const c2 of COL.list) { if (c2.kind !== 'bld') continue; g.fillStyle = c2.h > 30 ? '#8e98a2' : '#a99d88'; g.fillRect(X(c2.x0), Z(c2.z0), Math.max(1, (c2.x1 - c2.x0) * s), Math.max(1, (c2.z1 - c2.z0) * s)); }
+  // 道路：街の碁盤の目と、街の外の道（環状道路・山道・ハイウェイ・港の道）
+  g.strokeStyle = '#3b3b3e'; g.lineCap = 'round'; g.lineJoin = 'round';
+  for (const poly of REG.polys) { g.lineWidth = Math.max(2, poly.hw * 2 * s); g.beginPath(); poly.ids.forEach((id, k) => { const n = ROAD.nodes[id]; if (k) g.lineTo(X(n.x), Z(n.z)); else g.moveTo(X(n.x), Z(n.z)); }); g.stroke(); }
+  g.lineWidth = CITY.HR * 2 * s;
   for (let i = 0; i <= CITY.N; i++) { g.beginPath(); g.moveTo(X(lineX(i)), Z(-CITY.HR)); g.lineTo(X(lineX(i)), Z(CITY.E + CITY.HR)); g.stroke(); g.beginPath(); g.moveTo(X(-CITY.HR), Z(lineX(i))); g.lineTo(X(CITY.E + CITY.HR), Z(lineX(i))); g.stroke(); }
   MAPC = c;
 }
@@ -597,7 +672,9 @@ async function buildCity(say) {
   buildGraph(); buildRoads(); await nextFrame();
   say('街並みを組み立てています…'); await nextFrame();
   for (let i = 0; i < CITY.N; i++) { for (let j = 0; j < CITY.N; j++) fillBlock(i, j); if (i % 2) await nextFrame(); }
-  buildTerrain();
+  await buildRegions(say);   // 街の外（街のあとに作る：街の乱数・お金の袋の番号を変えない）
+  say('地形を作っています…'); await nextFrame();
+  await buildTerrain(say);
   say('仕上げています…'); await nextFrame();
   finishBuckets();
   buildMapCanvas();

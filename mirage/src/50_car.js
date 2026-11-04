@@ -198,6 +198,7 @@ class Car {
     this.m = buildCarModel(type, paint, this.police);
     this.x = x; this.z = z; this.y = groundH(x, z); this.yaw = yaw; this.vx = 0; this.vz = 0; this.yr = 0; this.steer = 0; this.pitch = 0; this.roll = 0;
     this.hp = 1000; this.dead = false; this.burnT = 0; this.driver = null; this.ai = null; this.wheelRot = 0; this.smokeT = 0;
+    this.vy = 0; this.air = false; this.airT = 0; this.takeoff = null;   // 空中（坂の頂上・ジャンプ台・崖から飛ぶ）
     this.input = { th: 0, br: 0, st: 0, hb: false };
     this.r = this.T.W / 2 + 0.08;
     this.place();
@@ -216,6 +217,14 @@ class Car {
     let vf = this.vx * sx + this.vz * cz, vl = this.vx * cz - this.vz * sx;   // 前と横（左が+）
     // 前後の力
     const hpK = this.hp < 250 ? 0.55 : 1;
+    if (this.air) {   // 空中：アクセル・ハンドル・横の摩擦はきかない。回転はゆっくり弱まる
+      this.yr *= Math.exp(-0.6 * dt); this.yaw += this.yr * dt;
+      this.x += this.vx * dt; this.z += this.vz * dt; this.vx *= Math.exp(-0.05 * dt); this.vz *= Math.exp(-0.05 * dt);
+      this.wheelRot += vf * dt / T.tire;
+      this.groundFollow(dt, vf, vl);
+      this.collideStatic(); this.place(); this.burnTick(dt, Math.sin(this.yaw), Math.cos(this.yaw));
+      return;
+    }
     if (I.th > 0) { if (vf < -0.5) vf += 16 * I.th * dt; else vf += T.acc * hpK * I.th * Math.max(0.05, 1 - vf / (T.max * hpK)) * dt; }
     if (I.br > 0) { if (vf > 0.6) vf -= 15 * I.br * dt; else vf = Math.max(-11, vf - 6 * I.br * dt); }
     if (!I.th && !I.br) vf -= Math.sign(vf) * Math.min(Math.abs(vf), (1.2 + Math.abs(vf) * 0.04) * dt);
@@ -234,13 +243,20 @@ class Car {
     const sx2 = Math.sin(this.yaw), cz2 = Math.cos(this.yaw);
     this.vx = sx2 * vf + cz2 * vl; this.vz = cz2 * vf - sx2 * vl;
     this.drift = Math.abs(vl) > 3 && Math.abs(vf) > 6;
-    // 動かす
+    // 動かす（登れない急な斜面＝岩の壁は、壁と同じようにぶつかる）
+    const ox = this.x, oz = this.z, g0 = groundH(ox, oz);
     this.x += this.vx * dt; this.z += this.vz * dt;
-    // 地面にそわせる
-    const gh = groundH(this.x, this.z), hf = groundH(this.x + sx2 * 1.6, this.z + cz2 * 1.6), hr = groundH(this.x - sx2 * 1.6, this.z - cz2 * 1.6);
-    const hl = groundH(this.x + cz2 * 0.9, this.z - sx2 * 0.9), hR = groundH(this.x - cz2 * 0.9, this.z + sx2 * 0.9);
-    this.y = damp(this.y, gh, 14, dt); this.pitch = damp(this.pitch, -Math.atan2(hf - hr, 3.2), 8, dt); this.roll = damp(this.roll, Math.atan2(hl - hR, 1.8) - vl * 0.006, 8, dt);
-    this.surfSand = gh > 0.3 || Math.abs(this.x - CITY.E / 2) > CITY.E / 2 + CITY.IN || this.z < -CITY.IN;
+    const step = Math.hypot(this.x - ox, this.z - oz);
+    if (step > 1e-4) {
+      const ux = (this.x - ox) / step, uz = (this.z - oz) / step, ahead = groundH(ox + ux * 1.4, oz + uz * 1.4);
+      if (ahead - g0 > 1.4 * 0.9 && ahead > this.y + 0.4) {
+        const vn = this.vx * ux + this.vz * uz, hit = Math.abs(vn);
+        this.x = ox; this.z = oz; this.vx -= ux * vn * 1.3; this.vz -= uz * vn * 1.3;
+        if (hit > 4) { this.damage(Math.min(340, hit * hit * 0.62), null); AUDIO.crash(this.x, this.z, Math.min(1, hit / 20)); if (this === PLAYER.car) GAME.shake = Math.min(1, hit / 18); }
+      }
+    }
+    this.groundFollow(dt, vf, vl);
+    this.surfSand = !onPaved(this.x, this.z);
     if (this.surfSand) { const v = this.speed, lim = 30; if (v > lim) { this.vx *= lim / v; this.vz *= lim / v; } }
     // 建物にぶつかる
     this.collideStatic();
@@ -248,7 +264,46 @@ class Car {
     this.wheelRot += vf * dt / T.tire;
     for (const w of this.m.wheels) { w.w.rotation.x = this.wheelRot; if (w.front) w.piv.rotation.y = this.steer; }
     this.place();
-    // 壊れ具合：煙・炎・爆発
+    this.burnTick(dt, sx2, cz2);
+  }
+  // 地面にそう・飛ぶ・着地する。ジャンプ台から飛んだときは takeoff に台の番号
+  groundFollow(dt, vf, vl) {
+    const sx = Math.sin(this.yaw), cz = Math.cos(this.yaw);
+    const gh = groundH(this.x, this.z), hf = groundH(this.x + sx * 1.6, this.z + cz * 1.6), hr = groundH(this.x - sx * 1.6, this.z - cz * 1.6);
+    const hl = groundH(this.x + cz * 0.9, this.z - sx * 0.9), hR = groundH(this.x - cz * 0.9, this.z + sx * 0.9);
+    const slopeV = vf * (hf - hr) / 3.2;   // 地面の傾きにそって進むときの上下の速さ
+    if (this.air) {
+      this.vy -= 22 * dt; this.y += this.vy * dt; this.airT += dt;
+      this.pitch = damp(this.pitch, clamp(-this.vy * 0.025, -0.45, 0.45), 1.5, dt); this.roll = damp(this.roll, 0, 2, dt);
+      if (this.y <= gh) {
+        if (this.airT < 0.15 && this.vy > slopeV - 1.5) { this.y = gh; return; }   // 台のはしまでは、まだ台の上を走っている
+        // 着地（ジャンプ台から飛んだときは、少し強くても壊れにくい）
+        const imp = slopeV - this.vy, lim = this.takeoff && this.takeoff.ramp >= 0 ? 15 : 9; this.y = gh; this.air = false; this.vy = slopeV;
+        if (imp > lim) { this.damage(Math.min(300, (imp - lim) * (imp - lim) * 4), null); AUDIO.crash(this.x, this.z, Math.min(1, imp / 22)); FX.sparks(this.x, gh + 0.3, this.z, 8); }
+        else if (imp > 3) AUDIO.thud(this.x, this.z);
+        if (this === PLAYER.car) GAME.shake = Math.max(GAME.shake, Math.min(0.9, imp / 25));
+        if (this.takeoff && this === PLAYER.car && GAME.onLand) GAME.onLand(this);
+        this.takeoff = null;
+      }
+      return;
+    }
+    // 後ろ半分の傾きでの上下の速さ（台のはしで前輪が出ても、台の坂の勢いのまま飛び出す）
+    const slopeB = vf * (gh - hr) / 1.6;
+    // 飛び出す：このままの勢いで進んだ先で、地面のほうが下にある（坂の頂上・台のはし）。崖からは落ちる
+    const k = 2 * dt, gn = groundH(this.x + this.vx * k, this.z + this.vz * k), vy0 = Math.max(slopeB, slopeV), y0 = Math.max(this.y, gh), yb = y0 + vy0 * k - 11 * k * k;
+    const launch = vy0 > 2.2 && this.speed > 8 && yb > gn + 0.25, fall = gh < this.y - 1.2;
+    if (launch || fall) {
+      this.air = true; this.vy = launch ? vy0 : Math.min(0, slopeV); this.airT = 0; if (launch) this.y = y0;
+      let ramp = -1; REG.ramps.forEach((r, i) => { if (Math.hypot(this.x - (r.x + r.s * r.L), this.z - (r.z + r.c * r.L)) < 7) ramp = i; });
+      this.takeoff = { x: this.x, z: this.z, y: this.y, ramp };
+      return;
+    }
+    this.vy = slopeV;
+    this.y = damp(this.y, gh, gh > this.y ? 30 : 14, dt); this.pitch = damp(this.pitch, -Math.atan2(hf - hr, 3.2), 8, dt); this.roll = damp(this.roll, Math.atan2(hl - hR, 1.8) - vl * 0.006, 8, dt);
+  }
+  // 壊れ具合：煙・炎・爆発
+  burnTick(dt, sx2, cz2) {
+    const T = this.T;
     if (!this.dead && this.hp <= 0) { this.burnT += dt; if (this.burnT > 4) this.explode(); }
     if (this.hp < 350 || this.burnT > 0) { this.smokeT -= dt; if (this.smokeT <= 0) { this.smokeT = this.burnT > 0 ? 0.04 : 0.12; FX.smoke(this.x + sx2 * T.L * 0.38, this.y + T.belt + 0.1, this.z + cz2 * T.L * 0.38, this.burnT > 0); } }
   }

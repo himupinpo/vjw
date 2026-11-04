@@ -17,7 +17,11 @@ function frame(now) {
   const real = (now - last) / 1000, dt = Math.min(0.05, real); last = now;
   if (!RUN) return;
   fpsAcc += real; fpsN++; if (fpsAcc > 0.5) { if (SET.fps) $('fps').textContent = Math.round(fpsN / fpsAcc) + ' fps'; fpsAcc = 0; fpsN = 0; }
-  tick(dt);
+  // ジャンプ台から飛んでいる間はスローモーション
+  const C = PLAYER.car, slowWant = GAME.state === 'play' && C && C.air && C.takeoff && C.takeoff.ramp >= 0 && !C.dead ? 0.42 : 1;
+  GAME.slow += (slowWant - GAME.slow) * Math.min(1, real * (slowWant < GAME.slow ? 9 : 4));
+  if (Math.abs(GAME.slow - slowWant) < 0.01) GAME.slow = slowWant;
+  tick(dt * GAME.slow);
   if (gtao.enabled) composer.render(dt); else renderer.render(scene, camera);
 }
 function tick(dt) {
@@ -50,6 +54,7 @@ function tick(dt) {
   // 影はカメラの見ている所のまわりだけ細かく
   const P = GAME.state === 'play' ? PLAYER.pos : camera.position;
   _sunT.set(Math.round(P.x * 2) / 2, 0, Math.round(P.z * 2) / 2);
+  if (CITY.skirt) { CITY.skirt.position.set(camera.position.x, -1.2, camera.position.z); CITY.skirt.scale.y = Math.max(1, camera.position.y + 150); }
   sun.target.position.copy(_sunT); sun.position.copy(_sunT).addScaledVector(SUN_DIR, 150);
 }
 async function boot() {
@@ -75,5 +80,5 @@ async function boot() {
     console.error(err);
   }
 }
-window.__MC = { loop: v => (RUN = v), step: (sec, d = 1 / 30) => { for (let t = 0; t < sec; t += d) tick(d); }, THREE, scene, camera, renderer, __composer: composer, gtao, GAME, PLAYER, WORLD, WANTED, CAM, IN, MAP, CITY, PLACES, PARK, CASH, COL, ROAD, MISSIONS, PICK, UI, AUDIO, RADIO, SET, applyQuality, groundH, segBlock, FX, crime, writeSave, loadSave, MAT, TEX, POP, aimCast, poseHuman, makeHuman, HUMAN_DATA };
+window.__MC = { loop: v => (RUN = v), step: (sec, d = 1 / 30) => { for (let t = 0; t < sec; t += d) tick(d); }, THREE, scene, camera, renderer, __composer: composer, gtao, GAME, PLAYER, WORLD, WANTED, CAM, IN, MAP, CITY, PLACES, PARK, CASH, COL, ROAD, MISSIONS, PICK, UI, AUDIO, RADIO, SET, applyQuality, groundH, segBlock, FX, crime, writeSave, loadSave, MAT, TEX, POP, aimCast, poseHuman, makeHuman, HUMAN_DATA, REG, natH, regionH, roadNear, onPaved, MARK, get MAPC() { return MAPC; }, sun };
 boot();
