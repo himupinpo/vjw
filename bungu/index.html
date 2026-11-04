@@ -1,0 +1,1992 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>文房具カンパニー</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=Shippori+Mincho:wght@700&display=swap">
+<style>
+/* 紙とインクの色。ゲーム画面なので明るいテーマで固定 */
+:root {
+  --paper: #fbf8f1; --paper2: #f3eee3; --card: #fffdf8; --ink: #2b2a28; --sub: #6f6a60; --line: #e3dccd; --line2: #d3cab7;
+  --blue: #2b6fd6; --blue2: #e7effb; --red: #d9493e; --green: #2e9a63; --gold: #c99a2e; --shadow: 0 6px 22px rgba(60,45,20,.16);
+  --f: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+  --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px); --sal: env(safe-area-inset-left, 0px); --sar: env(safe-area-inset-right, 0px);
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: #e9e2d3; color: var(--ink); font-family: var(--f); -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
+button { font-family: inherit; color: inherit; }
+input, select { font-family: inherit; }
+#rot { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; transform-origin: 0 0; overflow: hidden; }
+#c { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+.hidden { display: none !important; }
+
+/* 上のバー：会社・日付・お金・RP・速さ */
+#top { position: absolute; left: 0; right: 0; top: 0; padding: calc(8px + var(--sat)) calc(10px + var(--sar)) 8px calc(10px + var(--sal)); display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: linear-gradient(rgba(251,248,241,.94), rgba(251,248,241,.86)); border-bottom: 1px solid var(--line); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 5; }
+body.hub #top { padding-left: calc(58px + var(--sal)); }
+#coName { font-weight: 900; font-size: 16px; max-width: 34vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#date { font-size: 13px; color: var(--sub); white-space: nowrap; }
+.stat { display: flex; align-items: baseline; gap: 4px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+#money { font-weight: 900; font-size: 18px; color: var(--green); }
+#money.neg { color: var(--red); }
+#rp { font-weight: 700; font-size: 15px; color: var(--blue); }
+.sp { margin-left: auto; display: flex; gap: 4px; }
+.sp button { width: 38px; height: 32px; border-radius: 9px; border: 1px solid var(--line2); background: var(--card); font-size: 13px; font-weight: 700; cursor: pointer; padding: 0; }
+.sp button.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+#menuB { width: 36px; height: 32px; border-radius: 9px; border: 1px solid var(--line2); background: var(--card); font-size: 16px; cursor: pointer; }
+body.narrow #coName { max-width: 46vw; }
+body.narrow .sp { margin-left: 0; }
+body.narrow #top { row-gap: 6px; }
+
+/* 目標・お知らせ・ニュース */
+#goal { position: absolute; left: calc(10px + var(--sal)); top: calc(var(--topH, 52px) + 8px); max-width: min(360px, calc(100% - 20px)); background: rgba(255,253,248,.93); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; font-size: 13px; line-height: 1.45; box-shadow: var(--shadow); z-index: 3; cursor: pointer; }
+#goal b { color: var(--blue); font-size: 11px; letter-spacing: .08em; display: block; }
+#goal small { color: var(--sub); display: block; margin-top: 2px; }
+#toasts { position: absolute; left: 50%; transform: translateX(-50%); top: calc(var(--topH, 52px) + 8px); width: min(360px, calc(100% - 20px)); display: flex; flex-direction: column; gap: 6px; z-index: 8; pointer-events: none; }
+.toast { background: var(--card); border: 1px solid var(--line); border-left: 5px solid var(--blue); border-radius: 10px; padding: 8px 12px; font-size: 13px; line-height: 1.45; box-shadow: var(--shadow); animation: tin .25s ease-out; }
+.toast.good { border-left-color: var(--green); } .toast.bad { border-left-color: var(--red); } .toast.gold { border-left-color: var(--gold); }
+@keyframes tin { from { transform: translateX(20px); opacity: 0; } }
+#news { position: absolute; left: 0; right: 0; bottom: calc(64px + var(--sab)); height: 26px; overflow: hidden; background: rgba(43,42,40,.82); color: #f6f1e6; font-size: 13px; line-height: 26px; z-index: 4; white-space: nowrap; }
+#news span { position: absolute; left: 100%; padding-left: 20px; will-change: transform; }
+
+/* 下のメニュー */
+#nav { position: absolute; left: 0; right: 0; bottom: 0; height: calc(64px + var(--sab)); padding: 0 calc(6px + var(--sar)) var(--sab) calc(6px + var(--sal)); display: flex; justify-content: center; gap: 2px; background: rgba(251,248,241,.96); border-top: 1px solid var(--line); z-index: 6; }
+#nav button { flex: 1; max-width: 110px; border: 0; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; font-size: 11.5px; font-weight: 700; color: var(--sub); cursor: pointer; position: relative; border-radius: 10px; margin: 5px 0; }
+#nav button svg { width: 24px; height: 24px; }
+#nav button.on { color: var(--blue); background: var(--blue2); }
+#nav button i.dot { position: absolute; top: 4px; right: calc(50% - 20px); width: 9px; height: 9px; border-radius: 50%; background: var(--red); display: none; }
+#nav button i.dot.on { display: block; }
+
+/* シート（画面の下から出るパネル。横長の画面では右に） */
+#sheet { position: absolute; left: 0; right: 0; bottom: calc(64px + var(--sab)); height: 62%; background: var(--paper); border-top-left-radius: 18px; border-top-right-radius: 18px; box-shadow: 0 -8px 30px rgba(60,45,20,.18); z-index: 7; display: flex; flex-direction: column; transform: translateY(110%); transition: transform .25s ease; }
+#sheet.on { transform: none; }
+body.wide #sheet { left: auto; right: 0; top: var(--topH, 52px); bottom: calc(64px + var(--sab)); width: min(460px, 46%); height: auto; border-radius: 0; border-left: 1px solid var(--line); transform: translateX(105%); }
+body.wide #sheet.on { transform: none; }
+.shHead { display: flex; align-items: center; padding: 12px 14px 6px 16px; gap: 8px; }
+.shHead h2 { margin: 0; font-size: 18px; font-weight: 900; flex: 1; }
+.x { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line2); background: var(--card); font-size: 18px; cursor: pointer; line-height: 1; }
+.tabs { display: flex; gap: 6px; padding: 4px 14px 8px; overflow-x: auto; scrollbar-width: none; flex-shrink: 0; }
+.tabs::-webkit-scrollbar { display: none; }
+.tabs button { flex-shrink: 0; border: 1px solid var(--line2); background: var(--card); border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.tabs button.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+#shBody { flex: 1; overflow-y: auto; padding: 4px 14px 16px; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; touch-action: pan-y; }
+
+/* カード・ボタン・バー */
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px; margin-bottom: 10px; }
+.card h3 { margin: 0 0 6px; font-size: 15px; }
+.row { display: flex; align-items: center; gap: 10px; }
+.row.sb { justify-content: space-between; }
+.muted { color: var(--sub); font-size: 12.5px; line-height: 1.5; }
+.btn { border: 0; border-radius: 11px; padding: 9px 14px; font-weight: 900; font-size: 14px; cursor: pointer; background: var(--blue); color: #fff; }
+.btn.sub { background: var(--card); color: var(--ink); border: 1px solid var(--line2); }
+.btn.red { background: var(--red); } .btn.green { background: var(--green); } .btn.gold { background: var(--gold); }
+.btn:disabled { opacity: .42; cursor: default; }
+.btn.small { padding: 6px 10px; font-size: 12.5px; border-radius: 9px; }
+.btn.big { width: 100%; padding: 13px; font-size: 16px; }
+.bar { height: 8px; background: var(--paper2); border-radius: 99px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--blue); border-radius: 99px; }
+.bar.g i { background: var(--green); } .bar.r i { background: var(--red); } .bar.o i { background: var(--gold); }
+.pill { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 11.5px; font-weight: 700; background: var(--paper2); color: var(--sub); }
+.pill.blue { background: var(--blue2); color: var(--blue); } .pill.green { background: #e2f3ea; color: var(--green); } .pill.red { background: #fbe6e3; color: var(--red); } .pill.gold { background: #f8efd9; color: #9a7316; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 13.5px; }
+.kv b { text-align: right; font-variant-numeric: tabular-nums; }
+.kind { display: flex; gap: 10px; align-items: center; cursor: pointer; }
+.kind .ic { width: 52px; height: 52px; border-radius: 12px; background: var(--paper2); display: grid; place-items: center; flex-shrink: 0; }
+.kind .ic svg { width: 40px; height: 40px; }
+.prod { display: grid; grid-template-columns: 64px 1fr; gap: 10px; }
+.prod img { width: 64px; height: 64px; border-radius: 10px; background: var(--paper2); object-fit: cover; }
+.stars { color: var(--gold); letter-spacing: 1px; }
+.score { font-size: 22px; font-weight: 900; }
+.list-empty { text-align: center; color: var(--sub); padding: 26px 8px; font-size: 14px; }
+.res { border-left: 4px solid var(--line2); }
+.res.done { border-left-color: var(--green); opacity: .7; } .res.can { border-left-color: var(--blue); } .res.cur { border-left-color: var(--gold); }
+.chart { width: 100%; height: 110px; display: block; }
+
+/* 開発スタジオ（全画面）：3Dの見本＋選ぶところ */
+#studio { position: absolute; inset: 0; z-index: 9; display: grid; grid-template-rows: auto 38% 1fr; background: transparent; }
+body.wide #studio { grid-template-rows: auto 1fr; grid-template-columns: 1fr min(470px, 46%); }
+#stHead { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; padding: calc(8px + var(--sat)) calc(12px + var(--sar)) 8px calc(12px + var(--sal)); background: var(--paper); border-bottom: 1px solid var(--line); }
+body.hub #stHead { padding-left: calc(58px + var(--sal)); }
+#stHead h2 { margin: 0; font-size: 17px; flex: 1; font-weight: 900; }
+#pv { position: relative; touch-action: none; cursor: grab; }
+#pvHint { position: absolute; left: 10px; bottom: 8px; font-size: 11.5px; color: var(--sub); background: rgba(251,248,241,.8); padding: 3px 8px; border-radius: 8px; pointer-events: none; }
+#pvMeter { position: absolute; right: 10px; top: 10px; width: min(220px, 50%); background: rgba(255,253,248,.9); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; font-size: 12px; pointer-events: none; }
+#pvMeter .bar { margin: 3px 0 6px; height: 7px; position: relative; overflow: visible; }
+#pvMeter .bar u { position: absolute; top: -3px; width: 2px; height: 13px; background: var(--ink); }
+#stPanel { background: var(--paper); display: flex; flex-direction: column; min-height: 0; border-top: 1px solid var(--line); }
+body.wide #stPanel { border-top: 0; border-left: 1px solid var(--line); }
+#stBody { flex: 1; overflow-y: auto; padding: 4px 14px 12px; touch-action: pan-y; overscroll-behavior: contain; }
+#stFoot { padding: 10px 14px calc(10px + var(--sab)); border-top: 1px solid var(--line); display: flex; gap: 10px; align-items: center; background: var(--paper); }
+#stFoot .muted { flex: 1; }
+.grp { margin: 10px 0 4px; font-size: 13px; font-weight: 900; color: var(--sub); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1.5px solid var(--line2); background: var(--card); border-radius: 10px; padding: 6px 10px; font-size: 13px; font-weight: 700; cursor: pointer; text-align: left; line-height: 1.25; }
+.chip small { display: block; font-weight: 500; font-size: 10.5px; color: var(--sub); }
+.chip.on { border-color: var(--blue); background: var(--blue2); color: var(--blue); }
+.chip.lock { opacity: .45; cursor: default; }
+.sw { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.sw button { width: 30px; height: 30px; border-radius: 50%; border: 2px solid rgba(0,0,0,.12); cursor: pointer; padding: 0; }
+.sw button.on { outline: 3px solid var(--blue); outline-offset: 2px; }
+.sw label { position: relative; width: 30px; height: 30px; border-radius: 50%; border: 2px dashed var(--line2); display: grid; place-items: center; font-size: 15px; cursor: pointer; overflow: hidden; }
+.sw label input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.txt { width: 100%; border: 1.5px solid var(--line2); border-radius: 10px; padding: 9px 11px; font-size: 15px; background: var(--card); -webkit-user-select: text; user-select: text; }
+.txt:focus { outline: none; border-color: var(--blue); }
+input[type=range] { width: 100%; accent-color: var(--blue); }
+
+/* モーダル（発売・レビューなど） */
+#modal { position: absolute; inset: 0; z-index: 30; background: rgba(40,32,20,.42); display: none; align-items: center; justify-content: center; padding: 16px; }
+#modal.on { display: flex; }
+#modalBox { background: var(--paper); border-radius: 18px; width: min(480px, 100%); max-height: calc(100% - 20px); overflow-y: auto; padding: 18px; box-shadow: var(--shadow); touch-action: pan-y; overscroll-behavior: contain; }
+#modalBox h2 { margin: 0 0 8px; font-size: 20px; font-weight: 900; }
+.review { text-align: center; }
+.review .rvs { font-size: 64px; font-weight: 900; line-height: 1; margin: 6px 0; }
+.review .cm { text-align: left; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; margin: 6px 0; font-size: 13.5px; line-height: 1.5; }
+.review .cm b { display: block; font-size: 11.5px; color: var(--sub); }
+
+/* タイトル・読みこみ */
+.screen { position: absolute; inset: 0; z-index: 20; display: none; align-items: center; justify-content: center; padding: 16px; background: radial-gradient(ellipse at 50% 30%, rgba(251,248,241,.55), rgba(233,226,211,.92)); }
+.screen.on { display: flex; }
+.tpanel { width: min(440px, 100%); background: var(--paper); border-radius: 22px; padding: 26px 22px; box-shadow: var(--shadow); text-align: center; max-height: 100%; overflow-y: auto; }
+.tpanel h1 { margin: 0; font-size: 34px; font-weight: 900; letter-spacing: .04em; }
+.tpanel h1 small { display: block; font-size: 13px; letter-spacing: .3em; color: var(--sub); font-weight: 700; margin-top: 4px; }
+.tpanel p { color: var(--sub); font-size: 13.5px; line-height: 1.6; }
+.tpanel .btn { width: 100%; margin-top: 10px; }
+#load h1 { font-size: 26px; }
+body.studio #nav, body.studio #news, body.studio #top, body.studio #goal, body.studio #sheet { display: none; }
+body.intitle #nav, body.intitle #news, body.intitle #top, body.intitle #goal, body.intitle #toasts { display: none; }
+@keyframes tin2 { from { transform: translateY(-10px); opacity: 0; } }
+.toast { animation-name: tin2; }
+</style>
+</head>
+<body class="intitle">
+<div id="rot">
+<canvas id="c"></canvas>
+<div id="top">
+  <div id="coName">ぶんぐ工房</div>
+  <div id="date">2000年4月1日</div>
+  <div class="stat"><span id="money">0円</span></div>
+  <div class="stat"><span id="rp">0 RP</span></div>
+  <div class="sp" id="speed"><button data-s="0" type="button" aria-label="止める">Ⅱ</button><button data-s="1" type="button" class="on">▶</button><button data-s="2" type="button">▶▶</button><button data-s="4" type="button">▶▶▶</button></div>
+  <button id="menuB" type="button" aria-label="メニュー">≡</button>
+</div>
+<div id="goal" class="hidden"></div>
+<div id="toasts"></div>
+<div id="news"><span id="newsT"></span></div>
+<nav id="nav"></nav>
+<div id="sheet"><div class="shHead"><h2 id="shTitle"></h2><button class="x" id="shClose" type="button" aria-label="とじる">×</button></div><div class="tabs" id="shTabs"></div><div id="shBody"></div></div>
+<div id="studio" class="hidden">
+  <div id="stHead"><h2 id="stTitle">新しい製品</h2><button class="x" id="stClose" type="button" aria-label="とじる">×</button></div>
+  <div id="pv"><div id="pvMeter"></div><div id="pvHint">ドラッグで回す・2本指やホイールで拡大</div></div>
+  <div id="stPanel"><div class="tabs" id="stTabs"></div><div id="stBody"></div><div id="stFoot"></div></div>
+</div>
+<div id="modal"><div id="modalBox"></div></div>
+<div class="screen" id="title"><div class="tpanel">
+  <h1>文房具カンパニー<small>STATIONERY COMPANY</small></h1>
+  <p>小さな作業部屋から始めて、えんぴつ・消しゴム・シャー芯・シャーペン・ボールペン・万年筆を開発し、世界一の文房具メーカーを目指そう。色・模様・ロゴは自分でデザインできます。</p>
+  <button class="btn big green" id="tCont" type="button">つづきから</button>
+  <button class="btn big" id="tNew" type="button">はじめから</button>
+  <p id="tNote" class="muted"></p>
+</div></div>
+<div class="screen on" id="load"><div class="tpanel"><h1>文房具カンパニー</h1><p id="loadmsg">準備しています…</p></div></div>
+</div>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { toCreasedNormals } from 'three/addons/utils/BufferGeometryUtils.js';
+// =========================================================================================
+//  文房具カンパニー — 文房具メーカーを育てる経営シミュレーション（オリジナル作品）
+//  製品をデザインして（3Dで見ながら色・模様・ロゴを変えられる）、開発して、発売して、研究して、会社を大きくする
+//  three.js r170。事務所も3Dで、雇った人が働き、作った製品が生産ラインを流れ、棚に並ぶ
+// =========================================================================================
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+const lerp = (a, b, t) => a + (b - a) * t;
+const damp = (a, b, k, dt) => lerp(a, b, 1 - Math.exp(-k * dt));
+const TAU = Math.PI * 2;
+const rr = (a, b) => a + Math.random() * (b - a);
+const ri = (a, b) => Math.floor(rr(a, b + 1));
+const pick = (arr, r = Math.random) => arr[(r() * arr.length) | 0];
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const nextFrame = () => new Promise(r => requestAnimationFrame(() => r()));
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const IS_TOUCH = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
+if (IS_TOUCH) document.body.classList.add('touch');
+
+// お金の表示：1万円より大きいと「万円」「億円」「兆円」
+function yen(n, plus) {
+  const s = n < 0 ? '−' : plus && n > 0 ? '+' : '', a = Math.abs(n);
+  if (a >= 1e12) return s + (a / 1e12).toFixed(a < 1e13 ? 2 : 1) + '兆円';
+  if (a >= 1e8) return s + (a / 1e8).toFixed(a < 1e9 ? 2 : a < 1e10 ? 1 : 0) + '億円';
+  if (a >= 1e4) return s + Math.round(a / 1e4).toLocaleString() + '万円';
+  return s + Math.round(a).toLocaleString() + '円';
+}
+const num = n => Math.round(n).toLocaleString();
+// ゲームの日付：0日目＝2000年4月1日（新学期から）
+const DAY0 = new Date(2000, 3, 1);
+const dateOf = day => new Date(DAY0.getFullYear(), DAY0.getMonth(), DAY0.getDate() + Math.floor(day));
+const yearOf = day => { const d = dateOf(day); return d.getFullYear() + d.getMonth() / 12; };
+const dateStr = day => { const d = dateOf(day); return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`; };
+
+// ---------- 3dgame のホームの中で動くとき（⚙ の横画面・音） ----------
+const HUB = { embedded: window.parent !== window, vol: 1, sound: true };
+if (HUB.embedded) document.body.classList.add('hub');
+const ROT = { on: false };
+const VW = () => (ROT.on ? innerHeight : innerWidth), VH = () => (ROT.on ? innerWidth : innerHeight);
+const toStage = (cx, cy) => (ROT.on ? { x: cy, y: innerWidth - cx } : { x: cx, y: cy });
+function applyHome(S) {
+  if (!S || typeof S !== 'object') return;
+  if (typeof S.land === 'boolean' && S.land !== ROT.on) { ROT.on = S.land; onResize(); }
+  if (typeof S.sound === 'boolean') HUB.sound = S.sound;
+  if (typeof S.vol === 'number') HUB.vol = clamp(S.vol, 0, 1);
+  AU.setVol();
+}
+
+// ---------- 設定（このゲームだけのもの） ----------
+const SET = Object.assign({ music: true, quality: IS_TOUCH ? 'std' : 'high' }, (() => { try { return JSON.parse(localStorage.getItem('bungu-settings')) || {}; } catch (e) { return {}; } })());
+const saveSet = () => { try { localStorage.setItem('bungu-settings', JSON.stringify(SET)); } catch (e) { /* 保存できない */ } };
+
+// ---------- 音（Web Audio で作る。効果音と、やさしいBGM） ----------
+const AU = {
+  ac: null, out: null, bgm: null, t: 0, step: 0,
+  resume() {
+    if (!this.ac) {
+      try { this.ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+      this.out = this.ac.createGain(); this.out.connect(this.ac.destination);
+      this.bgm = this.ac.createGain(); this.bgm.gain.value = 0.22; this.bgm.connect(this.out);
+      this.setVol();
+    }
+    if (this.ac.state === 'suspended') this.ac.resume();
+  },
+  setVol() { if (this.out) this.out.gain.value = HUB.sound ? 0.8 * HUB.vol : 0; if (this.bgm) this.bgm.gain.value = SET.music ? 0.22 : 0; },
+  ok() { return this.ac && this.ac.state === 'running' && HUB.sound && HUB.vol > 0; },
+  tone(f, t0, dur, type = 'sine', vol = 0.2, dst) {
+    const a = this.ac, o = a.createOscillator(), g = a.createGain();
+    o.type = type; o.frequency.value = f; g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(vol, t0 + 0.01); g.gain.exponentialRampToValueAtTime(0.0008, t0 + dur);
+    o.connect(g); g.connect(dst || this.out); o.start(t0); o.stop(t0 + dur + 0.05);
+  },
+  click() { if (!this.ok()) return; this.tone(880, this.ac.currentTime, 0.06, 'triangle', 0.08); },
+  coin() { if (!this.ok()) return; const t = this.ac.currentTime; this.tone(1320, t, 0.12, 'square', 0.05); this.tone(1760, t + 0.07, 0.25, 'square', 0.05); },
+  chime() { if (!this.ok()) return; const t = this.ac.currentTime; [784, 988, 1175, 1568].forEach((f, i) => this.tone(f, t + i * 0.09, 0.5, 'sine', 0.12)); },
+  fanfare() { if (!this.ok()) return; const t = this.ac.currentTime; [[523, 0], [659, .12], [784, .24], [1047, .36], [784, .52], [1047, .64]].forEach(([f, d]) => { this.tone(f, t + d, 0.4, 'triangle', 0.14); this.tone(f / 2, t + d, 0.4, 'sine', 0.08); }); },
+  bad() { if (!this.ok()) return; const t = this.ac.currentTime; this.tone(330, t, 0.25, 'sawtooth', 0.05); this.tone(247, t + 0.18, 0.35, 'sawtooth', 0.05); },
+  // BGM：木琴のような音で、ゆっくりした4つの和音のくり返し
+  music(dt) {
+    if (!this.ac || !SET.music || !this.ok()) return;
+    this.t -= dt; if (this.t > 0) return;
+    const CH = [[60, 64, 67, 71], [57, 60, 64, 67], [62, 65, 69, 72], [55, 59, 62, 65]], beat = 0.42, now = this.ac.currentTime;
+    const ch = CH[(this.step >> 3) % 4], i = this.step % 8, mf = m => 440 * Math.pow(2, (m - 69) / 12);
+    const mel = [ch[0] + 12, ch[2], ch[1] + 12, ch[3], ch[2] + 12, ch[1], ch[3] + 12, ch[2]][i];
+    this.tone(mf(mel), now + 0.02, 0.9, 'sine', 0.11, this.bgm); this.tone(mf(mel) * 2, now + 0.02, 0.25, 'triangle', 0.025, this.bgm);
+    if (i % 4 === 0) this.tone(mf(ch[0] - 12), now + 0.02, 1.6, 'triangle', 0.09, this.bgm);
+    this.step++; this.t = beat;
+  },
+};
+// =========================================================================================
+//  データ：文房具の種類・性能の選択肢・見た目の項目・研究・スタッフ・設備・事務所・ライバル・目標
+//  （会社名・人物・製品はすべて架空。実在のメーカーや商品名は使わない）
+// =========================================================================================
+const SEGS = { stu: '学生', adu: '社会人', pro: 'プロ（絵・製図）' };
+
+// 種類：週あたりの国内の市場（本数）、層の割合、性能の期待（年ごとに上がる）、開発の基本費用と日数、不具合の数、1本の生産の手間
+const KINDS = {
+  pencil:   { name: 'えんぴつ',   short: 'えんぴつ', base: 42000, segw: { stu: .7, adu: .12, pro: .18 }, e0: 24, slope: 1.15, dev: 200000, days: 10, bugs: 2, work: 1,  unlock: null,   trend: dy => Math.max(0.62, 1 - dy * 0.014) },
+  eraser:   { name: '消しゴム',   short: '消しゴム', base: 36000, segw: { stu: .72, adu: .18, pro: .1 }, e0: 22, slope: 1.05, dev: 200000, days: 10, bugs: 2, work: 1,  unlock: null,   trend: () => 1 },
+  lead:     { name: 'シャー芯',   short: 'シャー芯', base: 30000, segw: { stu: .62, adu: .26, pro: .12 }, e0: 20, slope: 1.2, dev: 350000, days: 12, bugs: 3, work: 1,  unlock: 'r_mech', trend: dy => 1 + dy * 0.006 },
+  mech:     { name: 'シャープペンシル', short: 'シャーペン', base: 15000, segw: { stu: .6, adu: .25, pro: .15 }, e0: 26, slope: 1.6, dev: 1200000, days: 18, bugs: 5, work: 3,  unlock: 'r_mech', trend: dy => 1 + dy * 0.02 },
+  ball:     { name: 'ボールペン', short: 'ボールペン', base: 60000, segw: { stu: .45, adu: .5, pro: .05 }, e0: 24, slope: 1.7, dev: 900000, days: 16, bugs: 4, work: 1.5, unlock: 'r_ball', trend: dy => 1 + dy * 0.015 },
+  fountain: { name: '万年筆',     short: '万年筆', base: 1500, segw: { stu: .1, adu: .7, pro: .2 }, e0: 22, slope: 1.6, dev: 3000000, days: 26, bugs: 8, work: 20, unlock: 'r_fp',   trend: dy => 1 + Math.max(0, dy - 8) * 0.06 },
+};
+const KIND_IDS = Object.keys(KINDS);
+
+// 性能の選択肢：lv＝性能の点、cost＝1本の原価（円）、req＝必要な研究、pop＝その品の需要の大きさ（太さ・濃さなど）、seg＝よろこぶ層
+const opt = (id, name, lv, cost, o = {}) => Object.assign({ id, name, lv, cost }, o);
+const LEAD_SIZES = [opt('s05', '0.5mm', 5, 0, { pop: 1 }), opt('s07', '0.7mm', 5, 0, { pop: .45, req: 'r_l07', seg: { stu: .15 } }), opt('s03', '0.3mm', 7, 1, { pop: .55, req: 'r_l03', seg: { adu: .2, pro: .2 } }), opt('s09', '0.9mm', 4, 0, { pop: .22, req: 'r_l09' }), opt('s02', '0.2mm', 12, 2, { pop: .32, req: 'r_l02', seg: { pro: .3, adu: .1 } })];
+const GRADES = [opt('HB', 'HB', 0, 0, { pop: 1 }), opt('B', 'B', 0, 0, { pop: .9, seg: { stu: .1 } }), opt('2B', '2B', 0, 0, { pop: .75, seg: { stu: .15 } }), opt('H', 'H', 0, 0, { pop: .45, seg: { pro: .2 } }), opt('F', 'F', 0, 0, { pop: .25, seg: { adu: .1 } }), opt('2H', '2H', 0, 0, { pop: .3, seg: { pro: .3 } }), opt('4B', '4B', 0, 0, { pop: .3, seg: { pro: .4 } }), opt('6B', '6B', 0, 0, { pop: .18, seg: { pro: .5 } })];
+const GRIPS = [opt('none', 'なし', 0, 0), opt('rubber', 'ラバー', 6, 8, { req: 'r_g1', seg: { stu: .1 } }), opt('silicone', 'やわらかシリコン', 10, 12, { req: 'r_g2', seg: { stu: .15, adu: .05 } }), opt('knurl', '金属ローレット', 12, 22, { req: 'r_g3', seg: { pro: .25, adu: .1 } })];
+const SPECS = {
+  pencil: [
+    { key: 'grade', name: '芯の濃さ', opts: GRADES },
+    { key: 'core', name: '芯の質', opts: [opt('c0', 'ふつうの芯', 10, 3), opt('c1', 'なめらかな芯', 18, 4, { req: 'r_pc1' }), opt('c2', '高密度の芯', 26, 6, { req: 'r_pc2', seg: { pro: .15 } }), opt('c3', '折れにくい芯', 32, 7, { req: 'r_pc3', seg: { stu: .1 } })] },
+    { key: 'wood', name: '軸の木', opts: [opt('w0', 'ふつうの木', 8, 5), opt('w1', '香りのよい杉', 14, 8, { req: 'r_pw1', seg: { adu: .1, pro: .1 } }), opt('w2', '再生材（エコ）', 12, 6, { req: 'r_pw2', eco: 1 })] },
+    { key: 'shape', name: '形', opts: [opt('hex', '六角', 4, 0), opt('round', '丸', 4, 0), opt('tri', '三角（持ちやすい）', 8, 1, { req: 'r_ptri', seg: { stu: .2 } })] },
+    { key: 'erase', name: 'おしりの消しゴム', opts: [opt('no', 'なし', 0, 0, { seg: { pro: .1 } }), opt('yes', 'あり', 3, 2, { seg: { stu: .1 } })] },
+  ],
+  eraser: [
+    { key: 'mat', name: '素材', opts: [opt('m0', '天然ゴム', 8, 6), opt('m1', 'プラスチック', 13, 5), opt('m2', 'よく消える樹脂', 20, 7, { req: 'r_e1' }), opt('m3', '消しくずがまとまる', 26, 8, { req: 'r_e2', seg: { stu: .15 } }), opt('m4', '軽い力で消える', 32, 9, { req: 'r_e3', seg: { stu: .1, adu: .1 } })] },
+    { key: 'size', name: '大きさ', opts: [opt('sm', '小', 2, 2, { seg: { adu: .1 } }), opt('md', '中', 4, 4), opt('lg', '大', 5, 6, { seg: { stu: .05 } })] },
+    { key: 'shape', name: '形', opts: [opt('box', '四角', 3, 0), opt('soft', '丸みのある形', 4, 0), opt('many', '角がたくさんある形', 9, 1, { req: 'r_e4', seg: { stu: .15, pro: .1 } }), opt('stick', '細長いホルダー式', 8, 14, { req: 'r_e5', seg: { pro: .25, adu: .1 } })] },
+    { key: 'sleeve', name: 'ケース', opts: [opt('k0', '紙のケース', 1, 1), opt('k1', '角が折れにくいケース', 5, 1, { req: 'r_e6' })] },
+    { key: 'scent', name: '香り', opts: [opt('none', 'なし', 0, 0), opt('berry', 'いちご', 2, 1, { req: 'r_scent', seg: { stu: .15 } }), opt('lemon', 'レモン', 2, 1, { req: 'r_scent', seg: { stu: .15 } }), opt('mint', 'ミント', 2, 1, { req: 'r_scent', seg: { stu: .1, adu: .05 } })] },
+  ],
+  lead: [
+    { key: 'size', name: '太さ', opts: LEAD_SIZES },
+    { key: 'grade', name: '濃さ', opts: GRADES.filter(g => !['4B', '6B'].includes(g.id)) },
+    { key: 'str', name: '芯の強さ', opts: [opt('t0', 'ふつう', 8, 6), opt('t1', '折れにくい', 16, 8, { req: 'r_l1' }), opt('t2', '高強度ナノ芯', 26, 11, { req: 'r_l2' }), opt('t3', 'なめらか高強度芯', 34, 13, { req: 'r_l3' })] },
+    { key: 'count', name: '本数', opts: [opt('n20', '20本', 2, 0), opt('n40', '40本', 4, 8, { seg: { adu: .1, pro: .1 } })] },
+    { key: 'case', name: 'ケース', opts: [opt('c0', '小さな箱', 1, 1), opt('c1', 'スライド式', 4, 2, { req: 'r_lc' }), opt('c2', '1本ずつ出せる', 7, 4, { req: 'r_lc2', seg: { stu: .1 } })] },
+  ],
+  mech: [
+    { key: 'size', name: '芯の太さ', opts: LEAD_SIZES },
+    { key: 'mech', name: '機構', opts: [opt('k0', 'ノック式', 10, 60), opt('k1', 'サイドノック', 13, 75, { req: 'r_m1', seg: { adu: .1 } }), opt('k2', '振って芯を出す', 16, 90, { req: 'r_m2', seg: { stu: .2 } }), opt('k3', '芯が回る機構', 24, 140, { req: 'r_m3', seg: { stu: .15 } }), opt('k4', '芯が折れない機構', 30, 190, { req: 'r_m4', seg: { stu: .2 } }), opt('k5', '自動で芯が出る機構', 36, 260, { req: 'r_m5', seg: { adu: .1, stu: .1 } })] },
+    { key: 'grip', name: 'グリップ', opts: GRIPS },
+    { key: 'body', name: '軸の素材', opts: [opt('plastic', 'プラスチック', 4, 20), opt('clear', '透明プラスチック', 5, 22, { clear: 1 }), opt('alu', 'アルミ', 9, 70, { req: 'r_al', metal: 1, seg: { adu: .15, pro: .15 } }), opt('wood', '木', 9, 80, { req: 'r_wood', woodBody: 1, seg: { adu: .2 } })] },
+    { key: 'tip', name: '先端', opts: [opt('t0', 'ふつうのパイプ', 3, 0), opt('t1', '製図用の長いパイプ', 7, 10, { req: 'r_tipd', seg: { pro: .3 } }), opt('t2', 'ひっこむパイプ', 8, 25, { req: 'r_tip', seg: { stu: .1, adu: .1 } })] },
+    { key: 'erase', name: '消しゴム', opts: [opt('e0', '小さい消しゴム', 2, 3), opt('e1', '回して出る消しゴム', 5, 12, { req: 'r_twe' })] },
+  ],
+  ball: [
+    { key: 'ink', name: 'インク', opts: [opt('oil', '油性', 10, 20), opt('gel', '水性ゲル', 16, 28, { req: 'r_gel', seg: { stu: .2 } }), opt('low', '低粘度油性', 24, 32, { req: 'r_lv', seg: { adu: .2 } }), opt('erasable', '消せるインク', 22, 40, { req: 'r_fr', seg: { stu: .45 } }), opt('quick', '速乾ゲル', 28, 36, { req: 'r_qd', seg: { stu: .15, adu: .1 } }), opt('pigment', 'にじまない顔料ゲル', 32, 40, { req: 'r_pg', seg: { adu: .15, pro: .2 } })] },
+    { key: 'tip', name: 'ボールの太さ', opts: [opt('t10', '1.0mm', 3, 0, { pop: .4 }), opt('t07', '0.7mm', 5, 0, { pop: 1 }), opt('t05', '0.5mm', 7, 1, { pop: 1, req: 'r_b05' }), opt('t038', '0.38mm', 10, 2, { pop: .7, req: 'r_b038', seg: { stu: .1 } }), opt('t028', '0.28mm', 12, 3, { pop: .35, req: 'r_b028', seg: { pro: .2 } })] },
+    { key: 'colors', name: '色の数', opts: [opt('c1', '1色', 0, 0), opt('c2', '2色', 4, 25, { req: 'r_mc' }), opt('c3', '3色', 7, 45, { req: 'r_mc', seg: { stu: .1 } }), opt('c4', '4色', 9, 60, { req: 'r_mc4', seg: { stu: .15 } }), opt('cm', '多機能（3色＋シャープ）', 13, 85, { req: 'r_mf', seg: { adu: .2 } })] },
+    { key: 'act', name: '方式', opts: [opt('cap', 'キャップ式', 2, 5), opt('knock', 'ノック式', 5, 12), opt('twist', '回転式', 6, 18, { req: 'r_tw', seg: { adu: .15 } })] },
+    { key: 'grip', name: 'グリップ', opts: GRIPS },
+    { key: 'body', name: '軸の素材', opts: [opt('plastic', 'プラスチック', 3, 10), opt('clear', '透明プラスチック', 4, 12, { clear: 1 }), opt('alu', 'アルミ', 8, 60, { req: 'r_al', metal: 1, seg: { adu: .15 } }), opt('brass', '真ちゅう', 12, 120, { req: 'r_brass', metal: 1, seg: { adu: .25 } })] },
+  ],
+  fountain: [
+    { key: 'nib', name: 'ペン先', opts: [opt('steel', 'ステンレス', 10, 300), opt('k14', '14金', 20, 1800, { req: 'r_14k', seg: { adu: .1 } }), opt('k18', '18金', 26, 2800, { req: 'r_18k', seg: { adu: .15 } }), opt('k21', '21金', 30, 3800, { req: 'r_21k', seg: { adu: .2, pro: .1 } }), opt('soft', 'やわらかい21金', 34, 4500, { req: 'r_soft', seg: { pro: .3 } })] },
+    { key: 'width', name: '字幅', opts: [opt('EF', '極細', 2, 0, { pop: .6 }), opt('F', '細字', 2, 0, { pop: 1 }), opt('M', '中字', 2, 0, { pop: 1 }), opt('B', '太字', 2, 0, { pop: .4 }), opt('MS', '筆のような字幅', 6, 120, { pop: .25, req: 'r_mus', seg: { pro: .4 } })] },
+    { key: 'fill', name: 'インクの入れ方', opts: [opt('cart', 'カートリッジ', 4, 20), opt('conv', '両用式（コンバーター）', 8, 60, { req: 'r_conv' }), opt('piston', '吸入式', 14, 220, { req: 'r_piston', seg: { pro: .15, adu: .1 } })] },
+    { key: 'body', name: '軸', opts: [opt('resin', '樹脂', 4, 120), opt('metal', '金属', 8, 260, { req: 'r_fpm', metal: 1 }), opt('wood', '木', 9, 300, { req: 'r_wood', woodBody: 1, seg: { adu: .1 } }), opt('ebonite', 'エボナイト', 12, 900, { req: 'r_ebo', seg: { pro: .15 } }), opt('urushi', '漆塗り', 16, 1800, { req: 'r_urushi', seg: { adu: .25 } })] },
+    { key: 'cap', name: 'キャップ', opts: [opt('screw', 'ねじ式', 4, 40), opt('push', 'はめ込み式', 3, 30), opt('capless', 'キャップレス（ノック式）', 12, 900, { req: 'r_capless', seg: { adu: .2 } })] },
+  ],
+};
+
+// 見た目：色・模様・仕上げ・金具・ロゴ。性能には関係しないが、デザインの点（流行・こだわり）に関係する
+const PALETTE = ['#f4f1ea', '#1d1d1f', '#c8c8c8', '#6b6b70', '#d93b2f', '#f08a24', '#f6c945', '#7cbf4d', '#2f9e6e', '#2b8fd6', '#24438f', '#7b4bc4',
+  '#e86fa8', '#f7b6c8', '#fbe3a4', '#bfe3c0', '#b9dcf2', '#d7c4ef', '#a89f91', '#8f9e8b', '#9aa6b8', '#c9a28c', '#6d4b33', '#3e5a47'];
+const PATTERNS = { none: '無地', stripe: 'しま', dots: '水玉', stars: '星', check: 'チェック', hearts: 'ハート', grad: 'グラデーション', marble: '大理石', wood: '木目', camo: 'まだら' };
+const FINISHES = { gloss: 'ツヤ', matte: 'マット', metal: 'メタリック', pearl: 'パール' };
+const METALS = { silver: '銀', gold: '金', black: '黒', rose: 'ピンクゴールド' };
+const FONTS = { goth: 'ゴシック', round: '丸文字', mincho: '明朝' };
+const INKS = ['#1a1a1a', '#1f3fa8', '#c8261e', '#2a8a3e', '#e2589a', '#6a3fb8', '#e07a1c', '#2a9db0', '#6b4a2b'];
+const LOOKS = {
+  pencil: [
+    { key: 'body', name: '軸の色', type: 'color' }, { key: 'finish', name: '仕上げ', type: 'sel', opts: FINISHES },
+    { key: 'pattern', name: '模様', type: 'sel', opts: PATTERNS }, { key: 'pat', name: '模様の色', type: 'color' },
+    { key: 'tip', name: 'おしりの色', type: 'color' }, { key: 'eraser', name: '消しゴムの色', type: 'color', when: d => d.spec.erase === 'yes' },
+    { key: 'metal', name: '金具', type: 'sel', opts: METALS, when: d => d.spec.erase === 'yes' },
+    { key: 'logo', name: 'ロゴの文字', type: 'text' }, { key: 'logoColor', name: '文字の色', type: 'color' }, { key: 'font', name: '字体', type: 'sel', opts: FONTS },
+  ],
+  eraser: [
+    { key: 'body', name: '消しゴムの色', type: 'color' }, { key: 'sleeve', name: 'ケースの色', type: 'color' },
+    { key: 'pattern', name: 'ケースの模様', type: 'sel', opts: PATTERNS }, { key: 'pat', name: '模様の色', type: 'color' },
+    { key: 'finish', name: 'ケースの仕上げ', type: 'sel', opts: FINISHES },
+    { key: 'logo', name: 'ロゴの文字', type: 'text' }, { key: 'logoColor', name: '文字の色', type: 'color' }, { key: 'font', name: '字体', type: 'sel', opts: FONTS },
+  ],
+  lead: [
+    { key: 'body', name: 'ケースの色', type: 'color' }, { key: 'clear', name: 'ケースの透け', type: 'sel', opts: { clear: '透明', smoke: 'スモーク', solid: '不透明' } },
+    { key: 'cap', name: 'ふたの色', type: 'color' }, { key: 'label', name: 'ラベルの色', type: 'color' },
+    { key: 'pattern', name: 'ラベルの模様', type: 'sel', opts: PATTERNS }, { key: 'pat', name: '模様の色', type: 'color' },
+    { key: 'logo', name: 'ロゴの文字', type: 'text' }, { key: 'logoColor', name: '文字の色', type: 'color' }, { key: 'font', name: '字体', type: 'sel', opts: FONTS },
+  ],
+  mech: [
+    { key: 'body', name: '軸の色', type: 'color' }, { key: 'finish', name: '仕上げ', type: 'sel', opts: FINISHES },
+    { key: 'pattern', name: '模様', type: 'sel', opts: PATTERNS }, { key: 'pat', name: '模様の色', type: 'color' },
+    { key: 'grip', name: 'グリップの色', type: 'color', when: d => d.spec.grip !== 'none' && d.spec.grip !== 'knurl' },
+    { key: 'metal', name: '金具', type: 'sel', opts: METALS },
+    { key: 'logo', name: 'ロゴの文字', type: 'text' }, { key: 'logoColor', name: '文字の色', type: 'color' }, { key: 'font', name: '字体', type: 'sel', opts: FONTS },
+  ],
+  ball: [
+    { key: 'body', name: '軸の色', type: 'color' }, { key: 'finish', name: '仕上げ', type: 'sel', opts: FINISHES },
+    { key: 'pattern', name: '模様', type: 'sel', opts: PATTERNS }, { key: 'pat', name: '模様の色', type: 'color' },
+    { key: 'grip', name: 'グリップの色', type: 'color', when: d => d.spec.grip !== 'none' && d.spec.grip !== 'knurl' },
+    { key: 'clip', name: 'クリップの色', type: 'color' }, { key: 'metal', name: '金具', type: 'sel', opts: METALS },
+    { key: 'ink', name: 'インクの色', type: 'ink', when: d => d.spec.colors === 'c1' },
+    { key: 'logo', name: 'ロゴの文字', type: 'text' }, { key: 'logoColor', name: '文字の色', type: 'color' }, { key: 'font', name: '字体', type: 'sel', opts: FONTS },
+  ],
+  fountain: [
+    { key: 'body', name: '軸の色', type: 'color', when: d => !['wood'].includes(d.spec.body) }, { key: 'cap', name: 'キャップの色', type: 'color', when: d => d.spec.cap !== 'capless' },
+    { key: 'finish', name: '仕上げ', type: 'sel', opts: FINISHES },
+    { key: 'pattern', name: '模様', type: 'sel', opts: PATTERNS }, { key: 'pat', name: '模様の色', type: 'color' },
+    { key: 'metal', name: '金具', type: 'sel', opts: METALS }, { key: 'nibTone', name: 'ペン先の色', type: 'sel', opts: { gold: '金', silver: '銀', two: 'ツートン' } },
+    { key: 'ink', name: 'インクの色', type: 'ink' },
+    { key: 'logo', name: 'ロゴの文字', type: 'text' }, { key: 'logoColor', name: '文字の色', type: 'color' }, { key: 'font', name: '字体', type: 'sel', opts: FONTS },
+  ],
+};
+const DEF_LOOK = {
+  pencil: { body: '#2f9e6e', finish: 'gloss', pattern: 'none', pat: '#f6c945', tip: '#f4f1ea', eraser: '#f7b6c8', metal: 'gold', logo: 'BUNGU HB', logoColor: '#d8b25a', font: 'goth' },
+  eraser: { body: '#f4f1ea', sleeve: '#2b8fd6', pattern: 'stripe', pat: '#1d1d1f', finish: 'matte', logo: 'ERASER', logoColor: '#f4f1ea', font: 'goth' },
+  lead: { body: '#1d1d1f', clear: 'smoke', cap: '#2b8fd6', label: '#f4f1ea', pattern: 'none', pat: '#2b8fd6', logo: 'LEAD', logoColor: '#1d1d1f', font: 'goth' },
+  mech: { body: '#24438f', finish: 'gloss', pattern: 'none', pat: '#f4f1ea', grip: '#1d1d1f', metal: 'silver', logo: 'SHARP 0.5', logoColor: '#f4f1ea', font: 'goth' },
+  ball: { body: '#f4f1ea', finish: 'gloss', pattern: 'none', pat: '#2b8fd6', grip: '#2b8fd6', clip: '#2b8fd6', metal: 'silver', ink: '#1a1a1a', logo: 'SMOOTH', logoColor: '#24438f', font: 'goth' },
+  fountain: { body: '#1d1d1f', cap: '#1d1d1f', finish: 'gloss', pattern: 'none', pat: '#d93b2f', metal: 'gold', nibTone: 'gold', ink: '#1f3fa8', logo: 'BUNGU', logoColor: '#d8b25a', font: 'mincho' },
+};
+
+// 研究：年から始められる。RP（研究ポイント）を払って、日数がたつと完了
+const R_ = (id, name, cat, year, rp, days, o = {}) => Object.assign({ id, name, cat, year, rp, days }, o);
+const RESEARCH = [
+  R_('r_mech', 'シャープペンシルの基本', 'gen', 2000, 25, 14, { unlock: ['mech', 'lead'], desc: 'シャーペンとシャー芯を作れるようになる' }),
+  R_('r_ball', 'ボールペンの基本', 'gen', 2000, 35, 18, { unlock: ['ball'], desc: 'ボールペンを作れるようになる' }),
+  R_('r_fp', '万年筆の基本', 'gen', 2001, 80, 30, { unlock: ['fountain'], desc: '万年筆を作れるようになる（高いけれど、もうけも大きい）' }),
+  R_('r_prod1', '生産のくふう Ⅰ', 'gen', 2001, 40, 14, { costCut: .05, desc: 'すべての製品の原価 −5%' }),
+  R_('r_qa1', '品質チェックの手順', 'gen', 2002, 50, 16, { bugCut: .15, desc: '開発中の不具合 −15%' }),
+  R_('r_mk1', '文房具店とのつながり', 'gen', 2002, 60, 20, { sales: .05, desc: '売れる数 +5%' }),
+  R_('r_des1', 'デザインの研究 Ⅰ', 'gen', 2003, 70, 20, { design: .5, desc: 'デザインの点 +0.5' }),
+  R_('r_prod2', '生産のくふう Ⅱ', 'gen', 2006, 120, 25, { costCut: .05, req: 'r_prod1', desc: 'すべての製品の原価 −5%' }),
+  R_('r_mk2', 'ネット通販', 'gen', 2008, 160, 30, { sales: .08, req: 'r_mk1', desc: '売れる数 +8%' }),
+  R_('r_qa2', '自動検査機', 'gen', 2010, 200, 30, { bugCut: .2, req: 'r_qa1', desc: '開発中の不具合 −20%' }),
+  R_('r_des2', 'デザインの研究 Ⅱ', 'gen', 2011, 220, 30, { design: .5, req: 'r_des1', desc: 'デザインの点 +0.5' }),
+  R_('r_prod3', '生産のくふう Ⅲ', 'gen', 2012, 300, 40, { costCut: .05, req: 'r_prod2', desc: 'すべての製品の原価 −5%' }),
+  R_('r_mk3', 'SNSの宣伝', 'gen', 2014, 260, 30, { adBoost: .25, req: 'r_mk2', desc: '広告の効果 +25%' }),
+  // えんぴつ
+  R_('r_pc1', 'なめらかな芯', 'pencil', 2000, 30, 12), R_('r_pw1', '香りのよい杉の軸', 'pencil', 2002, 40, 14), R_('r_ptri', '三角の軸', 'pencil', 2004, 45, 14),
+  R_('r_pc2', '高密度の芯', 'pencil', 2006, 90, 20, { req: 'r_pc1' }), R_('r_pw2', '再生材の軸', 'pencil', 2008, 80, 18), R_('r_pc3', '折れにくい芯', 'pencil', 2012, 160, 26, { req: 'r_pc2' }),
+  // 消しゴム
+  R_('r_e1', 'よく消える樹脂', 'eraser', 2000, 25, 12), R_('r_scent', '香りつき消しゴム', 'eraser', 2002, 30, 12), R_('r_e4', '角がたくさんある形', 'eraser', 2003, 50, 16),
+  R_('r_e6', '角が折れにくいケース', 'eraser', 2004, 45, 14), R_('r_e2', '消しくずがまとまる', 'eraser', 2005, 90, 20, { req: 'r_e1' }), R_('r_e5', 'ホルダー式の消しゴム', 'eraser', 2007, 90, 20),
+  R_('r_e3', '軽い力で消える', 'eraser', 2013, 180, 28, { req: 'r_e2' }),
+  // シャー芯
+  R_('r_l07', '0.7mm の芯', 'lead', 2001, 30, 12, { req: 'r_mech' }), R_('r_l03', '0.3mm の芯', 'lead', 2002, 45, 16, { req: 'r_mech' }), R_('r_l1', '折れにくい芯', 'lead', 2003, 60, 18, { req: 'r_mech' }),
+  R_('r_lc', 'スライド式ケース', 'lead', 2003, 40, 12, { req: 'r_mech' }), R_('r_l09', '0.9mm の芯', 'lead', 2004, 40, 12, { req: 'r_mech' }), R_('r_l2', '高強度ナノ芯', 'lead', 2009, 140, 24, { req: 'r_l1' }),
+  R_('r_lc2', '1本ずつ出せるケース', 'lead', 2010, 110, 20, { req: 'r_lc' }), R_('r_l02', '0.2mm の芯', 'lead', 2014, 220, 30, { req: 'r_l03' }), R_('r_l3', 'なめらか高強度芯', 'lead', 2016, 260, 32, { req: 'r_l2' }),
+  // シャーペン
+  R_('r_g1', 'ラバーグリップ', 'mech', 2001, 40, 14, { req: 'r_mech' }), R_('r_tipd', '製図用の長いパイプ', 'mech', 2001, 35, 12, { req: 'r_mech' }), R_('r_m1', 'サイドノック', 'mech', 2002, 50, 16, { req: 'r_mech' }),
+  R_('r_al', 'アルミの軸', 'mech', 2004, 70, 18, { req: 'r_mech' }), R_('r_m2', '振って芯を出す', 'mech', 2005, 90, 20, { req: 'r_m1' }), R_('r_g2', 'シリコングリップ', 'mech', 2006, 90, 20, { req: 'r_g1' }),
+  R_('r_twe', '回して出る消しゴム', 'mech', 2006, 70, 16, { req: 'r_mech' }), R_('r_tip', 'ひっこむパイプ', 'mech', 2007, 110, 22, { req: 'r_tipd' }), R_('r_m3', '芯が回る機構', 'mech', 2008, 180, 30, { req: 'r_m2' }),
+  R_('r_g3', '金属ローレット', 'mech', 2009, 120, 22, { req: 'r_al' }), R_('r_m4', '芯が折れない機構', 'mech', 2010, 240, 34, { req: 'r_m3' }), R_('r_wood', '木の軸', 'mech', 2011, 140, 24),
+  R_('r_m5', '自動で芯が出る機構', 'mech', 2017, 380, 40, { req: 'r_m4' }),
+  // ボールペン
+  R_('r_gel', 'ゲルインク', 'ball', 2000, 40, 16, { req: 'r_ball' }), R_('r_b05', '0.5mm のボール', 'ball', 2001, 35, 12, { req: 'r_ball' }), R_('r_mc', '2色・3色ボールペン', 'ball', 2002, 60, 18, { req: 'r_ball' }),
+  R_('r_mc4', '4色ボールペン', 'ball', 2004, 90, 20, { req: 'r_mc' }), R_('r_tw', '回転式', 'ball', 2005, 70, 16, { req: 'r_ball' }), R_('r_lv', '低粘度油性インク', 'ball', 2006, 160, 28, { req: 'r_ball' }),
+  R_('r_fr', '消せるインク', 'ball', 2007, 200, 32, { req: 'r_gel' }), R_('r_b038', '0.38mm のボール', 'ball', 2008, 120, 22, { req: 'r_b05' }), R_('r_brass', '真ちゅうの軸', 'ball', 2008, 120, 20, { req: 'r_ball' }),
+  R_('r_mf', '多機能ペン', 'ball', 2009, 160, 26, { req: 'r_mc4' }), R_('r_qd', '速乾ゲルインク', 'ball', 2012, 220, 30, { req: 'r_gel' }), R_('r_b028', '0.28mm のボール', 'ball', 2014, 200, 30, { req: 'r_b038' }),
+  R_('r_pg', 'にじまない顔料ゲル', 'ball', 2017, 300, 34, { req: 'r_qd' }),
+  // 万年筆
+  R_('r_14k', '14金のペン先', 'fountain', 2001, 90, 24, { req: 'r_fp' }), R_('r_fpm', '金属の軸', 'fountain', 2002, 60, 16, { req: 'r_fp' }), R_('r_conv', '両用式（コンバーター）', 'fountain', 2003, 80, 20, { req: 'r_fp' }),
+  R_('r_18k', '18金のペン先', 'fountain', 2006, 180, 30, { req: 'r_14k' }), R_('r_piston', '吸入式', 'fountain', 2009, 200, 32, { req: 'r_conv' }), R_('r_ebo', 'エボナイトの軸', 'fountain', 2010, 180, 28, { req: 'r_fp' }),
+  R_('r_mus', '筆のような字幅', 'fountain', 2010, 150, 26, { req: 'r_fp' }), R_('r_21k', '21金のペン先', 'fountain', 2012, 260, 36, { req: 'r_18k' }), R_('r_urushi', '漆塗りの軸', 'fountain', 2014, 320, 38, { req: 'r_ebo' }),
+  R_('r_capless', 'キャップレス万年筆', 'fountain', 2015, 360, 40, { req: 'r_fp' }), R_('r_soft', 'やわらかい21金', 'fountain', 2018, 420, 42, { req: 'r_21k' }),
+];
+const RES_BY_ID = Object.fromEntries(RESEARCH.map(r => [r.id, r]));
+// 研究の説明（性能の選択肢を開く研究は、開くものの名前から作る）
+for (const r of RESEARCH) {
+  if (r.desc) continue;
+  const opens = [];
+  for (const k of KIND_IDS) for (const g of SPECS[k]) for (const o of g.opts) if (o.req === r.id && !opens.includes(KINDS[k].short + '：' + o.name)) opens.push(KINDS[k].short + '：' + o.name);
+  r.desc = opens.length ? opens.join('、') + ' が使えるようになる' : '';
+}
+const RES_CATS = { gen: '会社', pencil: 'えんぴつ', eraser: '消しゴム', lead: 'シャー芯', mech: 'シャーペン', ball: 'ボールペン', fountain: '万年筆' };
+
+// スタッフ：役わりごとの働き（レベル1〜5）と月給
+const ROLES = {
+  res: { name: '研究員', desc: '研究ポイント（RP）を作る', rate: [0.5, 0.75, 1.05, 1.45, 1.9], sal: [220000, 320000, 460000, 650000, 900000], shirt: '#f4f4f0' },
+  qa:  { name: '品質チェック', desc: '開発中の不具合を直す', rate: [0.35, 0.55, 0.8, 1.1, 1.45], sal: [200000, 290000, 420000, 600000, 820000], shirt: '#3d7fd0' },
+  des: { name: 'デザイナー', desc: 'デザインの点が上がる・開発が少し速くなる', rate: [0.25, 0.4, 0.6, 0.8, 1.0], sal: [240000, 340000, 480000, 680000, 940000], shirt: '#f0902a' },
+  sal: { name: '営業', desc: '売れる数が増える', rate: [0.04, 0.06, 0.085, 0.11, 0.14], sal: [230000, 330000, 470000, 660000, 920000], shirt: '#5b5e66' },
+};
+const FAMILY = ['佐藤', '鈴木', '高橋', '田中', '伊藤', '渡辺', '山本', '中村', '小林', '加藤', '吉田', '山田', '佐々木', '山口', '松本', '井上', '木村', '清水', '森', '池田', '橋本', '石川', '前田', '藤田', '岡田', '長谷川', '村上', '近藤', '坂本', '遠藤'];
+const GIVEN = ['ゆうと', 'はると', 'そうた', 'れん', 'あおい', 'ひなた', 'さくら', 'ゆい', 'みお', 'りこ', 'はな', 'めい', 'けんた', 'だいき', 'なつみ', 'ことね', 'しおり', 'あやの', 'たくみ', 'こうき', 'まなみ', 'しゅん', 'かえで', 'つばさ', 'ひかり', 'ゆうか', 'りょう', 'あかり', 'そら', 'いつき'];
+
+// 事務所：机の数（＝雇える人数）・同時に開発できる数・家賃・設備の上限・引っ越しの条件
+const OFFICES = [
+  { name: '自宅の作業部屋', desks: 2, slots: 1, rent: 0, maxEq: 1, w: 7, d: 5.5, cost: 0 },
+  { name: '小さな事務所', desks: 6, slots: 2, rent: 400000, maxEq: 2, w: 11, d: 8, cost: 15000000, need: { launched: 3, sales: 30000000 } },
+  { name: '文具ビル', desks: 12, slots: 3, rent: 3000000, maxEq: 3, w: 15, d: 10, cost: 200000000, need: { launched: 9, sales: 1000000000 } },
+  { name: '本社タワー', desks: 24, slots: 4, rent: 15000000, maxEq: 3, w: 20, d: 13, cost: 2000000000, need: { launched: 18, sales: 12000000000 } },
+];
+// 設備：レベルごとの値段。効果は sim の EFF で計算する
+const EQUIP = {
+  chair:   { name: 'いい椅子', desc: 'みんなの仕事が速くなる（+5%／Lv）', price: [400000, 1200000, 3500000] },
+  monitor: { name: '2台目のモニター', desc: '研究と品質チェックが速くなる（+6%／Lv）', price: [600000, 1800000, 5000000] },
+  plant:   { name: '観葉植物', desc: '居心地がよくなる（みんな +4%／Lv）', price: [150000, 450000, 1200000] },
+  coffee:  { name: 'コーヒーマシン', desc: '休けいでやる気アップ（みんな +5%）', price: [300000], max: 1 },
+  lab:     { name: '試作ラボ', desc: '開発中の不具合が減る（−12%／Lv）', price: [2000000, 8000000, 25000000] },
+  line:    { name: '生産ライン', desc: '1週間に作れる数が増える', price: [0, 3000000, 12000000, 45000000, 150000000, 500000000], lv0: 1, maxBy: [2, 3, 5, 6] },
+};
+const LINE_CAP = [0, 26000, 60000, 140000, 320000, 700000, 1500000];   // 1週間に作れる手間（えんぴつ1本＝1）
+
+// 広告：最初の数週間の売れゆきが上がる
+const ADS = [
+  { id: 'none', name: 'なし', cost: 0, boost: 0, brand: 0 },
+  { id: 'flyer', name: 'お店のチラシ', cost: 300000, boost: .4, brand: .01 },
+  { id: 'mag', name: '雑誌の広告', cost: 2000000, boost: .8, brand: .03 },
+  { id: 'tv', name: 'テレビCM', cost: 15000000, boost: 1.5, brand: .07 },
+  { id: 'event', name: '新作発表会', cost: 60000000, boost: 2.5, brand: .12 },
+];
+// 売る地域
+const MARKETS = [
+  { id: 'jp', name: '国内', mult: 1, cost: 0 },
+  { id: 'asia', name: 'アジア', mult: 1.6, cost: 60000000, need: { launched: 6 } },
+  { id: 'world', name: '世界', mult: 3.2, cost: 600000000, need: { launched: 12 }, req: 'asia' },
+];
+// 季節：月ごと（1月〜12月）の売れゆき。学生は新学期と受験、社会人は4月と年末の贈り物
+const SEASON = {
+  stu: [1.3, 1.35, 1.65, 1.75, 1.0, 0.9, 0.8, 0.72, 1.1, 1.0, 0.98, 0.95],
+  adu: [1.0, 0.95, 1.1, 1.3, 1.0, 0.95, 0.95, 0.9, 1.0, 1.0, 1.05, 1.35],
+  pro: [1, 1, 1.05, 1.1, 1, 1, 1, 1, 1, 1, 1, 1.05],
+};
+// 流行の色（見た目の点が上がり、少し売れやすくなる）
+const TRENDS = {
+  pastel: 'パステルカラー', dusty: 'くすみカラー', black: '黒い軸', clear: '透明の軸', metal: 'メタリック', natural: '木の風合い', vivid: 'あざやかな色', white: '白い軸',
+};
+// ライバル会社（架空）：強い種類とブランドの強さ
+const RIVALS = [
+  { id: 'hoshino', name: 'ホシノ文具', brand: 1.3, w: { pencil: 1.3, eraser: 1.2, lead: 1.1, mech: .9, ball: .8, fountain: .3 }, value: 900000000, color: '#d84a3a' },
+  { id: 'aoba', name: 'アオバ筆記', brand: 1.35, w: { pencil: .6, eraser: .7, lead: 1.2, mech: 1.3, ball: 1.3, fountain: .6 }, value: 1500000000, color: '#2f8a4e' },
+  { id: 'kamome', name: 'カモメ工業', brand: 1.15, w: { pencil: 1, eraser: 1, lead: 1, mech: 1, ball: 1.1, fountain: .5 }, value: 700000000, color: '#2d6fc4' },
+  { id: 'hibari', name: 'ヒバリ堂', brand: 1.25, w: { pencil: .4, eraser: .3, lead: .3, mech: .5, ball: .6, fountain: 1.6 }, value: 1100000000, color: '#8a5a2b' },
+];
+// 目標（ごほうびつき）。上から順に1つずつ出る
+const GOALS = [
+  { id: 'g1', text: 'さいしょの文房具を発売しよう', reward: { money: 500000, rp: 10 }, done: s => s.stats.launched >= 1, hint: '「開発」から、えんぴつか消しゴムを作ろう' },
+  { id: 'g2', text: '研究員をやとおう', reward: { money: 300000, rp: 15 }, done: s => s.staff.some(m => m.role === 'res'), hint: '「スタッフ」の「採用」から' },
+  { id: 'g3', text: '研究をひとつ終わらせよう', reward: { money: 500000, rp: 10 }, done: s => s.research.done.length >= 1, hint: '「研究」から。シャーペンやボールペンも研究で作れるようになる' },
+  { id: 'g4', text: '3種類の文房具を発売しよう', reward: { money: 1500000, rp: 20 }, done: s => new Set(s.products.map(p => p.kind)).size >= 3 },
+  { id: 'g5', text: '売上の合計 1,000万円', reward: { money: 2000000, rp: 20 }, done: s => s.stats.sales >= 10000000 },
+  { id: 'g6', text: '小さな事務所へ引っ越そう', reward: { money: 3000000, rp: 30 }, done: s => s.tier >= 1, hint: '「事務所」から。発売3つ・売上2,000万円が条件' },
+  { id: 'g7', text: 'レビューで 8.0 点以上をとろう', reward: { money: 5000000, rp: 40 }, done: s => s.stats.best >= 8 },
+  { id: 'g8', text: '6種類すべてを発売しよう', reward: { money: 10000000, rp: 60 }, done: s => new Set(s.products.map(p => p.kind)).size >= 6 },
+  { id: 'g9', text: 'アジアに進出しよう', reward: { money: 10000000, rp: 60 }, done: s => s.markets.includes('asia'), hint: '「会社」の「売る地域」から' },
+  { id: 'g10', text: '文具ビルへ引っ越そう', reward: { money: 30000000, rp: 100 }, done: s => s.tier >= 2 },
+  { id: 'g11', text: 'どれかの種類でシェア1位になろう', reward: { money: 50000000, rp: 120 }, done: s => s.stats.top1 },
+  { id: 'g12', text: 'ライバル会社を買収しよう', reward: { money: 80000000, rp: 150 }, done: s => s.rivals.some(r => r.owned) },
+  { id: 'g13', text: '世界に進出しよう', reward: { money: 100000000, rp: 200 }, done: s => s.markets.includes('world') },
+  { id: 'g14', text: '本社タワーへ引っ越そう', reward: { money: 200000000, rp: 300 }, done: s => s.tier >= 3 },
+  { id: 'g15', text: '会社の価値 1,000億円', reward: { money: 0, rp: 500 }, done: s => s.stats.value >= 1e11 },
+];
+// =========================================================================================
+//  3Dの製品モデル：デザイン（性能の選択肢＋見た目）から、えんぴつ・消しゴム・シャー芯・シャーペン・ボールペン・万年筆を組み立てる
+//  単位は cm。長さの向きが +x（先が +x）、正面が +z。軸の表面の色・模様・ロゴはキャンバスに描いて貼る
+// =========================================================================================
+const canvas = $('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.NeutralToneMapping; renderer.toneMappingExposure = 0.95;
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const pmrem = new THREE.PMREMGenerator(renderer);
+const ENV = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+const MAXANI = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+
+// ---------- ノイズ（大理石・木目・まだら模様） ----------
+const _h2 = (i, j) => { let h = (i * 374761393 + j * 668265263) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h & 0xffff) / 65535; };
+function vnoise(x, y) { const i = Math.floor(x), j = Math.floor(y), fx = x - i, fy = y - j, u = fx * fx * (3 - 2 * fx), v = fy * fy * (3 - 2 * fy); const a = _h2(i, j), b = _h2(i + 1, j), c = _h2(i, j + 1), d = _h2(i + 1, j + 1); return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v; }
+function fbm2(x, y) { let s = 0, a = 0.5, f = 1; for (let o = 0; o < 4; o++) { s += a * vnoise(x * f + o * 7.1, y * f - o * 3.3); a *= 0.5; f *= 2.02; } return s / 0.9375; }
+const hex2rgb = h => { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+const mixHex = (a, b, t) => { const A = hex2rgb(a), B = hex2rgb(b); return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, '0')).join(''); };
+const newCanvas = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
+const FONT_CSS = { goth: '700 {s}px "Zen Maru Gothic", "Hiragino Sans", "Noto Sans JP", sans-serif', round: '900 {s}px "Zen Maru Gothic", "Hiragino Maru Gothic ProN", sans-serif', mincho: '700 {s}px "Shippori Mincho", "Hiragino Mincho ProN", "Noto Serif JP", serif' };
+
+// 模様を描く。w×h のキャンバスが、横 L cm（長さ）× 縦 C cm（まわり）にあたる
+function drawPattern(g, w, h, L, C, pattern, base, pat) {
+  const px = w / L, py = h / C;   // 1cm あたりの点（横・縦）
+  g.fillStyle = base; g.fillRect(0, 0, w, h);
+  g.fillStyle = pat; g.strokeStyle = pat;
+  const per = (cm, f) => { for (let y = -1; y < h / (cm * py) + 1; y++) for (let x = -1; x < w / (cm * px) + 1; x++) f(x * cm * px + ((y & 1) ? cm * px / 2 : 0), y * cm * py, y); };
+  const ell = (x, y, r) => { g.beginPath(); g.ellipse(x, y, r * px, r * py, 0, 0, TAU); g.fill(); };
+  if (pattern === 'stripe') { const p = 0.36 * py; for (let y = 0; y < h + p; y += p) g.fillRect(0, y, w, p * 0.38); }
+  else if (pattern === 'dots') per(0.42, (x, y) => ell(x, y, 0.09));
+  else if (pattern === 'stars') per(0.62, (x, y) => { g.beginPath(); for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + k * Math.PI / 5, r = (k & 1 ? 0.06 : 0.15); g.lineTo(x + Math.cos(a) * r * px, y + Math.sin(a) * r * py); } g.closePath(); g.fill(); });
+  else if (pattern === 'hearts') per(0.6, (x, y) => { const s = 0.12; g.beginPath(); g.moveTo(x, y + s * py); g.bezierCurveTo(x - 1.6 * s * px, y - 0.2 * s * py, x - 0.6 * s * px, y - 1.3 * s * py, x, y - 0.4 * s * py); g.bezierCurveTo(x + 0.6 * s * px, y - 1.3 * s * py, x + 1.6 * s * px, y - 0.2 * s * py, x, y + s * py); g.fill(); });
+  else if (pattern === 'check') { g.globalAlpha = 0.45; const p = 0.5; for (let x = 0; x < w; x += p * px * 2) g.fillRect(x, 0, p * px, h); for (let y = 0; y < h; y += p * py * 2) g.fillRect(0, y, w, p * py); g.globalAlpha = 1; }
+  else if (pattern === 'grad') { const gr = g.createLinearGradient(0, 0, w, 0); gr.addColorStop(0, base); gr.addColorStop(1, pat); g.fillStyle = gr; g.fillRect(0, 0, w, h); }
+  else if (['marble', 'wood', 'camo'].includes(pattern)) {
+    const img = g.getImageData(0, 0, w, h), d = img.data, B = hex2rgb(base), P = hex2rgb(pat);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const cx = x / px, cy = y / py; let t;
+      if (pattern === 'marble') { const n = fbm2(cx * 0.9, cy * 0.9); t = Math.pow(Math.abs(Math.sin(cx * 1.4 + n * 7)), 6) * 0.9 + n * 0.15; }
+      else if (pattern === 'wood') { const n = fbm2(cx * 0.25, cy * 2.2); t = 0.5 + 0.5 * Math.sin(cy * 9 + n * 6); t = t * t * 0.55 + n * 0.2; }
+      else { const n = fbm2(cx * 0.8, cy * 0.8); t = n > 0.55 ? 1 : n > 0.47 ? 0.5 : 0; }
+      const i = (y * w + x) * 4; for (let k = 0; k < 3; k++) d[i + k] = B[k] + (P[k] - B[k]) * clamp(t, 0, 1);
+    }
+    g.putImageData(img, 0, 0);
+  }
+}
+// 軸の表面のテクスチャ：模様＋両はしの色帯＋ロゴ（正面＝縦のまん中）
+function surfaceTex(o) {
+  const L = o.L, C = o.C, w = o.cheap ? 512 : 1024, h = clamp(Math.round(w * C / L), 32, 1024), c = newCanvas(w, h), g = c.getContext('2d');
+  drawPattern(g, w, h, L, C, o.pattern || 'none', o.base, o.pat || o.base);
+  for (const b of o.bands || []) { g.fillStyle = b.color; g.fillRect(b.from / L * w, 0, (b.to - b.from) / L * w, h); }
+  for (const t of o.texts || []) {
+    if (!t.text) continue;
+    const ph = t.size * h / C, x0 = t.from / L * w, x1 = t.to / L * w;
+    g.save(); g.fillStyle = t.color; g.textBaseline = 'middle'; g.textAlign = t.align || 'left';
+    g.font = (FONT_CSS[t.font] || FONT_CSS.goth).replace('{s}', Math.round(ph));
+    // 縦と横で 1cm の点の数がちがうので、横を (横の点/縦の点) 倍にして形を保つ。入りきらなければ縮める
+    const tw = g.measureText(t.text).width, k = (w / L) / (h / C), maxW = x1 - x0, sx = k * Math.min(1, maxW / Math.max(1, tw * k));
+    g.translate(t.align === 'center' ? (x0 + x1) / 2 : x0, h * (t.v != null ? t.v : 0.5)); g.scale(sx, 1);
+    g.fillText(t.text, 0, 0); g.restore();
+  }
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = MAXANI; tex.wrapS = THREE.RepeatWrapping;
+  return tex;
+}
+// ラバーグリップのつぶつぶ・金属のローレット（法線マップ）
+const _nmaps = {};
+function bumpTex(kind) {
+  if (_nmaps[kind]) return _nmaps[kind];
+  const S = 128, H = new Float32Array(S * S);
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    let v;
+    if (kind === 'dimple') { const fx = (x % 16) - 8, fy = (y % 16) - 8; v = Math.max(0, 1 - Math.hypot(fx, fy) / 5); }
+    else if (kind === 'knurl') { v = (Math.abs(((x + y) % 12) - 6) + Math.abs(((x - y + 1200) % 12) - 6)) / 12; }
+    else v = vnoise(x / 8, y / 8);
+    H[y * S + x] = v;
+  }
+  const c = newCanvas(S, S), g = c.getContext('2d'), img = g.createImageData(S, S);
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const h = (a, b) => H[((b + S) % S) * S + ((a + S) % S)];
+    let nx = (h(x - 1, y) - h(x + 1, y)) * 3, ny = (h(x, y + 1) - h(x, y - 1)) * 3; const l = Math.hypot(nx, ny, 1);
+    const i = (y * S + x) * 4; img.data[i] = (nx / l * .5 + .5) * 255; img.data[i + 1] = (ny / l * .5 + .5) * 255; img.data[i + 2] = (1 / l * .5 + .5) * 255; img.data[i + 3] = 255;
+  }
+  g.putImageData(img, 0, 0);
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(kind === 'knurl' ? 6 : 4, kind === 'knurl' ? 6 : 3);
+  return (_nmaps[kind] = t);
+}
+
+// ---------- 形：断面（y,z の点の輪）を x にそって押し出す ----------
+// 断面の点は θ＝atan2(y,z) が −π から増える順。v（テクスチャの縦）は周の長さの割合で、正面（θ＝0）が 0.5
+function finishSection(pts) {
+  pts.forEach(p => (p.a = Math.atan2(p.y, p.z)));
+  let k = 0; pts.forEach((p, i) => { if (p.a < pts[k].a) k = i; });
+  const P = pts.slice(k).concat(pts.slice(0, k)); let s = 0; P[0].s = 0;
+  for (let i = 1; i < P.length; i++) { s += Math.hypot(P[i].y - P[i - 1].y, P[i].z - P[i - 1].z); P[i].s = s; }
+  const per = s + Math.hypot(P[0].y - P[P.length - 1].y, P[0].z - P[P.length - 1].z);
+  P.forEach(p => (p.v = p.s / per)); P.per = per;
+  return P;
+}
+function secCircle(r, n = 56) { const pts = []; for (let j = 0; j < n; j++) { const a = -Math.PI + j * TAU / n; pts.push({ y: r * Math.sin(a), z: r * Math.cos(a) }); } return finishSection(pts); }
+// 角を丸めた多角形の断面（面のまん中が正面）。corners は [y,z] の角（丸める前）
+function secRounded(corners, cr, arcN = 6, edgeN = 4) {
+  const pts = [], n = corners.length;
+  for (let i = 0; i < n; i++) {
+    const P = corners[(i + n - 1) % n], Q = corners[i], N = corners[(i + 1) % n];
+    // 角の内がわに cr だけ入った点を中心に、外向きの法線の間を円弧で
+    const e1 = [Q[0] - P[0], Q[1] - P[1]], e2 = [N[0] - Q[0], N[1] - Q[1]], l1 = Math.hypot(...e1), l2 = Math.hypot(...e2);
+    const n1 = [-e1[1] / l1, e1[0] / l1], n2 = [-e2[1] / l2, e2[0] / l2];   // θ が増える向きの輪の外向き
+    const bis = [n1[0] + n2[0], n1[1] + n2[1]], bl = Math.hypot(...bis) || 1, half = Math.acos(clamp((n1[0] * n2[0] + n1[1] * n2[1]), -1, 1)) / 2;
+    const d = cr / Math.cos(half), cx = Q[0] - bis[0] / bl * d, cy = Q[1] - bis[1] / bl * d;
+    const a0 = Math.atan2(n1[0], n1[1]), a1 = a0 + angDiff2(a0, Math.atan2(n2[0], n2[1]));
+    // 前の角からこの角までの辺（点を足して、色やテクスチャの細かさを保つ）
+    if (pts.length) { const last = pts[pts.length - 1], sx = cx + Math.sin(a0) * cr, sy = cy + Math.cos(a0) * cr; for (let k = 1; k < edgeN; k++) pts.push({ y: lerp(last.y, sx, k / edgeN), z: lerp(last.z, sy, k / edgeN) }); }
+    for (let k = 0; k <= arcN; k++) { const a = lerp(a0, a1, k / arcN); pts.push({ y: cx + Math.sin(a) * cr, z: cy + Math.cos(a) * cr }); }
+  }
+  { const last = pts[pts.length - 1], first = pts[0]; for (let k = 1; k < edgeN; k++) pts.push({ y: lerp(last.y, first.y, k / edgeN), z: lerp(last.z, first.z, k / edgeN) }); }
+  return finishSection(pts);
+}
+function angDiff2(a, b) { let d = (b - a) % TAU; if (d > Math.PI) d -= TAU; if (d < -Math.PI) d += TAU; return d; }
+// 正 n 角形（apothem＝中心から面まで）。面のまん中が正面（+z）にくる。輪の順は θ が増える向き
+function secPoly(n, ap, cr) { const R = ap / Math.cos(Math.PI / n), c = []; for (let k = 0; k < n; k++) { const a = Math.PI / n + k * TAU / n; c.push([R * Math.sin(a), R * Math.cos(a)]); } return secRounded(c, cr, 6, 6); }
+function secRect(hy, hz, cr) { return secRounded([[hy, hz], [hy, -hz], [-hy, -hz], [-hy, hz]], cr, 6, 6); }
+function secMany(hy, hz) {   // 角がたくさんある形：四隅を段にけずった十字形
+  const a = hy, b = hz, s = Math.min(hy, hz) * 0.42;
+  const c = [[a - s, b], [a - s, b - s], [a, b - s], [a, -b + s], [a - s, -b + s], [a - s, -b], [-a + s, -b], [-a + s, -b + s], [-a, -b + s], [-a, b - s], [-a + s, b - s], [-a + s, b]];
+  return secRounded(c, 0.03, 2, 3);
+}
+// 押し出し：xs の位置ごとに、断面を scale(x, p) 倍した輪をつなぐ。color(x,p,f) で頂点の色
+function sweep(xs, sec, scale = () => 1, o = {}) {
+  const n = sec.length, pos = [], uv = [], col = o.color ? [] : null, idx = [];
+  const x0 = o.u0 != null ? o.u0 : xs[0], x1 = o.u1 != null ? o.u1 : xs[xs.length - 1];
+  for (let i = 0; i < xs.length; i++) {
+    const x = xs[i];
+    for (let j = 0; j <= n; j++) {
+      const p = sec[j % n], f = scale(x, p, i);
+      pos.push(x, p.y * f, p.z * f); uv.push((x - x0) / (x1 - x0 || 1), j === n ? 1 : p.v);
+      if (col) { const c = o.color(x, p, f); col.push(c[0], c[1], c[2]); }
+    }
+  }
+  for (let i = 0; i < xs.length - 1; i++) for (let j = 0; j < n; j++) { const a = i * (n + 1) + j, b = a + n + 1; idx.push(a, b, a + 1, b, b + 1, a + 1); }
+  const cap = (i, dir) => {
+    const x = xs[i], c0 = pos.length / 3; pos.push(x, 0, 0); uv.push(0.5, 0.5); if (col) { const c = o.capColor || o.color(x, { y: 0, z: 0 }, 0); col.push(c[0], c[1], c[2]); }
+    for (let j = 0; j < n; j++) { const p = sec[j], f = scale(x, p, i); pos.push(x, p.y * f, p.z * f); uv.push(0.5 + p.z * 0.3, 0.5 + p.y * 0.3); if (col) { const c = o.capColor || o.color(x, p, f); col.push(c[0], c[1], c[2]); } }
+    for (let j = 0; j < n; j++) { const a = c0 + 1 + j, b = c0 + 1 + (j + 1) % n; if (dir < 0) idx.push(c0, a, b); else idx.push(c0, b, a); }
+  };
+  if (o.capStart) cap(0, -1); if (o.capEnd) cap(xs.length - 1, 1);
+  let g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  if (col) g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  g.setIndex(idx);
+  g = toCreasedNormals(g, o.crease != null ? o.crease : 0.7);
+  return g;
+}
+// 回転体：profile＝[[x, r], ...]
+function lathe(profile, o = {}) {
+  const sec = o.sec || secCircle(1, o.n || 48), xs = profile.map(p => p[0]), rs = profile.map(p => p[1]);
+  return sweep(xs, sec, (x, p, i) => rs[i], o);
+}
+const range = (a, b, n) => Array.from({ length: n + 1 }, (_, i) => a + (b - a) * i / n);
+// 丸いはし：x0 から x1 まで、半径 r の丸み（at='start' か 'end'）
+function roundEnd(x0, x1, r, at, n = 6) { const out = []; for (let i = 0; i <= n; i++) { const t = i / n, a = t * Math.PI / 2; out.push(at === 'start' ? [x0 + (x1 - x0) * (1 - Math.cos(a)), r * Math.sin(a) + 0.0001] : [x0 + (x1 - x0) * Math.sin(a), r * Math.cos(a) + 0.0001]); } return out; }
+
+// ---------- 材質 ----------
+const METAL_COL = { silver: 0xd9dce2, gold: 0xe6bb62, black: 0x2c2c30, rose: 0xe8a690 };
+function matMetal(m, cheap) { return new THREE.MeshStandardMaterial({ color: METAL_COL[m] || METAL_COL.silver, metalness: 1, roughness: m === 'black' ? 0.38 : 0.18, envMapIntensity: 1.2 }); }
+function matPaint(finish, map, cheap, color = 0xffffff) {
+  if (cheap || finish === 'matte') return new THREE.MeshStandardMaterial({ map, color, roughness: finish === 'matte' ? 0.78 : finish === 'metal' ? 0.3 : 0.35, metalness: finish === 'metal' ? 0.55 : 0 });
+  const p = { map, color, roughness: 0.34, clearcoat: 1, clearcoatRoughness: 0.06 };
+  if (finish === 'metal') Object.assign(p, { metalness: 0.65, roughness: 0.28, clearcoat: 0.7 });
+  if (finish === 'pearl') Object.assign(p, { iridescence: 0.75, iridescenceIOR: 1.35, iridescenceThicknessRange: [200, 600], sheen: 0.6, sheenColor: new THREE.Color(0xffffff), roughness: 0.3 });
+  return new THREE.MeshPhysicalMaterial(p);
+}
+function matClear(hex, cheap, smoke) {
+  const c = new THREE.Color(hex);
+  if (cheap) return new THREE.MeshStandardMaterial({ color: c, transparent: true, opacity: smoke ? 0.55 : 0.32, roughness: 0.1, depthWrite: false });
+  return new THREE.MeshPhysicalMaterial({ color: c.lerp(new THREE.Color(0xffffff), smoke ? 0 : 0.35), transmission: smoke ? 0.7 : 0.95, thickness: 0.4, roughness: 0.06, ior: 1.45, attenuationColor: c, attenuationDistance: smoke ? 0.6 : 3 });
+}
+function matRubber(hex, kind) { return new THREE.MeshStandardMaterial({ color: hex, roughness: kind === 'silicone' ? 0.55 : 0.88, normalMap: bumpTex('dimple'), normalScale: new THREE.Vector2(0.6, 0.6) }); }
+const matSolid = (hex, rough = 0.5, metal = 0) => new THREE.MeshStandardMaterial({ color: hex, roughness: rough, metalness: metal });
+const WOOD_COL = { w0: '#e3bc8c', w1: '#d79d6d', w2: '#b9a991' };
+const NAT_WOOD = ['#b77b49', '#8a5a33'];
+
+function mesh(g, m, parent, cast = true) { const o = new THREE.Mesh(g, m); o.castShadow = cast; o.receiveShadow = true; if (parent) parent.add(o); return o; }
+// クリップ：根もとの輪＋棒＋先の玉（x0〜x1、軸の半径 r の上）
+function addClip(grp, x0, x1, r, mat, wide = 0.28) {
+  mesh(lathe([[x0 - 0.05, r + 0.012], [x0 + 0.45, r + 0.012]]), mat, grp);
+  const bar = mesh(new THREE.BoxGeometry(x1 - x0, 0.07, wide), mat, grp); bar.position.set((x0 + x1) / 2 + 0.2, r + 0.13, 0); bar.rotation.z = -0.025;
+  const head = mesh(new THREE.BoxGeometry(0.4, 0.14, wide), mat, grp); head.position.set(x0 + 0.25, r + 0.1, 0);
+  const tip = mesh(new THREE.SphereGeometry(wide * 0.42, 14, 10), mat, grp); tip.position.set(x1 + 0.2, r + 0.07, 0); tip.scale.set(1.4, 0.7, 1);
+}
+
+// ---------- 種類ごとのモデル ----------
+const BUILD = {
+  pencil(d, o) {
+    const g = new THREE.Group(), L = d.look, sp = d.spec, hasEr = sp.erase === 'yes';
+    const sec = sp.shape === 'round' ? secCircle(0.37, 56) : sp.shape === 'tri' ? secPoly(3, 0.33, 0.13) : secPoly(6, 0.36, 0.035);
+    const Rmax = Math.max(...sec.map(p => Math.hypot(p.y, p.z)));
+    const x0 = hasEr ? 1.85 : 0, bodyL = hasEr ? 13.0 : 14.9, x1 = x0 + bodyL, coneL = 1.9, gr = 0.1;
+    const wood = WOOD_COL[sp.wood] || WOOD_COL.w0, grade = (GRADES.find(x => x.id === sp.grade) || GRADES[0]).name;
+    const tex = surfaceTex({ L: bodyL, C: sec.per, base: L.body, pattern: L.pattern, pat: L.pat, cheap: o.cheap,
+      bands: hasEr ? [] : [{ from: 0, to: 0.7, color: L.tip }],
+      texts: [{ text: L.logo, color: L.logoColor, font: L.font, size: 0.34, from: bodyL * 0.3, to: bodyL * 0.86 }, { text: grade, color: L.logoColor, font: 'goth', size: 0.3, from: bodyL * 0.08 + (hasEr ? 0 : 0.6), to: bodyL * 0.22 + (hasEr ? 0 : 0.6) }] });
+    mesh(sweep([x0, x1], sec, () => 1), matPaint(L.finish, tex, o.cheap), g);
+    if (!hasEr) mesh(sweep([x0, x0 + 0.01], sec, () => 1.002, { capStart: true }), matPaint(L.finish, null, o.cheap, new THREE.Color(L.tip)), g);   // 色をつけたおしり
+    // 削った先：角から木が見える（断面と円すいの小さいほう）
+    const cw = new THREE.Color(wood), cp = new THREE.Color(L.body);
+    const xs = range(x1, x1 + coneL, 14), coneR = x => lerp(Rmax + 0.001, gr, (x - x1) / coneL);
+    const cone = sweep(xs, sec, (x, p) => Math.min(1, coneR(x) / Math.hypot(p.y, p.z)), { color: (x, p, f) => (f < 0.999 ? [cw.r, cw.g, cw.b] : [cp.r, cp.g, cp.b]), crease: 0.9 });
+    mesh(cone, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.6 }), g);
+    const lead = lathe([[x1 + coneL - 0.01, gr], [x1 + coneL + 0.42, 0.018]], { n: 20 }); mesh(lead, matSolid(0x2a2a2c, 0.35, 0.4), g);
+    if (hasEr) {
+      const fer = []; for (const x of range(0.6, 1.9, 26)) fer.push([x, 0.385 + (Math.sin((x - 0.6) / 1.3 * Math.PI * 8) > 0.6 ? 0.018 : 0)]);
+      mesh(lathe(fer, { n: 40 }), matMetal(L.metal || 'gold', o.cheap), g);
+      mesh(lathe([...roundEnd(0, 0.22, 0.33, 'start'), [0.62, 0.33]], { n: 36 }), matSolid(L.eraser, 0.85), g);
+    }
+    return g;
+  },
+  eraser(d, o) {
+    const g = new THREE.Group(), L = d.look, sp = d.spec;
+    const dims = { sm: [3.4, 0.85, 0.5], md: [4.4, 1.1, 0.58], lg: [5.6, 1.28, 0.66] }[sp.size] || [4.4, 1.1, 0.58];
+    const [len, hy, hz] = dims;
+    if (sp.shape === 'stick') {   // ホルダー式：細い軸から消しゴムが出ている
+      const hl = 9.5, sec = secRect(0.42, 0.3, 0.16), tex = surfaceTex({ L: hl, C: sec.per, base: L.sleeve, pattern: L.pattern, pat: L.pat, cheap: o.cheap, texts: [{ text: L.logo, color: L.logoColor, font: L.font, size: 0.3, from: 1.2, to: 7.5 }] });
+      mesh(sweep(range(0, hl, 1), sec, x => (x < 0.25 ? 0.9 : 1), { capStart: true }), matPaint(L.finish, tex, o.cheap), g);
+      const er = secRect(0.3, 0.2, 0.08); mesh(sweep(range(hl - 0.3, hl + 1.4, 4), er, x => (x > hl + 1.3 ? 0.9 : 1), { capEnd: true }), matSolid(L.body, 0.9), g);
+      const slide = mesh(new THREE.BoxGeometry(1.1, 0.1, 0.3), matSolid(mixHex(L.sleeve, '#000000', 0.25), 0.5), g); slide.position.set(4, 0.44, 0);
+      return g;
+    }
+    const sec = sp.shape === 'many' ? secMany(hy, hz) : secRect(hy, hz, sp.shape === 'soft' ? 0.32 : 0.06);
+    const bev = sp.shape === 'soft' ? 0.25 : 0.08, xs = [0, ...range(0.0, bev, 3).slice(1), ...range(len - bev, len, 3)];
+    const sc = x => { const e = Math.min(x, len - x); return e >= bev ? 1 : 0.86 + 0.14 * Math.sin(Math.PI / 2 * e / bev); };
+    mesh(sweep(xs, sec, sc, { capStart: true, capEnd: true, crease: 0.6 }), new THREE.MeshStandardMaterial({ color: L.body, roughness: 0.92 }), g);
+    // 紙のケース：まん中の65%を包む
+    const s0 = len * 0.24, s1 = len * 0.9, k = sp.shape === 'many' ? 1.02 : 1.0;
+    const ssec = sec.map(p => ({ y: p.y * (1 + 0.035 / hy) * k, z: p.z * (1 + 0.035 / hz) * k, v: p.v })); ssec.per = sec.per;
+    const tex = surfaceTex({ L: s1 - s0, C: sec.per, base: L.sleeve, pattern: L.pattern, pat: L.pat, cheap: o.cheap,
+      texts: [{ text: L.logo, color: L.logoColor, font: L.font, size: Math.min(0.62, hy * 0.62), from: 0.25, to: s1 - s0 - 0.25, align: 'center' }] });
+    const sm = matPaint(L.finish, tex, o.cheap); sm.side = THREE.DoubleSide;
+    mesh(sweep([s0, s1], ssec, () => 1), sm, g);
+    if (sp.sleeve === 'k1') for (const sy of [-1, 1]) { const cut = mesh(new THREE.BoxGeometry(0.02, 0.22, hz * 2.1), matSolid(mixHex(L.sleeve, '#ffffff', 0.3), 0.7), g); cut.position.set(s0 + 0.01, sy * hy * 0.85, 0); }
+    return g;
+  },
+  lead(d, o) {
+    const g = new THREE.Group(), L = d.look, sp = d.spec;
+    const len = 7.2, hy = 0.75, hz = 0.3, sec = secRect(hy, hz, 0.12);
+    const mat = L.clear === 'solid' ? matPaint('gloss', null, o.cheap, new THREE.Color(L.body)) : matClear(L.body, o.cheap, L.clear === 'smoke');
+    mesh(sweep(range(0, len, 1), sec, () => 1, { capStart: true }), mat, g);
+    // ふた（スライド式は横に動くつまみつき）
+    const capL = 1.5, cap = mesh(sweep(range(len - 0.05, len + capL, 2), secRect(hy + 0.04, hz + 0.04, 0.14), x => (x > len + capL - 0.12 ? 0.92 : 1), { capEnd: true }), matPaint('gloss', null, o.cheap, new THREE.Color(L.cap)), g);
+    if (sp.case === 'c1') { const t = mesh(new THREE.BoxGeometry(0.7, 0.12, 0.4), matSolid(mixHex(L.cap, '#000000', 0.2), 0.5), g); t.position.set(len + 0.6, hy + 0.08, 0); }
+    if (sp.case === 'c2') { const h = mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.05, 16), matSolid(0x111111, 0.4), g); h.rotation.z = Math.PI / 2; h.position.set(len + capL + 0.01, 0.35, 0); }
+    void cap;
+    // 中の芯
+    const size = { s05: 0.05, s07: 0.07, s03: 0.03, s09: 0.09, s02: 0.02 }[sp.size] || 0.05, n = sp.count === 'n40' ? 14 : 9;
+    if (L.clear !== 'solid') { const lm = matSolid(0x262628, 0.35, 0.5); for (let i = 0; i < n; i++) { const c = mesh(new THREE.CylinderGeometry(size / 2 * 1.4, size / 2 * 1.4, len - 0.4, 6), lm, g, false); c.rotation.z = Math.PI / 2; c.position.set(len / 2, -hy * 0.7 + (i / (n - 1)) * hy * 1.4, (i % 3 - 1) * hz * 0.45); } }
+    // ラベル
+    const lw = 4.2, lh = 1.05, c = newCanvas(512, 128), gg = c.getContext('2d');
+    drawPattern(gg, 512, 128, lw, lh, L.pattern, L.label, L.pat);
+    const sz = (LEAD_SIZES.find(x => x.id === sp.size) || LEAD_SIZES[0]).name, gd = sp.grade || 'HB';
+    gg.fillStyle = L.logoColor; gg.textBaseline = 'middle';
+    gg.font = (FONT_CSS[L.font] || FONT_CSS.goth).replace('{s}', 46); gg.fillText(L.logo || '', 18, 46, 320);
+    gg.font = FONT_CSS.goth.replace('{s}', 34); gg.fillText(`${sz}  ${gd}`, 18, 98);
+    gg.textAlign = 'right'; gg.font = FONT_CSS.goth.replace('{s}', 28); gg.fillText(sp.count === 'n40' ? '40本' : '20本', 494, 98);
+    const lt = new THREE.CanvasTexture(c); lt.colorSpace = THREE.SRGBColorSpace; lt.anisotropy = MAXANI;
+    const lab = mesh(new THREE.PlaneGeometry(lw, lh), new THREE.MeshStandardMaterial({ map: lt, roughness: 0.6 }), g, false); lab.position.set(len * 0.47, 0, hz + 0.012);
+    return g;
+  },
+  mech(d, o) {
+    const g = new THREE.Group(), L = d.look, sp = d.spec, met = matMetal(L.metal, o.cheap);
+    const R = 0.42, bx0 = 1.25, bx1 = 9.7, gx1 = 12.6, cx1 = 13.85, pipe = sp.tip === 't1' ? 0.9 : sp.tip === 't2' ? 0.3 : 0.45;
+    const bodyKind = sp.body;
+    const finish = bodyKind === 'alu' ? 'metal' : L.finish, pattern = bodyKind === 'wood' ? 'wood' : L.pattern;
+    const base = bodyKind === 'wood' ? NAT_WOOD[0] : L.body, pat = bodyKind === 'wood' ? NAT_WOOD[1] : L.pat;
+    const prof = [[bx0, R - 0.03], [bx0 + 0.25, R], [bx1 - 1.2, R], [bx1, R - 0.03]];
+    const texL = bx1 - bx0, tex = surfaceTex({ L: texL, C: TAU * R, base, pattern, pat, cheap: o.cheap, texts: [{ text: L.logo, color: L.logoColor, font: L.font, size: 0.3, from: 4.4, to: texL - 0.5 }] });
+    const bmat = bodyKind === 'clear' ? matClear(L.body, o.cheap) : matPaint(finish, tex, o.cheap);
+    mesh(lathe(prof, { u0: bx0, u1: bx1 }), bmat, g);
+    if (bodyKind === 'clear') { mesh(lathe([[bx0 + 0.3, 0.13], [bx1, 0.13]], { n: 16 }), matSolid(0x3a3a3c, 0.4, 0.3), g); }
+    // グリップ
+    const gp = [[bx1 - 0.02, R - 0.03], [bx1 + 0.3, R + 0.035], [gx1 - 0.6, R + 0.035], [gx1, R - 0.05]];
+    if (sp.grip === 'none') mesh(lathe(gp.map(p => [p[0], p[1] - 0.03])), bodyKind === 'clear' ? matClear(L.body, o.cheap) : matPaint(finish, tex, o.cheap), g);
+    else if (sp.grip === 'knurl') { const m = matMetal(L.metal, o.cheap); m.normalMap = bumpTex('knurl'); m.normalScale = new THREE.Vector2(1.2, 1.2); m.roughness = 0.32; mesh(lathe(gp), m, g); }
+    else mesh(lathe(gp), matRubber(L.grip, sp.grip), g);
+    // 先の金具とパイプ・芯
+    mesh(lathe([[gx1 - 0.02, R - 0.06], [gx1 + 0.35, R - 0.1], [cx1, 0.11]], { n: 40 }), met, g);
+    mesh(lathe([[cx1 - 0.02, 0.055], [cx1 + pipe, 0.05]], { n: 16 }), met, g);
+    const ls = { s05: 0.026, s07: 0.035, s03: 0.016, s09: 0.045, s02: 0.011 }[sp.size] || 0.026;
+    mesh(lathe([[cx1 + pipe - 0.02, ls], [cx1 + pipe + 0.12, ls]], { n: 10 }), matSolid(0x232325, 0.35, 0.4), g);
+    // おしり（ノック）と消しゴム・クリップ
+    mesh(lathe([...roundEnd(0.05, 0.3, 0.33, 'start'), [bx0 + 0.05, 0.36]], { n: 40 }), met, g);
+    if (sp.erase === 'e1') mesh(lathe([[-0.35, 0.16], [0.06, 0.18]], { n: 20 }), matSolid(0xf2f0ea, 0.9), g);
+    addClip(g, bx0 + 0.05, bx0 + 3.6, R, met);
+    if (sp.mech === 'k1') { const b = mesh(new THREE.BoxGeometry(0.7, 0.16, 0.22), met, g); b.position.set(bx1 - 1.6, 0, R + 0.06); }
+    if (sp.mech === 'k3' || sp.mech === 'k4') { const w = mesh(lathe([[bx1 - 0.55, R + 0.005], [bx1 - 0.35, R + 0.005]]), new THREE.MeshStandardMaterial({ color: 0xf0d060, emissive: 0x3a2a00, roughness: 0.4 }), g); void w; }
+    return g;
+  },
+  ball(d, o) {
+    const g = new THREE.Group(), L = d.look, sp = d.spec, met = matMetal(L.metal, o.cheap);
+    const multi = sp.colors !== 'c1', R = multi ? 0.55 : 0.43, bx0 = 1.0, bx1 = 9.4, gx1 = 12.4, cx1 = 13.7;
+    const finish = sp.body === 'alu' ? 'metal' : sp.body === 'brass' ? 'metal' : L.finish, base = sp.body === 'brass' ? '#c9a24e' : L.body;
+    const prof = [[bx0, R - 0.04], [bx0 + 0.3, R], [bx1 - 1.0, R], [bx1, R - 0.04]];
+    const texL = bx1 - bx0, tex = surfaceTex({ L: texL, C: TAU * R, base, pattern: L.pattern, pat: L.pat, cheap: o.cheap, texts: [{ text: L.logo, color: L.logoColor, font: L.font, size: 0.32, from: 4.2, to: texL - 0.4 }] });
+    const clear = sp.body === 'clear', bmat = clear ? matClear(L.body, o.cheap) : matPaint(finish, tex, o.cheap);
+    mesh(lathe(prof, { u0: bx0, u1: bx1 }), bmat, g);
+    const inks = multi ? ['#1a1a1a', '#c8261e', '#1f3fa8', '#2a8a3e', '#8a8a8a'].slice(0, { c2: 2, c3: 3, c4: 4, cm: 4 }[sp.colors]) : [L.ink];
+    if (clear) inks.forEach((ic, i) => { const r = mesh(lathe([[bx0 + 0.4, 0.07], [gx1 - 0.3, 0.07]], { n: 12 }), matSolid(ic, 0.3), g); r.position.set(0, multi ? Math.sin(i / inks.length * TAU) * 0.2 : 0, multi ? Math.cos(i / inks.length * TAU) * 0.2 : 0); });
+    // グリップ
+    const gp = [[bx1 - 0.02, R - 0.04], [bx1 + 0.3, R + 0.03], [gx1 - 0.5, R + 0.03], [gx1, R - 0.08]];
+    if (sp.grip === 'none') mesh(lathe(gp.map(p => [p[0], p[1] - 0.03])), clear ? matClear(L.body, o.cheap) : matPaint(finish, tex, o.cheap), g);
+    else if (sp.grip === 'knurl') { const m = matMetal(L.metal, o.cheap); m.normalMap = bumpTex('knurl'); m.roughness = 0.32; mesh(lathe(gp), m, g); }
+    else mesh(lathe(gp), matRubber(L.grip, sp.grip), g);
+    // 先：円すいとボール。インクの色の小さな帯
+    const tipM = met;
+    mesh(lathe([[gx1 - 0.02, R - 0.09], [gx1 + 0.4, R - 0.18], [cx1, 0.07], [cx1 + 0.25, 0.035]], { n: 40 }), tipM, g);
+    const ball = mesh(new THREE.SphereGeometry(0.035, 12, 8), matMetal('silver'), g); ball.position.x = cx1 + 0.27;
+    if (!multi) mesh(lathe([[gx1 - 0.1, R - 0.07], [gx1 + 0.02, R - 0.075]]), matSolid(L.ink, 0.4), g);
+    // おしり：ノック／キャップ／回転、多色のつまみ
+    const cm = new THREE.Color(L.clip);
+    if (multi) {
+      mesh(lathe([...roundEnd(0.1, 0.5, R - 0.02, 'start'), [bx0 + 0.05, R - 0.02]], { n: 40 }), matPaint('gloss', null, o.cheap, new THREE.Color(base)), g);
+      inks.forEach((ic, i) => { const a = (i / inks.length) * TAU, t = mesh(new THREE.BoxGeometry(1.1, 0.26, 0.14), matSolid(ic, 0.35), g); t.position.set(1.2, Math.sin(a) * (R + 0.04), Math.cos(a) * (R + 0.04)); t.rotation.x = -a; });
+      addClip(g, bx0 + 0.2, bx0 + 3.8, R, new THREE.MeshStandardMaterial({ color: cm, roughness: 0.35 }));
+    } else if (sp.act === 'cap') {
+      mesh(lathe([...roundEnd(0.4, 0.6, R - 0.05, 'start'), [bx0 + 0.05, R - 0.05]], { n: 40 }), matSolid(L.clip, 0.4), g);
+      const cap = new THREE.Group(); g.add(cap);
+      mesh(lathe([[gx1 - 3.6, R + 0.05], [gx1 - 3.4, R + 0.09], [cx1 - 0.1, R + 0.09], ...roundEnd(cx1 - 0.1, cx1 + 0.8, R + 0.09, 'end')], { n: 40 }), clear ? matClear(L.clip, o.cheap) : matSolid(L.clip, 0.35), cap);
+      addClip(cap, gx1 - 3.4, gx1 - 0.2, R + 0.09, matSolid(L.clip, 0.3));
+    } else {
+      mesh(lathe([[0.0, 0.0001], [0.0, 0.17], [0.55, 0.18], [bx0 + 0.05, 0.2]], { n: 30 }), sp.act === 'twist' ? matPaint(finish, null, o.cheap, new THREE.Color(base)) : new THREE.MeshStandardMaterial({ color: cm, roughness: 0.35 }), g);
+      if (sp.act === 'twist') mesh(lathe([[bx1 - 0.18, R + 0.012], [bx1 + 0.02, R + 0.012]]), met, g);
+      addClip(g, bx0 + 0.1, bx0 + 3.6, R, sp.act === 'twist' ? met : new THREE.MeshStandardMaterial({ color: cm, roughness: 0.32 }));
+    }
+    return g;
+  },
+  fountain(d, o) {
+    const g = new THREE.Group(), L = d.look, sp = d.spec, met = matMetal(L.metal, o.cheap), capless = sp.cap === 'capless';
+    const bk = sp.body, wood = bk === 'wood', R = 0.56;
+    const finish = bk === 'metal' ? 'metal' : bk === 'urushi' ? 'gloss' : bk === 'ebonite' ? 'matte' : L.finish;
+    const base = wood ? NAT_WOOD[0] : L.body, pattern = wood ? 'wood' : L.pattern, pat = wood ? NAT_WOOD[1] : L.pat;
+    const bx0 = 0.35, bx1 = capless ? 11.2 : 8.4, texL = bx1 - bx0;
+    const tex = surfaceTex({ L: texL, C: TAU * R, base, pattern, pat, cheap: o.cheap, texts: capless ? [{ text: L.logo, color: L.logoColor, font: L.font, size: 0.3, from: 2, to: 7 }] : [] });
+    const bmat = matPaint(finish, tex, o.cheap); if (bk === 'urushi' && bmat.isMeshPhysicalMaterial) { bmat.clearcoatRoughness = 0.02; bmat.roughness = 0.2; }
+    mesh(lathe([...roundEnd(bx0, bx0 + 0.45, R - 0.06, 'start'), [bx0 + 1.2, R], [bx1 - 0.6, R], [bx1, R - 0.05]], { u0: bx0, u1: bx1 }), bmat, g);
+    mesh(lathe([[bx0 - 0.25, 0.0001], [bx0 - 0.25, 0.28], [bx0 + 0.08, 0.32]], { n: 32 }), met, g);   // おしりの金具
+    if (sp.fill === 'piston') { mesh(lathe([[bx0 + 1.0, R + 0.012], [bx0 + 1.18, R + 0.012]]), met, g); const wn = mesh(lathe([[bx1 - 1.0, R + 0.004], [bx1 - 0.45, R + 0.004]]), new THREE.MeshStandardMaterial({ color: L.ink, transparent: true, opacity: 0.75, roughness: 0.15 }), g); void wn; }
+    // 首（握るところ）とペン先
+    const sx0 = bx1, sx1 = bx1 + (capless ? 1.2 : 2.4);
+    mesh(lathe([[sx0 - 0.02, R - 0.08], [sx0 + 0.25, R - 0.1], [sx1 - 0.4, R - 0.16], [sx1, R - 0.1]], { n: 40 }), capless ? met : matPaint(bk === 'metal' ? 'gloss' : finish, tex, o.cheap), g);
+    mesh(lathe([[sx1 - 0.15, R - 0.11], [sx1 + 0.02, R - 0.11]]), met, g);
+    addNib(g, sx1 - 0.25, capless ? 1.3 : 2.6, R - 0.13, L.nibTone, sp, o);
+    if (capless) { addClip(g, sx0 - 3.2, sx0 - 0.3, R, met); mesh(lathe([[-0.2, 0.2], [bx0 - 0.2, 0.22]], { n: 24 }), met, g); }
+    else {
+      mesh(lathe([[bx1 - 0.25, R + 0.012], [bx1 - 0.05, R + 0.012]]), met, g);
+      // キャップ：ペンの奥に置く
+      const cap = new THREE.Group(); g.add(cap);
+      const cL = 6.4, cr = R + 0.08, ctex = surfaceTex({ L: cL, C: TAU * cr, base: L.cap, pattern: wood ? 'none' : pattern, pat, cheap: o.cheap, texts: [{ text: L.logo, color: L.logoColor, font: L.font, size: 0.3, from: 2.2, to: 5.6 }] });
+      mesh(lathe([...roundEnd(0, 0.5, cr - 0.08, 'start'), [0.9, cr], [cL - 0.2, cr], [cL, cr - 0.03]], { u0: 0, u1: cL }), matPaint(bk === 'metal' ? 'metal' : finish, ctex, o.cheap), cap);
+      mesh(lathe([[cL - 0.75, cr + 0.012], [cL - 0.25, cr + 0.012]]), met, cap);
+      mesh(lathe([[-0.18, 0.0001], [-0.18, 0.22], [0.12, 0.3]], { n: 32 }), met, cap);
+      addClip(cap, 0.2, 4.6, cr, met);
+      cap.position.set(3.2, 0, -1.75); cap.rotation.y = 0.12;
+    }
+    return g;
+  },
+};
+// 万年筆のペン先：先のとがった板を軸のまわりに少し曲げ、切りわりと穴・彫刻をテクスチャで
+function addNib(g, x0, len, r, tone, sp, o) {
+  const shape = new THREE.Shape(), w = len * 0.36;
+  shape.moveTo(0, -w / 2); shape.bezierCurveTo(len * 0.35, -w * 0.55, len * 0.75, -w * 0.25, len, 0); shape.bezierCurveTo(len * 0.75, w * 0.25, len * 0.35, w * 0.55, 0, w / 2); shape.closePath();
+  const geo = new THREE.ShapeGeometry(shape, 24), pos = geo.attributes.position;
+  // 曲げる：幅の向き（形の y）を円弧に。元の平らな板は x-z 面に置く
+  for (let i = 0; i < pos.count; i++) { const x = pos.getX(i), s = pos.getY(i), a = s / (r * 1.05); pos.setXYZ(i, x0 + x, r * Math.cos(a) - (x / len) * r * 0.55, r * Math.sin(a)); }
+  geo.computeVertexNormals();
+  const uv = geo.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, (pos.getX(i) - x0) / len, 0.5 + (Math.atan2(pos.getZ(i), pos.getY(i)) * r * 1.05) / w);
+  const S = 256, c = newCanvas(S, S), gg = c.getContext('2d'), gold = '#e8bf67', silver = '#dfe2e7';
+  gg.fillStyle = tone === 'silver' ? silver : gold; gg.fillRect(0, 0, S, S);
+  if (tone === 'two') { gg.fillStyle = silver; gg.beginPath(); gg.ellipse(S * 0.55, S / 2, S * 0.38, S * 0.3, 0, 0, TAU); gg.fill(); }
+  gg.strokeStyle = 'rgba(80,60,20,.55)'; gg.lineWidth = 2; for (let k = 0; k < 7; k++) { gg.beginPath(); gg.arc(S * 0.12, S / 2, 20 + k * 9, -0.9, 0.9); gg.stroke(); }
+  gg.fillStyle = '#1a1612'; gg.fillRect(S * 0.55, S / 2 - 1.5, S * 0.45, 3); gg.beginPath(); gg.arc(S * 0.55, S / 2, 7, 0, TAU); gg.fill();
+  if (sp.nib !== 'steel') { gg.fillStyle = 'rgba(70,50,15,.75)'; gg.font = '700 22px sans-serif'; gg.textAlign = 'center'; gg.textBaseline = 'middle'; gg.fillText({ k14: '14K', k18: '18K', k21: '21K', soft: '21K' }[sp.nib] || '', S * 0.3, S / 2); }
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  const m = new THREE.MeshStandardMaterial({ map: tex, metalness: 1, roughness: 0.2, side: THREE.DoubleSide });
+  mesh(geo, m, g);
+  // ペン芯（黒）
+  const feed = mesh(lathe([[x0 - 0.05, r * 0.92], [x0 + len * 0.55, r * 0.6], [x0 + len * 0.8, r * 0.25]], { n: 24 }), matSolid(0x141414, 0.6), g); feed.scale.set(1, 0.8, 1); feed.position.y = -0.02;
+}
+// デザインからモデル（中心を原点に）
+function buildProduct(d, o = {}) {
+  const g = BUILD[d.kind](d, o), box = new THREE.Box3().setFromObject(g), c = box.getCenter(new THREE.Vector3());
+  g.children.forEach(ch => ch.position.sub(c));
+  const wrap = new THREE.Group(); wrap.add(g); wrap.userData.size = box.getSize(new THREE.Vector3());
+  return wrap;
+}
+function disposeTree(o) { o.traverse(c => { if (c.geometry) c.geometry.dispose(); if (c.material) { const ms = Array.isArray(c.material) ? c.material : [c.material]; for (const m of ms) { for (const k of ['map', 'normalMap']) if (m[k] && !Object.values(_nmaps).includes(m[k])) m[k].dispose(); m.dispose(); } } }); }
+
+// ---------- デザインの見本台（スタジオ）：開発画面の3D ----------
+const STUDIO = {
+  scene: new THREE.Scene(), cam: new THREE.PerspectiveCamera(30, 1, 0.1, 200), obj: null, yaw: -0.5, pitch: 0.42, dist: 30, spin: true, drag: null, zoom: 1,
+  init() {
+    const s = this.scene; s.environment = ENV;
+    const c = newCanvas(4, 256), g = c.getContext('2d'), gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, '#fbf7ef'); gr.addColorStop(1, '#e7dfd0'); g.fillStyle = gr; g.fillRect(0, 0, 4, 256);
+    const bg = new THREE.CanvasTexture(c); bg.colorSpace = THREE.SRGBColorSpace; s.background = bg;
+    const key = new THREE.DirectionalLight(0xfff4e6, 2.2); key.position.set(-8, 18, 10); key.castShadow = true; key.shadow.mapSize.set(1024, 1024);
+    Object.assign(key.shadow.camera, { left: -12, right: 12, top: 12, bottom: -12, near: 1, far: 60 }); key.shadow.radius = 6; key.shadow.bias = -0.0004;
+    s.add(key, new THREE.HemisphereLight(0xffffff, 0xd8cdb8, 0.6));
+    const floor = new THREE.Mesh(new THREE.CircleGeometry(40, 48), new THREE.ShadowMaterial({ opacity: 0.18 })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; s.add(floor); this.floor = floor;
+    const disc = new THREE.Mesh(new THREE.CylinderGeometry(11, 11.3, 0.4, 64), new THREE.MeshStandardMaterial({ color: 0xf6f1e7, roughness: 0.55 })); disc.receiveShadow = true; disc.position.y = -0.2; s.add(disc); this.disc = disc;
+    this.root = new THREE.Group(); s.add(this.root);
+  },
+  set(d) {
+    if (this.obj) { this.root.remove(this.obj); disposeTree(this.obj); }
+    this.obj = buildProduct(d, { cheap: SET.quality === 'low' });
+    const sz = this.obj.userData.size, lift = Math.max(sz.y, sz.z * 0.2) / 2 + 0.05;
+    this.obj.position.y = lift + (d.kind === 'eraser' || d.kind === 'lead' ? 0 : 0.1);
+    this.obj.traverse(c => { if (c.isMesh) c.castShadow = true; });
+    this.root.add(this.obj);
+    this.radius = Math.max(sz.x, sz.z) / 2;
+    const sc = Math.max(1, this.radius / 9); this.disc.scale.set(sc, 1, sc);
+  },
+  update(dt) {
+    if (this.spin && !this.drag) this.root.rotation.y += dt * 0.35;
+    // 見本台の大きさに合わせて、製品の長さがちょうど入る距離（縦横の狭いほうの画角で）
+    const vf = this.cam.fov * Math.PI / 360, hf = Math.atan(Math.tan(vf) * this.cam.aspect), r = this.radius || 8, hh = this.obj ? this.obj.userData.size.y / 2 : 1;
+    const fit = Math.max(r / Math.tan(hf), (r * Math.sin(this.pitch) + hh * Math.cos(this.pitch)) / Math.tan(vf)) * 1.15 + 1.2;
+    const d = fit / this.zoom, cy = (this.obj ? this.obj.position.y : 1);
+    this.cam.position.set(Math.sin(this.yaw) * Math.cos(this.pitch) * d, cy + Math.sin(this.pitch) * d, Math.cos(this.yaw) * Math.cos(this.pitch) * d);
+    this.cam.lookAt(0, cy * 0.8, 0);
+  },
+};
+// 製品の小さな写真（一覧のカード用）：見本台で描いて画像に
+const THUMB = { cache: new Map(), rt: null, size: 192 };
+function productThumb(p) {
+  const key = p.id + ':' + (p.thumbKey || ''); if (THUMB.cache.has(key)) return THUMB.cache.get(key);
+  const S = THUMB.size; if (!THUMB.rt) THUMB.rt = new THREE.WebGLRenderTarget(S, S, { samples: 4, colorSpace: THREE.SRGBColorSpace });
+  const sc = new THREE.Scene(); sc.environment = ENV; sc.background = new THREE.Color(0xf4efe4);
+  const l = new THREE.DirectionalLight(0xffffff, 2.2); l.position.set(-5, 10, 8); sc.add(l, new THREE.HemisphereLight(0xffffff, 0xd8cdb8, 0.7));
+  const o = buildProduct(p, { cheap: true }); sc.add(o);
+  const sz = o.userData.size, r = Math.max(sz.x, sz.y, sz.z) / 2;
+  o.rotation.set(0.35, -0.55, p.kind === 'eraser' || p.kind === 'lead' ? 0 : 0.6);
+  const long = Math.max(sz.x, sz.y, sz.z) / Math.max(0.01, Math.min(Math.max(sz.y, sz.z), sz.x)) > 4, cam = new THREE.PerspectiveCamera(28, 1, 0.1, 200);
+  if (long) o.rotation.set(0.25, -0.35, 0.78);   // 長いものは斜めにして大きく
+  cam.position.set(0, 0, r / Math.sin(14 * Math.PI / 180) * (long ? 0.62 : 0.95)); cam.lookAt(0, 0, 0);
+  renderer.setRenderTarget(THUMB.rt); renderer.render(sc, cam);
+  const px = new Uint8Array(S * S * 4); renderer.readRenderTargetPixels(THUMB.rt, 0, 0, S, S, px); renderer.setRenderTarget(null);
+  const c = newCanvas(S, S), g = c.getContext('2d'), img = g.createImageData(S, S);
+  for (let y = 0; y < S; y++) img.data.set(px.subarray((S - 1 - y) * S * 4, (S - y) * S * 4), y * S * 4);
+  g.putImageData(img, 0, 0);
+  const url = c.toDataURL('image/jpeg', 0.85); THUMB.cache.set(key, url); disposeTree(o);
+  return url;
+}
+// =========================================================================================
+//  3Dの事務所：広さは事務所のランク、机は雇える人数。雇った人がパソコンで働き、
+//  作った製品が生産ラインを流れ、棚に並ぶ。設備（椅子・モニター・植物・コーヒー・ラボ）も置かれる
+//  単位は m。正面（カメラ側）が +z、奥の壁が −z、左の壁が −x
+// =========================================================================================
+const OFFICE = {
+  scene: new THREE.Scene(), cam: new THREE.PerspectiveCamera(38, 1, 0.1, 200), root: null,
+  yaw: 0.62, pitch: 0.66, zoom: 1, people: [], belt: [], t: 0, key: '',
+  init() {
+    const s = this.scene; s.environment = ENV; s.background = new THREE.Color(0xe9e2d3); s.environmentIntensity = 0.55;
+    s.add(new THREE.HemisphereLight(0xfff6e8, 0xb9ab90, 0.9));
+    const sun = new THREE.DirectionalLight(0xfff0d8, 2.4); sun.position.set(-6, 11, -4); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+    Object.assign(sun.shadow.camera, { left: -14, right: 14, top: 14, bottom: -14, near: 1, far: 50 }); sun.shadow.bias = -0.0005; sun.shadow.normalBias = 0.02; sun.shadow.radius = 4;
+    s.add(sun, sun.target); this.sun = sun;
+    const fill = new THREE.DirectionalLight(0xe8f0ff, 0.6); fill.position.set(8, 6, 10); s.add(fill);
+  },
+  // 状態が変わったら作り直す（雇う・引っ越す・設備・発売）
+  sync(S) {
+    const key = JSON.stringify([S.tier, S.equip, S.staff.map(m => m.role + m.id), S.products.slice(-14).map(p => p.id), S.company]);
+    if (key === this.key) return; this.key = key; this.build(S);
+  },
+  build(S) {
+    if (this.root) { this.scene.remove(this.root); disposeTree(this.root); }
+    const R = this.root = new THREE.Group(); this.scene.add(R); this.people = []; this.belt = [];
+    const O = OFFICES[S.tier], W = O.w, D = O.d, H = 3, tier = S.tier, cheap = SET.quality === 'low';
+    this.W = W; this.D = D;
+    const box = (w, h, d, mat, x, y, z, cast = true) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); m.castShadow = cast; m.receiveShadow = true; R.add(m); return m; };
+    // 床
+    const floorTex = this.floorTex(tier); floorTex.repeat.set(W / 2, D / 2);
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(W, D), new THREE.MeshStandardMaterial({ map: floorTex, roughness: tier === 3 ? 0.25 : 0.7 })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; R.add(floor);
+    box(W + 0.4, 0.3, D + 0.4, new THREE.MeshStandardMaterial({ color: 0x8c7d63, roughness: 0.9 }), 0, -0.16, 0, false);
+    // 壁：奥は窓つき、左は扉とポスター
+    const wallM = new THREE.MeshStandardMaterial({ color: [0xf1e6d2, 0xeef0ec, 0xe9edf2, 0xdfe6ee][tier], roughness: 0.9 });
+    const trimM = new THREE.MeshStandardMaterial({ color: [0xa47b52, 0xd9d3c7, 0x9aa3ad, 0x5d6670][tier], roughness: 0.6 });
+    const wz = -D / 2 - 0.08, nWin = Math.max(1, Math.floor(W / 3.4)), ww = Math.min(2.2, (W - 1) / nWin - 0.6);
+    box(W, 0.95, 0.16, wallM, 0, 0.475, wz); box(W, H - 2.45, 0.16, wallM, 0, 2.45 + (H - 2.45) / 2, wz);
+    const xs = []; for (let i = 0; i < nWin; i++) xs.push(-W / 2 + (i + 0.5) * W / nWin);
+    let prev = -W / 2; for (const x of xs) { box(x - ww / 2 - prev, 1.5, 0.16, wallM, (prev + x - ww / 2) / 2, 1.7, wz); prev = x + ww / 2; } box(W / 2 - prev, 1.5, 0.16, wallM, (prev + W / 2) / 2, 1.7, wz);
+    const skyT = this.skyTex(tier);
+    for (const x of xs) {
+      box(ww + 0.1, 0.08, 0.22, trimM, x, 0.95, wz + 0.02); box(ww + 0.1, 0.06, 0.2, trimM, x, 2.45, wz); box(0.05, 1.5, 0.12, trimM, x, 1.7, wz);
+      const sky = new THREE.Mesh(new THREE.PlaneGeometry(ww, 1.5), new THREE.MeshBasicMaterial({ map: skyT })); sky.position.set(x, 1.7, wz - 0.25); R.add(sky);
+    }
+    const lx = -W / 2 - 0.08;
+    box(0.16, H, D, wallM, lx, H / 2, 0);
+    box(0.06, 2.1, 0.95, new THREE.MeshStandardMaterial({ color: 0x9b7650, roughness: 0.6 }), lx + 0.1, 1.05, D / 2 - 1.1);   // 扉
+    box(0.16, 0.12, D, trimM, lx + 0.02, 0.06, 0); box(W, 0.12, 0.16, trimM, 0, 0.06, wz + 0.02);
+    // ポスター（会社名）
+    const post = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 0.76), new THREE.MeshStandardMaterial({ map: this.posterTex(S), roughness: 0.7 })); post.rotation.y = Math.PI / 2; post.position.set(lx + 0.1, 2.55, D / 2 - 1.1); R.add(post);
+    // 机の並び（右から前へ）
+    const nd = O.desks, cols = Math.max(2, Math.min(6, Math.ceil(Math.sqrt(nd * 1.6)))), rows = Math.ceil(nd / cols);
+    const dx = 1.9, dz = 1.75, x0 = W / 2 - 1.2 - (cols - 1) * dx, z0 = -D / 2 + 2.0;
+    const deskM = new THREE.MeshStandardMaterial({ color: tier === 0 ? 0xb88b5d : 0xe9e4da, roughness: 0.55 }), legM = new THREE.MeshStandardMaterial({ color: 0x5b5f66, roughness: 0.4, metalness: 0.6 });
+    const scrM = new THREE.MeshStandardMaterial({ color: 0x1a2230, emissive: 0x35557a, emissiveIntensity: 0.55, roughness: 0.3 }), monM = new THREE.MeshStandardMaterial({ color: 0x2a2c30, roughness: 0.5 });
+    const staff = S.staff;
+    for (let i = 0; i < nd; i++) {
+      const c = i % cols, r = (i / cols) | 0, x = x0 + c * dx, z = z0 + r * dz;
+      if (z > D / 2 - 0.8) break;
+      box(1.4, 0.05, 0.72, deskM, x, 0.74, z); for (const sx of [-0.62, 0.62]) box(0.05, 0.72, 0.62, legM, x + sx, 0.37, z, false);
+      const nm = S.equip.monitor > 0 ? 2 : 1;
+      for (let k = 0; k < nm; k++) { const mx = x + (nm === 2 ? (k ? 0.3 : -0.3) : 0); const m = box(0.56, 0.34, 0.03, monM, mx, 1.0, z - 0.2); m.rotation.y = nm === 2 ? (k ? -0.18 : 0.18) : 0; const sc = box(0.52, 0.3, 0.005, scrM, mx, 1.0, z - 0.183, false); sc.rotation.y = m.rotation.y; box(0.06, 0.16, 0.06, monM, mx, 0.84, z - 0.22, false); }
+      box(0.42, 0.02, 0.14, monM, x, 0.775, z + 0.06, false);
+      this.chair(R, x, z + 0.55, S.equip.chair);
+      const m = staff[i];
+      if (m) { const p = this.person(ROLES[m.role].shirt, m.hair, true); p.position.set(x, 0, z + 0.58); R.add(p); this.people.push(p); if (m.role === 'des') box(0.3, 0.012, 0.22, new THREE.MeshStandardMaterial({ color: 0x222222 }), x + 0.45, 0.775, z + 0.05, false); }
+    }
+    // 社長の机（窓ぎわ）
+    const cx = -W / 2 + 2.2, cz = -D / 2 + 1.5;
+    box(1.9, 0.07, 0.9, new THREE.MeshStandardMaterial({ color: 0x7a5233, roughness: 0.45 }), cx, 0.76, cz); box(1.8, 0.7, 0.05, new THREE.MeshStandardMaterial({ color: 0x6b462b, roughness: 0.5 }), cx, 0.38, cz - 0.4);
+    box(0.5, 0.34, 0.03, monM, cx + 0.3, 1.0, cz - 0.25); box(0.46, 0.3, 0.005, scrM, cx + 0.3, 1.0, cz - 0.233, false);
+    this.chair(R, cx, cz + 0.62, 3);
+    const boss = this.person('#2c3a5c', '#2a211b', true, true); boss.position.set(cx, 0, cz + 0.65); R.add(boss); this.people.push(boss);
+    // 植物・コーヒー・ラボ
+    const pots = [[W / 2 - 0.5, -D / 2 + 0.5], [-W / 2 + 0.5, D / 2 - 0.5], [W / 2 - 0.5, D / 2 - 0.5], [-W / 2 + 0.5, -D / 2 + 0.6], [0, -D / 2 + 0.5], [W / 4, D / 2 - 0.5]];
+    for (let i = 0; i < Math.min(pots.length, S.equip.plant * 2); i++) this.plant(R, pots[i][0], pots[i][1], 0.7 + (i % 3) * 0.25);
+    if (S.equip.coffee) { box(1.0, 0.9, 0.5, new THREE.MeshStandardMaterial({ color: 0xcfc6b5, roughness: 0.6 }), -W / 2 + 4.2, 0.45, -D / 2 + 0.4); box(0.32, 0.42, 0.3, new THREE.MeshStandardMaterial({ color: 0x1f1f22, roughness: 0.35, metalness: 0.4 }), -W / 2 + 4.0, 1.11, -D / 2 + 0.4); box(0.09, 0.1, 0.09, new THREE.MeshStandardMaterial({ color: 0xffffff }), -W / 2 + 4.35, 0.95, -D / 2 + 0.4); }
+    if (S.equip.lab) { const lxp = -W / 2 + 1.0, lzp = D / 2 - 2.6; box(0.9, 0.05, 1.6, new THREE.MeshStandardMaterial({ color: 0xf2f2f2, roughness: 0.4 }), lxp + 0.3, 0.9, lzp); box(0.85, 0.88, 1.55, new THREE.MeshStandardMaterial({ color: 0x8aa0b4, roughness: 0.6 }), lxp + 0.3, 0.44, lzp); for (let k = 0; k < S.equip.lab; k++) box(0.22, 0.3 + k * 0.08, 0.22, new THREE.MeshStandardMaterial({ color: [0x4f7fb8, 0xd9493e, 0x2e9a63][k], roughness: 0.4 }), lxp + 0.3, 1.07 + k * 0.04, lzp - 0.5 + k * 0.5); }
+    // 生産ライン（手前の左から右へ流れるベルト）と製品
+    const lineLv = S.equip.line, bz = D / 2 - 0.85, bx0 = -W / 2 + 1.0, bx1 = Math.min(W / 2 - 1.0, bx0 + 2.2 + lineLv * 2.2);
+    this.bz = bz; this.bx0 = bx0; this.bx1 = bx1;
+    if (tier === 0 && lineLv <= 1) {
+      box(bx1 - bx0, 0.06, 0.8, new THREE.MeshStandardMaterial({ color: 0xa57a4f, roughness: 0.6 }), (bx0 + bx1) / 2, 0.85, bz); for (const sx of [bx0 + 0.1, bx1 - 0.1]) box(0.08, 0.84, 0.7, legM, sx, 0.42, bz, false);
+      this.beltY = 0.89; this.beltSpeed = 0;
+    } else {
+      box(bx1 - bx0, 0.12, 0.7, new THREE.MeshStandardMaterial({ map: this.beltTex(), roughness: 0.8 }), (bx0 + bx1) / 2, 0.78, bz);
+      box(bx1 - bx0 + 0.1, 0.08, 0.06, legM, (bx0 + bx1) / 2, 0.82, bz - 0.38); box(bx1 - bx0 + 0.1, 0.08, 0.06, legM, (bx0 + bx1) / 2, 0.82, bz + 0.38);
+      for (let x = bx0 + 0.3; x < bx1; x += 1.2) box(0.08, 0.72, 0.6, legM, x, 0.36, bz, false);
+      for (let k = 0; k < lineLv; k++) { const mx = bx0 + 0.9 + k * (bx1 - bx0 - 1.8) / Math.max(1, lineLv - 1); box(0.9, 0.9, 1.0, new THREE.MeshStandardMaterial({ color: [0x3f6f9e, 0xd9a03b, 0x5a8f63, 0xb5544a, 0x6d6aa8, 0x777f88][k % 6], roughness: 0.45, metalness: 0.2 }), mx, 1.26, bz); box(0.12, 0.12, 0.02, new THREE.MeshStandardMaterial({ color: 0x55ff88, emissive: 0x33dd66, emissiveIntensity: 1 }), mx + 0.25, 1.5, bz + 0.51, false); }
+      this.beltY = 0.85; this.beltSpeed = 0.55;
+    }
+    const onSale = S.products.filter(p => p.active), src = onSale.length ? onSale : S.products.slice(-3);
+    const n = src.length ? Math.min(10, Math.max(4, Math.floor((bx1 - bx0) / 0.8))) : 0;
+    for (let i = 0; i < n; i++) {
+      const pr = src[i % src.length], m = buildProduct(pr, { cheap: true }); m.scale.setScalar(pr.kind === 'eraser' || pr.kind === 'lead' ? 0.06 : 0.045);
+      m.traverse(c => { if (c.isMesh) c.castShadow = true; });
+      m.userData.t = i / n; R.add(m); this.belt.push(m);
+    }
+    // 製品の棚（左の壁ぎわ、部屋に向けて開いている）：発売した製品の最新12こ
+    const shx = -W / 2 + 0.05, shz = D > 7 ? -0.6 : 0.15, sw = 2.3, shM = new THREE.MeshStandardMaterial({ color: 0xf6f1e6, roughness: 0.55 }), shB = new THREE.MeshStandardMaterial({ color: 0xc8b89a, roughness: 0.7 });
+    box(0.04, 1.75, sw, shB, shx + 0.02, 0.875, shz); for (const sz of [-sw / 2, sw / 2]) box(0.42, 1.75, 0.04, shM, shx + 0.21, 0.875, shz + sz);
+    for (let k = 0; k < 4; k++) box(0.42, 0.035, sw, shM, shx + 0.21, 0.08 + k * 0.52, shz, false);
+    S.products.slice(-12).forEach((pr, i) => {
+      const m = buildProduct(pr, { cheap: true }), row = (i / 3) | 0, col = i % 3, sc = pr.kind === 'eraser' || pr.kind === 'lead' ? 0.06 : 0.04; m.scale.setScalar(sc);
+      m.rotation.y = -Math.PI / 2 + 0.35; m.position.set(shx + 0.22, 0.1 + (3 - row) * 0.52 + m.userData.size.y * sc / 2, shz - 0.75 + col * 0.75); m.traverse(c => { if (c.isMesh) c.castShadow = true; }); R.add(m);
+    });
+    this.sun.target.position.set(0, 0, 0);
+    this.frame();
+  },
+  frame() { const W = this.W || 8, D = this.D || 6; this.dist = Math.max(W, D * 1.3) * 1.05 + 2.5; },
+  update(dt) {
+    this.t += dt;
+    for (let i = 0; i < this.people.length; i++) { const p = this.people[i], a = p.userData; if (!a.arms) continue; const ph = this.t * 9 + i * 1.7; a.arms[0].rotation.x = 1.25 + Math.sin(ph) * 0.12; a.arms[1].rotation.x = 1.25 + Math.sin(ph + 2.1) * 0.12; a.head.rotation.x = 0.12 + Math.sin(this.t * 0.7 + i) * 0.05; a.head.rotation.y = Math.sin(this.t * 0.31 + i * 2) * 0.25; }
+    const L = this.bx1 - this.bx0;
+    for (const m of this.belt) {
+      m.userData.t = (m.userData.t + dt * (this.beltSpeed || 0) / L) % 1;
+      m.position.set(this.bx0 + 0.2 + m.userData.t * (L - 0.4), this.beltY + (m.userData.size ? m.userData.size.y * m.scale.y / 2 + 0.005 : 0.03), this.bz); m.rotation.y = 0.15;
+    }
+    // 部屋がちょうど入る距離（縦長の画面では横の画角で決まる）
+    const vf = this.cam.fov * Math.PI / 360, hf = Math.atan(Math.tan(vf) * this.cam.aspect), W = this.W || 8, D = this.D || 6;
+    const fit = Math.max(W, D) * 0.55 / Math.tan(Math.min(vf, hf)) + 1.5, d = fit / this.zoom, ty = 0.6;
+    this.cam.position.set(Math.sin(this.yaw) * Math.cos(this.pitch) * d, ty + Math.sin(this.pitch) * d, Math.cos(this.yaw) * Math.cos(this.pitch) * d);
+    this.cam.lookAt(0, ty, 0.3);
+  },
+  // ---------- 部品 ----------
+  chair(R, x, z, lv) {
+    const g = new THREE.Group(), dark = new THREE.MeshStandardMaterial({ color: lv >= 1 ? 0x24262b : 0x5d6a7a, roughness: 0.7 }), metal = new THREE.MeshStandardMaterial({ color: 0x9aa0a8, metalness: 0.8, roughness: 0.3 });
+    const seat = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.07, 0.46), dark); seat.position.y = 0.47; g.add(seat);
+    const back = new THREE.Mesh(new THREE.BoxGeometry(0.46, lv >= 2 ? 0.75 : 0.5, 0.05), dark); back.position.set(0, lv >= 2 ? 0.92 : 0.8, 0.22); g.add(back);
+    if (lv >= 3) { const hr = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.14, 0.05), dark); hr.position.set(0, 1.38, 0.24); g.add(hr); }
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.4, 10), metal); pole.position.y = 0.24; g.add(pole);
+    for (let k = 0; k < 5; k++) { const leg = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 0.3), metal); const a = k / 5 * TAU; leg.position.set(Math.sin(a) * 0.14, 0.04, Math.cos(a) * 0.14); leg.rotation.y = a; g.add(leg); }
+    g.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+    g.position.set(x, 0, z); R.add(g);
+  },
+  plant(R, x, z, h) {
+    const g = new THREE.Group(), pot = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.15, 0.36, 16), new THREE.MeshStandardMaterial({ color: 0xc9b79c, roughness: 0.8 })); pot.position.y = 0.18; g.add(pot);
+    const leafM = new THREE.MeshStandardMaterial({ color: 0x4f8a45, roughness: 0.7 });
+    for (let k = 0; k < 7; k++) { const l = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 8), leafM); const a = k * 2.4; l.position.set(Math.sin(a) * 0.14, 0.36 + h * (0.4 + (k / 7) * 0.6), Math.cos(a) * 0.14); l.scale.set(1, 1.5, 0.6); l.rotation.y = a; g.add(l); }
+    g.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+    g.position.set(x, 0, z); R.add(g);
+  },
+  // 人：座っている（キーボードを打つ）
+  person(shirt, hair, seated, boss) {
+    const g = new THREE.Group(), skin = new THREE.MeshStandardMaterial({ color: 0xe9c4a2, roughness: 0.7 }), shirtM = new THREE.MeshStandardMaterial({ color: shirt, roughness: 0.75 }), pants = new THREE.MeshStandardMaterial({ color: boss ? 0x232838 : 0x3b4250, roughness: 0.8 });
+    const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.17, 0.3, 4, 10), shirtM); torso.position.set(0, 0.86, 0.05); torso.rotation.x = -0.1; g.add(torso);
+    const head = new THREE.Group(); head.position.set(0, 1.2, 0.0); g.add(head);
+    const hd = new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 12), skin); head.add(hd);
+    const hr = new THREE.Mesh(new THREE.SphereGeometry(0.137, 16, 10, 0, TAU, 0, Math.PI * 0.55), new THREE.MeshStandardMaterial({ color: hair || '#2b2118', roughness: 0.8 })); hr.position.set(0, 0.012, 0.012); hr.rotation.x = -0.25; head.add(hr);
+    for (const sx of [-0.1, 0.1]) {
+      const th = new THREE.Mesh(new THREE.CapsuleGeometry(0.075, 0.32, 4, 8), pants); th.rotation.x = Math.PI / 2; th.position.set(sx, 0.52, -0.16); g.add(th);
+      const sh = new THREE.Mesh(new THREE.CapsuleGeometry(0.065, 0.36, 4, 8), pants); sh.position.set(sx, 0.27, -0.36); g.add(sh);
+    }
+    const arms = [];
+    for (const sx of [-0.21, 0.21]) {
+      const up = new THREE.Group(); up.position.set(sx, 1.0, 0.05); g.add(up);
+      const ua = new THREE.Mesh(new THREE.CapsuleGeometry(0.055, 0.22, 4, 8), shirtM); ua.position.y = -0.14; up.add(ua);
+      const el = new THREE.Group(); el.position.y = -0.27; up.add(el);
+      const fa = new THREE.Mesh(new THREE.CapsuleGeometry(0.05, 0.22, 4, 8), shirtM); fa.position.y = -0.13; el.add(fa);
+      const hand = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), skin); hand.position.y = -0.27; el.add(hand);
+      up.rotation.x = 0.35; el.rotation.x = 1.25; arms.push(el);
+    }
+    g.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+    g.userData = { arms, head };
+    // 前（−z）を向いて座る形（机は −z 側にある）
+    return g;
+  },
+  // ---------- テクスチャ ----------
+  floorTex(tier) {
+    const c = newCanvas(256, 256), g = c.getContext('2d');
+    if (tier === 3) { g.fillStyle = '#e9e6e1'; g.fillRect(0, 0, 256, 256); g.strokeStyle = 'rgba(0,0,0,.08)'; g.strokeRect(0, 0, 256, 256); g.strokeRect(0, 0, 128, 128); g.strokeRect(128, 128, 128, 128); }
+    else {
+      const base = ['#c79a68', '#c9a77f', '#bfae95'][tier];
+      for (let i = 0; i < 8; i++) { g.fillStyle = mixHex(base, i % 2 ? '#8a6a45' : '#e8d3b2', ((i * 37) % 5) / 18); g.fillRect(0, i * 32, 256, 32); g.fillStyle = 'rgba(60,40,20,.25)'; g.fillRect(0, i * 32, 256, 1.5); g.fillRect(((i * 97) % 200) + 20, i * 32, 1.5, 32); }
+    }
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = MAXANI; return t;
+  },
+  skyTex(tier) {
+    const c = newCanvas(256, 256), g = c.getContext('2d'), gr = g.createLinearGradient(0, 0, 0, 256);
+    gr.addColorStop(0, '#8fc3ec'); gr.addColorStop(0.75, '#d8ecf7'); gr.addColorStop(1, '#eef5ec'); g.fillStyle = gr; g.fillRect(0, 0, 256, 256);
+    g.fillStyle = 'rgba(255,255,255,.85)'; for (let k = 0; k < 4; k++) { g.beginPath(); g.ellipse(40 + k * 60, 50 + (k % 2) * 30, 34, 12, 0, 0, TAU); g.fill(); }
+    if (tier === 0) { g.fillStyle = '#7fa86b'; g.beginPath(); for (let x = 0; x <= 256; x += 16) g.lineTo(x, 200 + Math.sin(x * 0.07) * 14); g.lineTo(256, 256); g.lineTo(0, 256); g.fill(); g.fillStyle = '#c9b49a'; g.fillRect(30, 170, 60, 60); g.fillStyle = '#9b5b43'; g.beginPath(); g.moveTo(24, 172); g.lineTo(60, 140); g.lineTo(96, 172); g.fill(); }
+    else { for (let k = 0; k < 9; k++) { const h = 40 + ((k * 53) % 90) * (tier >= 2 ? 1.6 : 0.8); g.fillStyle = ['#8d9bab', '#a4b0bd', '#7c8a9b'][k % 3]; g.fillRect(k * 30 - 4, 256 - h, 26, h); g.fillStyle = 'rgba(255,255,230,.5)'; for (let y = 256 - h + 6; y < 250; y += 10) g.fillRect(k * 30, y, 18, 3); } }
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+  },
+  posterTex(S) {
+    const c = newCanvas(512, 352), g = c.getContext('2d');
+    g.fillStyle = '#fbf8f1'; g.fillRect(0, 0, 512, 352); g.fillStyle = '#2b6fd6'; g.fillRect(0, 0, 512, 70);
+    g.fillStyle = '#fff'; g.font = '900 40px "Zen Maru Gothic", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText((S.company || '').slice(0, 12), 256, 36, 480);
+    g.fillStyle = '#2b2a28'; g.font = '700 30px "Zen Maru Gothic", sans-serif'; g.fillText('書くよろこびを、世界へ。', 256, 130, 480);
+    const cols = ['#d9493e', '#f0a03a', '#2e9a63', '#2b6fd6', '#7b4bc4'];
+    cols.forEach((col, i) => { g.save(); g.translate(96 + i * 80, 250); g.rotate(-0.5); g.fillStyle = col; g.fillRect(-10, -70, 20, 120); g.fillStyle = '#e8c79a'; g.beginPath(); g.moveTo(-10, 50); g.lineTo(10, 50); g.lineTo(0, 78); g.fill(); g.restore(); });
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+  },
+  beltTex() {
+    const c = newCanvas(64, 64), g = c.getContext('2d'); g.fillStyle = '#2f3237'; g.fillRect(0, 0, 64, 64); g.fillStyle = '#3c4046'; for (let x = 0; x < 64; x += 8) g.fillRect(x, 0, 3, 64);
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(12, 1); return t;
+  },
+};
+// =========================================================================================
+//  会社のシミュレーション：時間・開発（不具合）・発売とレビュー・売れゆき（シェア）・研究・スタッフ・設備・
+//  事務所・売る地域・ライバル・流行・ニュース・目標・セーブ
+// =========================================================================================
+const DAY_SEC = 0.6;   // 1倍の速さで、1日＝0.6秒
+let S = null;          // いまのゲームの状態（セーブされる）
+
+function newState(company) {
+  return {
+    v: 1, company: company || 'ぶんぐ工房', day: 0, money: 3000000, rp: 12, tier: 0,
+    equip: { chair: 0, monitor: 0, plant: 0, coffee: 0, lab: 0, line: 1 },
+    staff: [], cands: [], nextId: 1, research: { done: [], cur: null }, devs: [], products: [], markets: ['jp'],
+    rivals: RIVALS.map(r => ({ id: r.id, owned: false, P: {}, value: r.value })),
+    stats: { launched: 0, sales: 0, best: 0, value: 0, top1: false, monthRev: 0, monthProfit: 0, lastMonthProfit: 0, lastMonthRev: 0 },
+    goal: 0, brand: 0.55, trend: { id: 'pastel', until: 360 }, drops: [], hist: [], news: [], speed: 1, over: false, share: {}, capUse: 0,
+  };
+}
+
+// ---------- 計算のもと ----------
+const KMAX = {}; for (const k of KIND_IDS) KMAX[k] = SPECS[k].reduce((a, g) => a + Math.max(...g.opts.map(o => o.lv)), 0);
+const expected = (k, day = S.day) => Math.min(KINDS[k].e0 + KINDS[k].slope * (yearOf(day) - 2000), KMAX[k] * 0.88);
+const optOf = (k, key, id) => { const g = SPECS[k].find(x => x.key === key); return (g && g.opts.find(o => o.id === id)) || (g && g.opts[0]); };
+function perfP(d) { let P = d.bonus || 0; for (const g of SPECS[d.kind]) P += optOf(d.kind, g.key, d.spec[g.key]).lv; return P; }
+// 仕上げ：研究ポイントを使って性能を上げる（期待の5%ずつ）
+const POLISH = [0, 1, 2, 3, 4];
+const polishRP = (k, lv) => Math.round(lv * (12 + expected(k) * 1.3) * (1 + lv * 0.15));
+const polishBonus = (k, lv) => Math.round(lv * 0.05 * expected(k) * 10) / 10;
+const resDone = id => !id || S.research.done.includes(id);
+const kindOpen = k => !KINDS[k].unlock || resDone(KINDS[k].unlock);
+const sumRes = f => S.research.done.reduce((a, id) => a + (RES_BY_ID[id][f] || 0), 0);
+const BASE_COST = { pencil: 6, eraser: 6, lead: 10, mech: 20, ball: 6, fountain: 80 };
+function costOf(d) {
+  let c = BASE_COST[d.kind];
+  for (const g of SPECS[d.kind]) { const o = optOf(d.kind, g.key, d.spec[g.key]); let m = 1; for (const dr of S.drops) if (dr.kind === d.kind && dr.key === g.key && dr.opt === o.id) m *= dr.mult; c += o.cost * m; }
+  return Math.max(1, Math.round(c * (1 - sumRes('costCut'))));
+}
+const fairPrice = (d, q) => costOf(d) * 1.75 * (0.85 + 0.3 * clamp(q, 0.5, 1.6));
+const perfScore = q => clamp(6 + 3.4 * Math.tanh(2.6 * (q - 1)), 0.5, 10);
+const valueScore = (fair, price) => clamp(6 + 5 * (fair / price - 1), 0, 10);
+const recPrice = d => { const c = costOf(d); const r = c * 1.7; return r < 100 ? Math.max(c + 1, Math.round(r / 5) * 5) : r < 1000 ? Math.round(r / 10) * 10 : Math.round(r / 100) * 100; };
+// 見た目の分類（流行に合うか）
+function lookCats(d) {
+  const L = d.look, sp = d.spec, out = new Set(), c = new THREE.Color(L.body || '#ffffff'), hsl = {}; c.getHSL(hsl);
+  const body = sp.body;
+  if (body === 'clear' || (d.kind === 'lead' && L.clear !== 'solid')) out.add('clear');
+  if (L.finish === 'metal' || ['alu', 'brass', 'metal'].includes(body)) out.add('metal');
+  if (body === 'wood' || L.pattern === 'wood' || (d.kind === 'pencil' && sp.wood === 'w2')) out.add('natural');
+  const l = hsl.l, s = hsl.s;
+  if (l < 0.2) out.add('black'); else if (l > 0.88 && s < 0.35) out.add('white');
+  else if (l > 0.7 && s > 0.3) out.add('pastel'); else if (s < 0.35 && l > 0.3) out.add('dusty'); else if (s > 0.6 && l > 0.3 && l < 0.7) out.add('vivid');
+  return out;
+}
+function designScore(d, withTrend = true) {
+  let s = 5 + Math.min(2.5, S.staff.filter(m => m.role === 'des').reduce((a, m) => a + ROLES.des.rate[m.lv - 1], 0)) + sumRes('design');
+  const D = DEF_LOOK[d.kind], L = d.look;
+  if (L.pattern && L.pattern !== 'none') s += 0.3;
+  if (L.logo && L.logo !== D.logo) s += 0.35;
+  if (Object.keys(D).some(k => k !== 'logo' && L[k] !== D[k])) s += 0.35;
+  if (withTrend && lookCats(d).has(S.trend.id)) s += 1.3;
+  return clamp(s, 0, 10);
+}
+function segFit(d, month) {
+  const K = KINDS[d.kind]; let a = 0, b = 0;
+  for (const s in K.segw) { const w = K.segw[s] * SEASON[s][month]; let bon = 0; for (const g of SPECS[d.kind]) { const o = optOf(d.kind, g.key, d.spec[g.key]); if (o.seg && o.seg[s]) bon += o.seg[s]; } a += w * (1 + bon); b += w; }
+  return a / b;
+}
+function popOf(d) { let p = 1; for (const g of SPECS[d.kind]) { const o = optOf(d.kind, g.key, d.spec[g.key]); if (o.pop) p *= o.pop; } return p; }
+// 製品のいまの点（発売のあとも、年がたつと期待が上がって下がっていく）
+function currentScore(p) {
+  const q = perfP(p) / expected(p.kind), perf = perfScore(q), des = designScore(p), val = valueScore(fairPrice(p, q), p.price);
+  return { q, perf, des, val, R: clamp(0.58 * perf + 0.27 * des + 0.15 * val - (p.samePen || 0), 1, 10) };
+}
+// 1日あたりのその種類の市場（本数）
+function kindDemand(k, day = S.day) {
+  const K = KINDS[k], m = dateOf(day).getMonth(), dy = yearOf(day) - 2000; let seg = 0;
+  for (const s in K.segw) seg += K.segw[s] * SEASON[s][m];
+  const mk = MARKETS.filter(x => S.markets.includes(x.id)).reduce((a, x) => a + x.mult, 0);
+  return K.base * seg * K.trend(dy) * mk / 7;
+}
+function rivalA(r, k) {
+  const RV = RIVALS.find(x => x.id === r.id); if (r.owned || !RV.w[k]) return 0;
+  const P = r.P[k] || expected(k) * 0.97, q = P / expected(k), R = 0.58 * perfScore(q) + 0.27 * 6.6 + 0.15 * 6.2;
+  return RV.brand * (1 + 0.012 * (yearOf(S.day) - 2000)) * Math.pow(R / 7, 2.6) * RV.w[k];
+}
+function productA(p, month) {
+  const sc = currentScore(p), wk = (S.day - p.launchDay) / 7, fair = fairPrice(p, sc.q);
+  const priceK = clamp(Math.pow(fair / p.price, 2.2), 0.04, 4);
+  const ad = 1 + p.adBoost * (1 + sumRes('adBoost')) * Math.exp(-wk / 7);
+  const fresh = (1 + 0.6 * Math.exp(-wk / 3)) * Math.max(0.45, 1 - wk / 300);
+  const trend = lookCats(p).has(S.trend.id) ? 1.15 : 1;
+  const sales = 1 + Math.min(0.4, S.staff.filter(m => m.role === 'sal').reduce((a, m) => a + ROLES.sal.rate[m.lv - 1], 0)) + sumRes('sales');
+  return Math.pow(sc.R / 7, 2.6) * priceK * segFit(p, month) * popOf(p) * S.brand * ad * fresh * trend * sales;
+}
+// 仕事の速さ（設備）
+const workMul = () => 1 + 0.05 * S.equip.chair + 0.04 * S.equip.plant + (S.equip.coffee ? 0.05 : 0);
+const resRate = () => (0.12 + S.staff.filter(m => m.role === 'res').reduce((a, m) => a + ROLES.res.rate[m.lv - 1], 0)) * workMul() * (1 + 0.06 * S.equip.monitor);
+const qaRate = () => (0.2 + S.staff.filter(m => m.role === 'qa').reduce((a, m) => a + ROLES.qa.rate[m.lv - 1], 0)) * workMul() * (1 + 0.06 * S.equip.monitor) * (1 + 0.1 * S.equip.lab);
+const devSpeed = () => workMul() * (1 + 0.04 * S.staff.filter(m => m.role === 'des').length);
+
+// ---------- 開発 ----------
+function devPlan(d) {
+  const K = KINDS[d.kind], P = perfP(Object.assign({}, d, { bonus: d.bonus != null ? d.bonus : polishBonus(d.kind, d.polish || 0) }));
+  return { P, cost: costOf(d), devCost: Math.round(K.dev * (1 + P / 40) / 10000) * 10000, days: Math.round((K.days + P * 0.35) / devSpeed()),
+    bugs: (K.bugs + P / 8) * (1 - sumRes('bugCut')) * (1 - 0.12 * S.equip.lab) };
+}
+function canStartDev(d) {
+  if (S.devs.length >= OFFICES[S.tier].slots) return '同時に開発できるのは ' + OFFICES[S.tier].slots + ' つまで（事務所を広げると増える）';
+  for (const g of SPECS[d.kind]) { const o = optOf(d.kind, g.key, d.spec[g.key]); if (!resDone(o.req)) return o.name + ' はまだ研究していない'; }
+  if (S.money < devPlan(d).devCost) return 'お金が足りない';
+  if (S.rp < polishRP(d.kind, d.polish || 0)) return '研究ポイントが足りない（仕上げ）';
+  if (!d.name || !d.name.trim()) return '製品の名前を入れよう';
+  return '';
+}
+function startDev(d) {
+  const why = canStartDev(d); if (why) return why;
+  const pl = devPlan(d), pol = d.polish || 0, prp = polishRP(d.kind, pol);
+  S.money -= pl.devCost; S.rp -= prp;
+  S.devs.push({ id: S.nextId++, kind: d.kind, name: d.name.trim().slice(0, 24), spec: { ...d.spec }, look: { ...d.look }, price: d.price, devCost: pl.devCost, polish: pol, bonus: polishBonus(d.kind, pol), days: pl.days, left: pl.days, bugs: Math.max(1, Math.round(pl.bugs * rr(0.8, 1.2))), fixed: 0, ready: false });
+  news(`「${d.name}」の開発を始めた（${KINDS[d.kind].short}・${pl.days}日）`);
+  return '';
+}
+const devFound = v => Math.min(v.bugs, Math.floor(v.bugs * Math.min(1, (1 - v.left / v.days) * 1.15 + 0.05)));
+function fixWithRP(v) { const rest = Math.ceil(v.bugs - v.fixed), cost = rest * 3; if (rest <= 0 || S.rp < cost) return false; S.rp -= cost; v.fixed = v.bugs; return true; }
+
+// ---------- 発売 ----------
+const REVIEWERS = ['文具ライター', '文具好きの学生', '事務用品のバイヤー', 'デザイン雑誌', '文具ブロガー'];
+function launch(devId, price, adId) {
+  const i = S.devs.findIndex(v => v.id === devId); if (i < 0) return null;
+  const v = S.devs[i], ad = ADS.find(a => a.id === adId) || ADS[0];
+  if (S.money < ad.cost) return null;
+  S.devs.splice(i, 1); S.money -= ad.cost;
+  const p = { id: v.id, kind: v.kind, name: v.name, spec: v.spec, look: v.look, polish: v.polish || 0, bonus: v.bonus || 0, price: Math.max(1, Math.round(price)), launchDay: S.day, ad: ad.id, adBoost: ad.boost, units: 0, revenue: 0, profit: 0, active: true, weekUnits: 0, lastWeek: 0, devCost: v.devCost };
+  const same = S.products.some(o => o.active && o.kind === p.kind && JSON.stringify(o.spec) === JSON.stringify(p.spec));
+  p.samePen = same ? 1.4 : 0;
+  const q = perfP(p) / expected(p.kind), perf = perfScore(q), des = designScore(p), val = valueScore(fairPrice(p, q), p.price);
+  p.review = Math.round(clamp(0.58 * perf + 0.27 * des + 0.15 * val - p.samePen + rr(-0.25, 0.25), 1, 10) * 10) / 10;
+  p.scores = { perf: Math.round(perf * 10) / 10, des: Math.round(des * 10) / 10, val: Math.round(val * 10) / 10 };
+  p.comments = reviewComments(p, q, perf, des, val, same);
+  S.products.push(p); S.stats.launched++; S.stats.best = Math.max(S.stats.best, p.review);
+  S.brand = clamp(S.brand + (p.review - 6.2) * 0.03 + ad.brand, 0.4, 1.8);
+  news(`「${p.name}」発売！ レビュー ${p.review.toFixed(1)} 点`);
+  return p;
+}
+function reviewComments(p, q, perf, des, val, same) {
+  const best = SPECS[p.kind].map(g => optOf(p.kind, g.key, p.spec[g.key])).sort((a, b) => b.lv - a.lv)[0];
+  const who = () => pick(REVIEWERS), out = [];
+  if (same) out.push([who(), '前の製品とほとんど同じ。新しさがほしかった。']);
+  if (perf >= 8.3) out.push([who(), `「${best.name}」が効いていて、使い心地が段ちがい。今いちばんの${KINDS[p.kind].short}かも。`]);
+  else if (perf >= 6.5) out.push([who(), `ちゃんと使える${KINDS[p.kind].short}。「${best.name}」もいい感じ。`]);
+  else if (perf >= 4.5) out.push([who(), 'ふつうに使えるけれど、ほかの会社の新製品にくらべると少し古い感じ。']);
+  else out.push([who(), '性能はひと昔前。もっと研究して、新しい技術を入れてほしい。']);
+  const cats = lookCats(p);
+  if (cats.has(S.trend.id)) out.push(['デザイン雑誌', `今はやりの「${TRENDS[S.trend.id]}」で、見た目がとても今っぽい！`]);
+  else if (des >= 7) out.push(['デザイン雑誌', 'こだわりのデザインで、持っているとうれしくなる。']);
+  else if (des < 5.6) out.push([who(), '見た目はふつう。もう少し個性がほしい。']);
+  else out.push([who(), pick(['色がきれいで、手にとりやすいデザイン。', 'すっきりしたデザインで、どこでも使いやすい。', 'ロゴと色の組み合わせがいい感じ。'])]);
+  if (val >= 7.5) out.push(['事務用品のバイヤー', 'この値段でこの品質はお買い得。よく売れそう。']);
+  else if (val < 4) out.push(['事務用品のバイヤー', 'ちょっと高すぎる。値段を下げると手に取る人が増えそう。']);
+  else out.push(['事務用品のバイヤー', '値段は相場どおり。お店にも置きやすい。']);
+  return out.slice(0, 3);
+}
+
+// ---------- 研究 ----------
+function resState(r) {
+  if (S.research.done.includes(r.id)) return 'done';
+  if (S.research.cur && S.research.cur.id === r.id) return 'cur';
+  if (yearOf(S.day) < r.year) return 'year';
+  if (r.req && !resDone(r.req)) return 'req';
+  return 'can';
+}
+function startResearch(id) {
+  const r = RES_BY_ID[id]; if (!r || resState(r) !== 'can' || S.research.cur) return false;
+  if (S.rp < r.rp) return false;
+  S.rp -= r.rp; S.research.cur = { id, left: r.days, days: r.days }; return true;
+}
+
+// ---------- スタッフ ----------
+const HAIR = ['#2b2118', '#1c1a18', '#5a3a22', '#7a5a3a', '#3a2a20', '#9a6b3d', '#222222'];
+function makeCand() {
+  const roles = Object.keys(ROLES), role = pick(roles), maxLv = Math.min(5, S.tier + 2 + (Math.random() < 0.25 ? 1 : 0)), lv = ri(1, maxLv);
+  return { id: S.nextId++, name: pick(FAMILY) + ' ' + pick(GIVEN), role, lv, sal: Math.round(ROLES[role].sal[lv - 1] * rr(0.92, 1.1) / 1000) * 1000, hair: pick(HAIR) };
+}
+function rerollCands(pay) { if (pay) { const c = 50000 * (S.tier + 1); if (S.money < c) return false; S.money -= c; } S.cands = Array.from({ length: 4 }, makeCand); return true; }
+function hire(id) {
+  const c = S.cands.find(x => x.id === id); if (!c) return 'いない';
+  if (S.staff.length >= OFFICES[S.tier].desks) return '机が足りない（事務所を広げよう）';
+  if (S.money < c.sal) return 'お金が足りない（採用には月給1か月分）';
+  S.money -= c.sal; S.staff.push(c); S.cands = S.cands.filter(x => x !== c); S.cands.push(makeCand());
+  news(`${c.name}さん（${ROLES[c.role].name}）が入社した`); return '';
+}
+function fire(id) { S.staff = S.staff.filter(m => m.id !== id); }
+
+// ---------- 設備・事務所・地域・ライバル ----------
+const eqMax = k => k === 'line' ? EQUIP.line.maxBy[S.tier] : Math.min(EQUIP[k].max || 3, OFFICES[S.tier].maxEq);
+const eqPrice = k => EQUIP[k].price[S.equip[k] - (k === 'line' ? 0 : 0)] ?? null;
+function buyEquip(k) { const lv = S.equip[k]; if (lv >= eqMax(k)) return false; const pr = EQUIP[k].price[k === 'line' ? lv : lv]; if (pr == null || S.money < pr) return false; S.money -= pr; S.equip[k]++; return true; }
+function officeNeed(t) { const O = OFFICES[t]; if (!O || !O.need) return null; return { ok: S.stats.launched >= O.need.launched && S.stats.sales >= O.need.sales && S.money >= O.cost, launched: O.need.launched, sales: O.need.sales, cost: O.cost }; }
+function moveOffice() { const t = S.tier + 1, n = officeNeed(t); if (!n || !n.ok) return false; S.money -= n.cost; S.tier = t; news(`${OFFICES[t].name}へ引っ越した！`); return true; }
+function marketOk(m) { if (S.markets.includes(m.id)) return false; if (m.req && !S.markets.includes(m.req)) return false; if (m.id === 'world' && S.tier < 2) return false; return S.stats.launched >= (m.need ? m.need.launched : 0) && S.money >= m.cost; }
+function expand(id) { const m = MARKETS.find(x => x.id === id); if (!m || !marketOk(m)) return false; S.money -= m.cost; S.markets.push(id); S.brand = clamp(S.brand + 0.05, 0.4, 1.8); news(`${m.name}で売り始めた！ お客さんが増える`); return true; }
+// 海外は文具ビルから
+const buyoutPrice = r => Math.round(r.value * (1 + 0.05 * (yearOf(S.day) - 2000)) / 1e6) * 1e6;
+function buyout(id) { const r = S.rivals.find(x => x.id === id); if (!r || r.owned) return false; const pr = buyoutPrice(r); if (S.money < pr) return false; S.money -= pr; r.owned = true; r.paid = pr; S.brand = clamp(S.brand + 0.1, 0.4, 1.8); news(`${RIVALS.find(x => x.id === id).name}を買収した！`); return true; }
+
+// ---------- ニュース・お知らせ ----------
+function news(t, kind) { S.news.unshift({ d: S.day, t }); S.news.length = Math.min(S.news.length, 30); if (typeof UI !== 'undefined') UI.newsTick(t, kind); }
+
+// ---------- 1日すすめる ----------
+function dayTick() {
+  const prevMonth = dateOf(S.day).getMonth(); S.day++;
+  const date = dateOf(S.day), month = date.getMonth();
+  // 研究ポイント・研究
+  S.rp += resRate();
+  if (S.research.cur) { const c = S.research.cur; c.left -= workMul(); if (c.left <= 0) { const r = RES_BY_ID[c.id]; S.research.done.push(c.id); S.research.cur = null; UI.toast(`研究完了：${r.name}`, 'good'); if (r.unlock) UI.toast(`${r.unlock.map(k => KINDS[k].short).join('・')} を開発できるようになった！`, 'gold'); AU.chime(); news(`研究「${r.name}」が完了した`); UI.dirty(); } }
+  // 開発と不具合直し
+  let fixPool = qaRate();
+  const needs = S.devs.filter(v => devFound(v) - v.fixed > 0.01);
+  for (const v of S.devs) {
+    if (v.left > 0) v.left = Math.max(0, v.left - devSpeed());
+    const open = devFound(v) - v.fixed; if (open > 0 && fixPool > 0) { const f = Math.min(open, fixPool / Math.max(1, needs.length)); v.fixed += f; }
+    if (!v.ready && v.left <= 0 && v.fixed >= v.bugs - 0.001) { v.ready = true; UI.toast(`「${v.name}」の開発が終わった！ 発売しよう`, 'gold'); AU.chime(); UI.dirty(); UI.readyQueue(v.id); }
+  }
+  // 売れゆき（種類ごとにシェアを計算）
+  let rev = 0, cogs = 0, work = 0; const sold = [];
+  S.share = {};
+  for (const k of KIND_IDS) {
+    const mine = S.products.filter(p => p.active && p.kind === k);
+    const As = mine.map(p => productA(p, month)), rA = S.rivals.map(r => rivalA(r, k)), tot = As.reduce((a, b) => a + b, 0) + rA.reduce((a, b) => a + b, 0) + 1.5;   // 1.5＝小さな会社たち
+    const D = kindDemand(k);
+    S.share[k] = { me: As.reduce((a, b) => a + b, 0) / tot, rivals: rA.map(a => a / tot) };
+    mine.forEach((p, i) => { const u = D * As[i] / tot; sold.push([p, u]); work += u * KINDS[k].work; });
+  }
+  const cap = LINE_CAP[S.equip.line] / 7, f = work > cap ? cap / work : 1; S.capUse = work / cap;
+  for (const [p, u0] of sold) { const u = u0 * f, c = costOf(p); p.units += u; p.weekUnits += u; p.revenue += u * p.price; p.profit += u * (p.price - c); rev += u * p.price; cogs += u * c; }
+  S.money += rev - cogs; S.stats.sales += rev; S.stats.monthRev += rev; S.stats.monthProfit += rev - cogs;
+  // 週ごと
+  if (S.day % 7 === 0) weekTick();
+  if (month !== prevMonth) monthTick(date);
+  // 季節のお知らせ
+  if (date.getMonth() === 1 && date.getDate() === 15) news('もうすぐ新学期。学生向けの文房具がよく売れる季節です（3〜4月）');
+  if (date.getMonth() === 10 && date.getDate() === 20) news('年末の贈り物シーズン。万年筆やいいペンがよく売れます（12月）');
+  checkGoals();
+}
+function weekTick() {
+  for (const p of S.products) { p.lastWeek = p.weekUnits; p.weekUnits = 0; }
+  // ブランド：シェアと最近のレビューで、ゆっくり動く
+  const shares = KIND_IDS.map(k => (S.share[k] ? S.share[k].me : 0)), avg = shares.reduce((a, b) => a + b, 0) / KIND_IDS.length;
+  const target = 0.55 + 0.85 * clamp(avg * 3, 0, 1) + Math.min(0.25, S.stats.launched * 0.015) + 0.1 * S.rivals.filter(r => r.owned).length;
+  S.brand = clamp(S.brand + (target - S.brand) * 0.02, 0.4, 1.8);
+  S.stats.top1 = S.stats.top1 || KIND_IDS.some(k => S.share[k] && S.share[k].me > 0.05 && S.share[k].rivals.every(r => r < S.share[k].me));
+  S.hist.push(Math.round(S.money)); if (S.hist.length > 104) S.hist.shift();
+  // 会社の価値
+  S.stats.value = Math.max(0, S.money) + Math.max(0, S.stats.lastMonthProfit) * 36 + S.brand * 8e7 * S.markets.length + S.rivals.filter(r => r.owned).reduce((a, r) => a + (r.paid || 0) * 0.8, 0);
+  if (S.day % 28 === 0) save();
+}
+function monthTick(date) {
+  const sal = S.staff.reduce((a, m) => a + m.sal, 0), rent = OFFICES[S.tier].rent, div = S.rivals.filter(r => r.owned).reduce((a, r) => a + (r.paid || 0) * 0.006, 0);
+  S.money -= sal + rent; S.money += div;
+  S.stats.lastMonthProfit = S.stats.monthProfit - sal - rent + div; S.stats.lastMonthRev = S.stats.monthRev; S.stats.monthProfit = 0; S.stats.monthRev = 0;
+  if (sal + rent > 0) UI.toast(`給料と家賃：${yen(sal + rent)}`, '');
+  if (div > 0) UI.toast(`買収した会社からの利益：${yen(div, true)}`, 'good');
+  // ライバルの新製品
+  for (const r of S.rivals) {
+    if (r.owned) continue; const RV = RIVALS.find(x => x.id === r.id);
+    for (const k of KIND_IDS) { if (!RV.w[k] || RV.w[k] < 0.35) continue; const my = S.share[k] ? S.share[k].me : 0; if (!r.P[k] || Math.random() < (0.07 + my * 0.12) * RV.w[k]) { r.P[k] = expected(k) * (rr(0.98, 1.12) + my * 0.25); if (S.day > 30 && Math.random() < 0.5) news(`${RV.name}が新しい${KINDS[k].short}を発売した`); } }
+    r.value *= 1.004;
+  }
+  // 流行が変わる
+  if (S.day >= S.trend.until) { const ids = Object.keys(TRENDS).filter(t => t !== S.trend.id); S.trend = { id: pick(ids), until: S.day + ri(300, 480) }; news(`いま「${TRENDS[S.trend.id]}」の文房具がはやっている！`, 'gold'); UI.toast(`流行：${TRENDS[S.trend.id]}がブームに`, 'gold'); }
+  // 部品の値下がり
+  S.drops = S.drops.filter(d => d.until > S.day);
+  if (Math.random() < 0.12) {
+    const k = pick(KIND_IDS.filter(kindOpen)), g = pick(SPECS[k].filter(g => g.opts.some(o => o.cost > 3))), o = pick(g.opts.filter(o => o.cost > 3 && resDone(o.req)));
+    if (o) { S.drops.push({ kind: k, key: g.key, opt: o.id, mult: 0.8, until: S.day + 365 }); news(`${KINDS[k].short}の「${o.name}」の部品が値下がり（原価 −20%・1年間）`); }
+  }
+  if (S.money < 0) { UI.toast('お金がマイナスです！ 売れる製品を作るか、人や設備を見直そう', 'bad'); AU.bad(); }
+  if (S.money < -20000000) { S.over = true; UI.gameOver(); }
+  void date;
+}
+function checkGoals() {
+  const g = GOALS[S.goal]; if (!g || !g.done(S)) return;
+  S.money += g.reward.money; S.rp += g.reward.rp; S.goal++;
+  UI.toast(`目標達成：${g.text}　${g.reward.money ? yen(g.reward.money, true) + '　' : ''}+${g.reward.rp} RP`, 'gold'); AU.fanfare(); UI.dirty();
+}
+
+// ---------- セーブ ----------
+function save() { if (!S || S.over) return; try { localStorage.setItem('bungu-save', JSON.stringify(S)); } catch (e) { /* 保存できない */ } }
+function loadSave() {
+  try {
+    const s = JSON.parse(localStorage.getItem('bungu-save')); if (!s || s.v !== 1) return null;
+    const d = newState(s.company); for (const k in d) if (s[k] === undefined) s[k] = d[k];
+    s.equip = Object.assign(d.equip, s.equip); s.stats = Object.assign(d.stats, s.stats); s.research = Object.assign(d.research, s.research);
+    for (const r of d.rivals) if (!s.rivals.find(x => x.id === r.id)) s.rivals.push(r);
+    return s;
+  } catch (e) { return null; }
+}
+// =========================================================================================
+//  画面：上のバー・下のメニュー・シート（開発／製品／研究／スタッフ／会社／事務所）・開発スタジオ・発売とレビュー
+// =========================================================================================
+const SVG = {
+  dev: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M14 6l3 3"/><path d="M19 15v4M17 17h4"/></svg>',
+  prod: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>',
+  res: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3"/><path d="M7.5 15h9"/></svg>',
+  staff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.4"/><path d="M15.5 14.2c3 .2 5.5 2.6 5.5 5.8"/></svg>',
+  co: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V9l5-3v14"/><path d="M9 20V4l7 3v13"/><path d="M16 20v-9l4 2v7"/><path d="M2 20h20"/></svg>',
+  office: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M9 20v-5h6v5"/></svg>',
+};
+// 種類のアイコン（開発のカード）
+const KSVG = {
+  pencil: '<svg viewBox="0 0 48 48"><g transform="rotate(-40 24 24)"><rect x="8" y="20" width="26" height="8" rx="1" fill="#2e9a63"/><path d="M34 20l8 4-8 4z" fill="#e8c79a"/><path d="M40 23l2 1-2 1z" fill="#333"/><rect x="5" y="20" width="4" height="8" fill="#c9a24e"/><rect x="2" y="20.5" width="3.5" height="7" rx="1.5" fill="#f2a7b8"/></g></svg>',
+  eraser: '<svg viewBox="0 0 48 48"><g transform="rotate(-18 24 24)"><rect x="6" y="15" width="36" height="18" rx="3" fill="#f6f4ee" stroke="#ccc"/><rect x="15" y="14" width="25" height="20" fill="#2b6fd6"/><rect x="15" y="20" width="25" height="3" fill="#1d1d1f"/><rect x="15" y="26" width="25" height="3" fill="#1d1d1f"/></g></svg>',
+  lead: '<svg viewBox="0 0 48 48"><rect x="8" y="14" width="28" height="20" rx="3" fill="#2a2a2e"/><rect x="34" y="14" width="7" height="20" rx="2" fill="#2b6fd6"/><rect x="12" y="19" width="18" height="10" rx="1" fill="#fff"/><path d="M14 22h10M14 26h6" stroke="#333" stroke-width="1.6"/></svg>',
+  mech: '<svg viewBox="0 0 48 48"><g transform="rotate(-40 24 24)"><rect x="6" y="21" width="22" height="6" rx="2" fill="#24438f"/><rect x="28" y="20.5" width="9" height="7" rx="2" fill="#333"/><path d="M37 21.5l5 2.5-5 2.5z" fill="#bbb"/><rect x="2" y="21.5" width="5" height="5" rx="1.5" fill="#ccc"/><rect x="8" y="18.5" width="11" height="2" fill="#bbb"/></g></svg>',
+  ball: '<svg viewBox="0 0 48 48"><g transform="rotate(-40 24 24)"><rect x="6" y="20.5" width="24" height="7" rx="3" fill="#f6f4ee" stroke="#ccc"/><rect x="28" y="20.5" width="8" height="7" rx="2" fill="#2b6fd6"/><path d="M36 21.5l6 2.5-6 2.5z" fill="#bbb"/><rect x="2" y="21.5" width="5" height="5" rx="2" fill="#2b6fd6"/><rect x="8" y="17.5" width="12" height="2.4" fill="#2b6fd6"/></g></svg>',
+  fountain: '<svg viewBox="0 0 48 48"><g transform="rotate(-40 24 24)"><rect x="4" y="20" width="24" height="8" rx="3.5" fill="#1d1d1f"/><rect x="26" y="20" width="2" height="8" fill="#d4a83a"/><rect x="28" y="21" width="5" height="6" rx="1" fill="#1d1d1f"/><path d="M33 21l10 3-10 3z" fill="#e8bf67"/><path d="M36 24h6" stroke="#5a4512" stroke-width=".8"/></g></svg>',
+};
+const stars10 = v => { const n = Math.round(v / 2); return '★'.repeat(n) + '☆'.repeat(5 - n); };
+const NAME_PARTS = { a: ['なめらか', 'くっきり', 'さらさら', 'ふわり', 'きらり', 'しっかり', 'のびのび', 'すいすい', 'まなび', 'ひらめき', 'そよかぜ', 'ほしぞら', 'あおぞら', 'こもれび'], k: { pencil: 'えんぴつ', eraser: 'けしゴム', lead: '芯', mech: 'シャープ', ball: 'ペン', fountain: '万年筆' } };
+const randName = k => pick(NAME_PARTS.a) + NAME_PARTS.k[k] + (Math.random() < 0.35 ? ' ' + pick(['Lite', 'Pro', 'S', '2', 'Neo', 'Air', 'Plus']) : '');
+
+const UI = {
+  tab: null, sub: {}, dirtyF: true, refreshT: 0, studio: null, queue: [], modalOpen: false, newsQ: [], newsX: 0, newsW: 0, topT: 0,
+  init() {
+    const nav = $('nav'); nav.innerHTML = [['dev', '開発'], ['prod', '製品'], ['res', '研究'], ['staff', 'スタッフ'], ['co', '会社'], ['office', '事務所']].map(([k, n]) => `<button type="button" data-tab="${k}">${SVG[k]}<span>${n}</span><i class="dot"></i></button>`).join('');
+    nav.onclick = e => { const b = e.target.closest('button'); if (!b) return; AU.resume(); AU.click(); this.open(this.tab === b.dataset.tab ? null : b.dataset.tab); };
+    $('speed').onclick = e => { const b = e.target.closest('button'); if (!b || !S) return; AU.resume(); AU.click(); S.speed = +b.dataset.s; this.topT = 0; };
+    $('menuB').onclick = () => { AU.resume(); AU.click(); this.open(this.tab === 'menu' ? null : 'menu'); };
+    $('shClose').onclick = () => this.open(null);
+    $('stClose').onclick = () => this.closeStudio();
+    $('goal').onclick = () => { const g = GOALS[S.goal]; if (!g) return; this.open({ g1: 'dev', g2: 'staff', g3: 'res', g4: 'dev', g6: 'office', g9: 'co', g10: 'office', g12: 'co', g13: 'co', g14: 'office' }[g.id] || 'co'); };
+    // ボタンなどのクリックはまとめて受ける
+    for (const id of ['shBody', 'shTabs', 'stBody', 'stTabs', 'stFoot', 'modalBox']) $(id).addEventListener('click', e => this.onClick(e));
+    $('stBody').addEventListener('input', e => this.onInput(e)); $('shBody').addEventListener('change', e => this.onInput(e)); $('modalBox').addEventListener('input', e => this.onInput(e));
+    $('stBody').addEventListener('change', e => this.onInput(e));
+  },
+  // ---------- 毎フレーム ----------
+  update(dt) {
+    if (!S) return;
+    this.topT -= dt;
+    if (this.topT <= 0) {
+      this.topT = 0.1;
+      $('coName').textContent = S.company; $('date').textContent = dateStr(S.day);
+      const m = $('money'); m.textContent = yen(S.money); m.classList.toggle('neg', S.money < 0);
+      $('rp').textContent = Math.floor(S.rp) + ' RP';
+      for (const b of $('speed').children) b.classList.toggle('on', +b.dataset.s === S.speed && !this.paused());
+      const dots = $('nav').querySelectorAll('i.dot');
+      dots[0].classList.toggle('on', S.devs.some(v => v.ready)); dots[2].classList.toggle('on', !S.research.cur && RESEARCH.some(r => resState(r) === 'can' && S.rp >= r.rp));
+      const g = GOALS[S.goal], gb = $('goal');
+      gb.classList.toggle('hidden', !g || !!this.tab || !!this.studio);
+      if (g) { const html = `<b>目標</b>${esc(g.text)}${g.hint ? `<small>${esc(g.hint)}</small>` : ''}<small>ごほうび：${g.reward.money ? yen(g.reward.money) + '・' : ''}${g.reward.rp} RP</small>`; if (gb._h !== html) { gb.innerHTML = html; gb._h = html; } }
+    }
+    // ニュースの帯
+    const nt = $('newsT');
+    if (this.newsX < -this.newsW - 20) { const t = this.newsQ.shift() || (S.news[(Math.random() * Math.min(6, S.news.length)) | 0] || {}).t; if (t) { nt.textContent = '📰 ' + t; this.newsW = nt.offsetWidth; this.newsX = $('news').offsetWidth; } else this.newsX = -this.newsW - 21; }
+    this.newsX -= dt * 70; nt.style.transform = `translateX(${this.newsX}px)`;
+    // 開いているシートの中身（ゆっくり書きかえる）
+    this.refreshT -= dt;
+    if (this.tab && (this.dirtyF || this.refreshT <= 0) && !this.editing()) { this.render(); this.dirtyF = false; this.refreshT = 0.6; }
+    if (this.studio && this.studio.dirty) { this.studio.dirty = false; this.renderStudio(); }
+    if (this.queue.length && !this.modalOpen && !this.studio) { const id = this.queue.shift(); if (S.devs.find(v => v.id === id && v.ready)) this.launchModal(id); }
+  },
+  paused() { return !!this.studio || this.modalOpen || S.speed === 0; },
+  editing() { const a = document.activeElement; return a && (a.tagName === 'INPUT' || a.tagName === 'SELECT') && $('sheet').contains(a); },
+  dirty() { this.dirtyF = true; },
+  readyQueue(id) { if (!this.queue.includes(id)) this.queue.push(id); },
+  toast(t, kind = '') { const box = $('toasts'), d = document.createElement('div'); d.className = 'toast ' + kind; d.textContent = t; box.prepend(d); while (box.children.length > 4) box.lastChild.remove(); setTimeout(() => d.remove(), 4800); },
+  newsTick(t) { this.newsQ.push(t); if (this.newsQ.length > 5) this.newsQ.shift(); },
+  // ---------- シート ----------
+  open(tab) {
+    this.tab = tab; $('sheet').classList.toggle('on', !!tab);
+    for (const b of $('nav').children) b.classList.toggle('on', b.dataset.tab === tab);
+    if (tab) { $('shBody').scrollTop = 0; this.render(); }
+  },
+  render() {
+    const t = this.tab, body = $('shBody'), st = body.scrollTop;
+    const titles = { dev: '開発', prod: '製品', res: '研究', staff: 'スタッフ', co: '会社', office: '事務所', menu: 'メニュー' };
+    $('shTitle').textContent = titles[t] || '';
+    let tabs = '', html = '';
+    if (t === 'dev') html = this.pDev();
+    else if (t === 'prod') { const s = this.sub.prod || 'on'; tabs = this.tabsHtml('prod', { on: '販売中', off: '販売終了' }, s); html = this.pProd(s); }
+    else if (t === 'res') { const s = this.sub.res || 'gen'; tabs = this.tabsHtml('res', RES_CATS, s); html = this.pRes(s); }
+    else if (t === 'staff') { const s = this.sub.staff || 'list'; tabs = this.tabsHtml('staff', { list: '社員', hire: '採用' }, s); html = this.pStaff(s); }
+    else if (t === 'co') { const s = this.sub.co || 'sum'; tabs = this.tabsHtml('co', { sum: 'まとめ', share: 'シェア', mkt: '売る地域', rival: 'ライバル', goal: '目標' }, s); html = this.pCo(s); }
+    else if (t === 'office') html = this.pOffice();
+    else if (t === 'menu') html = this.pMenu();
+    $('shTabs').innerHTML = tabs; $('shTabs').classList.toggle('hidden', !tabs);
+    body.innerHTML = html; body.scrollTop = st;
+  },
+  tabsHtml(key, map, cur) { return Object.entries(map).map(([k, n]) => `<button type="button" class="${k === cur ? 'on' : ''}" data-act="sub" data-k="${key}" data-v="${k}">${esc(n)}</button>`).join(''); },
+  // 開発
+  pDev() {
+    let h = '';
+    const slots = OFFICES[S.tier].slots;
+    h += `<div class="muted" style="margin:2px 0 8px">同時に開発できる数：${S.devs.length} / ${slots}</div>`;
+    for (const v of S.devs) {
+      const prog = 1 - v.left / v.days, found = devFound(v), rest = Math.ceil(v.bugs - v.fixed), openB = Math.max(0, Math.ceil(found - v.fixed));
+      h += `<div class="card"><div class="row sb"><h3>${esc(v.name)}</h3><span class="pill">${KINDS[v.kind].short}</span></div>`;
+      if (v.ready) h += `<div class="row sb"><span class="pill green">完成！</span><button class="btn green" data-act="launchM" data-id="${v.id}" type="button">発売する</button></div>`;
+      else {
+        h += `<div class="muted">開発 ${Math.floor(prog * 100)}%　のこり ${Math.ceil(v.left)} 日</div><div class="bar"><i style="width:${prog * 100}%"></i></div>`;
+        h += `<div class="muted" style="margin-top:6px">不具合：見つかった ${found} 件のうち ${Math.floor(v.fixed)} 件直した（全部で約 ${v.bugs} 件）</div><div class="bar r"><i style="width:${(v.fixed / v.bugs) * 100}%"></i></div>`;
+        h += `<div class="row" style="margin-top:8px;gap:6px"><button class="btn sub small" data-act="fixRP" data-id="${v.id}" type="button" ${S.rp < rest * 3 || rest <= 0 ? 'disabled' : ''}>RPで全部直す（${rest * 3} RP）</button><span class="muted">${openB ? '品質チェックの人が直しています' : ''}</span></div>`;
+      }
+      h += '</div>';
+    }
+    h += `<div class="grp">新しく作る</div>`;
+    for (const k of KIND_IDS) {
+      const open = kindOpen(k), K = KINDS[k], r = K.unlock ? RES_BY_ID[K.unlock] : null, mine = S.products.filter(p => p.kind === k).length;
+      h += `<div class="card kind" ${open ? `data-act="newDev" data-k="${k}"` : ''} style="${open ? '' : 'opacity:.55'}"><div class="ic">${KSVG[k]}</div><div style="flex:1"><h3 style="margin:0">${K.name}</h3><div class="muted">${open ? `開発費 約${yen(K.dev)}〜・${K.days}日〜${mine ? `・発売 ${mine}こ` : ''}` : `研究「${r.name}」が必要`}</div></div>${open ? '<span class="pill blue">作る</span>' : '<span class="pill">🔒</span>'}</div>`;
+    }
+    return h;
+  },
+  // 製品
+  pProd(s) {
+    const list = S.products.filter(p => (s === 'on') === p.active).slice().reverse();
+    if (!list.length) return `<div class="list-empty">${s === 'on' ? 'まだ売っている製品がありません。<br>「開発」から作ってみよう' : '販売を終えた製品はありません'}</div>`;
+    let h = '';
+    if (s === 'on' && S.capUse > 1) h += `<div class="card" style="border-color:#e8b0a8"><b style="color:var(--red)">生産が追いついていません</b><div class="muted">注文の ${Math.round(100 / S.capUse)}% しか作れていない。「事務所」で生産ラインを強くしよう</div></div>`;
+    for (const p of list) {
+      const sc = currentScore(p);
+      h += `<div class="card"><div class="prod"><img alt="" src="${productThumb(p)}"><div><div class="row sb"><h3 style="margin:0">${esc(p.name)}</h3><span class="pill">${KINDS[p.kind].short}</span></div>
+        <div class="row" style="gap:8px;margin:3px 0"><span class="stars">${stars10(p.review)}</span><b>${p.review.toFixed(1)}</b><span class="muted">いまの評価 ${sc.R.toFixed(1)}</span></div>
+        <div class="kv"><span>値段</span><b>${yen(p.price)}（原価 ${yen(costOf(p))}）</b><span>先週</span><b>${num(p.lastWeek)} こ</b><span>売れた数</span><b>${num(p.units)} こ</b><span>利益</span><b>${yen(p.profit - (p.devCost || 0))}</b></div></div></div>
+        <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">${p.active ? `<button class="btn sub small" data-act="priceM" data-id="${p.id}" type="button">値段を変える</button><button class="btn sub small" data-act="stop" data-id="${p.id}" type="button">販売終了</button>` : `<button class="btn sub small" data-act="resume" data-id="${p.id}" type="button">また売る</button>`}<button class="btn small" data-act="copy" data-id="${p.id}" type="button">このデザインで新しく作る</button></div></div>`;
+    }
+    return h;
+  },
+  // 研究
+  pRes(cat) {
+    let h = `<div class="muted" style="margin:2px 0 8px">研究ポイント：<b style="color:var(--blue)">${Math.floor(S.rp)} RP</b>（1日 +${resRate().toFixed(2)}）。研究員をやとうと増える</div>`;
+    if (S.research.cur) { const c = S.research.cur, r = RES_BY_ID[c.id]; h += `<div class="card res cur"><div class="row sb"><h3>研究中：${esc(r.name)}</h3><span class="pill gold">のこり ${Math.ceil(c.left)} 日</span></div><div class="bar o"><i style="width:${(1 - c.left / c.days) * 100}%"></i></div></div>`; }
+    const order = { cur: 0, can: 1, req: 2, year: 3, done: 4 };
+    const list = RESEARCH.filter(r => r.cat === cat).sort((a, b) => order[resState(a)] - order[resState(b)] || a.year - b.year);
+    for (const r of list) {
+      const st = resState(r), can = st === 'can' && !S.research.cur && S.rp >= r.rp;
+      const lab = { done: '<span class="pill green">完了</span>', cur: '<span class="pill gold">研究中</span>', year: `<span class="pill">${r.year}年から</span>`, req: `<span class="pill">先に「${esc(r.req ? RES_BY_ID[r.req].name : '')}」</span>`, can: `<span class="pill blue">${r.rp} RP・${r.days}日</span>` }[st];
+      h += `<div class="card res ${st === 'done' ? 'done' : st === 'can' ? 'can' : st === 'cur' ? 'cur' : ''}"><div class="row sb"><h3 style="margin:0">${esc(r.name)}</h3>${lab}</div><div class="muted">${esc(r.desc)}</div>${st === 'can' ? `<div style="margin-top:8px"><button class="btn small" data-act="research" data-id="${r.id}" type="button" ${can ? '' : 'disabled'}>${S.research.cur ? 'ほかの研究中' : S.rp < r.rp ? 'RPが足りない' : '研究する'}</button></div>` : ''}</div>`;
+    }
+    return h;
+  },
+  // スタッフ
+  pStaff(s) {
+    const O = OFFICES[S.tier];
+    let h = `<div class="muted" style="margin:2px 0 8px">机：${S.staff.length} / ${O.desks}　月給の合計：${yen(S.staff.reduce((a, m) => a + m.sal, 0))}</div>`;
+    const person = (m, btn) => `<div class="card"><div class="row sb"><h3 style="margin:0">${esc(m.name)}</h3><span class="pill ${m.role === 'res' ? 'blue' : m.role === 'qa' ? '' : m.role === 'des' ? 'gold' : 'green'}">${ROLES[m.role].name}</span></div><div class="row sb" style="margin-top:4px"><span class="stars">${'★'.repeat(m.lv)}${'☆'.repeat(5 - m.lv)}</span><span class="muted">月給 ${yen(m.sal)}</span></div><div class="muted">${ROLES[m.role].desc}${m.role === 'res' ? `（1日 +${ROLES.res.rate[m.lv - 1]} RP）` : m.role === 'qa' ? `（1日 ${ROLES.qa.rate[m.lv - 1]} 件）` : m.role === 'sal' ? `（売上 +${Math.round(ROLES.sal.rate[m.lv - 1] * 100)}%）` : `（デザイン +${ROLES.des.rate[m.lv - 1]}）`}</div><div style="margin-top:8px">${btn}</div></div>`;
+    if (s === 'list') {
+      if (!S.staff.length) h += '<div class="list-empty">まだだれもいません。「採用」から仲間をふやそう</div>';
+      for (const m of S.staff) h += person(m, `<button class="btn sub small" data-act="fire" data-id="${m.id}" type="button">やめてもらう</button>`);
+    } else {
+      if (!S.cands.length) rerollCands(false);
+      for (const c of S.cands) h += person(c, `<button class="btn small" data-act="hire" data-id="${c.id}" type="button" ${S.staff.length >= O.desks || S.money < c.sal ? 'disabled' : ''}>採用する（${yen(c.sal)}）</button>`);
+      h += `<button class="btn sub big" data-act="reroll" type="button">ほかの人を探す（${yen(50000 * (S.tier + 1))}）</button>`;
+    }
+    return h;
+  },
+  // 会社
+  pCo(s) {
+    let h = '';
+    if (s === 'sum') {
+      h += `<div class="card"><div class="grp" style="margin-top:0">会社の名前</div><div class="row"><input class="txt" id="coIn" maxlength="16" value="${esc(S.company)}"><button class="btn small" data-act="rename" type="button">変える</button></div></div>`;
+      h += `<div class="card"><div class="kv"><span>会社の価値</span><b>${yen(S.stats.value)}</b><span>先月の利益</span><b style="color:${S.stats.lastMonthProfit < 0 ? 'var(--red)' : 'var(--green)'}">${yen(S.stats.lastMonthProfit, true)}</b><span>先月の売上</span><b>${yen(S.stats.lastMonthRev)}</b><span>売上の合計</span><b>${yen(S.stats.sales)}</b><span>評判</span><b class="stars">${'★'.repeat(Math.round(clamp(S.brand, 0.4, 2.4) / 2.4 * 5))}${'☆'.repeat(5 - Math.round(clamp(S.brand, 0.4, 2.4) / 2.4 * 5))}</b><span>発売した数</span><b>${S.stats.launched}</b><span>いまの流行</span><b>${TRENDS[S.trend.id]}</b></div></div>`;
+      h += `<div class="card"><div class="grp" style="margin-top:0">お金の動き（週ごと）</div><canvas class="chart" id="chart" width="600" height="220"></canvas></div>`;
+      h += `<div class="card"><div class="grp" style="margin-top:0">最近のニュース</div>${S.news.slice(0, 8).map(n => `<div class="muted">${dateStr(n.d)}　${esc(n.t)}</div>`).join('') || '<div class="muted">まだありません</div>'}</div>`;
+      setTimeout(() => this.drawChart(), 0);
+    } else if (s === 'share') {
+      for (const k of KIND_IDS) {
+        const sh = S.share[k]; if (!sh) continue;
+        const rows = [[S.company, sh.me, '#2b6fd6', true], ...RIVALS.map((r, i) => [r.name, sh.rivals[i], r.color, false]).filter(x => x[1] > 0.001)].sort((a, b) => b[1] - a[1]);
+        h += `<div class="card"><h3>${KINDS[k].name}</h3>${rows.map(([n, v, c, me]) => `<div class="row" style="gap:8px;margin:3px 0"><span style="width:92px;font-size:12.5px;${me ? 'font-weight:900' : ''}">${esc(n)}</span><div class="bar" style="flex:1"><i style="width:${Math.min(100, v * 100)}%;background:${c}"></i></div><b style="width:42px;text-align:right;font-size:12.5px">${Math.round(v * 100)}%</b></div>`).join('')}</div>`;
+      }
+    } else if (s === 'mkt') {
+      for (const m of MARKETS) {
+        const has = S.markets.includes(m.id), ok = marketOk(m);
+        h += `<div class="card"><div class="row sb"><h3 style="margin:0">${m.name}</h3>${has ? '<span class="pill green">販売中</span>' : `<span class="pill">お客さん ×${m.mult}</span>`}</div>${has ? '' : `<div class="muted">費用 ${yen(m.cost)}・発売した製品 ${m.need.launched} こ以上${m.req ? '・先にアジア' : ''}</div><div style="margin-top:8px"><button class="btn small" data-act="expand" data-id="${m.id}" type="button" ${ok ? '' : 'disabled'}>進出する</button></div>`}</div>`;
+      }
+    } else if (s === 'rival') {
+      for (const r of S.rivals) {
+        const RV = RIVALS.find(x => x.id === r.id), pr = buyoutPrice(r);
+        h += `<div class="card"><div class="row sb"><h3 style="margin:0;color:${RV.color}">${RV.name}</h3>${r.owned ? '<span class="pill green">買収ずみ</span>' : `<span class="pill">得意：${Object.entries(RV.w).sort((a, b) => b[1] - a[1]).slice(0, 2).map(([k]) => KINDS[k].short).join('・')}</span>`}</div>${r.owned ? `<div class="muted">毎月 ${yen((r.paid || 0) * 0.006)} の利益が入る</div>` : `<div class="muted">買収の値段 ${yen(pr)}。買収すると競争相手が減り、評判が上がり、毎月の利益も入る</div><div style="margin-top:8px"><button class="btn small gold" data-act="buyout" data-id="${r.id}" type="button" ${S.money >= pr ? '' : 'disabled'}>買収する</button></div>`}</div>`;
+      }
+    } else if (s === 'goal') {
+      GOALS.forEach((g, i) => { const done = i < S.goal; h += `<div class="card res ${done ? 'done' : i === S.goal ? 'can' : ''}"><div class="row sb"><b>${esc(g.text)}</b>${done ? '<span class="pill green">達成</span>' : i === S.goal ? '<span class="pill blue">いまの目標</span>' : ''}</div><div class="muted">ごほうび：${g.reward.money ? yen(g.reward.money) + '・' : ''}${g.reward.rp} RP</div></div>`; });
+    }
+    return h;
+  },
+  drawChart() {
+    const c = $('chart'); if (!c) return; const g = c.getContext('2d'), w = c.width, h = c.height, d = S.hist.length ? S.hist : [S.money];
+    g.clearRect(0, 0, w, h); const mn = Math.min(0, ...d), mx = Math.max(1, ...d), y = v => h - 16 - (v - mn) / (mx - mn || 1) * (h - 30);
+    g.strokeStyle = '#e3dccd'; g.lineWidth = 1; g.beginPath(); g.moveTo(0, y(0)); g.lineTo(w, y(0)); g.stroke();
+    g.strokeStyle = '#2b6fd6'; g.lineWidth = 3; g.beginPath(); d.forEach((v, i) => { const x = d.length < 2 ? w / 2 : i / (d.length - 1) * (w - 10) + 5; i ? g.lineTo(x, y(v)) : g.moveTo(x, y(v)); }); g.stroke();
+    g.fillStyle = '#6f6a60'; g.font = '20px sans-serif'; g.fillText(yen(mx), 6, 20); g.fillText(yen(mn), 6, h - 2);
+  },
+  // 事務所
+  pOffice() {
+    const O = OFFICES[S.tier], next = OFFICES[S.tier + 1], n = officeNeed(S.tier + 1);
+    let h = `<div class="card"><div class="row sb"><h3 style="margin:0">${O.name}</h3><span class="pill">家賃 ${yen(O.rent)}／月</span></div><div class="muted">机 ${O.desks}・同時に開発 ${O.slots}・設備はLv${O.maxEq}まで</div></div>`;
+    if (next) h += `<div class="card"><div class="row sb"><h3 style="margin:0">次：${next.name}</h3><span class="pill">${yen(next.cost)}</span></div><div class="muted">机 ${next.desks}・同時に開発 ${next.slots}・家賃 ${yen(next.rent)}／月</div><div class="muted">条件：発売 ${S.stats.launched}/${n.launched}・売上の合計 ${yen(S.stats.sales)} / ${yen(n.sales)}</div><div style="margin-top:8px"><button class="btn" data-act="move" type="button" ${n.ok ? '' : 'disabled'}>引っ越す</button></div></div>`;
+    const cap = LINE_CAP[S.equip.line];
+    h += `<div class="card"><div class="row sb"><h3 style="margin:0">生産</h3><span class="muted">1週間に ${num(cap)}（えんぴつなら${num(cap)}本）</span></div><div class="muted">いまの注文：${Math.round(S.capUse * 100)}%</div><div class="bar ${S.capUse > 1 ? 'r' : 'g'}"><i style="width:${Math.min(100, S.capUse * 100)}%"></i></div><div class="muted">シャーペンは3本分、万年筆は20本分の手間がかかる</div></div>`;
+    h += '<div class="grp">設備</div>';
+    for (const k of Object.keys(EQUIP)) {
+      const E = EQUIP[k], lv = S.equip[k], mx = eqMax(k), pr = E.price[lv], top = (k === 'line' ? E.price.length : (E.max || 3));
+      h += `<div class="card"><div class="row sb"><h3 style="margin:0">${E.name}</h3><span class="pill">Lv ${lv}${k === 'line' ? '' : ' / ' + (E.max || 3)}</span></div><div class="muted">${E.desc}</div><div style="margin-top:8px">${lv >= top ? '<span class="pill green">最大</span>' : lv >= mx ? `<span class="pill">事務所を広げると上げられる</span>` : `<button class="btn small" data-act="equip" data-k="${k}" type="button" ${S.money >= pr ? '' : 'disabled'}>Lv ${lv + 1} にする（${yen(pr)}）</button>`}</div></div>`;
+    }
+    return h;
+  },
+  pMenu() {
+    return `<div class="card"><div class="row sb"><b>BGM</b><button class="btn small ${SET.music ? '' : 'sub'}" data-act="music" type="button">${SET.music ? 'オン' : 'オフ'}</button></div></div>
+      <div class="card"><b>画質</b><div class="chips" style="margin-top:8px">${[['high', '高画質'], ['std', '標準'], ['low', '軽量']].map(([k, n]) => `<button class="chip ${SET.quality === k ? 'on' : ''}" data-act="quality" data-v="${k}" type="button">${n}</button>`).join('')}</div></div>
+      <div class="card"><b>遊び方</b><div class="muted" style="margin-top:6px;line-height:1.7">① 「開発」で文房具を選び、性能（芯・インク・機構など）と見た目（色・模様・ロゴ）を決めて開発する。<br>② 開発が終わったら値段と広告を決めて発売。レビューの点と値段で売れゆきが決まる。<br>③ 「研究」で新しい技術を開くと、もっといい製品が作れる。年がたつとお客さんの期待も上がる。<br>④ 「スタッフ」で研究員・品質チェック・デザイナー・営業をやとう。<br>⑤ 「事務所」で設備を買い、引っ越して会社を大きくしよう。季節（新学期・年末）や流行の色もねらおう。<br>上の ▶ で時間の速さ、Ⅱ で一時停止。自動でセーブされます。</div></div>
+      <div class="card"><button class="btn red small" data-act="reset" type="button">最初からやり直す</button></div>`;
+  },
+  // ---------- クリック ----------
+  onClick(e) {
+    const b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
+    const a = b.dataset.act, id = +b.dataset.id; AU.resume(); AU.click();
+    if (a === 'sub') { this.sub[b.dataset.k] = b.dataset.v; $('shBody').scrollTop = 0; this.render(); return; }
+    if (a === 'newDev') return this.openStudio({ kind: b.dataset.k });
+    if (a === 'launchM') return this.launchModal(id);
+    if (a === 'fixRP') { const v = S.devs.find(x => x.id === id); if (v && fixWithRP(v)) this.toast('RPを使って不具合を直した', 'good'); }
+    else if (a === 'priceM') return this.priceModal(id);
+    else if (a === 'stop') { const p = S.products.find(x => x.id === id); if (p) { p.active = false; this.toast(`「${p.name}」の販売を終えた`); } }
+    else if (a === 'resume') { const p = S.products.find(x => x.id === id); if (p) p.active = true; }
+    else if (a === 'copy') { const p = S.products.find(x => x.id === id); if (p) return this.openStudio({ kind: p.kind, spec: { ...p.spec }, look: { ...p.look }, name: p.name.replace(/( \d+)?$/, '') + ' 2', price: p.price }); }
+    else if (a === 'research') { if (startResearch(b.dataset.id)) { this.toast(`研究を始めた：${RES_BY_ID[b.dataset.id].name}`); } }
+    else if (a === 'hire') { const why = hire(id); if (why) this.toast(why, 'bad'); else { AU.coin(); } }
+    else if (a === 'fire') { const m = S.staff.find(x => x.id === id); if (m) return this.ask(`${m.name}さん（${ROLES[m.role].name}）にやめてもらいますか？`, () => { fire(id); this.toast(`${m.name}さんがやめた`); }); }
+    else if (a === 'reroll') { if (!rerollCands(true)) this.toast('お金が足りない', 'bad'); }
+    else if (a === 'rename') { const v = ($('coIn').value || '').trim().slice(0, 16); if (v) { S.company = v; this.toast('会社の名前を変えた'); } }
+    else if (a === 'expand') { if (expand(b.dataset.id)) { AU.fanfare(); } }
+    else if (a === 'buyout') { if (buyout(b.dataset.id)) { AU.fanfare(); } }
+    else if (a === 'move') { if (moveOffice()) { AU.fanfare(); this.toast(`${OFFICES[S.tier].name}へ引っ越した！`, 'gold'); OFFICE.zoom = 1; } }
+    else if (a === 'equip') { if (buyEquip(b.dataset.k)) { AU.coin(); this.toast(`${EQUIP[b.dataset.k].name}を Lv${S.equip[b.dataset.k]} にした`, 'good'); } }
+    else if (a === 'music') { SET.music = !SET.music; saveSet(); AU.setVol(); }
+    else if (a === 'quality') { SET.quality = b.dataset.v; saveSet(); applyQuality(); OFFICE.key = ''; }
+    else if (a === 'reset') return this.ask('会社を消して最初からやり直します。よろしいですか？', () => { S.over = true; try { localStorage.removeItem('bungu-save'); } catch (er) { /* なし */ } location.reload(); });
+    // スタジオ
+    else if (a === 'stTab') { this.studio.tab = b.dataset.v; $('stBody').scrollTop = 0; this.renderStudio(); return; }
+    else if (a === 'spec') { const d = this.studio.d; d.spec[b.dataset.k] = b.dataset.v; this.studio.changed(); return; }
+    else if (a === 'look') { const d = this.studio.d; d.look[b.dataset.k] = b.dataset.v; this.studio.changed(); return; }
+    else if (a === 'polish') { const d = this.studio.d; d.polish = +b.dataset.v; d.bonus = polishBonus(d.kind, d.polish); this.studio.changed(); return; }
+    else if (a === 'randName') { this.studio.d.name = randName(this.studio.d.kind); this.renderStudio(); return; }
+    else if (a === 'recPrice') { this.studio.d.price = recPrice(this.studio.d); this.renderStudio(); return; }
+    else if (a === 'startDev') { const why = startDev(this.studio.d); if (why) { this.toast(why, 'bad'); AU.bad(); } else { AU.coin(); this.toast(`「${this.studio.d.name}」の開発を始めた！`, 'good'); this.closeStudio(); this.open('dev'); } return; }
+    // モーダル
+    else if (a === 'ad') { this.modalState.ad = b.dataset.v; this.renderLaunch(); return; }
+    else if (a === 'doLaunch') { const st = this.modalState, p = launch(st.id, st.price, st.ad); if (!p) { this.toast('お金が足りない', 'bad'); return; } AU.fanfare(); this.reviewModal(p); checkGoals(); return; }
+    else if (a === 'later') { this.closeModal(); return; }
+    else if (a === 'setPrice') { const p = S.products.find(x => x.id === this.modalState.id); if (p) { p.price = Math.max(1, Math.round(this.modalState.price)); this.toast(`「${p.name}」を ${yen(p.price)} にした`); } this.closeModal(); return; }
+    else if (a === 'closeM') { this.closeModal(); return; }
+    else if (a === 'yes') { const f = this.modalState && this.modalState.yes; this.closeModal(); if (f) f(); this.dirty(); return; }
+    else if (a === 'restart') { try { localStorage.removeItem('bungu-save'); } catch (er) { /* なし */ } location.reload(); return; }
+    else if (a === 'startNew') { const v = ($('newCo').value || '').trim().slice(0, 16) || 'ぶんぐ工房'; this.closeModal(); GAMEFLOW.begin(newState(v), true); return; }
+    if (S) checkGoals();
+    this.dirty(); this.render();
+  },
+  onInput(e) {
+    const t = e.target;
+    if (this.studio && t.dataset.look) { this.studio.d.look[t.dataset.look] = t.value; this.studio.changed(t.type === 'text'); return; }
+    if (this.studio && t.id === 'stName') { this.studio.d.name = t.value; return; }
+    if (this.studio && (t.id === 'stPrice' || t.id === 'stPriceR')) { const v = Math.max(1, Math.round(+t.value || 1)); this.studio.d.price = v; if (t.id === 'stPriceR') $('stPrice').value = v; else $('stPriceR').value = v; this.studioMeter(); this.studioFoot(); return; }
+    if (this.modalOpen && (t.id === 'mPrice' || t.id === 'mPriceR')) { const v = Math.max(1, Math.round(+t.value || 1)); this.modalState.price = v; if (t.id === 'mPriceR') $('mPrice').value = v; else $('mPriceR').value = v; const ev = $('mPriceEval'); if (ev) ev.innerHTML = this.priceEval(this.modalState.d, v); }
+  },
+  // ---------- 開発スタジオ ----------
+  openStudio(init) {
+    const k = init.kind, spec = init.spec || {};
+    for (const g of SPECS[k]) if (!spec[g.key]) { let o = g.opts[0]; for (const x of g.opts) if (resDone(x.req) && x.lv > o.lv) o = x; spec[g.key] = o.id; }   // 研究ずみでいちばん性能のよいもの
+    const d = { kind: k, spec, look: Object.assign({ ...DEF_LOOK[k] }, init.look || {}), name: init.name || randName(k), price: 0, polish: 0, bonus: 0 };
+    d.price = init.price || recPrice(d);
+    this.open(null);
+    this.studio = { d, tab: 'spec', dirty: true, t: 0, changed: (soft) => { this.studio.dirty = !soft; this.studio.rebuild = true; if (soft) { this.studioMeter(); } } };
+    this.studio.rebuild = true;
+    $('studio').classList.remove('hidden'); document.body.classList.add('studio'); $('stTitle').textContent = `新しい${KINDS[k].name}`;
+    STUDIO.zoom = 1; STUDIO.yaw = -0.5; STUDIO.spin = true;
+    this.renderStudio();
+  },
+  closeStudio() { this.studio = null; $('studio').classList.add('hidden'); document.body.classList.remove('studio'); },
+  renderStudio() {
+    const st = this.studio; if (!st) return; const d = st.d, k = d.kind;
+    $('stTabs').innerHTML = [['spec', '性能'], ['look', '見た目'], ['name', '名前と値段']].map(([v, n]) => `<button type="button" class="${st.tab === v ? 'on' : ''}" data-act="stTab" data-v="${v}">${n}</button>`).join('');
+    const body = $('stBody'), sc = body.scrollTop; let h = '';
+    if (st.tab === 'spec') {
+      h += `<div class="grp">仕上げ（研究ポイントで性能を上げる）</div><div class="chips">${POLISH.map(lv => { const c = polishRP(k, lv); return `<button type="button" class="chip ${(d.polish || 0) === lv ? 'on' : ''} ${S.rp < c ? 'lock' : ''}" ${S.rp >= c ? `data-act="polish" data-v="${lv}"` : ''}>${lv ? '+' + lv * 5 + '%' : 'なし'}<small>${lv ? c + ' RP・性能 +' + polishBonus(k, lv) : 'RPを使わない'}</small></button>`; }).join('')}</div>`;
+      for (const g of SPECS[k]) {
+        h += `<div class="grp">${g.name}</div><div class="chips">`;
+        for (const o of g.opts) {
+          const ok = resDone(o.req), r = o.req ? RES_BY_ID[o.req] : null, on = d.spec[g.key] === o.id;
+          const segs = o.seg ? Object.keys(o.seg).map(s => SEGS[s].replace('（絵・製図）', '')).join('・') + 'に人気' : '';
+          h += `<button type="button" class="chip ${on ? 'on' : ''} ${ok ? '' : 'lock'}" ${ok ? `data-act="spec" data-k="${g.key}" data-v="${o.id}"` : ''}>${esc(o.name)}<small>${ok ? `性能 ${o.lv}${o.cost ? `・原価 +${o.cost}円` : ''}${segs ? '・' + segs : ''}` : `🔒 研究「${esc(r.name)}」`}</small></button>`;
+        }
+        h += '</div>';
+      }
+    } else if (st.tab === 'look') {
+      for (const f of LOOKS[k]) {
+        if (f.when && !f.when(d)) continue;
+        h += `<div class="grp">${f.name}</div>`;
+        const v = d.look[f.key];
+        if (f.type === 'color') h += `<div class="sw">${PALETTE.map(c => `<button type="button" class="${v === c ? 'on' : ''}" style="background:${c}" data-act="look" data-k="${f.key}" data-v="${c}" aria-label="${c}"></button>`).join('')}<label title="自由な色">🎨<input type="color" value="${v}" data-look="${f.key}"></label></div>`;
+        else if (f.type === 'ink') h += `<div class="sw">${INKS.map(c => `<button type="button" class="${v === c ? 'on' : ''}" style="background:${c}" data-act="look" data-k="${f.key}" data-v="${c}" aria-label="${c}"></button>`).join('')}<label title="自由な色">🎨<input type="color" value="${v}" data-look="${f.key}"></label></div>`;
+        else if (f.type === 'sel') h += `<div class="chips">${Object.entries(f.opts).map(([id, n]) => `<button type="button" class="chip ${v === id ? 'on' : ''}" data-act="look" data-k="${f.key}" data-v="${id}">${esc(n)}</button>`).join('')}</div>`;
+        else if (f.type === 'text') h += `<input class="txt" maxlength="14" value="${esc(v || '')}" data-look="${f.key}" placeholder="ロゴの文字（空でもいい）">`;
+      }
+      h += `<div class="muted" style="margin-top:10px">いまの流行：<b>${TRENDS[S.trend.id]}</b>。流行に合うとデザインの点が上がります。模様やロゴを工夫しても少し上がります。</div>`;
+    } else {
+      const c = costOf(d), rp = recPrice(d), mx = Math.max(rp * 4, c * 6);
+      h += `<div class="grp">製品の名前</div><div class="row"><input class="txt" id="stName" maxlength="24" value="${esc(d.name)}"><button class="btn sub small" data-act="randName" type="button" aria-label="名前を考える">🎲</button></div>`;
+      h += `<div class="grp">値段（1こ）</div><div class="row"><input class="txt" id="stPrice" type="number" inputmode="numeric" min="1" value="${d.price}" style="width:130px"><span class="muted">円</span><button class="btn sub small" data-act="recPrice" type="button">おすすめ ${yen(rp)}</button></div>`;
+      h += `<input type="range" id="stPriceR" min="${Math.max(1, Math.floor(c * 0.8))}" max="${Math.ceil(mx)}" value="${d.price}" style="margin-top:8px">`;
+      h += `<div class="muted">原価 ${yen(c)}。おすすめの値段はもうけが約7割。安くするとたくさん売れて、高くすると1こあたりのもうけが増える。値段は発売のときにも、あとからも変えられます。</div>`;
+    }
+    body.innerHTML = h; body.scrollTop = sc;
+    this.studioMeter(); this.studioFoot();
+  },
+  studioMeter() {
+    const d = this.studio.d, P = perfP(d), ex = expected(d.kind), q = P / ex, des = designScore(d), c = costOf(d);
+    $('pvMeter').innerHTML = `性能 <b>${P}</b>（期待 ${ex.toFixed(0)}）<div class="bar ${q >= 1 ? 'g' : q >= 0.85 ? '' : 'r'}"><i style="width:${Math.min(100, q / 1.4 * 100)}%"></i><u style="left:${100 / 1.4}%"></u></div>デザイン <b>${des.toFixed(1)}</b><div class="bar o"><i style="width:${des * 10}%"></i></div>原価 <b>${yen(c)}</b>　値段 <b>${yen(d.price)}</b>`;
+  },
+  studioFoot() {
+    const d = this.studio.d, pl = devPlan(d), why = canStartDev(d);
+    $('stFoot').innerHTML = `<div class="muted">開発費 <b>${yen(pl.devCost)}</b>・${pl.days}日・不具合 約${Math.max(1, Math.round(pl.bugs))}件${why ? `<br><span style="color:var(--red)">${esc(why)}</span>` : ''}</div><button class="btn green" data-act="startDev" type="button" ${why ? 'disabled' : ''}>開発スタート</button>`;
+  },
+  priceEval(d, price) { const q = perfP(d) / expected(d.kind), fair = fairPrice(d, q), r = fair / price; return r > 1.25 ? '<span class="pill green">とても安い</span>' : r > 1.02 ? '<span class="pill green">お買い得</span>' : r > 0.85 ? '<span class="pill">ふつう</span>' : r > 0.65 ? '<span class="pill gold">少し高い</span>' : '<span class="pill red">高すぎる</span>'; },
+  // ---------- モーダル ----------
+  showModal(html) { $('modalBox').innerHTML = html; $('modal').classList.add('on'); this.modalOpen = true; $('modalBox').scrollTop = 0; },
+  closeModal() { $('modal').classList.remove('on'); this.modalOpen = false; this.modalState = null; this.dirty(); },
+  launchModal(id) {
+    const v = S.devs.find(x => x.id === id); if (!v || !v.ready) return;
+    this.modalState = { id, price: v.price || recPrice(v), ad: 'none', d: v };
+    this.renderLaunch();
+  },
+  renderLaunch() {
+    const st = this.modalState, v = st.d, c = costOf(v), rp = recPrice(v), mx = Math.max(rp * 4, c * 6), ad = ADS.find(a => a.id === st.ad);
+    this.showModal(`<h2>「${esc(v.name)}」を発売</h2><div class="row" style="gap:12px"><img alt="" src="${productThumb(v)}" style="width:96px;height:96px;border-radius:12px"><div class="kv"><span>種類</span><b>${KINDS[v.kind].name}</b><span>原価</span><b>${yen(c)}</b><span>おすすめ</span><b>${yen(rp)}</b></div></div>
+      <div class="grp">値段</div><div class="row"><input class="txt" id="mPrice" type="number" inputmode="numeric" min="1" value="${st.price}" style="width:130px"><span id="mPriceEval">${this.priceEval(v, st.price)}</span></div>
+      <input type="range" id="mPriceR" min="${Math.max(1, Math.floor(c * 0.8))}" max="${Math.ceil(mx)}" value="${st.price}" style="margin-top:8px">
+      <div class="grp">広告（最初の数週間よく売れる）</div><div class="chips">${ADS.map(a => `<button type="button" class="chip ${st.ad === a.id ? 'on' : ''}" data-act="ad" data-v="${a.id}" ${S.money < a.cost ? 'disabled style="opacity:.4"' : ''}>${a.name}<small>${a.cost ? yen(a.cost) + '・' : ''}${a.boost ? '売れゆき +' + Math.round(a.boost * 100) + '%' : 'お金はかからない'}</small></button>`).join('')}</div>
+      <div class="row" style="margin-top:14px;gap:8px"><button class="btn sub" data-act="later" type="button">あとで</button><button class="btn green" style="flex:1" data-act="doLaunch" type="button" ${S.money < ad.cost ? 'disabled' : ''}>発売する${ad.cost ? `（広告 ${yen(ad.cost)}）` : ''}</button></div>`);
+  },
+  reviewModal(p) {
+    const col = p.review >= 8 ? 'var(--green)' : p.review >= 6 ? 'var(--blue)' : p.review >= 4 ? 'var(--gold)' : 'var(--red)';
+    this.showModal(`<div class="review"><div class="muted">発売しました！ みんなの評価は…</div><img alt="" src="${productThumb(p)}" style="width:110px;height:110px;border-radius:14px;margin-top:8px"><h2>${esc(p.name)}</h2>
+      <div class="rvs" style="color:${col}">${p.review.toFixed(1)}</div><div class="stars" style="font-size:22px">${stars10(p.review)}</div>
+      <div class="grid2" style="margin:10px 0"><div class="card" style="margin:0"><div class="muted">性能</div><div class="score">${p.scores.perf}</div></div><div class="card" style="margin:0"><div class="muted">デザイン</div><div class="score">${p.scores.des}</div></div><div class="card" style="margin:0;grid-column:1/-1"><div class="muted">値段の満足</div><div class="score">${p.scores.val}</div></div></div>
+      ${p.comments.map(([w, t]) => `<div class="cm"><b>${esc(w)}</b>${esc(t)}</div>`).join('')}
+      <button class="btn big" style="margin-top:10px" data-act="closeM" type="button">OK</button></div>`);
+  },
+  priceModal(id) {
+    const p = S.products.find(x => x.id === id); if (!p) return; const c = costOf(p), rp = recPrice(p), mx = Math.max(rp * 4, c * 6);
+    this.modalState = { id, price: p.price, d: p };
+    this.showModal(`<h2>「${esc(p.name)}」の値段</h2><div class="muted">原価 ${yen(c)}・おすすめ ${yen(rp)}。売れないときは少し下げてみよう</div>
+      <div class="row" style="margin-top:10px"><input class="txt" id="mPrice" type="number" inputmode="numeric" min="1" value="${p.price}" style="width:130px"><span id="mPriceEval">${this.priceEval(p, p.price)}</span></div>
+      <input type="range" id="mPriceR" min="${Math.max(1, Math.floor(c * 0.8))}" max="${Math.ceil(mx)}" value="${p.price}" style="margin-top:8px">
+      <div class="row" style="margin-top:14px;gap:8px"><button class="btn sub" data-act="closeM" type="button">やめる</button><button class="btn" style="flex:1" data-act="setPrice" type="button">この値段にする</button></div>`);
+  },
+  // はい／いいえ（ブラウザの confirm は埋めこみ先で使えないことがあるので、ゲームの中に出す）
+  ask(text, yes) { this.showModal(`<h2>確認</h2><p class="muted" style="line-height:1.7">${esc(text)}</p><div class="row" style="gap:8px"><button class="btn sub" data-act="closeM" type="button">やめる</button><button class="btn red" style="flex:1" data-act="yes" type="button">はい</button></div>`); this.modalState = { yes }; },
+  gameOver() {
+    this.showModal(`<div class="review"><h2>倒産…</h2><p class="muted">お金のマイナスが2,000万円をこえて、会社をたたむことになりました。<br>${S.day > 0 ? `${dateStr(S.day)}までの記録：発売 ${S.stats.launched}こ・売上の合計 ${yen(S.stats.sales)}` : ''}</p><button class="btn big" data-act="restart" type="button">新しい会社をつくる</button></div>`);
+    try { localStorage.removeItem('bungu-save'); } catch (e) { /* なし */ }
+  },
+};
+// =========================================================================================
+//  起動・画面の大きさ・ドラッグ操作・毎フレームの流れ
+// =========================================================================================
+function applyQuality() {
+  const q = SET.quality, dpr = window.devicePixelRatio || 1;
+  renderer.setPixelRatio(Math.min(dpr, q === 'high' ? 2 : q === 'low' ? 1 : 1.5));
+  renderer.shadowMap.enabled = q !== 'low';
+  OFFICE.scene.traverse(o => { if (o.isMesh && o.material) o.material.needsUpdate = true; });
+  onResize();
+}
+function onResize() {
+  const r = $('rot'), W = VW(), H = VH();
+  r.style.width = W + 'px'; r.style.height = H + 'px'; r.style.transform = ROT.on ? 'rotate(90deg) translateY(-100%)' : 'none';
+  document.body.classList.toggle('wide', W >= 760 && W > H * 1.1);
+  document.body.classList.toggle('narrow', W < 560);
+  renderer.setSize(W, H, false);
+  document.documentElement.style.setProperty('--topH', $('top').offsetHeight + 'px');
+}
+addEventListener('resize', onResize);
+// 要素の位置（回転した舞台の中の座標）
+function stageRect(el) { let x = 0, y = 0, e = el; while (e && e !== $('rot')) { x += e.offsetLeft; y += e.offsetTop; e = e.offsetParent; } return { x, y, w: el.offsetWidth, h: el.offsetHeight }; }
+
+// ---------- ドラッグで回す・2本指とホイールで拡大（事務所と開発の見本） ----------
+function dragControl(el, get) {
+  const pts = new Map(); let pinch = 0;
+  el.addEventListener('pointerdown', e => { if (e.target !== el) return; pts.set(e.pointerId, toStage(e.clientX, e.clientY)); try { el.setPointerCapture(e.pointerId); } catch (er) { /* なし */ } const c = get(); if (c.onStart) c.onStart(); if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch = Math.hypot(a.x - b.x, a.y - b.y); } });
+  el.addEventListener('pointermove', e => {
+    if (!pts.has(e.pointerId)) return; const p = toStage(e.clientX, e.clientY), o = pts.get(e.pointerId), c = get();
+    if (pts.size === 1) { c.yaw -= (p.x - o.x) * 0.008; c.pitch = clamp(c.pitch + (p.y - o.y) * 0.006, c.pMin, c.pMax); }
+    pts.set(e.pointerId, p);
+    if (pts.size === 2) { const [a, b] = [...pts.values()], d = Math.hypot(a.x - b.x, a.y - b.y); if (pinch) c.zoom = clamp(c.zoom * d / pinch, c.zMin, c.zMax); pinch = d; }
+  });
+  const end = e => { pts.delete(e.pointerId); pinch = 0; const c = get(); if (!pts.size && c.onEnd) c.onEnd(); };
+  el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+  el.addEventListener('wheel', e => { e.preventDefault(); const c = get(); c.zoom = clamp(c.zoom * Math.exp(-e.deltaY * 0.0015), c.zMin, c.zMax); }, { passive: false });
+}
+const OFFICE_CTL = { get yaw() { return OFFICE.yaw; }, set yaw(v) { OFFICE.yaw = clamp(v, -1.2, 1.3); }, get pitch() { return OFFICE.pitch; }, set pitch(v) { OFFICE.pitch = v; }, get zoom() { return OFFICE.zoom; }, set zoom(v) { OFFICE.zoom = v; }, pMin: 0.3, pMax: 1.2, zMin: 0.7, zMax: 2.4 };
+const STUDIO_CTL = { get yaw() { return STUDIO.yaw; }, set yaw(v) { STUDIO.yaw = v; }, get pitch() { return STUDIO.pitch; }, set pitch(v) { STUDIO.pitch = v; }, get zoom() { return STUDIO.zoom; }, set zoom(v) { STUDIO.zoom = v; }, pMin: 0.05, pMax: 1.35, zMin: 0.6, zMax: 3.2, onStart() { STUDIO.spin = false; STUDIO.drag = true; }, onEnd() { STUDIO.drag = null; } };
+
+// ---------- タイトル・新しい会社・つづき ----------
+const GAMEFLOW = {
+  state: 'load',
+  title() {
+    this.state = 'title'; $('load').classList.remove('on'); $('title').classList.add('on'); document.body.classList.add('intitle');
+    const sv = loadSave(); $('tCont').classList.toggle('hidden', !sv);
+    $('tNote').textContent = sv ? `${sv.company}・${dateStr(sv.day)}・お金 ${yen(sv.money)}` : '';
+    $('tNew').textContent = sv ? '新しい会社をつくる' : 'はじめる';
+    OFFICE.sync(sv || demoState());
+  },
+  begin(s, fresh) {
+    S = s; this.state = 'play'; $('title').classList.remove('on'); document.body.classList.remove('intitle');
+    if (fresh) {
+      for (const r of S.rivals) for (const k of KIND_IDS) r.P[k] = expected(k, 0) * rr(0.97, 1.08);
+      rerollCands(false);
+      news(`${S.company}を立ち上げた！ 小さな作業部屋からのスタート`);
+      UI.showModal(`<h2>ようこそ、社長！</h2><p class="muted" style="line-height:1.75">${esc(S.company)}は、自宅の作業部屋から始まる小さな文房具メーカー。手元のお金は <b>${yen(S.money)}</b>。<br>
+        ① 下の「開発」で、えんぴつか消しゴムを作ってみよう。性能と見た目（色・模様・ロゴ）を自由に決められます。<br>
+        ② 開発が終わったら値段を決めて発売。レビューがよいほど、よく売れます。<br>
+        ③ 「研究」でシャーペン・ボールペン・万年筆も作れるようになります。<br>
+        ④ 4月は新学期で学生向けがよく売れる季節。さっそく始めよう！</p><button class="btn big" data-act="closeM" type="button">はじめる</button>`);
+    }
+    OFFICE.key = ''; OFFICE.sync(S); UI.dirty(); onResize(); save();
+  },
+  newGame() {
+    AU.resume();
+    UI.showModal(`<h2>新しい会社</h2><div class="grp">会社の名前</div><input class="txt" id="newCo" maxlength="16" value="ぶんぐ工房"><p class="muted">あとから「会社」で変えられます。${loadSave() ? '<br><b style="color:var(--red)">いまのセーブは消えます。</b>' : ''}</p><div class="row" style="gap:8px"><button class="btn sub" data-act="closeM" type="button">もどる</button><button class="btn green" style="flex:1" data-act="startNew" type="button">この名前で始める</button></div>`);
+  },
+};
+function demoState() {
+  const s = newState('文房具カンパニー'); s.tier = 1; s.equip = { chair: 1, monitor: 1, plant: 2, coffee: 1, lab: 1, line: 2 };
+  s.staff = [['res', '#2b2118'], ['qa', '#5a3a22'], ['des', '#1c1a18'], ['sal', '#7a5a3a'], ['res', '#3a2a20']].map(([role, hair], i) => ({ id: 900 + i, role, hair, lv: 2, sal: 0, name: '' }));
+  s.products = [
+    { id: 991, kind: 'pencil', spec: { grade: 'HB', core: 'c1', wood: 'w1', shape: 'hex', erase: 'yes' }, look: { ...DEF_LOOK.pencil } },
+    { id: 992, kind: 'ball', spec: { ink: 'gel', tip: 't05', colors: 'c1', act: 'knock', grip: 'rubber', body: 'plastic' }, look: { ...DEF_LOOK.ball, body: '#f7b6c8', grip: '#e86fa8', clip: '#e86fa8' } },
+    { id: 993, kind: 'eraser', spec: { mat: 'm2', size: 'md', shape: 'box', sleeve: 'k0', scent: 'none' }, look: { ...DEF_LOOK.eraser } },
+    { id: 994, kind: 'fountain', spec: { nib: 'k14', width: 'F', fill: 'conv', body: 'resin', cap: 'screw' }, look: { ...DEF_LOOK.fountain, body: '#24438f', cap: '#24438f', pattern: 'marble', pat: '#b9dcf2' } },
+    { id: 995, kind: 'mech', spec: { size: 's05', mech: 'k0', grip: 'rubber', body: 'plastic', tip: 't0', erase: 'e0' }, look: { ...DEF_LOOK.mech } },
+  ].map(p => Object.assign(p, { active: true, name: '' }));
+  return s;
+}
+
+// ---------- 毎フレーム ----------
+let last = performance.now(), acc = 0;
+function frame(now) {
+  requestAnimationFrame(frame);
+  const dt = Math.min(0.1, (now - last) / 1000); last = now;
+  if (GAMEFLOW.state === 'play' && S && !S.over) {
+    if (!UI.paused()) { acc += dt * S.speed; let n = 0; while (acc >= DAY_SEC && n < 16) { dayTick(); acc -= DAY_SEC; n++; if (S.over) break; } if (n >= 16) acc = 0; }
+    OFFICE.sync(S);
+  } else if (GAMEFLOW.state === 'title') OFFICE.yaw = 0.62 + Math.sin(now / 5000) * 0.35;
+  const st = UI.studio;
+  if (st && st.rebuild) { st.rbT = (st.rbT || 0) + dt; if (st.rbT > 0.06) { st.rbT = 0; st.rebuild = false; STUDIO.set(st.d); } }
+  STUDIO.update(dt); OFFICE.update(dt); UI.update(dt); AU.music(dt);
+  render();
+}
+function render() {
+  const W = VW(), H = VH();
+  if (UI.studio && STUDIO.obj) {
+    const r = stageRect($('pv'));
+    renderer.setScissorTest(true); renderer.setViewport(r.x, H - r.y - r.h, r.w, r.h); renderer.setScissor(r.x, H - r.y - r.h, r.w, r.h);
+    STUDIO.cam.aspect = r.w / Math.max(1, r.h); STUDIO.cam.updateProjectionMatrix(); renderer.render(STUDIO.scene, STUDIO.cam);
+    renderer.setScissorTest(false);
+  } else {
+    renderer.setViewport(0, 0, W, H);
+    OFFICE.cam.aspect = W / H; OFFICE.cam.fov = W < H ? 52 : 38; OFFICE.cam.updateProjectionMatrix(); renderer.render(OFFICE.scene, OFFICE.cam);
+  }
+}
+
+async function boot() {
+  if (HUB.embedded) {
+    try { applyHome(JSON.parse(localStorage.getItem('3dame-settings'))); } catch (e) { /* ホームの設定なし */ }
+    addEventListener('message', e => { if (e.data && e.data.h3dSet) applyHome(e.data.h3dSet); });
+  }
+  onResize(); applyQuality();
+  $('loadmsg').textContent = '文字を準備しています…';
+  try { await Promise.race([Promise.all(['700 20px "Zen Maru Gothic"', '900 20px "Zen Maru Gothic"', '700 20px "Shippori Mincho"'].map(f => document.fonts.load(f, 'ぶんぐ文房具ABC0123'))), new Promise(r => setTimeout(r, 2500))]); } catch (e) { /* 文字が読めなくてもつづける */ }
+  $('loadmsg').textContent = '事務所を準備しています…'; await nextFrame();
+  STUDIO.init(); OFFICE.init(); UI.init();
+  dragControl($('c'), () => OFFICE_CTL); dragControl($('pv'), () => STUDIO_CTL);
+  $('tCont').onclick = () => { AU.resume(); AU.click(); const s = loadSave(); if (s) GAMEFLOW.begin(s, false); };
+  $('tNew').onclick = () => { AU.click(); GAMEFLOW.newGame(); };
+  addEventListener('pagehide', save); document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
+  GAMEFLOW.title();
+  requestAnimationFrame(frame);
+}
+window.__BG = { get S() { return S; }, set S(v) { S = v; }, step(days) { for (let i = 0; i < days && !S.over; i++) dayTick(); }, THREE, renderer, UI, OFFICE, STUDIO, GAMEFLOW, AU,
+  startDev, launch, startResearch, hire, fire, polishRP, polishBonus, buyEquip, moveOffice, expand, buyout, rerollCands, devPlan, costOf, expected, perfP, recPrice, currentScore, designScore, kindDemand, productThumb, buildProduct, save, loadSave, newState,
+  KINDS, SPECS, LOOKS, DEF_LOOK, RESEARCH, GOALS, OFFICES, EQUIP };
+boot();
+</script>
+</body></html>
