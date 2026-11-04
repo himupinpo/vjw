@@ -9,7 +9,7 @@ const EVENT = {
   start(p, adId, done) {
     this.p = p; this.ad = adId || 'none'; this.done = done; this.t = 0; this.active = true;
     this.big = ['mag', 'tv', 'event'].includes(this.ad); this.dur = this.big ? (this.ad === 'event' ? 7.6 : 7.0) : 5.6; this.reveal = this.big ? 2.3 : 0;
-    this.people = []; this.flashes = []; this.sfx = {}; this.icons = []; this.heroT = 0;
+    this.people = []; this.flashes = []; this.sfx = {}; this.icons = []; this.heroT = 0; this.drum = false; this.revealed = false;
     this.build();
     const ov = $('evOv'), names = { none: '店頭に並びました', flyer: 'チラシを見たお客さんが来ました', mag: '雑誌の取材つき発表会', tv: 'テレビ中継つき発表会', event: '新作発表会' };
     $('evSub').textContent = names[this.ad]; $('evName').textContent = `「${p.name}」`; $('evPrice').textContent = yen(p.price);
@@ -245,8 +245,8 @@ const EVENT = {
       P.pts.geometry.attributes.position.needsUpdate = true;
     }
     // 音・字幕
-    if (t0 < 0.5 && t >= 0.5) this.drumroll(R - 0.5);
-    if (t0 < R && t >= R) { this.crash(); AU.fanfare(); this.crowd(2.6); $('evOv').classList.remove('pre'); $('evOv').classList.add('show'); }
+    if (!this.drum && t >= 0.5) { this.drum = true; if (t < R - 0.3) this.drumroll(R - t); }
+    if (!this.revealed && t >= R) { this.revealed = true; this.crash(); AU.fanfare(); this.crowd(2.6); $('evOv').classList.remove('pre'); $('evOv').classList.add('show'); }
   },
   // ---------- 効果音 ----------
   noise(dur) { const a = AU.ac, b = a.createBuffer(1, Math.ceil(a.sampleRate * dur), a.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; const s = a.createBufferSource(); s.buffer = b; return s; },
