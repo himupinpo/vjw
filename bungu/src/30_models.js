@@ -266,32 +266,71 @@ const BUILD = {
     return g;
   },
   mech(d, o) {
-    const g = new THREE.Group(), L = d.look, sp = d.spec, met = matMetal(L.metal, o.cheap);
-    const R = 0.42, bx0 = 1.25, bx1 = 9.7, gx1 = 12.6, cx1 = 13.85, pipe = sp.tip === 't1' ? 0.9 : sp.tip === 't2' ? 0.3 : 0.45;
-    const bodyKind = sp.body;
-    const finish = bodyKind === 'alu' ? 'metal' : L.finish, pattern = bodyKind === 'wood' ? 'wood' : L.pattern;
-    const base = bodyKind === 'wood' ? NAT_WOOD[0] : L.body, pat = bodyKind === 'wood' ? NAT_WOOD[1] : L.pat;
-    const prof = [[bx0, R - 0.03], [bx0 + 0.25, R], [bx1 - 1.2, R], [bx1, R - 0.03]];
-    const texL = bx1 - bx0, tex = surfaceTex({ L: texL, C: TAU * R, base, pattern, pat, cheap: o.cheap, texts: [{ text: L.logo, color: L.logoColor, font: L.font, size: 0.3, from: 4.4, to: texL - 0.5 }] });
-    const bmat = bodyKind === 'clear' ? matClear(L.body, o.cheap) : matPaint(finish, tex, o.cheap);
-    mesh(lathe(prof, { u0: bx0, u1: bx1 }), bmat, g);
-    if (bodyKind === 'clear') { mesh(lathe([[bx0 + 0.3, 0.13], [bx1, 0.13]], { n: 16 }), matSolid(0x3a3a3c, 0.4, 0.3), g); }
-    // グリップ
-    const gp = [[bx1 - 0.02, R - 0.03], [bx1 + 0.3, R + 0.035], [gx1 - 0.6, R + 0.035], [gx1, R - 0.05]];
-    if (sp.grip === 'none') mesh(lathe(gp.map(p => [p[0], p[1] - 0.03])), bodyKind === 'clear' ? matClear(L.body, o.cheap) : matPaint(finish, tex, o.cheap), g);
-    else if (sp.grip === 'knurl') { const m = matMetal(L.metal, o.cheap); m.normalMap = bumpTex('knurl'); m.normalScale = new THREE.Vector2(1.2, 1.2); m.roughness = 0.32; mesh(lathe(gp), m, g); }
-    else mesh(lathe(gp), matRubber(L.grip, sp.grip), g);
-    // 先の金具とパイプ・芯
-    mesh(lathe([[gx1 - 0.02, R - 0.06], [gx1 + 0.35, R - 0.1], [cx1, 0.11]], { n: 40 }), met, g);
-    mesh(lathe([[cx1 - 0.02, 0.055], [cx1 + pipe, 0.05]], { n: 16 }), met, g);
-    const ls = { s05: 0.026, s07: 0.035, s03: 0.016, s09: 0.045, s02: 0.011 }[sp.size] || 0.026;
-    mesh(lathe([[cx1 + pipe - 0.02, ls], [cx1 + pipe + 0.12, ls]], { n: 10 }), matSolid(0x232325, 0.35, 0.4), g);
-    // おしり（ノック）と消しゴム・クリップ
-    mesh(lathe([...roundEnd(0.05, 0.3, 0.33, 'start'), [bx0 + 0.05, 0.36]], { n: 40 }), met, g);
-    if (sp.erase === 'e1') mesh(lathe([[-0.35, 0.16], [0.06, 0.18]], { n: 20 }), matSolid(0xf2f0ea, 0.9), g);
-    addClip(g, bx0 + 0.05, bx0 + 3.6, R, met);
-    if (sp.mech === 'k1') { const b = mesh(new THREE.BoxGeometry(0.7, 0.16, 0.22), met, g); b.position.set(bx1 - 1.6, 0, R + 0.06); }
-    if (sp.mech === 'k3' || sp.mech === 'k4') { const w = mesh(lathe([[bx1 - 0.55, R + 0.005], [bx1 - 0.35, R + 0.005]]), new THREE.MeshStandardMaterial({ color: 0xf0d060, emissive: 0x3a2a00, roughness: 0.4 }), g); void w; }
+    // 設計（部品ごとの素材・太さ・断面・クリップ・窓）から組み立てる。+x が先
+    const g = new THREE.Group(), L = d.look, sp = d.spec, b = mechBuild(d), M = MECH_MATS, cm = v => v / 10;
+    const Lc = cm(b.L), R = cm(b.D / 2), Rg = cm(b.D / 2 + b.gripD / 2), kx1 = cm(MECH_KNOCK), gx0 = Lc - cm(MECH_TIP + b.gripL), tx0 = Lc - cm(MECH_TIP);
+    const wt = WOOD_TONES[L.woodTone] || WOOD_TONES.maple, metalM = () => matMetal(L.metal, o.cheap);
+    const secOf = (r, part) => b.sec === 'hex' ? secPoly(6, r, 0.03) : b.sec === 'dodeca' ? secPoly(12, r, 0.006) : b.sec === 'tri' ? secPoly(3, r * 0.95, 0.12) : secCircle(r, 56);
+    // 部品の材質（表面のテクスチャ：模様・ロゴ・木目）
+    const partMat = (mk, len, circ, color, texts, part) => {
+      const m = M[mk];
+      if (m.clear) return matClear(color, o.cheap);
+      if (m.wood) { const t = surfaceTex({ L: len, C: circ, base: mk === 'wood2' ? wt[1] : wt[1], pattern: mk === 'wood2' ? 'stripe' : 'wood', pat: mk === 'wood2' ? wt[2] : wt[2], cheap: o.cheap, texts }); const mt = matPaint(mk === 'wood2' ? 'gloss' : 'matte', t, o.cheap); return mt; }
+      if (m.soft) return matRubber(L.grip, mk);
+      if (mk === 'brass' || mk === 'sus') { if (!texts || !texts.length || !texts[0].text) return metalM(); const mh = '#' + new THREE.Color(METAL_COL[L.metal] || METAL_COL.silver).getHexString(); const mm = matPaint('metal', surfaceTex({ L: len, C: circ, base: mh, pattern: 'none', cheap: o.cheap, texts }), o.cheap); mm.metalness = 0.85; mm.roughness = 0.22; return mm; }   // 刻印：めっきの色の上にロゴ
+      if (mk === 'alu') return matPaint('metal', surfaceTex({ L: len, C: circ, base: color, pattern: part === 'barrel' ? L.pattern : 'none', pat: L.pat, cheap: o.cheap, texts }), o.cheap);
+      return matPaint(part === 'barrel' ? L.finish : 'gloss', surfaceTex({ L: len, C: circ, base: color, pattern: part === 'barrel' ? L.pattern : 'none', pat: L.pat, cheap: o.cheap, texts }), o.cheap);
+    };
+    // 胴軸
+    const bLen = gx0 - kx1, bsec = secOf(R, 'barrel');
+    const bm = partMat(b.mat.barrel, bLen, bsec.per, L.body, [{ text: L.logo, color: L.logoColor, font: L.font, size: Math.min(0.32, R * 0.7), from: bLen * 0.42, to: bLen * 0.95 }], 'barrel');
+    mesh(sweep([kx1, kx1 + 0.06, gx0 - 0.04, gx0], bsec, (x, p, i) => (i === 0 ? 0.96 : 1), { u0: kx1, u1: gx0 }), bm, g);
+    if (M[b.mat.barrel].clear) mesh(lathe([[kx1 + 0.2, 0.13], [tx0, 0.13]], { n: 16 }), matSolid(0x3a3a3c, 0.4, 0.3), g);
+    // グリップ（みぞは形で、ローレット・つぶつぶは法線マップで）
+    const gm = M[b.mat.grip], round = gm.metal || gm.soft || b.sec === 'round', gsec = round ? secCircle(Rg, 56) : secOf(Rg, 'grip');
+    const gxs = [gx0, gx0 + 0.05], rr0 = []; for (let x = gx0 + 0.1; x < tx0 - 0.05; x += 0.05) gxs.push(x); gxs.push(tx0 - 0.05, tx0);
+    const groove = x => (b.fin === 'rings' && ((x - gx0) % 0.28) < 0.09 && x > gx0 + 0.15 && x < tx0 - 0.15 ? 0.94 : 1);
+    void rr0;
+    let gmat;
+    if (b.fin === 'knurlF' || b.fin === 'knurlC') { gmat = b.mat.grip === 'alu' ? matPaint('metal', null, o.cheap, new THREE.Color(L.grip)) : metalM(); gmat.normalMap = bumpTex('knurl'); gmat.normalScale = new THREE.Vector2(b.fin === 'knurlF' ? 0.9 : 1.6, b.fin === 'knurlF' ? 0.9 : 1.6); gmat.roughness = 0.35; }
+    else if (b.mat.grip === 'resin') gmat = matPaint('gloss', null, o.cheap, new THREE.Color(L.grip));
+    else if (b.mat.grip === 'alu') gmat = matPaint('metal', null, o.cheap, new THREE.Color(L.grip));
+    else gmat = partMat(b.mat.grip, tx0 - gx0, gsec.per, L.grip, [], 'grip');
+    if (b.fin === 'dots' && !gm.soft) { gmat.normalMap = bumpTex('dimple'); gmat.normalScale = new THREE.Vector2(0.6, 0.6); }
+    mesh(sweep(gxs, gsec, (x, p, i) => (i === 0 || i === gxs.length - 1 ? 0.97 : groove(x)), { u0: gx0, u1: tx0 }), gmat, g);
+    // 口金・パイプ・芯
+    const tipM = M[b.mat.tip].metal || b.mat.tip === 'alu' ? metalM() : matPaint('gloss', null, o.cheap, new THREE.Color(mixHex(L.body, '#000000', 0.35)));
+    mesh(lathe([[tx0 - 0.01, Rg - 0.035], [tx0 + 0.3, Rg - 0.07], [Lc, 0.11]], { n: 40 }), tipM, g);
+    const pipe = cm(sp.tip === 't1' ? 4 : sp.tip === 't2' ? 2.5 : 3), ls = { s05: 0.026, s07: 0.035, s03: 0.016, s09: 0.045, s02: 0.011 }[sp.size] || 0.026;
+    mesh(lathe([[Lc - 0.02, 0.055], [Lc + pipe, 0.05]], { n: 16 }), matMetal('silver'), g);
+    mesh(lathe([[Lc + pipe - 0.02, ls], [Lc + pipe + 0.1, ls]], { n: 10 }), matSolid(0x232325, 0.35, 0.4), g);
+    // ノック（天冠）と消しゴム
+    const knM = M[b.mat.knock].metal || b.mat.knock === 'alu' ? metalM() : matPaint('gloss', null, o.cheap, new THREE.Color(L.body));
+    mesh(lathe([...roundEnd(0.02, 0.22, 0.22, 'start'), [kx1 * 0.6, 0.24], [kx1 + 0.02, 0.25]], { n: 36 }), knM, g);
+    mesh(lathe([[kx1 * 0.62, 0.252], [kx1 + 0.02, Math.min(R, 0.3)]], { n: 36 }), knM, g);
+    if (sp.erase === 'e1') mesh(lathe([[-0.35, 0.16], [0.04, 0.17]], { n: 20 }), matSolid(0xf2f0ea, 0.9), g);
+    // クリップ（上のはしからの位置）
+    if (b.mat.clip !== 'none') {
+      const x0 = Math.max(kx1 + 0.02, cm(b.clipTop)), cmat = b.mat.clip === 'resin' ? matPaint('gloss', null, o.cheap, new THREE.Color(L.clipColor)) : metalM();
+      addClip(g, x0, x0 + cm(MECH_CLIP) - 0.2, x0 < gx0 ? R : Rg, cmat, Math.min(0.3, R * 0.75));
+    }
+    // 硬度表示窓：小さな窓に「HB」。ノックの下は回す輪つき
+    if (b.win !== 'none') {
+      const wx = Lc - cm(mechWinX(b)), rAt = wx < kx1 ? 0.25 : wx < gx0 ? R : Rg;
+      if (b.win === 'knock') mesh(lathe([[wx - 0.22, rAt + 0.012], [wx + 0.22, rAt + 0.012]], { n: 40 }), metalM(), g);
+      const c2 = newCanvas(128, 64), q = c2.getContext('2d'); q.fillStyle = '#fbfbf6'; q.fillRect(0, 0, 128, 64); q.strokeStyle = '#333'; q.lineWidth = 6; q.strokeRect(3, 3, 122, 58); q.fillStyle = '#111'; q.font = '900 40px sans-serif'; q.textAlign = 'center'; q.textBaseline = 'middle'; q.fillText('HB', 64, 34);
+      const wtx = new THREE.CanvasTexture(c2); wtx.colorSpace = THREE.SRGBColorSpace;
+      const win = mesh(new THREE.PlaneGeometry(0.42, 0.21), new THREE.MeshStandardMaterial({ map: wtx, roughness: 0.3 }), g, false); win.position.set(wx, 0, rAt + 0.016);
+    }
+    // 機構の見た目のちがい
+    if (sp.mech === 'k1') { const bt = mesh(new THREE.BoxGeometry(0.6, 0.14, 0.2), metalM(), g); bt.position.set(gx0 - 1.4, 0, R + 0.05); }
+    if (sp.mech === 'k3' || sp.mech === 'k4') mesh(lathe([[gx0 - 0.5, R + 0.004], [gx0 - 0.3, R + 0.004]]), new THREE.MeshStandardMaterial({ color: 0xf0d060, emissive: 0x3a2a00, roughness: 0.4 }), g);
+    // 重心の印（開発スタジオだけ）：赤い三角が下から指す
+    if (o.cogMarker) {
+      const ms = mechStats(d), cx = Lc - cm(ms.cog), mk = new THREE.Group();
+      const cone = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.34, 20), new THREE.MeshStandardMaterial({ color: 0xd9493e, emissive: 0x551510, roughness: 0.4 })); cone.position.y = -0.17; mk.add(cone);
+      mk.position.set(cx, -Math.max(R, Rg) - 0.12, 0); mk.userData.cog = true; g.add(mk);
+    }
     return g;
   },
   ball(d, o) {
@@ -386,7 +425,7 @@ function addNib(g, x0, len, r, tone, sp, o) {
 }
 // デザインからモデル（中心を原点に）
 function buildProduct(d, o = {}) {
-  const g = BUILD[d.kind](d, o), box = new THREE.Box3().setFromObject(g), c = box.getCenter(new THREE.Vector3());
+  const g = BUILD[d.kind](d, o), box = new THREE.Box3(); g.children.forEach(ch => { if (!ch.userData.cog) box.expandByObject(ch); }); const c = box.getCenter(new THREE.Vector3());
   g.children.forEach(ch => ch.position.sub(c));
   const wrap = new THREE.Group(); wrap.add(g); wrap.userData.size = box.getSize(new THREE.Vector3());
   return wrap;
@@ -409,9 +448,9 @@ const STUDIO = {
   },
   set(d) {
     if (this.obj) { this.root.remove(this.obj); disposeTree(this.obj); }
-    this.obj = buildProduct(d, { cheap: SET.quality === 'low' });
+    this.obj = buildProduct(d, { cheap: SET.quality === 'low', cogMarker: d.kind === 'mech' });
     const sz = this.obj.userData.size, lift = Math.max(sz.y, sz.z * 0.2) / 2 + 0.05;
-    this.obj.position.y = lift + (d.kind === 'eraser' || d.kind === 'lead' ? 0 : 0.1);
+    this.obj.position.y = lift + (d.kind === 'eraser' || d.kind === 'lead' ? 0 : 0.1) + (d.kind === 'mech' ? 0.6 : 0);   // シャーペンは下に重心の印
     this.obj.traverse(c => { if (c.isMesh) c.castShadow = true; });
     this.root.add(this.obj);
     this.radius = Math.max(sz.x, sz.z) / 2;

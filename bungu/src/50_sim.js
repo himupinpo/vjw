@@ -18,9 +18,11 @@ function newState(company) {
 
 // ---------- 計算のもと ----------
 const KMAX = {}; for (const k of KIND_IDS) KMAX[k] = SPECS[k].reduce((a, g) => a + Math.max(...g.opts.map(o => o.lv)), 0);
+KMAX.mech += 26;   // シャーペンは設計（書きやすさ14・機能8・素材4）の点が加わる
 const expected = (k, day = S.day) => Math.min(KINDS[k].e0 + KINDS[k].slope * (yearOf(day) - 2000), KMAX[k] * 0.88);
 const optOf = (k, key, id) => { const g = SPECS[k].find(x => x.key === key); return (g && g.opts.find(o => o.id === id)) || (g && g.opts[0]); };
-function perfP(d) { let P = d.bonus || 0; for (const g of SPECS[d.kind]) P += optOf(d.kind, g.key, d.spec[g.key]).lv; return P; }
+function perfP(d) { let P = d.bonus || 0; for (const g of SPECS[d.kind]) P += optOf(d.kind, g.key, d.spec[g.key]).lv; if (d.kind === 'mech') { const m = mechStats(d); P += m.ergoPts + m.func + m.mat; } return Math.round(P * 10) / 10; }
+const luxOf = d => (d.kind === 'mech' ? mechStats(d).lux : 0);
 // 仕上げ：研究ポイントを使って性能を上げる（期待の5%ずつ）
 const POLISH = [0, 1, 2, 3, 4];
 const polishRP = (k, lv) => Math.round(lv * (12 + expected(k) * 1.3) * (1 + lv * 0.15));
@@ -32,16 +34,18 @@ const BASE_COST = { pencil: 6, eraser: 6, lead: 10, mech: 20, ball: 6, fountain:
 function costOf(d) {
   let c = BASE_COST[d.kind];
   for (const g of SPECS[d.kind]) { const o = optOf(d.kind, g.key, d.spec[g.key]); let m = 1; for (const dr of S.drops) if (dr.kind === d.kind && dr.key === g.key && dr.opt === o.id) m *= dr.mult; c += o.cost * m; }
+  if (d.kind === 'mech') c += mechStats(d).cost;
   return Math.max(1, Math.round(c * (1 - sumRes('costCut'))));
 }
-const fairPrice = (d, q) => costOf(d) * 1.75 * (0.85 + 0.3 * clamp(q, 0.5, 1.6));
+const fairPrice = (d, q) => costOf(d) * 1.75 * (0.85 + 0.3 * clamp(q, 0.5, 1.6)) * (1 + 3 * luxOf(d));   // 高級なものは高くても買われる
 const perfScore = q => clamp(6 + 3.4 * Math.tanh(2.6 * (q - 1)), 0.5, 10);
 const valueScore = (fair, price) => clamp(6 + 5 * (fair / price - 1), 0, 10);
-const recPrice = d => { const c = costOf(d); const r = c * 1.7; return r < 100 ? Math.max(c + 1, Math.round(r / 5) * 5) : r < 1000 ? Math.round(r / 10) * 10 : Math.round(r / 100) * 100; };
+// おすすめの値段（高級なものは高め）
+const recPrice = d => { const c = costOf(d); const r = c * 1.7 * (1 + 2.4 * luxOf(d)); return r < 100 ? Math.max(c + 1, Math.round(r / 5) * 5) : r < 1000 ? Math.round(r / 10) * 10 : Math.round(r / 100) * 100; };
 // 見た目の分類（流行に合うか）
 function lookCats(d) {
   const L = d.look, sp = d.spec, out = new Set(), c = new THREE.Color(L.body || '#ffffff'), hsl = {}; c.getHSL(hsl);
-  const body = sp.body;
+  const body = d.kind === 'mech' ? ({ clear: 'clear', alu: 'alu', brass: 'brass', wood: 'wood', wood2: 'wood' })[mechBuild(d).mat.barrel] : sp.body;
   if (body === 'clear' || (d.kind === 'lead' && L.clear !== 'solid')) out.add('clear');
   if (L.finish === 'metal' || ['alu', 'brass', 'metal'].includes(body)) out.add('metal');
   if (body === 'wood' || L.pattern === 'wood' || (d.kind === 'pencil' && sp.wood === 'w2')) out.add('natural');
@@ -57,11 +61,13 @@ function designScore(d, withTrend = true) {
   if (L.logo && L.logo !== D.logo) s += 0.35;
   if (Object.keys(D).some(k => k !== 'logo' && L[k] !== D[k])) s += 0.35;
   if (withTrend && lookCats(d).has(S.trend.id)) s += 1.3;
+  if (d.kind === 'mech') s += 0.8 * mechStats(d).lux;   // 金属や木の質感
   return clamp(s, 0, 10);
 }
 function segFit(d, month) {
   const K = KINDS[d.kind]; let a = 0, b = 0;
-  for (const s in K.segw) { const w = K.segw[s] * SEASON[s][month]; let bon = 0; for (const g of SPECS[d.kind]) { const o = optOf(d.kind, g.key, d.spec[g.key]); if (o.seg && o.seg[s]) bon += o.seg[s]; } a += w * (1 + bon); b += w; }
+  const ms = d.kind === 'mech' ? mechStats(d) : null;
+  for (const s in K.segw) { const w = K.segw[s] * SEASON[s][month]; let bon = ms ? ms.seg[s] : 0; for (const g of SPECS[d.kind]) { const o = optOf(d.kind, g.key, d.spec[g.key]); if (o.seg && o.seg[s]) bon += o.seg[s]; } a += w * (1 + bon); b += w; }
   return a / b;
 }
 function popOf(d) { let p = 1; for (const g of SPECS[d.kind]) { const o = optOf(d.kind, g.key, d.spec[g.key]); if (o.pop) p *= o.pop; } return p; }
@@ -89,7 +95,8 @@ function productA(p, month) {
   const fresh = (1 + 0.6 * Math.exp(-wk / 3)) * Math.max(0.45, 1 - wk / 300);
   const trend = lookCats(p).has(S.trend.id) ? 1.15 : 1;
   const sales = 1 + Math.min(0.4, S.staff.filter(m => m.role === 'sal').reduce((a, m) => a + ROLES.sal.rate[m.lv - 1], 0)) + sumRes('sales');
-  return Math.pow(sc.R / 7, 2.6) * priceK * segFit(p, month) * popOf(p) * S.brand * ad * fresh * trend * sales;
+  const re = 1 + (p.reissue || 0) * Math.exp(-wk / 26);   // 復刻版：昔のファンが買う
+  return Math.pow(sc.R / 7, 2.6) * priceK * segFit(p, month) * popOf(p) * S.brand * ad * fresh * trend * sales * re;
 }
 // 仕事の速さ（設備）
 const workMul = () => 1 + 0.05 * S.equip.chair + 0.04 * S.equip.plant + (S.equip.coffee ? 0.05 : 0);
@@ -108,6 +115,7 @@ function canStartDev(d) {
   for (const g of SPECS[d.kind]) { const o = optOf(d.kind, g.key, d.spec[g.key]); if (!resDone(o.req)) return o.name + ' はまだ研究していない'; }
   if (S.money < devPlan(d).devCost) return 'お金が足りない';
   if (S.rp < polishRP(d.kind, d.polish || 0)) return '研究ポイントが足りない（仕上げ）';
+  if (d.kind === 'mech') { const lk = mechLocks(d); if (lk.length) return lk[0] + ' はまだ研究していない'; }
   if (!d.name || !d.name.trim()) return '製品の名前を入れよう';
   return '';
 }
@@ -115,7 +123,7 @@ function startDev(d) {
   const why = canStartDev(d); if (why) return why;
   const pl = devPlan(d), pol = d.polish || 0, prp = polishRP(d.kind, pol);
   S.money -= pl.devCost; S.rp -= prp;
-  S.devs.push({ id: S.nextId++, kind: d.kind, name: d.name.trim().slice(0, 24), spec: { ...d.spec }, look: { ...d.look }, price: d.price, devCost: pl.devCost, polish: pol, bonus: polishBonus(d.kind, pol), days: pl.days, left: pl.days, bugs: Math.max(1, Math.round(pl.bugs * rr(0.8, 1.2))), fixed: 0, ready: false });
+  S.devs.push({ id: S.nextId++, kind: d.kind, name: d.name.trim().slice(0, 24), spec: { ...d.spec }, look: { ...d.look }, build: d.kind === 'mech' ? JSON.parse(JSON.stringify(mechBuild(d))) : undefined, reissue: d.reissue || 0, price: d.price, devCost: pl.devCost, polish: pol, bonus: polishBonus(d.kind, pol), days: pl.days, left: pl.days, bugs: Math.max(1, Math.round(pl.bugs * rr(0.8, 1.2))), fixed: 0, ready: false });
   news(`「${d.name}」の開発を始めた（${KINDS[d.kind].short}・${pl.days}日）`);
   return '';
 }
@@ -129,7 +137,7 @@ function launch(devId, price, adId) {
   const v = S.devs[i], ad = ADS.find(a => a.id === adId) || ADS[0];
   if (S.money < ad.cost) return null;
   S.devs.splice(i, 1); S.money -= ad.cost;
-  const p = { id: v.id, kind: v.kind, name: v.name, spec: v.spec, look: v.look, polish: v.polish || 0, bonus: v.bonus || 0, price: Math.max(1, Math.round(price)), launchDay: S.day, ad: ad.id, adBoost: ad.boost, units: 0, revenue: 0, profit: 0, active: true, weekUnits: 0, lastWeek: 0, devCost: v.devCost };
+  const p = { id: v.id, kind: v.kind, name: v.name, spec: v.spec, look: v.look, build: v.build, reissue: v.reissue || 0, polish: v.polish || 0, bonus: v.bonus || 0, price: Math.max(1, Math.round(price)), launchDay: S.day, ad: ad.id, adBoost: ad.boost, units: 0, revenue: 0, profit: 0, active: true, weekUnits: 0, lastWeek: 0, devCost: v.devCost };
   const same = S.products.some(o => o.active && o.kind === p.kind && JSON.stringify(o.spec) === JSON.stringify(p.spec));
   p.samePen = same ? 1.4 : 0;
   const q = perfP(p) / expected(p.kind), perf = perfScore(q), des = designScore(p), val = valueScore(fairPrice(p, q), p.price);
@@ -139,16 +147,26 @@ function launch(devId, price, adId) {
   S.products.push(p); S.stats.launched++; S.stats.best = Math.max(S.stats.best, p.review);
   S.brand = clamp(S.brand + (p.review - 6.2) * 0.03 + ad.brand, 0.4, 1.8);
   news(`「${p.name}」発売！ レビュー ${p.review.toFixed(1)} 点`);
+  if (p.reissue) news(`名品の復刻版「${p.name}」に行列ができた！`);
   return p;
 }
 function reviewComments(p, q, perf, des, val, same) {
   const best = SPECS[p.kind].map(g => optOf(p.kind, g.key, p.spec[g.key])).sort((a, b) => b.lv - a.lv)[0];
-  const who = () => pick(REVIEWERS), out = [];
+  const who = () => pick(['文具ライター', '文具好きの学生', '文具ブロガー']), out = [];
   if (same) out.push([who(), '前の製品とほとんど同じ。新しさがほしかった。']);
   if (perf >= 8.3) out.push([who(), `「${best.name}」が効いていて、使い心地が段ちがい。今いちばんの${KINDS[p.kind].short}かも。`]);
   else if (perf >= 6.5) out.push([who(), `ちゃんと使える${KINDS[p.kind].short}。「${best.name}」もいい感じ。`]);
   else if (perf >= 4.5) out.push([who(), 'ふつうに使えるけれど、ほかの会社の新製品にくらべると少し古い感じ。']);
   else out.push([who(), '性能はひと昔前。もっと研究して、新しい技術を入れてほしい。']);
+  if (p.kind === 'mech') {   // 重さ・重心・グリップの感想
+    const m = mechStats(p); let t = `${m.W.toFixed(1)}g、重心は先から${Math.round(m.cog)}mm（全長の${m.cogPct.toFixed(0)}%）。`;
+    t += m.cogPct <= 45 ? '重心が低くて先が安定し、線がぶれない。' : m.cogPct >= 50 ? '重心が高めで、先が少しふらつく。' : 'バランスはふつう。';
+    t += m.gripQ >= 0.9 ? 'グリップがしっかり指にかかる。' : m.gripQ < 0.45 ? 'グリップがすべりやすい。' : '';
+    if (m.lux >= 0.6) t += '金属や木の質感が手に心地よい。';
+    if (m.notes.length) t += m.notes[0] + '。';
+    out.push(['製図の先生', t]);
+  }
+  if (p.reissue) out.push(['文具ブロガー', 'あの名品が帰ってきた！ 昔使っていた人もなつかしがって買いそう。']);
   const cats = lookCats(p);
   if (cats.has(S.trend.id)) out.push(['デザイン雑誌', `今はやりの「${TRENDS[S.trend.id]}」で、見た目がとても今っぽい！`]);
   else if (des >= 7) out.push(['デザイン雑誌', 'こだわりのデザインで、持っているとうれしくなる。']);
@@ -157,7 +175,7 @@ function reviewComments(p, q, perf, des, val, same) {
   if (val >= 7.5) out.push(['事務用品のバイヤー', 'この値段でこの品質はお買い得。よく売れそう。']);
   else if (val < 4) out.push(['事務用品のバイヤー', 'ちょっと高すぎる。値段を下げると手に取る人が増えそう。']);
   else out.push(['事務用品のバイヤー', '値段は相場どおり。お店にも置きやすい。']);
-  return out.slice(0, 3);
+  return out.slice(0, p.kind === 'mech' ? 4 : 3);
 }
 
 // ---------- 研究 ----------
@@ -241,8 +259,12 @@ function dayTick() {
   if (date.getMonth() === 10 && date.getDate() === 20) news('年末の贈り物シーズン。万年筆やいいペンがよく売れます（12月）');
   checkGoals();
 }
+// 名品：評価が高くて販売を終えた製品は、1年たつと中古で高くなる（高級なものほど）
+const legendOk = p => !p.active && (p.review >= 8.8 || (p.review >= 8.2 && luxOf(p) >= 0.4));
+const resaleMult = p => Math.round((1.5 + Math.max(0, p.review - 8) * 2.2 + luxOf(p) * 3) * (1 + Math.min(1.5, (S.day - (p.offDay || S.day)) / 365 * 0.25)) * 10) / 10;
 function weekTick() {
   for (const p of S.products) { p.lastWeek = p.weekUnits; p.weekUnits = 0; }
+  for (const p of S.products) if (legendOk(p) && !p.legend && S.day - (p.offDay || S.day) >= 365) { p.legend = true; S.brand = clamp(S.brand + 0.03, 0.4, 1.8); news(`販売を終えた「${p.name}」が中古市場で定価の${resaleMult(p)}倍に！ 名品として話題に`); UI.toast(`「${p.name}」が名品になった！ 復刻版も作れる`, 'gold'); }
   // ブランド：シェアと最近のレビューで、ゆっくり動く
   const shares = KIND_IDS.map(k => (S.share[k] ? S.share[k].me : 0)), avg = shares.reduce((a, b) => a + b, 0) / KIND_IDS.length;
   const target = 0.55 + 0.85 * clamp(avg * 3, 0, 1) + Math.min(0.25, S.stats.launched * 0.015) + 0.1 * S.rivals.filter(r => r.owned).length;

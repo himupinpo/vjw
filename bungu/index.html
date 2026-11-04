@@ -153,6 +153,7 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
 .tpanel p { color: var(--sub); font-size: 13.5px; line-height: 1.6; }
 .tpanel .btn { width: 100%; margin-top: 10px; }
 #load h1 { font-size: 26px; }
+body.wide.sheeton #toasts { left: calc((100% - min(460px, 46%)) / 2); }
 body.studio #nav, body.studio #news, body.studio #top, body.studio #goal, body.studio #sheet { display: none; }
 body.intitle #nav, body.intitle #news, body.intitle #top, body.intitle #goal, body.intitle #toasts { display: none; }
 @keyframes tin2 { from { transform: translateY(-10px); opacity: 0; } }
@@ -299,7 +300,7 @@ const KINDS = {
   pencil:   { name: 'えんぴつ',   short: 'えんぴつ', base: 42000, segw: { stu: .7, adu: .12, pro: .18 }, e0: 24, slope: 1.15, dev: 200000, days: 10, bugs: 2, work: 1,  unlock: null,   trend: dy => Math.max(0.62, 1 - dy * 0.014) },
   eraser:   { name: '消しゴム',   short: '消しゴム', base: 36000, segw: { stu: .72, adu: .18, pro: .1 }, e0: 22, slope: 1.05, dev: 200000, days: 10, bugs: 2, work: 1,  unlock: null,   trend: () => 1 },
   lead:     { name: 'シャー芯',   short: 'シャー芯', base: 30000, segw: { stu: .62, adu: .26, pro: .12 }, e0: 20, slope: 1.2, dev: 350000, days: 12, bugs: 3, work: 1,  unlock: 'r_mech', trend: dy => 1 + dy * 0.006 },
-  mech:     { name: 'シャープペンシル', short: 'シャーペン', base: 15000, segw: { stu: .6, adu: .25, pro: .15 }, e0: 26, slope: 1.6, dev: 1200000, days: 18, bugs: 5, work: 3,  unlock: 'r_mech', trend: dy => 1 + dy * 0.02 },
+  mech:     { name: 'シャープペンシル', short: 'シャーペン', base: 15000, segw: { stu: .6, adu: .25, pro: .15 }, e0: 34, slope: 1.5, dev: 1200000, days: 18, bugs: 5, work: 3,  unlock: 'r_mech', trend: dy => 1 + dy * 0.02 },
   ball:     { name: 'ボールペン', short: 'ボールペン', base: 60000, segw: { stu: .45, adu: .5, pro: .05 }, e0: 24, slope: 1.7, dev: 900000, days: 16, bugs: 4, work: 1.5, unlock: 'r_ball', trend: dy => 1 + dy * 0.015 },
   fountain: { name: '万年筆',     short: '万年筆', base: 1500, segw: { stu: .1, adu: .7, pro: .2 }, e0: 22, slope: 1.6, dev: 3000000, days: 26, bugs: 8, work: 20, unlock: 'r_fp',   trend: dy => 1 + Math.max(0, dy - 8) * 0.06 },
 };
@@ -335,8 +336,6 @@ const SPECS = {
   mech: [
     { key: 'size', name: '芯の太さ', opts: LEAD_SIZES },
     { key: 'mech', name: '機構', opts: [opt('k0', 'ノック式', 10, 60), opt('k1', 'サイドノック', 13, 75, { req: 'r_m1', seg: { adu: .1 } }), opt('k2', '振って芯を出す', 16, 90, { req: 'r_m2', seg: { stu: .2 } }), opt('k3', '芯が回る機構', 24, 140, { req: 'r_m3', seg: { stu: .15 } }), opt('k4', '芯が折れない機構', 30, 190, { req: 'r_m4', seg: { stu: .2 } }), opt('k5', '自動で芯が出る機構', 36, 260, { req: 'r_m5', seg: { adu: .1, stu: .1 } })] },
-    { key: 'grip', name: 'グリップ', opts: GRIPS },
-    { key: 'body', name: '軸の素材', opts: [opt('plastic', 'プラスチック', 4, 20), opt('clear', '透明プラスチック', 5, 22, { clear: 1 }), opt('alu', 'アルミ', 9, 70, { req: 'r_al', metal: 1, seg: { adu: .15, pro: .15 } }), opt('wood', '木', 9, 80, { req: 'r_wood', woodBody: 1, seg: { adu: .2 } })] },
     { key: 'tip', name: '先端', opts: [opt('t0', 'ふつうのパイプ', 3, 0), opt('t1', '製図用の長いパイプ', 7, 10, { req: 'r_tipd', seg: { pro: .3 } }), opt('t2', 'ひっこむパイプ', 8, 25, { req: 'r_tip', seg: { stu: .1, adu: .1 } })] },
     { key: 'erase', name: '消しゴム', opts: [opt('e0', '小さい消しゴム', 2, 3), opt('e1', '回して出る消しゴム', 5, 12, { req: 'r_twe' })] },
   ],
@@ -365,6 +364,7 @@ const FINISHES = { gloss: 'ツヤ', matte: 'マット', metal: 'メタリック'
 const METALS = { silver: '銀', gold: '金', black: '黒', rose: 'ピンクゴールド' };
 const FONTS = { goth: 'ゴシック', round: '丸文字', mincho: '明朝' };
 const INKS = ['#1a1a1a', '#1f3fa8', '#c8261e', '#2a8a3e', '#e2589a', '#6a3fb8', '#e07a1c', '#2a9db0', '#6b4a2b'];
+const WOOD_TONES = { maple: ['メープル', '#dcb57f', '#a9784a'], walnut: ['ウォルナット', '#6e4a31', '#3e281b'], ebony: ['黒檀', '#2c2522', '#110d0b'], cherry: ['チェリー', '#a8553a', '#6b2e1f'] };
 const LOOKS = {
   pencil: [
     { key: 'body', name: '軸の色', type: 'color' }, { key: 'finish', name: '仕上げ', type: 'sel', opts: FINISHES },
@@ -386,10 +386,13 @@ const LOOKS = {
     { key: 'logo', name: 'ロゴの文字', type: 'text' }, { key: 'logoColor', name: '文字の色', type: 'color' }, { key: 'font', name: '字体', type: 'sel', opts: FONTS },
   ],
   mech: [
-    { key: 'body', name: '軸の色', type: 'color' }, { key: 'finish', name: '仕上げ', type: 'sel', opts: FINISHES },
-    { key: 'pattern', name: '模様', type: 'sel', opts: PATTERNS }, { key: 'pat', name: '模様の色', type: 'color' },
-    { key: 'grip', name: 'グリップの色', type: 'color', when: d => d.spec.grip !== 'none' && d.spec.grip !== 'knurl' },
-    { key: 'metal', name: '金具', type: 'sel', opts: METALS },
+    { key: 'body', name: '軸の色', type: 'color', when: d => { const m = mechBuild(d).mat; return ['resin', 'clear', 'alu'].includes(m.barrel) || ['resin', 'alu'].includes(m.grip); } },
+    { key: 'finish', name: '軸の仕上げ', type: 'sel', opts: FINISHES, when: d => ['resin', 'alu'].includes(mechBuild(d).mat.barrel) },
+    { key: 'pattern', name: '模様', type: 'sel', opts: PATTERNS, when: d => ['resin', 'alu'].includes(mechBuild(d).mat.barrel) }, { key: 'pat', name: '模様の色', type: 'color', when: d => ['resin', 'alu'].includes(mechBuild(d).mat.barrel) },
+    { key: 'grip', name: 'グリップの色', type: 'color', when: d => ['resin', 'rubber', 'silicone', 'alu'].includes(mechBuild(d).mat.grip) },
+    { key: 'woodTone', name: '木の種類', type: 'sel', opts: Object.fromEntries(Object.entries(WOOD_TONES).map(([k, v]) => [k, v[0]])), when: d => Object.values(mechBuild(d).mat).some(m => m === 'wood' || m === 'wood2') },
+    { key: 'metal', name: '金具のめっき', type: 'sel', opts: METALS },
+    { key: 'clipColor', name: 'クリップの色', type: 'color', when: d => mechBuild(d).mat.clip === 'resin' },
     { key: 'logo', name: 'ロゴの文字', type: 'text' }, { key: 'logoColor', name: '文字の色', type: 'color' }, { key: 'font', name: '字体', type: 'sel', opts: FONTS },
   ],
   ball: [
@@ -413,7 +416,7 @@ const DEF_LOOK = {
   pencil: { body: '#2f9e6e', finish: 'gloss', pattern: 'none', pat: '#f6c945', tip: '#f4f1ea', eraser: '#f7b6c8', metal: 'gold', logo: 'BUNGU HB', logoColor: '#d8b25a', font: 'goth' },
   eraser: { body: '#f4f1ea', sleeve: '#2b8fd6', pattern: 'stripe', pat: '#1d1d1f', finish: 'matte', logo: 'ERASER', logoColor: '#f4f1ea', font: 'goth' },
   lead: { body: '#1d1d1f', clear: 'smoke', cap: '#2b8fd6', label: '#f4f1ea', pattern: 'none', pat: '#2b8fd6', logo: 'LEAD', logoColor: '#1d1d1f', font: 'goth' },
-  mech: { body: '#24438f', finish: 'gloss', pattern: 'none', pat: '#f4f1ea', grip: '#1d1d1f', metal: 'silver', logo: 'SHARP 0.5', logoColor: '#f4f1ea', font: 'goth' },
+  mech: { body: '#24438f', finish: 'gloss', pattern: 'none', pat: '#f4f1ea', grip: '#1d1d1f', woodTone: 'maple', metal: 'silver', clipColor: '#24438f', logo: 'SHARP 0.5', logoColor: '#f4f1ea', font: 'goth' },
   ball: { body: '#f4f1ea', finish: 'gloss', pattern: 'none', pat: '#2b8fd6', grip: '#2b8fd6', clip: '#2b8fd6', metal: 'silver', ink: '#1a1a1a', logo: 'SMOOTH', logoColor: '#24438f', font: 'goth' },
   fountain: { body: '#1d1d1f', cap: '#1d1d1f', finish: 'gloss', pattern: 'none', pat: '#d93b2f', metal: 'gold', nibTone: 'gold', ink: '#1f3fa8', logo: 'BUNGU', logoColor: '#d8b25a', font: 'mincho' },
 };
@@ -446,15 +449,22 @@ const RESEARCH = [
   R_('r_lc', 'スライド式ケース', 'lead', 2003, 40, 12, { req: 'r_mech' }), R_('r_l09', '0.9mm の芯', 'lead', 2004, 40, 12, { req: 'r_mech' }), R_('r_l2', '高強度ナノ芯', 'lead', 2009, 140, 24, { req: 'r_l1' }),
   R_('r_lc2', '1本ずつ出せるケース', 'lead', 2010, 110, 20, { req: 'r_lc' }), R_('r_l02', '0.2mm の芯', 'lead', 2014, 220, 30, { req: 'r_l03' }), R_('r_l3', 'なめらか高強度芯', 'lead', 2016, 260, 32, { req: 'r_l2' }),
   // シャーペン
-  R_('r_g1', 'ラバーグリップ', 'mech', 2001, 40, 14, { req: 'r_mech' }), R_('r_tipd', '製図用の長いパイプ', 'mech', 2001, 35, 12, { req: 'r_mech' }), R_('r_m1', 'サイドノック', 'mech', 2002, 50, 16, { req: 'r_mech' }),
-  R_('r_al', 'アルミの軸', 'mech', 2004, 70, 18, { req: 'r_mech' }), R_('r_m2', '振って芯を出す', 'mech', 2005, 90, 20, { req: 'r_m1' }), R_('r_g2', 'シリコングリップ', 'mech', 2006, 90, 20, { req: 'r_g1' }),
+  R_('r_g1', 'ラバーグリップ', 'mech', 2001, 40, 14, { req: 'r_mech', desc: 'シャーペン・ボールペンのラバーのグリップが使える' }), R_('r_tipd', '製図用の長いパイプ', 'mech', 2001, 35, 12, { req: 'r_mech' }), R_('r_m1', 'サイドノック', 'mech', 2002, 50, 16, { req: 'r_mech' }),
+  R_('r_al', 'アルミの部品', 'mech', 2004, 70, 18, { req: 'r_mech', desc: 'シャーペンのアルミの軸・グリップ、ボールペンのアルミ軸が使える' }), R_('r_m2', '振って芯を出す', 'mech', 2005, 90, 20, { req: 'r_m1' }), R_('r_g2', 'シリコングリップ', 'mech', 2006, 90, 20, { req: 'r_g1', desc: 'やわらかいシリコンのグリップが使える（学生に人気）' }),
   R_('r_twe', '回して出る消しゴム', 'mech', 2006, 70, 16, { req: 'r_mech' }), R_('r_tip', 'ひっこむパイプ', 'mech', 2007, 110, 22, { req: 'r_tipd' }), R_('r_m3', '芯が回る機構', 'mech', 2008, 180, 30, { req: 'r_m2' }),
-  R_('r_g3', '金属ローレット', 'mech', 2009, 120, 22, { req: 'r_al' }), R_('r_m4', '芯が折れない機構', 'mech', 2010, 240, 34, { req: 'r_m3' }), R_('r_wood', '木の軸', 'mech', 2011, 140, 24),
+  R_('r_g3', '金属ローレット', 'mech', 2009, 120, 22, { req: 'r_al', desc: '金属のグリップに細かい／粗いローレット（すべり止めの刻み）をつけられる。製図をする人に人気' }), R_('r_m4', '芯が折れない機構', 'mech', 2010, 240, 34, { req: 'r_m3' }), R_('r_wood', '天然木の部品', 'mech', 2004, 100, 22, { desc: 'シャーペンの天然木の軸・グリップ、万年筆の木の軸が使える' }),
   R_('r_m5', '自動で芯が出る機構', 'mech', 2017, 380, 40, { req: 'r_m4' }),
+  R_('r_hwin', '硬度表示窓', 'mech', 2001, 35, 12, { req: 'r_mech', desc: 'シャーペンに芯の濃さを示す窓をつけられる（位置も選べる）。製図をする人に人気' }),
+  R_('r_sus', 'ステンレスの部品', 'mech', 2005, 80, 18, { req: 'r_mech', desc: 'シャーペンのステンレスの口金・グリップ・ノック・クリップ（ばね）が使える' }),
+  R_('r_cushion', '芯クッション', 'mech', 2006, 90, 20, { req: 'r_mech', desc: '強く書くと芯が少し引っこんで折れにくくなる仕組み' }),
+  R_('r_cog', '重心のおもり', 'mech', 2008, 110, 22, { req: 'r_brass', desc: '軸の中に真ちゅうのおもりを入れて、重心を下げたり上げたりできる' }),
+  R_('r_clipret', 'クリップ連動のパイプ収納', 'mech', 2009, 160, 26, { req: 'r_tip', desc: 'クリップをはさむとパイプが引っこむ（胸ポケットに入れても安全）' }),
+  R_('r_wood2', '強化木（積層）の部品', 'mech', 2010, 150, 26, { req: 'r_wood', desc: '樹脂をしみこませた積層の木。重みがあって、木目がきれい' }),
+  R_('r_12', '十二角の軸', 'mech', 2014, 120, 22, { req: 'r_mech', desc: 'ころがりにくく、手になじむ十二角形の軸' }),
   // ボールペン
   R_('r_gel', 'ゲルインク', 'ball', 2000, 40, 16, { req: 'r_ball' }), R_('r_b05', '0.5mm のボール', 'ball', 2001, 35, 12, { req: 'r_ball' }), R_('r_mc', '2色・3色ボールペン', 'ball', 2002, 60, 18, { req: 'r_ball' }),
   R_('r_mc4', '4色ボールペン', 'ball', 2004, 90, 20, { req: 'r_mc' }), R_('r_tw', '回転式', 'ball', 2005, 70, 16, { req: 'r_ball' }), R_('r_lv', '低粘度油性インク', 'ball', 2006, 160, 28, { req: 'r_ball' }),
-  R_('r_fr', '消せるインク', 'ball', 2007, 200, 32, { req: 'r_gel' }), R_('r_b038', '0.38mm のボール', 'ball', 2008, 120, 22, { req: 'r_b05' }), R_('r_brass', '真ちゅうの軸', 'ball', 2008, 120, 20, { req: 'r_ball' }),
+  R_('r_fr', '消せるインク', 'ball', 2007, 200, 32, { req: 'r_gel' }), R_('r_b038', '0.38mm のボール', 'ball', 2008, 120, 22, { req: 'r_b05' }), R_('r_brass', '真ちゅうの部品', 'gen', 2003, 90, 20, { desc: 'シャーペンの真ちゅうの口金・グリップ・軸、ボールペンの真ちゅう軸が使える（重くて高級）' }),
   R_('r_mf', '多機能ペン', 'ball', 2009, 160, 26, { req: 'r_mc4' }), R_('r_qd', '速乾ゲルインク', 'ball', 2012, 220, 30, { req: 'r_gel' }), R_('r_b028', '0.28mm のボール', 'ball', 2014, 200, 30, { req: 'r_b038' }),
   R_('r_pg', 'にじまない顔料ゲル', 'ball', 2017, 300, 34, { req: 'r_qd' }),
   // 万年筆
@@ -550,6 +560,139 @@ const GOALS = [
   { id: 'g14', text: '本社タワーへ引っ越そう', reward: { money: 200000000, rp: 300 }, done: s => s.tier >= 3 },
   { id: 'g15', text: '会社の価値 1,000億円', reward: { money: 0, rp: 500 }, done: s => s.stats.value >= 1e11 },
 ];
+// =========================================================================================
+//  シャーペンの設計：部品ごとの素材・太さ・長さ・断面・グリップの加工・クリップと硬度表示窓の位置・おもり
+//  形と素材の密度から重さと重心（先からの距離）を計算し、書きやすさ・機能・高級感・層ごとの人気を決める
+//  （数字は実際の製図用・学習用・木軸・金属軸のシャーペンの重さ 9〜23g、重心 全長の43〜52% を目安に合わせた）
+// =========================================================================================
+const MECH_MATS = {
+  none:     { name: 'なし', dens: 0, cost: 0, lux: 0 },
+  resin:    { name: '樹脂', dens: 1.15, wall: 1.4, cost: 3, lux: 0 },
+  clear:    { name: '透明樹脂', dens: 1.2, wall: 1.4, cost: 4, lux: 0.05, clear: 1 },
+  rubber:   { name: 'ラバー', dens: 1.25, wall: 1.3, cost: 8, lux: 0.05, soft: 1, req: 'r_g1' },
+  silicone: { name: 'シリコン', dens: 1.15, wall: 1.7, cost: 12, lux: 0.05, soft: 2, req: 'r_g2' },
+  alu:      { name: 'アルミ', dens: 2.7, wall: 0.9, cost: 25, lux: 0.5, metal: 1, req: 'r_al' },
+  brass:    { name: '真ちゅう', dens: 8.5, wall: 0.7, cost: 45, lux: 0.9, metal: 1, req: 'r_brass' },
+  sus:      { name: 'ステンレス', dens: 7.9, wall: 0.7, cost: 40, lux: 0.8, metal: 1, req: 'r_sus' },
+  wood:     { name: '天然木', dens: 0.7, solid: 1, cost: 35, lux: 0.85, wood: 1, req: 'r_wood' },
+  wood2:    { name: '強化木（積層）', dens: 1.3, solid: 1, cost: 55, lux: 1, wood: 1, req: 'r_wood2' },
+};
+// 部品：使える素材（free は研究なしで使える）。重さの計算と原価の重み
+const MECH_PARTS = {
+  tip:    { name: '口金（先の金具）', mats: ['resin', 'alu', 'brass', 'sus'], free: ['resin', 'alu'], cw: 0.4, lw: 0.15 },
+  grip:   { name: 'グリップ', mats: ['resin', 'rubber', 'silicone', 'alu', 'brass', 'sus', 'wood', 'wood2'], cw: 0.6, lw: 0.3 },
+  barrel: { name: '胴軸', mats: ['resin', 'clear', 'alu', 'brass', 'wood', 'wood2'], cw: 1, lw: 0.45 },
+  knock:  { name: 'ノック（天冠）', mats: ['resin', 'alu', 'brass', 'sus'], free: ['resin', 'alu'], cw: 0.25, lw: 0.1 },
+  clip:   { name: 'クリップ', mats: ['none', 'resin', 'sus', 'brass'], free: ['none', 'resin', 'sus'], cw: 0.3, lw: 0.1 },
+};
+const GRIP_FIN = {
+  plain:  { name: 'なめらか', ok: m => true, cost: 0, q: m => (m.soft ? 0.75 : m.wood ? 0.78 : m.metal ? 0.35 : 0.3) },
+  rings:  { name: 'みぞ（リング）', ok: m => !m.soft, cost: 2, q: m => (m.metal ? 0.6 : m.wood ? 0.7 : 0.55) },
+  dots:   { name: 'つぶつぶ', ok: m => !!m.soft || m === MECH_MATS.resin, cost: 1, q: m => (m.soft ? 0.95 : 0.6) },
+  knurlF: { name: 'ローレット（細かい）', ok: m => !!m.metal, cost: 18, req: 'r_g3', q: () => 0.95 },
+  knurlC: { name: 'ローレット（粗い）', ok: m => !!m.metal, cost: 15, req: 'r_g3', q: () => 0.85 },
+};
+const MECH_SECS = { round: { name: '丸' }, hex: { name: '六角', roll: 1, cost: 2 }, dodeca: { name: '十二角', roll: 1, cost: 4, req: 'r_12' }, tri: { name: '三角', roll: 1, cost: 3, req: 'r_ptri' } };
+const MECH_WIN = { none: '窓なし', knock: 'ノックの下（回して合わせる）', top: '軸の上のほう', clip: 'クリップの根もと', grip: 'グリップのすぐ上' };
+const MECH_COG = { none: { name: 'なし', mass: 0 }, tip: { name: '先に真ちゅうのおもり（低重心）', mass: 3.5, cost: 12, req: 'r_cog' }, rear: { name: '後ろにおもり（高重心）', mass: 3, cost: 10, req: 'r_cog' } };
+const DEF_BUILD = { L: 145, D: 9, gripD: 0, gripL: 32, sec: 'round', mat: { tip: 'alu', grip: 'resin', barrel: 'resin', knock: 'resin', clip: 'resin' }, fin: 'rings', clipTop: 22, win: 'none', cog: 'none', cushion: false, clipret: false };
+// 有名なシャーペンの「型」を参考にした出発点（名前はオリジナル）
+const MECH_PRESETS = [
+  { id: 'hexmetal', name: '金属六角の製図用', note: '全部金属・六角・細かいローレット・長いパイプ。重くてどっしり', b: { L: 140, D: 8, gripD: 0, gripL: 30, sec: 'hex', mat: { tip: 'brass', grip: 'brass', barrel: 'brass', knock: 'brass', clip: 'sus' }, fin: 'knurlF', clipTop: 16, win: 'knock', cog: 'none' }, spec: { tip: 't1', mech: 'k0' } },
+  { id: 'knurlrub', name: 'ローレットの低重心製図用', note: '金属グリップ・クリップでパイプが引っこむ・ノックの下に硬度窓', b: { L: 145, D: 8, gripD: 0.5, gripL: 34, sec: 'round', mat: { tip: 'brass', grip: 'brass', barrel: 'alu', knock: 'brass', clip: 'sus' }, fin: 'knurlF', clipTop: 18, win: 'knock', cog: 'tip', clipret: true }, spec: { tip: 't2', mech: 'k0' } },
+  { id: 'lightdraft', name: '軽い製図用', note: '樹脂の軸にアルミのグリップ。約10gで疲れにくい', b: { L: 147, D: 9, gripD: 0, gripL: 32, sec: 'round', mat: { tip: 'alu', grip: 'alu', barrel: 'resin', knock: 'resin', clip: 'resin' }, fin: 'rings', clipTop: 20, win: 'knock', cog: 'none' }, spec: { tip: 't1', mech: 'k0' } },
+  { id: 'silverhex', name: '銀の六角ローレット', note: 'アルミの六角軸に真ちゅうのローレットグリップ。低めの重心', b: { L: 145, D: 8, gripD: 0, gripL: 33, sec: 'hex', mat: { tip: 'brass', grip: 'brass', barrel: 'alu', knock: 'alu', clip: 'sus' }, fin: 'knurlF', clipTop: 18, win: 'knock', cog: 'none' }, spec: { tip: 't1', mech: 'k0' } },
+  { id: 'woodlow', name: '強化木の低重心', note: '積層強化木の軸と真ちゅうの口金。大人に人気', b: { L: 145, D: 9.5, gripD: 0, gripL: 34, sec: 'round', mat: { tip: 'brass', grip: 'wood2', barrel: 'wood2', knock: 'brass', clip: 'sus' }, fin: 'plain', clipTop: 20, win: 'none', cog: 'none' }, spec: { tip: 't0', mech: 'k0' } },
+  { id: 'dodeca', name: '十二角の自動芯出し', note: '十二角の軸・ステンレスの口金・自動で芯が出る', b: { L: 143, D: 9.3, gripD: 0, gripL: 30, sec: 'dodeca', mat: { tip: 'sus', grip: 'resin', barrel: 'alu', knock: 'alu', clip: 'sus' }, fin: 'rings', clipTop: 18, win: 'none', cog: 'none' }, spec: { tip: 't2', mech: 'k5' } },
+  { id: 'rotate', name: '芯が回る学生用', note: '芯が回って先がとがり続ける。軽くて安い', b: { L: 145, D: 9.5, gripD: 0, gripL: 32, sec: 'round', mat: { tip: 'alu', grip: 'resin', barrel: 'resin', knock: 'resin', clip: 'resin' }, fin: 'rings', clipTop: 22, win: 'none', cog: 'none' }, spec: { tip: 't0', mech: 'k3' } },
+  { id: 'nobreak', name: '折れない芯のやわらかグリップ', note: 'シリコンの太めグリップと、芯が折れない機構', b: { L: 145, D: 10, gripD: 1, gripL: 36, sec: 'round', mat: { tip: 'alu', grip: 'silicone', barrel: 'resin', knock: 'resin', clip: 'resin' }, fin: 'dots', clipTop: 22, win: 'none', cog: 'none' }, spec: { tip: 't0', mech: 'k4' } },
+  { id: 'vintage', name: '昔の高級機（廃盤の名品風）', note: 'ステンレスの軸に自動繰り出し・パイプ収納。今は作られない高級機をイメージ', b: { L: 140, D: 9.3, gripD: 0, gripL: 30, sec: 'round', mat: { tip: 'sus', grip: 'sus', barrel: 'alu', knock: 'sus', clip: 'sus' }, fin: 'knurlC', clipTop: 16, win: 'none', cog: 'none', cushion: true }, spec: { tip: 't2', mech: 'k5' } },
+];
+
+// 古いセーブ（グリップ・軸を「性能」で選んでいたころ）から設計を作る
+function mechBuild(d) {
+  if (d.build) return d.build;
+  const b = JSON.parse(JSON.stringify(DEF_BUILD)), g = d.spec && d.spec.grip, body = d.spec && d.spec.body;
+  if (g === 'rubber' || g === 'silicone') { b.mat.grip = g; b.fin = 'dots'; } else if (g === 'knurl') { b.mat.grip = 'alu'; b.fin = 'knurlF'; }
+  if (body === 'clear') b.mat.barrel = 'clear'; else if (body === 'alu') { b.mat.barrel = 'alu'; if (b.mat.grip === 'resin') b.mat.grip = 'alu'; } else if (body === 'wood') { b.mat.barrel = 'wood'; if (b.mat.grip === 'resin') b.mat.grip = 'wood'; }
+  return (d.build = b);
+}
+const mechWinX = (b) => ({ knock: b.L - 16, top: b.L - 30, clip: b.L - b.clipTop + 3, grip: 12 + b.gripL + 4 })[b.win] || 0;   // 先からの距離（mm）
+const MECH_TIP = 12, MECH_KNOCK = 14, MECH_CLIP = 38;
+// 重さ（g）・重心（先からmm）と、点のもと
+const _msCache = new WeakMap();
+function mechStats(d) {
+  const key = JSON.stringify([mechBuild(d), d.spec.mech, d.spec.erase, d.look && d.look.metal]), c = _msCache.get(d);
+  if (c && c.key === key) return c.v;
+  const v = mechStats0(d); _msCache.set(d, { key, v }); return v;
+}
+function mechStats0(d) {
+  const b = mechBuild(d), M = MECH_MATS, L = b.L, R = b.D / 2, Rg = R + b.gripD / 2, parts = [];
+  const tube = (mat, r, len, x0, tag) => { const m = M[mat]; if (!m || !m.dens) return; const rin = m.solid ? 2.6 : Math.max(2.4, r - m.wall), v = Math.PI * (r * r - rin * rin) * len / 1000; parts.push([v * m.dens, x0 + len / 2, tag]); return rin; };
+  { const m = M[b.mat.tip], R1 = 1.1, R2 = Math.max(1.5, Rg - 0.4), v = (Math.PI * MECH_TIP / 3 * (R1 * R1 + R1 * R2 + R2 * R2) - Math.PI * 0.81 * MECH_TIP) / 1000; parts.push([v * m.dens, MECH_TIP * 0.55, 'tip']); }
+  const rin = tube(b.mat.grip, Rg, b.gripL, MECH_TIP, 'grip');
+  if (M[b.mat.grip].soft) tube('resin', rin, b.gripL, MECH_TIP, 'core');
+  const bx0 = MECH_TIP + b.gripL, bLen = L - MECH_KNOCK - bx0; tube(b.mat.barrel, R, bLen, bx0, 'barrel');
+  { const m = M[b.mat.knock], v = Math.PI * (2.4 * 2.4 - 1.5 * 1.5) * 9 / 1000 + 0.05; parts.push([v * m.dens, L - 6, 'knock']); }
+  const clipRoot = L - b.clipTop, hasClip = b.mat.clip !== 'none';
+  if (hasClip) { const m = M[b.mat.clip]; parts.push([m.dens * 0.16 + (m.metal ? 0.1 : 0), clipRoot - MECH_CLIP / 2, 'clip']); }
+  parts.push([1.3, 26], [1.2, L * 0.55], [0.35, L * 0.42], [0.3, L - 8]);   // 中の部品（チャック・芯パイプとばね・芯・消しゴム）
+  const MX = { k1: [0.6, 60], k2: [2.4, 80], k3: [1.6, 30], k4: [1.2, 18], k5: [2.2, 26] }[d.spec.mech]; if (MX) parts.push(MX);
+  if (d.spec.erase === 'e1') parts.push([0.5, L - 10]);
+  if (b.cog !== 'none') parts.push([MECH_COG[b.cog].mass, b.cog === 'tip' ? 22 : L - 22]);
+  if (b.win !== 'none') parts.push([0.3, mechWinX(b)]);
+  if (b.cushion) parts.push([0.4, 24]);
+  if (b.clipret) parts.push([0.5, clipRoot - 10]);
+  const W = parts.reduce((a, p) => a + p[0], 0), cog = parts.reduce((a, p) => a + p[0] * p[1], 0) / W, cogPct = cog / L * 100;
+  // 書きやすさ（重さ・重心・太さ・グリップ）
+  const gm = M[b.mat.grip], fin = GRIP_FIN[b.fin] && GRIP_FIN[b.fin].ok(gm) ? GRIP_FIN[b.fin] : GRIP_FIN.plain, gripQ = fin.q(gm), Dg = Rg * 2, notes = [];
+  const gs = x => Math.exp(-x * x / 2);
+  let ergo = 0.25 * gs((W - 15.5) / 6) + 0.3 * clamp((51 - cogPct) / 7, 0, 1) + 0.2 * gs((Dg - 9.4) / 1.3) + 0.25 * gripQ;
+  const clipLow = hasClip && clipRoot - MECH_CLIP < MECH_TIP + b.gripL + 6;
+  if (clipLow) { ergo -= 0.15; notes.push('クリップが指に当たる（クリップをもっと上へ）'); }
+  if (cogPct > 52) notes.push('重心が高くて、先がふらつきやすい');
+  if (W > 24) notes.push('重い。長く書くと疲れやすい');
+  if (Dg < 7.6) notes.push('細すぎて、にぎりにくい');
+  if (Dg > 11.5) notes.push('太すぎて、手の小さい人には使いにくい');
+  // 機能
+  let func = 0, winHidden = false;
+  if (b.win !== 'none') { const wx = mechWinX(b); winHidden = hasClip && b.win === 'top' && wx < clipRoot && wx > clipRoot - MECH_CLIP; func += winHidden ? 0.6 : 2 + (b.win === 'grip' ? 0.5 : 0); if (winHidden) notes.push('硬度表示窓がクリップにかくれる'); }
+  if (hasClip) func += 1.2 + (M[b.mat.clip].metal ? 0.3 : 0);
+  if (b.clipret && hasClip) func += 1.2;
+  if (b.cushion) func += 1.4;
+  if (MECH_SECS[b.sec].roll) func += 0.8;
+  func = Math.min(8, func);
+  // 素材のよさ（耐久性・精度）
+  let mat = 0; if (M[b.mat.tip].metal) mat += 1.2; if (gm.metal) mat += 0.8; if (gm.wood || M[b.mat.barrel].wood) mat += 0.8; if (M[b.mat.barrel].metal) mat += 0.6; mat = Math.min(4, mat);
+  // 高級感（値段の高さが受け入れられる）
+  let lux = 0; for (const k in MECH_PARTS) lux += MECH_PARTS[k].lw * (M[b.mat[k]].lux || 0);
+  if (b.fin === 'knurlF' || b.fin === 'knurlC') lux += 0.1; if (W >= 18) lux += 0.05; if (d.look && (d.look.metal === 'gold' || d.look.metal === 'rose') && Object.values(b.mat).some(x => M[x].metal)) lux += 0.05;
+  lux = clamp(lux, 0, 1);
+  // 層ごとの人気
+  const knurl = b.fin === 'knurlF' || b.fin === 'knurlC', soft = !!gm.soft, wood = !!(gm.wood || M[b.mat.barrel].wood);
+  const seg = {
+    pro: 0.25 * gs((W - 19) / 5) + 0.25 * clamp((47 - cogPct) / 4, 0, 1) + (knurl ? 0.2 : 0) + (b.win !== 'none' && !winHidden ? 0.15 : 0) + (Dg <= 8.6 ? 0.1 : 0) + (MECH_SECS[b.sec].roll ? 0.05 : 0),
+    stu: 0.25 * gs((W - 12) / 3.5) + (soft ? 0.2 : 0) + (Dg >= 9 && Dg <= 10.8 ? 0.1 : 0),
+    adu: 0.3 * lux + (wood ? 0.15 : 0) + (hasClip ? 0.1 : 0) + 0.15 * gs((W - 17) / 5),
+  };
+  // 部品の原価
+  const sz = Math.pow(b.D / 9, 1.5) * (L / 145);
+  let cost = 0; for (const k in MECH_PARTS) cost += MECH_PARTS[k].cw * (M[b.mat[k]].cost || 0) * (k === 'barrel' || k === 'grip' ? sz : 1) + (k === 'clip' && b.mat.clip === 'resin' ? 1 : 0);
+  cost += (fin.cost || 0) + (b.win !== 'none' ? 8 : 0) + (MECH_COG[b.cog].cost || 0) + (b.cushion ? 15 : 0) + (b.clipret ? 30 : 0) + (MECH_SECS[b.sec].cost || 0);
+  return { W, cog, cogPct, ergo: clamp(ergo, 0, 1), ergoPts: 14 * clamp(ergo, 0, 1), func, mat, lux, seg, cost, notes, gripQ, Dg, fin, winHidden };
+}
+// 研究がまだの部品
+function mechLocks(d) {
+  const b = mechBuild(d), out = [];
+  for (const k in MECH_PARTS) { const P = MECH_PARTS[k], m = b.mat[k], r = MECH_MATS[m].req; if (r && !(P.free || []).includes(m) && !resDone(r)) out.push(P.name + 'の' + MECH_MATS[m].name); }
+  const fin = GRIP_FIN[b.fin]; if (fin && fin.req && !resDone(fin.req)) out.push(fin.name);
+  const sec = MECH_SECS[b.sec]; if (sec.req && !resDone(sec.req)) out.push(sec.name + 'の軸');
+  if (b.win !== 'none' && !resDone('r_hwin')) out.push('硬度表示窓');
+  if (MECH_COG[b.cog].req && !resDone(MECH_COG[b.cog].req)) out.push('重心のおもり');
+  if (b.cushion && !resDone('r_cushion')) out.push('芯クッション');
+  if (b.clipret && !resDone('r_clipret')) out.push('クリップ連動のパイプ収納');
+  return out;
+}
 // =========================================================================================
 //  3Dの製品モデル：デザイン（性能の選択肢＋見た目）から、えんぴつ・消しゴム・シャー芯・シャーペン・ボールペン・万年筆を組み立てる
 //  単位は cm。長さの向きが +x（先が +x）、正面が +z。軸の表面の色・模様・ロゴはキャンバスに描いて貼る
@@ -818,32 +961,71 @@ const BUILD = {
     return g;
   },
   mech(d, o) {
-    const g = new THREE.Group(), L = d.look, sp = d.spec, met = matMetal(L.metal, o.cheap);
-    const R = 0.42, bx0 = 1.25, bx1 = 9.7, gx1 = 12.6, cx1 = 13.85, pipe = sp.tip === 't1' ? 0.9 : sp.tip === 't2' ? 0.3 : 0.45;
-    const bodyKind = sp.body;
-    const finish = bodyKind === 'alu' ? 'metal' : L.finish, pattern = bodyKind === 'wood' ? 'wood' : L.pattern;
-    const base = bodyKind === 'wood' ? NAT_WOOD[0] : L.body, pat = bodyKind === 'wood' ? NAT_WOOD[1] : L.pat;
-    const prof = [[bx0, R - 0.03], [bx0 + 0.25, R], [bx1 - 1.2, R], [bx1, R - 0.03]];
-    const texL = bx1 - bx0, tex = surfaceTex({ L: texL, C: TAU * R, base, pattern, pat, cheap: o.cheap, texts: [{ text: L.logo, color: L.logoColor, font: L.font, size: 0.3, from: 4.4, to: texL - 0.5 }] });
-    const bmat = bodyKind === 'clear' ? matClear(L.body, o.cheap) : matPaint(finish, tex, o.cheap);
-    mesh(lathe(prof, { u0: bx0, u1: bx1 }), bmat, g);
-    if (bodyKind === 'clear') { mesh(lathe([[bx0 + 0.3, 0.13], [bx1, 0.13]], { n: 16 }), matSolid(0x3a3a3c, 0.4, 0.3), g); }
-    // グリップ
-    const gp = [[bx1 - 0.02, R - 0.03], [bx1 + 0.3, R + 0.035], [gx1 - 0.6, R + 0.035], [gx1, R - 0.05]];
-    if (sp.grip === 'none') mesh(lathe(gp.map(p => [p[0], p[1] - 0.03])), bodyKind === 'clear' ? matClear(L.body, o.cheap) : matPaint(finish, tex, o.cheap), g);
-    else if (sp.grip === 'knurl') { const m = matMetal(L.metal, o.cheap); m.normalMap = bumpTex('knurl'); m.normalScale = new THREE.Vector2(1.2, 1.2); m.roughness = 0.32; mesh(lathe(gp), m, g); }
-    else mesh(lathe(gp), matRubber(L.grip, sp.grip), g);
-    // 先の金具とパイプ・芯
-    mesh(lathe([[gx1 - 0.02, R - 0.06], [gx1 + 0.35, R - 0.1], [cx1, 0.11]], { n: 40 }), met, g);
-    mesh(lathe([[cx1 - 0.02, 0.055], [cx1 + pipe, 0.05]], { n: 16 }), met, g);
-    const ls = { s05: 0.026, s07: 0.035, s03: 0.016, s09: 0.045, s02: 0.011 }[sp.size] || 0.026;
-    mesh(lathe([[cx1 + pipe - 0.02, ls], [cx1 + pipe + 0.12, ls]], { n: 10 }), matSolid(0x232325, 0.35, 0.4), g);
-    // おしり（ノック）と消しゴム・クリップ
-    mesh(lathe([...roundEnd(0.05, 0.3, 0.33, 'start'), [bx0 + 0.05, 0.36]], { n: 40 }), met, g);
-    if (sp.erase === 'e1') mesh(lathe([[-0.35, 0.16], [0.06, 0.18]], { n: 20 }), matSolid(0xf2f0ea, 0.9), g);
-    addClip(g, bx0 + 0.05, bx0 + 3.6, R, met);
-    if (sp.mech === 'k1') { const b = mesh(new THREE.BoxGeometry(0.7, 0.16, 0.22), met, g); b.position.set(bx1 - 1.6, 0, R + 0.06); }
-    if (sp.mech === 'k3' || sp.mech === 'k4') { const w = mesh(lathe([[bx1 - 0.55, R + 0.005], [bx1 - 0.35, R + 0.005]]), new THREE.MeshStandardMaterial({ color: 0xf0d060, emissive: 0x3a2a00, roughness: 0.4 }), g); void w; }
+    // 設計（部品ごとの素材・太さ・断面・クリップ・窓）から組み立てる。+x が先
+    const g = new THREE.Group(), L = d.look, sp = d.spec, b = mechBuild(d), M = MECH_MATS, cm = v => v / 10;
+    const Lc = cm(b.L), R = cm(b.D / 2), Rg = cm(b.D / 2 + b.gripD / 2), kx1 = cm(MECH_KNOCK), gx0 = Lc - cm(MECH_TIP + b.gripL), tx0 = Lc - cm(MECH_TIP);
+    const wt = WOOD_TONES[L.woodTone] || WOOD_TONES.maple, metalM = () => matMetal(L.metal, o.cheap);
+    const secOf = (r, part) => b.sec === 'hex' ? secPoly(6, r, 0.03) : b.sec === 'dodeca' ? secPoly(12, r, 0.006) : b.sec === 'tri' ? secPoly(3, r * 0.95, 0.12) : secCircle(r, 56);
+    // 部品の材質（表面のテクスチャ：模様・ロゴ・木目）
+    const partMat = (mk, len, circ, color, texts, part) => {
+      const m = M[mk];
+      if (m.clear) return matClear(color, o.cheap);
+      if (m.wood) { const t = surfaceTex({ L: len, C: circ, base: mk === 'wood2' ? wt[1] : wt[1], pattern: mk === 'wood2' ? 'stripe' : 'wood', pat: mk === 'wood2' ? wt[2] : wt[2], cheap: o.cheap, texts }); const mt = matPaint(mk === 'wood2' ? 'gloss' : 'matte', t, o.cheap); return mt; }
+      if (m.soft) return matRubber(L.grip, mk);
+      if (mk === 'brass' || mk === 'sus') { if (!texts || !texts.length || !texts[0].text) return metalM(); const mh = '#' + new THREE.Color(METAL_COL[L.metal] || METAL_COL.silver).getHexString(); const mm = matPaint('metal', surfaceTex({ L: len, C: circ, base: mh, pattern: 'none', cheap: o.cheap, texts }), o.cheap); mm.metalness = 0.85; mm.roughness = 0.22; return mm; }   // 刻印：めっきの色の上にロゴ
+      if (mk === 'alu') return matPaint('metal', surfaceTex({ L: len, C: circ, base: color, pattern: part === 'barrel' ? L.pattern : 'none', pat: L.pat, cheap: o.cheap, texts }), o.cheap);
+      return matPaint(part === 'barrel' ? L.finish : 'gloss', surfaceTex({ L: len, C: circ, base: color, pattern: part === 'barrel' ? L.pattern : 'none', pat: L.pat, cheap: o.cheap, texts }), o.cheap);
+    };
+    // 胴軸
+    const bLen = gx0 - kx1, bsec = secOf(R, 'barrel');
+    const bm = partMat(b.mat.barrel, bLen, bsec.per, L.body, [{ text: L.logo, color: L.logoColor, font: L.font, size: Math.min(0.32, R * 0.7), from: bLen * 0.42, to: bLen * 0.95 }], 'barrel');
+    mesh(sweep([kx1, kx1 + 0.06, gx0 - 0.04, gx0], bsec, (x, p, i) => (i === 0 ? 0.96 : 1), { u0: kx1, u1: gx0 }), bm, g);
+    if (M[b.mat.barrel].clear) mesh(lathe([[kx1 + 0.2, 0.13], [tx0, 0.13]], { n: 16 }), matSolid(0x3a3a3c, 0.4, 0.3), g);
+    // グリップ（みぞは形で、ローレット・つぶつぶは法線マップで）
+    const gm = M[b.mat.grip], round = gm.metal || gm.soft || b.sec === 'round', gsec = round ? secCircle(Rg, 56) : secOf(Rg, 'grip');
+    const gxs = [gx0, gx0 + 0.05], rr0 = []; for (let x = gx0 + 0.1; x < tx0 - 0.05; x += 0.05) gxs.push(x); gxs.push(tx0 - 0.05, tx0);
+    const groove = x => (b.fin === 'rings' && ((x - gx0) % 0.28) < 0.09 && x > gx0 + 0.15 && x < tx0 - 0.15 ? 0.94 : 1);
+    void rr0;
+    let gmat;
+    if (b.fin === 'knurlF' || b.fin === 'knurlC') { gmat = b.mat.grip === 'alu' ? matPaint('metal', null, o.cheap, new THREE.Color(L.grip)) : metalM(); gmat.normalMap = bumpTex('knurl'); gmat.normalScale = new THREE.Vector2(b.fin === 'knurlF' ? 0.9 : 1.6, b.fin === 'knurlF' ? 0.9 : 1.6); gmat.roughness = 0.35; }
+    else if (b.mat.grip === 'resin') gmat = matPaint('gloss', null, o.cheap, new THREE.Color(L.grip));
+    else if (b.mat.grip === 'alu') gmat = matPaint('metal', null, o.cheap, new THREE.Color(L.grip));
+    else gmat = partMat(b.mat.grip, tx0 - gx0, gsec.per, L.grip, [], 'grip');
+    if (b.fin === 'dots' && !gm.soft) { gmat.normalMap = bumpTex('dimple'); gmat.normalScale = new THREE.Vector2(0.6, 0.6); }
+    mesh(sweep(gxs, gsec, (x, p, i) => (i === 0 || i === gxs.length - 1 ? 0.97 : groove(x)), { u0: gx0, u1: tx0 }), gmat, g);
+    // 口金・パイプ・芯
+    const tipM = M[b.mat.tip].metal || b.mat.tip === 'alu' ? metalM() : matPaint('gloss', null, o.cheap, new THREE.Color(mixHex(L.body, '#000000', 0.35)));
+    mesh(lathe([[tx0 - 0.01, Rg - 0.035], [tx0 + 0.3, Rg - 0.07], [Lc, 0.11]], { n: 40 }), tipM, g);
+    const pipe = cm(sp.tip === 't1' ? 4 : sp.tip === 't2' ? 2.5 : 3), ls = { s05: 0.026, s07: 0.035, s03: 0.016, s09: 0.045, s02: 0.011 }[sp.size] || 0.026;
+    mesh(lathe([[Lc - 0.02, 0.055], [Lc + pipe, 0.05]], { n: 16 }), matMetal('silver'), g);
+    mesh(lathe([[Lc + pipe - 0.02, ls], [Lc + pipe + 0.1, ls]], { n: 10 }), matSolid(0x232325, 0.35, 0.4), g);
+    // ノック（天冠）と消しゴム
+    const knM = M[b.mat.knock].metal || b.mat.knock === 'alu' ? metalM() : matPaint('gloss', null, o.cheap, new THREE.Color(L.body));
+    mesh(lathe([...roundEnd(0.02, 0.22, 0.22, 'start'), [kx1 * 0.6, 0.24], [kx1 + 0.02, 0.25]], { n: 36 }), knM, g);
+    mesh(lathe([[kx1 * 0.62, 0.252], [kx1 + 0.02, Math.min(R, 0.3)]], { n: 36 }), knM, g);
+    if (sp.erase === 'e1') mesh(lathe([[-0.35, 0.16], [0.04, 0.17]], { n: 20 }), matSolid(0xf2f0ea, 0.9), g);
+    // クリップ（上のはしからの位置）
+    if (b.mat.clip !== 'none') {
+      const x0 = Math.max(kx1 + 0.02, cm(b.clipTop)), cmat = b.mat.clip === 'resin' ? matPaint('gloss', null, o.cheap, new THREE.Color(L.clipColor)) : metalM();
+      addClip(g, x0, x0 + cm(MECH_CLIP) - 0.2, x0 < gx0 ? R : Rg, cmat, Math.min(0.3, R * 0.75));
+    }
+    // 硬度表示窓：小さな窓に「HB」。ノックの下は回す輪つき
+    if (b.win !== 'none') {
+      const wx = Lc - cm(mechWinX(b)), rAt = wx < kx1 ? 0.25 : wx < gx0 ? R : Rg;
+      if (b.win === 'knock') mesh(lathe([[wx - 0.22, rAt + 0.012], [wx + 0.22, rAt + 0.012]], { n: 40 }), metalM(), g);
+      const c2 = newCanvas(128, 64), q = c2.getContext('2d'); q.fillStyle = '#fbfbf6'; q.fillRect(0, 0, 128, 64); q.strokeStyle = '#333'; q.lineWidth = 6; q.strokeRect(3, 3, 122, 58); q.fillStyle = '#111'; q.font = '900 40px sans-serif'; q.textAlign = 'center'; q.textBaseline = 'middle'; q.fillText('HB', 64, 34);
+      const wtx = new THREE.CanvasTexture(c2); wtx.colorSpace = THREE.SRGBColorSpace;
+      const win = mesh(new THREE.PlaneGeometry(0.42, 0.21), new THREE.MeshStandardMaterial({ map: wtx, roughness: 0.3 }), g, false); win.position.set(wx, 0, rAt + 0.016);
+    }
+    // 機構の見た目のちがい
+    if (sp.mech === 'k1') { const bt = mesh(new THREE.BoxGeometry(0.6, 0.14, 0.2), metalM(), g); bt.position.set(gx0 - 1.4, 0, R + 0.05); }
+    if (sp.mech === 'k3' || sp.mech === 'k4') mesh(lathe([[gx0 - 0.5, R + 0.004], [gx0 - 0.3, R + 0.004]]), new THREE.MeshStandardMaterial({ color: 0xf0d060, emissive: 0x3a2a00, roughness: 0.4 }), g);
+    // 重心の印（開発スタジオだけ）：赤い三角が下から指す
+    if (o.cogMarker) {
+      const ms = mechStats(d), cx = Lc - cm(ms.cog), mk = new THREE.Group();
+      const cone = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.34, 20), new THREE.MeshStandardMaterial({ color: 0xd9493e, emissive: 0x551510, roughness: 0.4 })); cone.position.y = -0.17; mk.add(cone);
+      mk.position.set(cx, -Math.max(R, Rg) - 0.12, 0); mk.userData.cog = true; g.add(mk);
+    }
     return g;
   },
   ball(d, o) {
@@ -938,7 +1120,7 @@ function addNib(g, x0, len, r, tone, sp, o) {
 }
 // デザインからモデル（中心を原点に）
 function buildProduct(d, o = {}) {
-  const g = BUILD[d.kind](d, o), box = new THREE.Box3().setFromObject(g), c = box.getCenter(new THREE.Vector3());
+  const g = BUILD[d.kind](d, o), box = new THREE.Box3(); g.children.forEach(ch => { if (!ch.userData.cog) box.expandByObject(ch); }); const c = box.getCenter(new THREE.Vector3());
   g.children.forEach(ch => ch.position.sub(c));
   const wrap = new THREE.Group(); wrap.add(g); wrap.userData.size = box.getSize(new THREE.Vector3());
   return wrap;
@@ -961,9 +1143,9 @@ const STUDIO = {
   },
   set(d) {
     if (this.obj) { this.root.remove(this.obj); disposeTree(this.obj); }
-    this.obj = buildProduct(d, { cheap: SET.quality === 'low' });
+    this.obj = buildProduct(d, { cheap: SET.quality === 'low', cogMarker: d.kind === 'mech' });
     const sz = this.obj.userData.size, lift = Math.max(sz.y, sz.z * 0.2) / 2 + 0.05;
-    this.obj.position.y = lift + (d.kind === 'eraser' || d.kind === 'lead' ? 0 : 0.1);
+    this.obj.position.y = lift + (d.kind === 'eraser' || d.kind === 'lead' ? 0 : 0.1) + (d.kind === 'mech' ? 0.6 : 0);   // シャーペンは下に重心の印
     this.obj.traverse(c => { if (c.isMesh) c.castShadow = true; });
     this.root.add(this.obj);
     this.radius = Math.max(sz.x, sz.z) / 2;
@@ -1218,9 +1400,11 @@ function newState(company) {
 
 // ---------- 計算のもと ----------
 const KMAX = {}; for (const k of KIND_IDS) KMAX[k] = SPECS[k].reduce((a, g) => a + Math.max(...g.opts.map(o => o.lv)), 0);
+KMAX.mech += 26;   // シャーペンは設計（書きやすさ14・機能8・素材4）の点が加わる
 const expected = (k, day = S.day) => Math.min(KINDS[k].e0 + KINDS[k].slope * (yearOf(day) - 2000), KMAX[k] * 0.88);
 const optOf = (k, key, id) => { const g = SPECS[k].find(x => x.key === key); return (g && g.opts.find(o => o.id === id)) || (g && g.opts[0]); };
-function perfP(d) { let P = d.bonus || 0; for (const g of SPECS[d.kind]) P += optOf(d.kind, g.key, d.spec[g.key]).lv; return P; }
+function perfP(d) { let P = d.bonus || 0; for (const g of SPECS[d.kind]) P += optOf(d.kind, g.key, d.spec[g.key]).lv; if (d.kind === 'mech') { const m = mechStats(d); P += m.ergoPts + m.func + m.mat; } return Math.round(P * 10) / 10; }
+const luxOf = d => (d.kind === 'mech' ? mechStats(d).lux : 0);
 // 仕上げ：研究ポイントを使って性能を上げる（期待の5%ずつ）
 const POLISH = [0, 1, 2, 3, 4];
 const polishRP = (k, lv) => Math.round(lv * (12 + expected(k) * 1.3) * (1 + lv * 0.15));
@@ -1232,16 +1416,18 @@ const BASE_COST = { pencil: 6, eraser: 6, lead: 10, mech: 20, ball: 6, fountain:
 function costOf(d) {
   let c = BASE_COST[d.kind];
   for (const g of SPECS[d.kind]) { const o = optOf(d.kind, g.key, d.spec[g.key]); let m = 1; for (const dr of S.drops) if (dr.kind === d.kind && dr.key === g.key && dr.opt === o.id) m *= dr.mult; c += o.cost * m; }
+  if (d.kind === 'mech') c += mechStats(d).cost;
   return Math.max(1, Math.round(c * (1 - sumRes('costCut'))));
 }
-const fairPrice = (d, q) => costOf(d) * 1.75 * (0.85 + 0.3 * clamp(q, 0.5, 1.6));
+const fairPrice = (d, q) => costOf(d) * 1.75 * (0.85 + 0.3 * clamp(q, 0.5, 1.6)) * (1 + 3 * luxOf(d));   // 高級なものは高くても買われる
 const perfScore = q => clamp(6 + 3.4 * Math.tanh(2.6 * (q - 1)), 0.5, 10);
 const valueScore = (fair, price) => clamp(6 + 5 * (fair / price - 1), 0, 10);
-const recPrice = d => { const c = costOf(d); const r = c * 1.7; return r < 100 ? Math.max(c + 1, Math.round(r / 5) * 5) : r < 1000 ? Math.round(r / 10) * 10 : Math.round(r / 100) * 100; };
+// おすすめの値段（高級なものは高め）
+const recPrice = d => { const c = costOf(d); const r = c * 1.7 * (1 + 2.4 * luxOf(d)); return r < 100 ? Math.max(c + 1, Math.round(r / 5) * 5) : r < 1000 ? Math.round(r / 10) * 10 : Math.round(r / 100) * 100; };
 // 見た目の分類（流行に合うか）
 function lookCats(d) {
   const L = d.look, sp = d.spec, out = new Set(), c = new THREE.Color(L.body || '#ffffff'), hsl = {}; c.getHSL(hsl);
-  const body = sp.body;
+  const body = d.kind === 'mech' ? ({ clear: 'clear', alu: 'alu', brass: 'brass', wood: 'wood', wood2: 'wood' })[mechBuild(d).mat.barrel] : sp.body;
   if (body === 'clear' || (d.kind === 'lead' && L.clear !== 'solid')) out.add('clear');
   if (L.finish === 'metal' || ['alu', 'brass', 'metal'].includes(body)) out.add('metal');
   if (body === 'wood' || L.pattern === 'wood' || (d.kind === 'pencil' && sp.wood === 'w2')) out.add('natural');
@@ -1257,11 +1443,13 @@ function designScore(d, withTrend = true) {
   if (L.logo && L.logo !== D.logo) s += 0.35;
   if (Object.keys(D).some(k => k !== 'logo' && L[k] !== D[k])) s += 0.35;
   if (withTrend && lookCats(d).has(S.trend.id)) s += 1.3;
+  if (d.kind === 'mech') s += 0.8 * mechStats(d).lux;   // 金属や木の質感
   return clamp(s, 0, 10);
 }
 function segFit(d, month) {
   const K = KINDS[d.kind]; let a = 0, b = 0;
-  for (const s in K.segw) { const w = K.segw[s] * SEASON[s][month]; let bon = 0; for (const g of SPECS[d.kind]) { const o = optOf(d.kind, g.key, d.spec[g.key]); if (o.seg && o.seg[s]) bon += o.seg[s]; } a += w * (1 + bon); b += w; }
+  const ms = d.kind === 'mech' ? mechStats(d) : null;
+  for (const s in K.segw) { const w = K.segw[s] * SEASON[s][month]; let bon = ms ? ms.seg[s] : 0; for (const g of SPECS[d.kind]) { const o = optOf(d.kind, g.key, d.spec[g.key]); if (o.seg && o.seg[s]) bon += o.seg[s]; } a += w * (1 + bon); b += w; }
   return a / b;
 }
 function popOf(d) { let p = 1; for (const g of SPECS[d.kind]) { const o = optOf(d.kind, g.key, d.spec[g.key]); if (o.pop) p *= o.pop; } return p; }
@@ -1289,7 +1477,8 @@ function productA(p, month) {
   const fresh = (1 + 0.6 * Math.exp(-wk / 3)) * Math.max(0.45, 1 - wk / 300);
   const trend = lookCats(p).has(S.trend.id) ? 1.15 : 1;
   const sales = 1 + Math.min(0.4, S.staff.filter(m => m.role === 'sal').reduce((a, m) => a + ROLES.sal.rate[m.lv - 1], 0)) + sumRes('sales');
-  return Math.pow(sc.R / 7, 2.6) * priceK * segFit(p, month) * popOf(p) * S.brand * ad * fresh * trend * sales;
+  const re = 1 + (p.reissue || 0) * Math.exp(-wk / 26);   // 復刻版：昔のファンが買う
+  return Math.pow(sc.R / 7, 2.6) * priceK * segFit(p, month) * popOf(p) * S.brand * ad * fresh * trend * sales * re;
 }
 // 仕事の速さ（設備）
 const workMul = () => 1 + 0.05 * S.equip.chair + 0.04 * S.equip.plant + (S.equip.coffee ? 0.05 : 0);
@@ -1308,6 +1497,7 @@ function canStartDev(d) {
   for (const g of SPECS[d.kind]) { const o = optOf(d.kind, g.key, d.spec[g.key]); if (!resDone(o.req)) return o.name + ' はまだ研究していない'; }
   if (S.money < devPlan(d).devCost) return 'お金が足りない';
   if (S.rp < polishRP(d.kind, d.polish || 0)) return '研究ポイントが足りない（仕上げ）';
+  if (d.kind === 'mech') { const lk = mechLocks(d); if (lk.length) return lk[0] + ' はまだ研究していない'; }
   if (!d.name || !d.name.trim()) return '製品の名前を入れよう';
   return '';
 }
@@ -1315,7 +1505,7 @@ function startDev(d) {
   const why = canStartDev(d); if (why) return why;
   const pl = devPlan(d), pol = d.polish || 0, prp = polishRP(d.kind, pol);
   S.money -= pl.devCost; S.rp -= prp;
-  S.devs.push({ id: S.nextId++, kind: d.kind, name: d.name.trim().slice(0, 24), spec: { ...d.spec }, look: { ...d.look }, price: d.price, devCost: pl.devCost, polish: pol, bonus: polishBonus(d.kind, pol), days: pl.days, left: pl.days, bugs: Math.max(1, Math.round(pl.bugs * rr(0.8, 1.2))), fixed: 0, ready: false });
+  S.devs.push({ id: S.nextId++, kind: d.kind, name: d.name.trim().slice(0, 24), spec: { ...d.spec }, look: { ...d.look }, build: d.kind === 'mech' ? JSON.parse(JSON.stringify(mechBuild(d))) : undefined, reissue: d.reissue || 0, price: d.price, devCost: pl.devCost, polish: pol, bonus: polishBonus(d.kind, pol), days: pl.days, left: pl.days, bugs: Math.max(1, Math.round(pl.bugs * rr(0.8, 1.2))), fixed: 0, ready: false });
   news(`「${d.name}」の開発を始めた（${KINDS[d.kind].short}・${pl.days}日）`);
   return '';
 }
@@ -1329,7 +1519,7 @@ function launch(devId, price, adId) {
   const v = S.devs[i], ad = ADS.find(a => a.id === adId) || ADS[0];
   if (S.money < ad.cost) return null;
   S.devs.splice(i, 1); S.money -= ad.cost;
-  const p = { id: v.id, kind: v.kind, name: v.name, spec: v.spec, look: v.look, polish: v.polish || 0, bonus: v.bonus || 0, price: Math.max(1, Math.round(price)), launchDay: S.day, ad: ad.id, adBoost: ad.boost, units: 0, revenue: 0, profit: 0, active: true, weekUnits: 0, lastWeek: 0, devCost: v.devCost };
+  const p = { id: v.id, kind: v.kind, name: v.name, spec: v.spec, look: v.look, build: v.build, reissue: v.reissue || 0, polish: v.polish || 0, bonus: v.bonus || 0, price: Math.max(1, Math.round(price)), launchDay: S.day, ad: ad.id, adBoost: ad.boost, units: 0, revenue: 0, profit: 0, active: true, weekUnits: 0, lastWeek: 0, devCost: v.devCost };
   const same = S.products.some(o => o.active && o.kind === p.kind && JSON.stringify(o.spec) === JSON.stringify(p.spec));
   p.samePen = same ? 1.4 : 0;
   const q = perfP(p) / expected(p.kind), perf = perfScore(q), des = designScore(p), val = valueScore(fairPrice(p, q), p.price);
@@ -1339,16 +1529,26 @@ function launch(devId, price, adId) {
   S.products.push(p); S.stats.launched++; S.stats.best = Math.max(S.stats.best, p.review);
   S.brand = clamp(S.brand + (p.review - 6.2) * 0.03 + ad.brand, 0.4, 1.8);
   news(`「${p.name}」発売！ レビュー ${p.review.toFixed(1)} 点`);
+  if (p.reissue) news(`名品の復刻版「${p.name}」に行列ができた！`);
   return p;
 }
 function reviewComments(p, q, perf, des, val, same) {
   const best = SPECS[p.kind].map(g => optOf(p.kind, g.key, p.spec[g.key])).sort((a, b) => b.lv - a.lv)[0];
-  const who = () => pick(REVIEWERS), out = [];
+  const who = () => pick(['文具ライター', '文具好きの学生', '文具ブロガー']), out = [];
   if (same) out.push([who(), '前の製品とほとんど同じ。新しさがほしかった。']);
   if (perf >= 8.3) out.push([who(), `「${best.name}」が効いていて、使い心地が段ちがい。今いちばんの${KINDS[p.kind].short}かも。`]);
   else if (perf >= 6.5) out.push([who(), `ちゃんと使える${KINDS[p.kind].short}。「${best.name}」もいい感じ。`]);
   else if (perf >= 4.5) out.push([who(), 'ふつうに使えるけれど、ほかの会社の新製品にくらべると少し古い感じ。']);
   else out.push([who(), '性能はひと昔前。もっと研究して、新しい技術を入れてほしい。']);
+  if (p.kind === 'mech') {   // 重さ・重心・グリップの感想
+    const m = mechStats(p); let t = `${m.W.toFixed(1)}g、重心は先から${Math.round(m.cog)}mm（全長の${m.cogPct.toFixed(0)}%）。`;
+    t += m.cogPct <= 45 ? '重心が低くて先が安定し、線がぶれない。' : m.cogPct >= 50 ? '重心が高めで、先が少しふらつく。' : 'バランスはふつう。';
+    t += m.gripQ >= 0.9 ? 'グリップがしっかり指にかかる。' : m.gripQ < 0.45 ? 'グリップがすべりやすい。' : '';
+    if (m.lux >= 0.6) t += '金属や木の質感が手に心地よい。';
+    if (m.notes.length) t += m.notes[0] + '。';
+    out.push(['製図の先生', t]);
+  }
+  if (p.reissue) out.push(['文具ブロガー', 'あの名品が帰ってきた！ 昔使っていた人もなつかしがって買いそう。']);
   const cats = lookCats(p);
   if (cats.has(S.trend.id)) out.push(['デザイン雑誌', `今はやりの「${TRENDS[S.trend.id]}」で、見た目がとても今っぽい！`]);
   else if (des >= 7) out.push(['デザイン雑誌', 'こだわりのデザインで、持っているとうれしくなる。']);
@@ -1357,7 +1557,7 @@ function reviewComments(p, q, perf, des, val, same) {
   if (val >= 7.5) out.push(['事務用品のバイヤー', 'この値段でこの品質はお買い得。よく売れそう。']);
   else if (val < 4) out.push(['事務用品のバイヤー', 'ちょっと高すぎる。値段を下げると手に取る人が増えそう。']);
   else out.push(['事務用品のバイヤー', '値段は相場どおり。お店にも置きやすい。']);
-  return out.slice(0, 3);
+  return out.slice(0, p.kind === 'mech' ? 4 : 3);
 }
 
 // ---------- 研究 ----------
@@ -1441,8 +1641,12 @@ function dayTick() {
   if (date.getMonth() === 10 && date.getDate() === 20) news('年末の贈り物シーズン。万年筆やいいペンがよく売れます（12月）');
   checkGoals();
 }
+// 名品：評価が高くて販売を終えた製品は、1年たつと中古で高くなる（高級なものほど）
+const legendOk = p => !p.active && (p.review >= 8.8 || (p.review >= 8.2 && luxOf(p) >= 0.4));
+const resaleMult = p => Math.round((1.5 + Math.max(0, p.review - 8) * 2.2 + luxOf(p) * 3) * (1 + Math.min(1.5, (S.day - (p.offDay || S.day)) / 365 * 0.25)) * 10) / 10;
 function weekTick() {
   for (const p of S.products) { p.lastWeek = p.weekUnits; p.weekUnits = 0; }
+  for (const p of S.products) if (legendOk(p) && !p.legend && S.day - (p.offDay || S.day) >= 365) { p.legend = true; S.brand = clamp(S.brand + 0.03, 0.4, 1.8); news(`販売を終えた「${p.name}」が中古市場で定価の${resaleMult(p)}倍に！ 名品として話題に`); UI.toast(`「${p.name}」が名品になった！ 復刻版も作れる`, 'gold'); }
   // ブランド：シェアと最近のレビューで、ゆっくり動く
   const shares = KIND_IDS.map(k => (S.share[k] ? S.share[k].me : 0)), avg = shares.reduce((a, b) => a + b, 0) / KIND_IDS.length;
   const target = 0.55 + 0.85 * clamp(avg * 3, 0, 1) + Math.min(0.25, S.stats.launched * 0.015) + 0.1 * S.rivals.filter(r => r.owned).length;
@@ -1567,7 +1771,7 @@ const UI = {
   newsTick(t) { this.newsQ.push(t); if (this.newsQ.length > 5) this.newsQ.shift(); },
   // ---------- シート ----------
   open(tab) {
-    this.tab = tab; $('sheet').classList.toggle('on', !!tab);
+    this.tab = tab; $('sheet').classList.toggle('on', !!tab); document.body.classList.toggle('sheeton', !!tab);
     for (const b of $('nav').children) b.classList.toggle('on', b.dataset.tab === tab);
     if (tab) { $('shBody').scrollTop = 0; this.render(); }
   },
@@ -1620,8 +1824,8 @@ const UI = {
       const sc = currentScore(p);
       h += `<div class="card"><div class="prod"><img alt="" src="${productThumb(p)}"><div><div class="row sb"><h3 style="margin:0">${esc(p.name)}</h3><span class="pill">${KINDS[p.kind].short}</span></div>
         <div class="row" style="gap:8px;margin:3px 0"><span class="stars">${stars10(p.review)}</span><b>${p.review.toFixed(1)}</b><span class="muted">いまの評価 ${sc.R.toFixed(1)}</span></div>
-        <div class="kv"><span>値段</span><b>${yen(p.price)}（原価 ${yen(costOf(p))}）</b><span>先週</span><b>${num(p.lastWeek)} こ</b><span>売れた数</span><b>${num(p.units)} こ</b><span>利益</span><b>${yen(p.profit - (p.devCost || 0))}</b></div></div></div>
-        <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">${p.active ? `<button class="btn sub small" data-act="priceM" data-id="${p.id}" type="button">値段を変える</button><button class="btn sub small" data-act="stop" data-id="${p.id}" type="button">販売終了</button>` : `<button class="btn sub small" data-act="resume" data-id="${p.id}" type="button">また売る</button>`}<button class="btn small" data-act="copy" data-id="${p.id}" type="button">このデザインで新しく作る</button></div></div>`;
+        <div class="kv"><span>値段</span><b>${yen(p.price)}（原価 ${yen(costOf(p))}）</b><span>先週</span><b>${num(p.lastWeek)} こ</b><span>売れた数</span><b>${num(p.units)} こ</b><span>利益</span><b>${yen(p.profit - (p.devCost || 0))}</b>${p.kind === 'mech' ? (() => { const m = mechStats(p); return `<span>重さ・重心</span><b>${m.W.toFixed(1)}g・${m.cogPct.toFixed(0)}%</b>`; })() : ''}${p.legend ? `<span>中古の相場</span><b style="color:#9a7316">${yen(p.price * resaleMult(p))}</b>` : ''}</div>${p.legend ? '<span class="pill gold">名品</span>' : ''}${p.reissue ? '<span class="pill gold">復刻版</span>' : ''}</div></div>
+        <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">${p.active ? `<button class="btn sub small" data-act="priceM" data-id="${p.id}" type="button">値段を変える</button><button class="btn sub small" data-act="stop" data-id="${p.id}" type="button">販売終了</button>` : `<button class="btn sub small" data-act="resume" data-id="${p.id}" type="button">また売る</button>${p.legend ? `<button class="btn gold small" data-act="reissue" data-id="${p.id}" type="button">復刻版を作る</button>` : ''}`}<button class="btn small" data-act="copy" data-id="${p.id}" type="button">このデザインで新しく作る</button></div></div>`;
     }
     return h;
   },
@@ -1719,9 +1923,9 @@ const UI = {
     if (a === 'launchM') return this.launchModal(id);
     if (a === 'fixRP') { const v = S.devs.find(x => x.id === id); if (v && fixWithRP(v)) this.toast('RPを使って不具合を直した', 'good'); }
     else if (a === 'priceM') return this.priceModal(id);
-    else if (a === 'stop') { const p = S.products.find(x => x.id === id); if (p) { p.active = false; this.toast(`「${p.name}」の販売を終えた`); } }
+    else if (a === 'stop') { const p = S.products.find(x => x.id === id); if (p) { p.active = false; p.offDay = S.day; this.toast(`「${p.name}」の販売を終えた`); } }
     else if (a === 'resume') { const p = S.products.find(x => x.id === id); if (p) p.active = true; }
-    else if (a === 'copy') { const p = S.products.find(x => x.id === id); if (p) return this.openStudio({ kind: p.kind, spec: { ...p.spec }, look: { ...p.look }, name: p.name.replace(/( \d+)?$/, '') + ' 2', price: p.price }); }
+    else if (a === 'copy') { const p = S.products.find(x => x.id === id); if (p) return this.openStudio({ kind: p.kind, spec: { ...p.spec }, look: { ...p.look }, build: p.build, name: p.name.replace(/( \d+)?$/, '') + ' 2', price: p.price }); }
     else if (a === 'research') { if (startResearch(b.dataset.id)) { this.toast(`研究を始めた：${RES_BY_ID[b.dataset.id].name}`); } }
     else if (a === 'hire') { const why = hire(id); if (why) this.toast(why, 'bad'); else { AU.coin(); } }
     else if (a === 'fire') { const m = S.staff.find(x => x.id === id); if (m) return this.ask(`${m.name}さん（${ROLES[m.role].name}）にやめてもらいますか？`, () => { fire(id); this.toast(`${m.name}さんがやめた`); }); }
@@ -1738,9 +1942,18 @@ const UI = {
     else if (a === 'stTab') { this.studio.tab = b.dataset.v; $('stBody').scrollTop = 0; this.renderStudio(); return; }
     else if (a === 'spec') { const d = this.studio.d; d.spec[b.dataset.k] = b.dataset.v; this.studio.changed(); return; }
     else if (a === 'look') { const d = this.studio.d; d.look[b.dataset.k] = b.dataset.v; this.studio.changed(); return; }
+    else if (a === 'mpre') { const d = this.studio.d, pr = MECH_PRESETS.find(x => x.id === b.dataset.v); if (pr) { d.build = Object.assign(JSON.parse(JSON.stringify(DEF_BUILD)), JSON.parse(JSON.stringify(pr.b))); for (const [k, v] of Object.entries(pr.spec || {})) { const o = optOf('mech', k, v); if (o && resDone(o.req)) d.spec[k] = v; } this.toast(`「${pr.name}」の型にした${mechLocks(d).length ? '（まだ研究していない部品があります）' : ''}`); } this.studio.changed(); return; }
+    else if (['mmat', 'mfin', 'msec', 'mwin', 'mcog', 'mgd', 'mgl', 'mtog'].includes(a)) {
+      const bd = mechBuild(this.studio.d), v = b.dataset.v;
+      if (a === 'mmat') { bd.mat[b.dataset.k] = v; if (!GRIP_FIN[bd.fin].ok(MECH_MATS[bd.mat.grip])) bd.fin = MECH_MATS[bd.mat.grip].soft ? 'dots' : 'plain'; if (bd.mat.clip === 'none') bd.clipret = false; }
+      else if (a === 'mfin') bd.fin = v; else if (a === 'msec') bd.sec = v; else if (a === 'mwin') bd.win = v; else if (a === 'mcog') bd.cog = v;
+      else if (a === 'mgd') bd.gripD = +v; else if (a === 'mgl') bd.gripL = +v; else if (a === 'mtog') bd[b.dataset.k] = !bd[b.dataset.k];
+      this.studio.changed(); return;
+    }
+    else if (a === 'reissue') { const p = S.products.find(x => x.id === id); if (p) return this.openStudio({ kind: p.kind, spec: { ...p.spec }, look: { ...p.look }, build: p.build, name: p.name.replace(/ 復刻版$/, '') + ' 復刻版', price: Math.round(p.price * 1.2), reissue: 0.9 }); }
     else if (a === 'polish') { const d = this.studio.d; d.polish = +b.dataset.v; d.bonus = polishBonus(d.kind, d.polish); this.studio.changed(); return; }
     else if (a === 'randName') { this.studio.d.name = randName(this.studio.d.kind); this.renderStudio(); return; }
-    else if (a === 'recPrice') { this.studio.d.price = recPrice(this.studio.d); this.renderStudio(); return; }
+    else if (a === 'recPrice') { this.studio.d.price = recPrice(this.studio.d); this.studio.d.priceAuto = true; this.renderStudio(); return; }
     else if (a === 'startDev') { const why = startDev(this.studio.d); if (why) { this.toast(why, 'bad'); AU.bad(); } else { AU.coin(); this.toast(`「${this.studio.d.name}」の開発を始めた！`, 'good'); this.closeStudio(); this.open('dev'); } return; }
     // モーダル
     else if (a === 'ad') { this.modalState.ad = b.dataset.v; this.renderLaunch(); return; }
@@ -1758,26 +1971,28 @@ const UI = {
     const t = e.target;
     if (this.studio && t.dataset.look) { this.studio.d.look[t.dataset.look] = t.value; this.studio.changed(t.type === 'text'); return; }
     if (this.studio && t.id === 'stName') { this.studio.d.name = t.value; return; }
-    if (this.studio && (t.id === 'stPrice' || t.id === 'stPriceR')) { const v = Math.max(1, Math.round(+t.value || 1)); this.studio.d.price = v; if (t.id === 'stPriceR') $('stPrice').value = v; else $('stPriceR').value = v; this.studioMeter(); this.studioFoot(); return; }
+    if (this.studio && t.dataset.mb) { const bd = mechBuild(this.studio.d), k = t.dataset.mb; bd[k] = +t.value; const lab = $({ L: 'mbL', D: 'mbD', clipTop: 'mbC' }[k]); if (lab) lab.textContent = k === 'D' ? (+t.value).toFixed(1) : t.value; this.studio.changed(true); this.studioFoot(); return; }
+    if (this.studio && (t.id === 'stPrice' || t.id === 'stPriceR')) { const v = Math.max(1, Math.round(+t.value || 1)); this.studio.d.price = v; this.studio.d.priceAuto = false; if (t.id === 'stPriceR') $('stPrice').value = v; else $('stPriceR').value = v; this.studioMeter(); this.studioFoot(); return; }
     if (this.modalOpen && (t.id === 'mPrice' || t.id === 'mPriceR')) { const v = Math.max(1, Math.round(+t.value || 1)); this.modalState.price = v; if (t.id === 'mPriceR') $('mPrice').value = v; else $('mPriceR').value = v; const ev = $('mPriceEval'); if (ev) ev.innerHTML = this.priceEval(this.modalState.d, v); }
   },
   // ---------- 開発スタジオ ----------
   openStudio(init) {
     const k = init.kind, spec = init.spec || {};
     for (const g of SPECS[k]) if (!spec[g.key]) { let o = g.opts[0]; for (const x of g.opts) if (resDone(x.req) && x.lv > o.lv) o = x; spec[g.key] = o.id; }   // 研究ずみでいちばん性能のよいもの
-    const d = { kind: k, spec, look: Object.assign({ ...DEF_LOOK[k] }, init.look || {}), name: init.name || randName(k), price: 0, polish: 0, bonus: 0 };
-    d.price = init.price || recPrice(d);
+    const d = { kind: k, spec, look: Object.assign({ ...DEF_LOOK[k] }, init.look || {}), name: init.name || randName(k), price: 0, polish: 0, bonus: 0, reissue: init.reissue || 0 };
+    if (k === 'mech') d.build = JSON.parse(JSON.stringify(init.build || DEF_BUILD));
+    d.price = init.price || recPrice(d); d.priceAuto = !init.price;   // 自分で値段を変えるまでは、おすすめの値段についていく
     this.open(null);
-    this.studio = { d, tab: 'spec', dirty: true, t: 0, changed: (soft) => { this.studio.dirty = !soft; this.studio.rebuild = true; if (soft) { this.studioMeter(); } } };
+    this.studio = { d, tab: 'spec', dirty: true, t: 0, changed: (soft) => { if (d.priceAuto) d.price = recPrice(d); this.studio.dirty = !soft; this.studio.rebuild = true; if (soft) { this.studioMeter(); } } };
     this.studio.rebuild = true;
-    $('studio').classList.remove('hidden'); document.body.classList.add('studio'); $('stTitle').textContent = `新しい${KINDS[k].name}`;
+    $('studio').classList.remove('hidden'); document.body.classList.add('studio'); $('stTitle').textContent = d.reissue ? `復刻版の${KINDS[k].name}` : `新しい${KINDS[k].name}`;
     STUDIO.zoom = 1; STUDIO.yaw = -0.5; STUDIO.spin = true;
     this.renderStudio();
   },
   closeStudio() { this.studio = null; $('studio').classList.add('hidden'); document.body.classList.remove('studio'); },
   renderStudio() {
     const st = this.studio; if (!st) return; const d = st.d, k = d.kind;
-    $('stTabs').innerHTML = [['spec', '性能'], ['look', '見た目'], ['name', '名前と値段']].map(([v, n]) => `<button type="button" class="${st.tab === v ? 'on' : ''}" data-act="stTab" data-v="${v}">${n}</button>`).join('');
+    $('stTabs').innerHTML = (k === 'mech' ? [['spec', '性能'], ['build', '設計'], ['look', '見た目'], ['name', '名前と値段']] : [['spec', '性能'], ['look', '見た目'], ['name', '名前と値段']]).map(([v, n]) => `<button type="button" class="${st.tab === v ? 'on' : ''}" data-act="stTab" data-v="${v}">${n}</button>`).join('');
     const body = $('stBody'), sc = body.scrollTop; let h = '';
     if (st.tab === 'spec') {
       h += `<div class="grp">仕上げ（研究ポイントで性能を上げる）</div><div class="chips">${POLISH.map(lv => { const c = polishRP(k, lv); return `<button type="button" class="chip ${(d.polish || 0) === lv ? 'on' : ''} ${S.rp < c ? 'lock' : ''}" ${S.rp >= c ? `data-act="polish" data-v="${lv}"` : ''}>${lv ? '+' + lv * 5 + '%' : 'なし'}<small>${lv ? c + ' RP・性能 +' + polishBonus(k, lv) : 'RPを使わない'}</small></button>`; }).join('')}</div>`;
@@ -1790,6 +2005,8 @@ const UI = {
         }
         h += '</div>';
       }
+    } else if (st.tab === 'build') {
+      h += this.studioBuild(d);
     } else if (st.tab === 'look') {
       for (const f of LOOKS[k]) {
         if (f.when && !f.when(d)) continue;
@@ -1813,7 +2030,53 @@ const UI = {
   },
   studioMeter() {
     const d = this.studio.d, P = perfP(d), ex = expected(d.kind), q = P / ex, des = designScore(d), c = costOf(d);
-    $('pvMeter').innerHTML = `性能 <b>${P}</b>（期待 ${ex.toFixed(0)}）<div class="bar ${q >= 1 ? 'g' : q >= 0.85 ? '' : 'r'}"><i style="width:${Math.min(100, q / 1.4 * 100)}%"></i><u style="left:${100 / 1.4}%"></u></div>デザイン <b>${des.toFixed(1)}</b><div class="bar o"><i style="width:${des * 10}%"></i></div>原価 <b>${yen(c)}</b>　値段 <b>${yen(d.price)}</b>`;
+    $('pvMeter').innerHTML = `性能 <b>${P}</b>（期待 ${ex.toFixed(0)}）<div class="bar ${q >= 1 ? 'g' : q >= 0.85 ? '' : 'r'}"><i style="width:${Math.min(100, q / 1.4 * 100)}%"></i><u style="left:${100 / 1.4}%"></u></div>デザイン <b>${des.toFixed(1)}</b><div class="bar o"><i style="width:${des * 10}%"></i></div>原価 <b>${yen(c)}</b>　値段 <b>${yen(d.price)}</b>${d.kind === 'mech' ? (() => { const m = mechStats(d); return `<br>重さ <b>${m.W.toFixed(1)}g</b>　重心 <b>${m.cogPct.toFixed(1)}%</b>`; })() : ''}`;
+    const rd = $('mbRead'); if (rd && d.kind === 'mech') rd.innerHTML = this.buildReadout(d);
+  },
+  // ---------- シャーペンの設計 ----------
+  buildReadout(d) {
+    const b = mechBuild(d), m = mechStats(d), st5 = v => { const n = Math.round(clamp(v, 0, 1) * 5); return '★'.repeat(n) + '☆'.repeat(5 - n); };
+    return `<div class="kv"><span>重さ</span><b>${m.W.toFixed(1)} g</b><span>重心</span><b>先から ${Math.round(m.cog)} mm（全長の ${m.cogPct.toFixed(1)}%）</b><span>書きやすさ</span><b class="stars">${st5(m.ergo)}</b><span>機能</span><b class="stars">${st5(m.func / 8)}</b><span>高級感</span><b class="stars">${st5(m.lux)}</b><span>学生の人気</span><b class="stars">${st5(m.seg.stu / 0.55)}</b><span>社会人の人気</span><b class="stars">${st5(m.seg.adu / 0.6)}</b><span>製図・プロの人気</span><b class="stars">${st5(m.seg.pro / 0.9)}</b></div>${m.notes.length ? `<div class="muted" style="color:var(--red);margin-top:6px">⚠ ${m.notes.map(esc).join('<br>⚠ ')}</div>` : ''}${this.balanceSvg(b, m, d)}`;
+  },
+  // 横から見た図：左が先。部品の素材の色、クリップ、硬度表示窓、重心（▲）
+  balanceSvg(b, m, d) {
+    const L = b.L, sx = 300 / (L + 8), X = x => (x + 6) * sx, cy = 30, R = b.D / 2, Rg = R + b.gripD / 2, ys = 2.1;
+    const col = { resin: d.look.body, clear: '#cfe6f2', rubber: d.look.grip, silicone: d.look.grip, alu: '#c3c8cf', brass: '#d6b25e', sus: '#b9bec5', wood: (WOOD_TONES[d.look.woodTone] || WOOD_TONES.maple)[1], wood2: (WOOD_TONES[d.look.woodTone] || WOOD_TONES.maple)[2] };
+    const c = k => (k === 'grip' && ['resin', 'alu'].includes(b.mat.grip) ? (b.mat.grip === 'alu' ? '#c3c8cf' : d.look.grip) : col[b.mat[k]] || '#ccc');
+    const rect = (x0, x1, r, fill) => `<rect x="${X(x0)}" y="${cy - r * ys}" width="${X(x1) - X(x0)}" height="${r * ys * 2}" rx="2" fill="${fill}" stroke="rgba(0,0,0,.35)" stroke-width=".8"/>`;
+    const pipe = d.spec.tip === 't1' ? 4 : 3, bx0 = MECH_TIP + b.gripL;
+    let g = `<rect x="${X(-pipe)}" y="${cy - 0.6}" width="${X(0) - X(-pipe)}" height="1.2" fill="#888"/>`;
+    g += `<polygon points="${X(0)},${cy - 1.2 * ys} ${X(MECH_TIP)},${cy - (Rg - 0.4) * ys} ${X(MECH_TIP)},${cy + (Rg - 0.4) * ys} ${X(0)},${cy + 1.2 * ys}" fill="${c('tip')}" stroke="rgba(0,0,0,.35)" stroke-width=".8"/>`;
+    g += rect(MECH_TIP, bx0, Rg, c('grip')) + rect(bx0, L - MECH_KNOCK, R, c('barrel')) + rect(L - MECH_KNOCK, L, 2.4, c('knock'));
+    if (b.fin === 'knurlF' || b.fin === 'knurlC') for (let x = MECH_TIP + 2; x < bx0 - 1; x += b.fin === 'knurlF' ? 1.6 : 2.6) g += `<line x1="${X(x)}" y1="${cy - Rg * ys}" x2="${X(x + 1.2)}" y2="${cy + Rg * ys}" stroke="rgba(0,0,0,.25)" stroke-width=".7"/>`;
+    if (b.win !== 'none') { const wx = mechWinX(b); g += `<rect x="${X(wx) - 5}" y="${cy - 3}" width="10" height="6" fill="#fff" stroke="#333" stroke-width=".7"/><text x="${X(wx)}" y="${cy + 2}" font-size="5" text-anchor="middle" fill="#111">HB</text>`; }
+    if (b.mat.clip !== 'none') { const r0 = L - b.clipTop; g += `<rect x="${X(r0 - MECH_CLIP)}" y="${cy - R * ys - 4}" width="${X(r0) - X(r0 - MECH_CLIP)}" height="2.6" rx="1.3" fill="${b.mat.clip === 'resin' ? d.look.clipColor : '#aab0b8'}" stroke="rgba(0,0,0,.4)" stroke-width=".6"/>`; }
+    g += `<polygon points="${X(m.cog)},${cy + R * ys + 3} ${X(m.cog) - 5},${cy + R * ys + 11} ${X(m.cog) + 5},${cy + R * ys + 11}" fill="#d9493e"/><text x="${X(m.cog)}" y="${cy + R * ys + 19}" font-size="7.5" text-anchor="middle" fill="#d9493e">重心 ${Math.round(m.cog)}mm</text>`;
+    g += `<text x="${X(-pipe)}" y="10" font-size="7" fill="#6f6a60">← 先</text><text x="${X(L)}" y="10" font-size="7" text-anchor="end" fill="#6f6a60">ノック →</text>`;
+    return `<svg viewBox="0 0 310 64" style="width:100%;height:auto;margin-top:8px;background:#fff;border-radius:10px;border:1px solid var(--line)">${g}</svg>`;
+  },
+  studioBuild(d) {
+    const b = mechBuild(d), M = MECH_MATS, lock = r => !!r && !resDone(r);
+    const chip = (act, k, v, on, name, small, locked) => `<button type="button" class="chip ${on ? 'on' : ''} ${locked ? 'lock' : ''}" ${locked ? '' : `data-act="${act}" data-k="${k}" data-v="${v}"`}>${name}${small ? `<small>${small}</small>` : ''}</button>`;
+    let h = `<div class="card" id="mbRead" style="margin-top:8px">${this.buildReadout(d)}</div>`;
+    h += `<div class="grp">参考の型（有名なシャーペンの特徴をもとにした出発点）</div><div class="chips">${MECH_PRESETS.map(p => chip('mpre', '', p.id, false, esc(p.name), esc(p.note))).join('')}</div>`;
+    h += `<div class="grp">寸法</div><div class="muted">全長 <b id="mbL">${b.L}</b> mm</div><input type="range" min="136" max="152" step="1" value="${b.L}" data-mb="L">`;
+    h += `<div class="muted">軸の太さ <b id="mbD">${b.D.toFixed(1)}</b> mm</div><input type="range" min="7.5" max="11.5" step="0.1" value="${b.D}" data-mb="D">`;
+    h += `<div class="muted" style="margin-top:6px">グリップの太さ（軸とのちがい）</div><div class="chips">${[-0.5, 0, 0.5, 1, 1.5].map(v => chip('mgd', '', v, b.gripD === v, (v > 0 ? '+' : v < 0 ? '−' : '±') + Math.abs(v) + 'mm', '')).join('')}</div>`;
+    h += `<div class="muted" style="margin-top:6px">グリップの長さ</div><div class="chips">${[24, 30, 34, 40].map(v => chip('mgl', '', v, b.gripL === v, v + 'mm', '')).join('')}</div>`;
+    h += `<div class="muted" style="margin-top:6px">軸の断面</div><div class="chips">${Object.entries(MECH_SECS).map(([k, v]) => chip('msec', '', k, b.sec === k, v.name, v.roll ? 'ころがりにくい' : '', lock(v.req))).join('')}</div>`;
+    h += `<div class="grp">部品ごとの素材（重さと重心が変わる）</div>`;
+    for (const [pk, P] of Object.entries(MECH_PARTS)) {
+      h += `<div class="muted" style="margin-top:6px">${P.name}</div><div class="chips">${P.mats.map(mk => { const m = M[mk], lk = lock(m.req) && !(P.free || []).includes(mk); return chip('mmat', pk, mk, b.mat[pk] === mk, m.name, mk === 'none' ? '' : `${m.dens} g/cm³${lk ? '・🔒' : ''}`, lk); }).join('')}</div>`;
+    }
+    const gm = M[b.mat.grip];
+    h += `<div class="grp">グリップの加工</div><div class="chips">${Object.entries(GRIP_FIN).filter(([, f]) => f.ok(gm)).map(([k, f]) => chip('mfin', '', k, b.fin === k, f.name, `にぎりやすさ ${Math.round(f.q(gm) * 100)}`, lock(f.req))).join('')}</div>`;
+    h += `<div class="grp">クリップの位置</div>${b.mat.clip === 'none' ? '<div class="muted">クリップなし（上の素材で選べる）</div>' : `<div class="muted">上のはしから <b id="mbC">${b.clipTop}</b> mm</div><input type="range" min="14" max="80" step="1" value="${b.clipTop}" data-mb="clipTop">`}`;
+    h += `<div class="grp">硬度表示窓の位置</div><div class="chips">${Object.entries(MECH_WIN).map(([k, n]) => chip('mwin', '', k, b.win === k, n, '', k !== 'none' && lock('r_hwin'))).join('')}</div>`;
+    h += `<div class="grp">重心のおもり</div><div class="chips">${Object.entries(MECH_COG).map(([k, c]) => chip('mcog', '', k, b.cog === k, c.name, c.mass ? `+${c.mass}g` : '', lock(c.req))).join('')}</div>`;
+    h += `<div class="grp">機能</div><div class="chips">${chip('mtog', 'cushion', '', b.cushion, '芯クッション', b.cushion ? 'あり' : 'なし', lock('r_cushion'))}${chip('mtog', 'clipret', '', b.clipret, 'クリップでパイプ収納', b.clipret ? 'あり' : 'なし', lock('r_clipret') || b.mat.clip === 'none')}</div>`;
+    h += `<div class="muted" style="margin-top:10px;line-height:1.6">重心は先から全長の45%くらいより下だと、先が安定して製図をする人に好まれます。学生は軽め（10〜14g）とやわらかいグリップ、社会人は金属や木の高級感が好き。クリップが下すぎると指に当たり、硬度表示窓をクリップの下にするとかくれます。</div>`;
+    return h;
   },
   studioFoot() {
     const d = this.studio.d, pl = devPlan(d), why = canStartDev(d);
@@ -1985,7 +2248,7 @@ async function boot() {
   requestAnimationFrame(frame);
 }
 window.__BG = { get S() { return S; }, set S(v) { S = v; }, step(days) { for (let i = 0; i < days && !S.over; i++) dayTick(); }, THREE, renderer, UI, OFFICE, STUDIO, GAMEFLOW, AU,
-  startDev, launch, startResearch, hire, fire, polishRP, polishBonus, buyEquip, moveOffice, expand, buyout, rerollCands, devPlan, costOf, expected, perfP, recPrice, currentScore, designScore, kindDemand, productThumb, buildProduct, save, loadSave, newState,
+  startDev, launch, startResearch, hire, fire, polishRP, polishBonus, mechStats, mechBuild, MECH_PRESETS, DEF_BUILD, buyEquip, moveOffice, expand, buyout, rerollCands, devPlan, costOf, expected, perfP, recPrice, currentScore, designScore, kindDemand, productThumb, buildProduct, save, loadSave, newState,
   KINDS, SPECS, LOOKS, DEF_LOOK, RESEARCH, GOALS, OFFICES, EQUIP };
 boot();
 </script>

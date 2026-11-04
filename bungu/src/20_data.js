@@ -9,7 +9,7 @@ const KINDS = {
   pencil:   { name: 'えんぴつ',   short: 'えんぴつ', base: 42000, segw: { stu: .7, adu: .12, pro: .18 }, e0: 24, slope: 1.15, dev: 200000, days: 10, bugs: 2, work: 1,  unlock: null,   trend: dy => Math.max(0.62, 1 - dy * 0.014) },
   eraser:   { name: '消しゴム',   short: '消しゴム', base: 36000, segw: { stu: .72, adu: .18, pro: .1 }, e0: 22, slope: 1.05, dev: 200000, days: 10, bugs: 2, work: 1,  unlock: null,   trend: () => 1 },
   lead:     { name: 'シャー芯',   short: 'シャー芯', base: 30000, segw: { stu: .62, adu: .26, pro: .12 }, e0: 20, slope: 1.2, dev: 350000, days: 12, bugs: 3, work: 1,  unlock: 'r_mech', trend: dy => 1 + dy * 0.006 },
-  mech:     { name: 'シャープペンシル', short: 'シャーペン', base: 15000, segw: { stu: .6, adu: .25, pro: .15 }, e0: 26, slope: 1.6, dev: 1200000, days: 18, bugs: 5, work: 3,  unlock: 'r_mech', trend: dy => 1 + dy * 0.02 },
+  mech:     { name: 'シャープペンシル', short: 'シャーペン', base: 15000, segw: { stu: .6, adu: .25, pro: .15 }, e0: 34, slope: 1.5, dev: 1200000, days: 18, bugs: 5, work: 3,  unlock: 'r_mech', trend: dy => 1 + dy * 0.02 },
   ball:     { name: 'ボールペン', short: 'ボールペン', base: 60000, segw: { stu: .45, adu: .5, pro: .05 }, e0: 24, slope: 1.7, dev: 900000, days: 16, bugs: 4, work: 1.5, unlock: 'r_ball', trend: dy => 1 + dy * 0.015 },
   fountain: { name: '万年筆',     short: '万年筆', base: 1500, segw: { stu: .1, adu: .7, pro: .2 }, e0: 22, slope: 1.6, dev: 3000000, days: 26, bugs: 8, work: 20, unlock: 'r_fp',   trend: dy => 1 + Math.max(0, dy - 8) * 0.06 },
 };
@@ -45,8 +45,6 @@ const SPECS = {
   mech: [
     { key: 'size', name: '芯の太さ', opts: LEAD_SIZES },
     { key: 'mech', name: '機構', opts: [opt('k0', 'ノック式', 10, 60), opt('k1', 'サイドノック', 13, 75, { req: 'r_m1', seg: { adu: .1 } }), opt('k2', '振って芯を出す', 16, 90, { req: 'r_m2', seg: { stu: .2 } }), opt('k3', '芯が回る機構', 24, 140, { req: 'r_m3', seg: { stu: .15 } }), opt('k4', '芯が折れない機構', 30, 190, { req: 'r_m4', seg: { stu: .2 } }), opt('k5', '自動で芯が出る機構', 36, 260, { req: 'r_m5', seg: { adu: .1, stu: .1 } })] },
-    { key: 'grip', name: 'グリップ', opts: GRIPS },
-    { key: 'body', name: '軸の素材', opts: [opt('plastic', 'プラスチック', 4, 20), opt('clear', '透明プラスチック', 5, 22, { clear: 1 }), opt('alu', 'アルミ', 9, 70, { req: 'r_al', metal: 1, seg: { adu: .15, pro: .15 } }), opt('wood', '木', 9, 80, { req: 'r_wood', woodBody: 1, seg: { adu: .2 } })] },
     { key: 'tip', name: '先端', opts: [opt('t0', 'ふつうのパイプ', 3, 0), opt('t1', '製図用の長いパイプ', 7, 10, { req: 'r_tipd', seg: { pro: .3 } }), opt('t2', 'ひっこむパイプ', 8, 25, { req: 'r_tip', seg: { stu: .1, adu: .1 } })] },
     { key: 'erase', name: '消しゴム', opts: [opt('e0', '小さい消しゴム', 2, 3), opt('e1', '回して出る消しゴム', 5, 12, { req: 'r_twe' })] },
   ],
@@ -75,6 +73,7 @@ const FINISHES = { gloss: 'ツヤ', matte: 'マット', metal: 'メタリック'
 const METALS = { silver: '銀', gold: '金', black: '黒', rose: 'ピンクゴールド' };
 const FONTS = { goth: 'ゴシック', round: '丸文字', mincho: '明朝' };
 const INKS = ['#1a1a1a', '#1f3fa8', '#c8261e', '#2a8a3e', '#e2589a', '#6a3fb8', '#e07a1c', '#2a9db0', '#6b4a2b'];
+const WOOD_TONES = { maple: ['メープル', '#dcb57f', '#a9784a'], walnut: ['ウォルナット', '#6e4a31', '#3e281b'], ebony: ['黒檀', '#2c2522', '#110d0b'], cherry: ['チェリー', '#a8553a', '#6b2e1f'] };
 const LOOKS = {
   pencil: [
     { key: 'body', name: '軸の色', type: 'color' }, { key: 'finish', name: '仕上げ', type: 'sel', opts: FINISHES },
@@ -96,10 +95,13 @@ const LOOKS = {
     { key: 'logo', name: 'ロゴの文字', type: 'text' }, { key: 'logoColor', name: '文字の色', type: 'color' }, { key: 'font', name: '字体', type: 'sel', opts: FONTS },
   ],
   mech: [
-    { key: 'body', name: '軸の色', type: 'color' }, { key: 'finish', name: '仕上げ', type: 'sel', opts: FINISHES },
-    { key: 'pattern', name: '模様', type: 'sel', opts: PATTERNS }, { key: 'pat', name: '模様の色', type: 'color' },
-    { key: 'grip', name: 'グリップの色', type: 'color', when: d => d.spec.grip !== 'none' && d.spec.grip !== 'knurl' },
-    { key: 'metal', name: '金具', type: 'sel', opts: METALS },
+    { key: 'body', name: '軸の色', type: 'color', when: d => { const m = mechBuild(d).mat; return ['resin', 'clear', 'alu'].includes(m.barrel) || ['resin', 'alu'].includes(m.grip); } },
+    { key: 'finish', name: '軸の仕上げ', type: 'sel', opts: FINISHES, when: d => ['resin', 'alu'].includes(mechBuild(d).mat.barrel) },
+    { key: 'pattern', name: '模様', type: 'sel', opts: PATTERNS, when: d => ['resin', 'alu'].includes(mechBuild(d).mat.barrel) }, { key: 'pat', name: '模様の色', type: 'color', when: d => ['resin', 'alu'].includes(mechBuild(d).mat.barrel) },
+    { key: 'grip', name: 'グリップの色', type: 'color', when: d => ['resin', 'rubber', 'silicone', 'alu'].includes(mechBuild(d).mat.grip) },
+    { key: 'woodTone', name: '木の種類', type: 'sel', opts: Object.fromEntries(Object.entries(WOOD_TONES).map(([k, v]) => [k, v[0]])), when: d => Object.values(mechBuild(d).mat).some(m => m === 'wood' || m === 'wood2') },
+    { key: 'metal', name: '金具のめっき', type: 'sel', opts: METALS },
+    { key: 'clipColor', name: 'クリップの色', type: 'color', when: d => mechBuild(d).mat.clip === 'resin' },
     { key: 'logo', name: 'ロゴの文字', type: 'text' }, { key: 'logoColor', name: '文字の色', type: 'color' }, { key: 'font', name: '字体', type: 'sel', opts: FONTS },
   ],
   ball: [
@@ -123,7 +125,7 @@ const DEF_LOOK = {
   pencil: { body: '#2f9e6e', finish: 'gloss', pattern: 'none', pat: '#f6c945', tip: '#f4f1ea', eraser: '#f7b6c8', metal: 'gold', logo: 'BUNGU HB', logoColor: '#d8b25a', font: 'goth' },
   eraser: { body: '#f4f1ea', sleeve: '#2b8fd6', pattern: 'stripe', pat: '#1d1d1f', finish: 'matte', logo: 'ERASER', logoColor: '#f4f1ea', font: 'goth' },
   lead: { body: '#1d1d1f', clear: 'smoke', cap: '#2b8fd6', label: '#f4f1ea', pattern: 'none', pat: '#2b8fd6', logo: 'LEAD', logoColor: '#1d1d1f', font: 'goth' },
-  mech: { body: '#24438f', finish: 'gloss', pattern: 'none', pat: '#f4f1ea', grip: '#1d1d1f', metal: 'silver', logo: 'SHARP 0.5', logoColor: '#f4f1ea', font: 'goth' },
+  mech: { body: '#24438f', finish: 'gloss', pattern: 'none', pat: '#f4f1ea', grip: '#1d1d1f', woodTone: 'maple', metal: 'silver', clipColor: '#24438f', logo: 'SHARP 0.5', logoColor: '#f4f1ea', font: 'goth' },
   ball: { body: '#f4f1ea', finish: 'gloss', pattern: 'none', pat: '#2b8fd6', grip: '#2b8fd6', clip: '#2b8fd6', metal: 'silver', ink: '#1a1a1a', logo: 'SMOOTH', logoColor: '#24438f', font: 'goth' },
   fountain: { body: '#1d1d1f', cap: '#1d1d1f', finish: 'gloss', pattern: 'none', pat: '#d93b2f', metal: 'gold', nibTone: 'gold', ink: '#1f3fa8', logo: 'BUNGU', logoColor: '#d8b25a', font: 'mincho' },
 };
@@ -156,15 +158,22 @@ const RESEARCH = [
   R_('r_lc', 'スライド式ケース', 'lead', 2003, 40, 12, { req: 'r_mech' }), R_('r_l09', '0.9mm の芯', 'lead', 2004, 40, 12, { req: 'r_mech' }), R_('r_l2', '高強度ナノ芯', 'lead', 2009, 140, 24, { req: 'r_l1' }),
   R_('r_lc2', '1本ずつ出せるケース', 'lead', 2010, 110, 20, { req: 'r_lc' }), R_('r_l02', '0.2mm の芯', 'lead', 2014, 220, 30, { req: 'r_l03' }), R_('r_l3', 'なめらか高強度芯', 'lead', 2016, 260, 32, { req: 'r_l2' }),
   // シャーペン
-  R_('r_g1', 'ラバーグリップ', 'mech', 2001, 40, 14, { req: 'r_mech' }), R_('r_tipd', '製図用の長いパイプ', 'mech', 2001, 35, 12, { req: 'r_mech' }), R_('r_m1', 'サイドノック', 'mech', 2002, 50, 16, { req: 'r_mech' }),
-  R_('r_al', 'アルミの軸', 'mech', 2004, 70, 18, { req: 'r_mech' }), R_('r_m2', '振って芯を出す', 'mech', 2005, 90, 20, { req: 'r_m1' }), R_('r_g2', 'シリコングリップ', 'mech', 2006, 90, 20, { req: 'r_g1' }),
+  R_('r_g1', 'ラバーグリップ', 'mech', 2001, 40, 14, { req: 'r_mech', desc: 'シャーペン・ボールペンのラバーのグリップが使える' }), R_('r_tipd', '製図用の長いパイプ', 'mech', 2001, 35, 12, { req: 'r_mech' }), R_('r_m1', 'サイドノック', 'mech', 2002, 50, 16, { req: 'r_mech' }),
+  R_('r_al', 'アルミの部品', 'mech', 2004, 70, 18, { req: 'r_mech', desc: 'シャーペンのアルミの軸・グリップ、ボールペンのアルミ軸が使える' }), R_('r_m2', '振って芯を出す', 'mech', 2005, 90, 20, { req: 'r_m1' }), R_('r_g2', 'シリコングリップ', 'mech', 2006, 90, 20, { req: 'r_g1', desc: 'やわらかいシリコンのグリップが使える（学生に人気）' }),
   R_('r_twe', '回して出る消しゴム', 'mech', 2006, 70, 16, { req: 'r_mech' }), R_('r_tip', 'ひっこむパイプ', 'mech', 2007, 110, 22, { req: 'r_tipd' }), R_('r_m3', '芯が回る機構', 'mech', 2008, 180, 30, { req: 'r_m2' }),
-  R_('r_g3', '金属ローレット', 'mech', 2009, 120, 22, { req: 'r_al' }), R_('r_m4', '芯が折れない機構', 'mech', 2010, 240, 34, { req: 'r_m3' }), R_('r_wood', '木の軸', 'mech', 2011, 140, 24),
+  R_('r_g3', '金属ローレット', 'mech', 2009, 120, 22, { req: 'r_al', desc: '金属のグリップに細かい／粗いローレット（すべり止めの刻み）をつけられる。製図をする人に人気' }), R_('r_m4', '芯が折れない機構', 'mech', 2010, 240, 34, { req: 'r_m3' }), R_('r_wood', '天然木の部品', 'mech', 2004, 100, 22, { desc: 'シャーペンの天然木の軸・グリップ、万年筆の木の軸が使える' }),
   R_('r_m5', '自動で芯が出る機構', 'mech', 2017, 380, 40, { req: 'r_m4' }),
+  R_('r_hwin', '硬度表示窓', 'mech', 2001, 35, 12, { req: 'r_mech', desc: 'シャーペンに芯の濃さを示す窓をつけられる（位置も選べる）。製図をする人に人気' }),
+  R_('r_sus', 'ステンレスの部品', 'mech', 2005, 80, 18, { req: 'r_mech', desc: 'シャーペンのステンレスの口金・グリップ・ノック・クリップ（ばね）が使える' }),
+  R_('r_cushion', '芯クッション', 'mech', 2006, 90, 20, { req: 'r_mech', desc: '強く書くと芯が少し引っこんで折れにくくなる仕組み' }),
+  R_('r_cog', '重心のおもり', 'mech', 2008, 110, 22, { req: 'r_brass', desc: '軸の中に真ちゅうのおもりを入れて、重心を下げたり上げたりできる' }),
+  R_('r_clipret', 'クリップ連動のパイプ収納', 'mech', 2009, 160, 26, { req: 'r_tip', desc: 'クリップをはさむとパイプが引っこむ（胸ポケットに入れても安全）' }),
+  R_('r_wood2', '強化木（積層）の部品', 'mech', 2010, 150, 26, { req: 'r_wood', desc: '樹脂をしみこませた積層の木。重みがあって、木目がきれい' }),
+  R_('r_12', '十二角の軸', 'mech', 2014, 120, 22, { req: 'r_mech', desc: 'ころがりにくく、手になじむ十二角形の軸' }),
   // ボールペン
   R_('r_gel', 'ゲルインク', 'ball', 2000, 40, 16, { req: 'r_ball' }), R_('r_b05', '0.5mm のボール', 'ball', 2001, 35, 12, { req: 'r_ball' }), R_('r_mc', '2色・3色ボールペン', 'ball', 2002, 60, 18, { req: 'r_ball' }),
   R_('r_mc4', '4色ボールペン', 'ball', 2004, 90, 20, { req: 'r_mc' }), R_('r_tw', '回転式', 'ball', 2005, 70, 16, { req: 'r_ball' }), R_('r_lv', '低粘度油性インク', 'ball', 2006, 160, 28, { req: 'r_ball' }),
-  R_('r_fr', '消せるインク', 'ball', 2007, 200, 32, { req: 'r_gel' }), R_('r_b038', '0.38mm のボール', 'ball', 2008, 120, 22, { req: 'r_b05' }), R_('r_brass', '真ちゅうの軸', 'ball', 2008, 120, 20, { req: 'r_ball' }),
+  R_('r_fr', '消せるインク', 'ball', 2007, 200, 32, { req: 'r_gel' }), R_('r_b038', '0.38mm のボール', 'ball', 2008, 120, 22, { req: 'r_b05' }), R_('r_brass', '真ちゅうの部品', 'gen', 2003, 90, 20, { desc: 'シャーペンの真ちゅうの口金・グリップ・軸、ボールペンの真ちゅう軸が使える（重くて高級）' }),
   R_('r_mf', '多機能ペン', 'ball', 2009, 160, 26, { req: 'r_mc4' }), R_('r_qd', '速乾ゲルインク', 'ball', 2012, 220, 30, { req: 'r_gel' }), R_('r_b028', '0.28mm のボール', 'ball', 2014, 200, 30, { req: 'r_b038' }),
   R_('r_pg', 'にじまない顔料ゲル', 'ball', 2017, 300, 34, { req: 'r_qd' }),
   // 万年筆

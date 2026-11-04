@@ -71,7 +71,7 @@ const UI = {
   newsTick(t) { this.newsQ.push(t); if (this.newsQ.length > 5) this.newsQ.shift(); },
   // ---------- シート ----------
   open(tab) {
-    this.tab = tab; $('sheet').classList.toggle('on', !!tab);
+    this.tab = tab; $('sheet').classList.toggle('on', !!tab); document.body.classList.toggle('sheeton', !!tab);
     for (const b of $('nav').children) b.classList.toggle('on', b.dataset.tab === tab);
     if (tab) { $('shBody').scrollTop = 0; this.render(); }
   },
@@ -124,8 +124,8 @@ const UI = {
       const sc = currentScore(p);
       h += `<div class="card"><div class="prod"><img alt="" src="${productThumb(p)}"><div><div class="row sb"><h3 style="margin:0">${esc(p.name)}</h3><span class="pill">${KINDS[p.kind].short}</span></div>
         <div class="row" style="gap:8px;margin:3px 0"><span class="stars">${stars10(p.review)}</span><b>${p.review.toFixed(1)}</b><span class="muted">いまの評価 ${sc.R.toFixed(1)}</span></div>
-        <div class="kv"><span>値段</span><b>${yen(p.price)}（原価 ${yen(costOf(p))}）</b><span>先週</span><b>${num(p.lastWeek)} こ</b><span>売れた数</span><b>${num(p.units)} こ</b><span>利益</span><b>${yen(p.profit - (p.devCost || 0))}</b></div></div></div>
-        <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">${p.active ? `<button class="btn sub small" data-act="priceM" data-id="${p.id}" type="button">値段を変える</button><button class="btn sub small" data-act="stop" data-id="${p.id}" type="button">販売終了</button>` : `<button class="btn sub small" data-act="resume" data-id="${p.id}" type="button">また売る</button>`}<button class="btn small" data-act="copy" data-id="${p.id}" type="button">このデザインで新しく作る</button></div></div>`;
+        <div class="kv"><span>値段</span><b>${yen(p.price)}（原価 ${yen(costOf(p))}）</b><span>先週</span><b>${num(p.lastWeek)} こ</b><span>売れた数</span><b>${num(p.units)} こ</b><span>利益</span><b>${yen(p.profit - (p.devCost || 0))}</b>${p.kind === 'mech' ? (() => { const m = mechStats(p); return `<span>重さ・重心</span><b>${m.W.toFixed(1)}g・${m.cogPct.toFixed(0)}%</b>`; })() : ''}${p.legend ? `<span>中古の相場</span><b style="color:#9a7316">${yen(p.price * resaleMult(p))}</b>` : ''}</div>${p.legend ? '<span class="pill gold">名品</span>' : ''}${p.reissue ? '<span class="pill gold">復刻版</span>' : ''}</div></div>
+        <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">${p.active ? `<button class="btn sub small" data-act="priceM" data-id="${p.id}" type="button">値段を変える</button><button class="btn sub small" data-act="stop" data-id="${p.id}" type="button">販売終了</button>` : `<button class="btn sub small" data-act="resume" data-id="${p.id}" type="button">また売る</button>${p.legend ? `<button class="btn gold small" data-act="reissue" data-id="${p.id}" type="button">復刻版を作る</button>` : ''}`}<button class="btn small" data-act="copy" data-id="${p.id}" type="button">このデザインで新しく作る</button></div></div>`;
     }
     return h;
   },
@@ -223,9 +223,9 @@ const UI = {
     if (a === 'launchM') return this.launchModal(id);
     if (a === 'fixRP') { const v = S.devs.find(x => x.id === id); if (v && fixWithRP(v)) this.toast('RPを使って不具合を直した', 'good'); }
     else if (a === 'priceM') return this.priceModal(id);
-    else if (a === 'stop') { const p = S.products.find(x => x.id === id); if (p) { p.active = false; this.toast(`「${p.name}」の販売を終えた`); } }
+    else if (a === 'stop') { const p = S.products.find(x => x.id === id); if (p) { p.active = false; p.offDay = S.day; this.toast(`「${p.name}」の販売を終えた`); } }
     else if (a === 'resume') { const p = S.products.find(x => x.id === id); if (p) p.active = true; }
-    else if (a === 'copy') { const p = S.products.find(x => x.id === id); if (p) return this.openStudio({ kind: p.kind, spec: { ...p.spec }, look: { ...p.look }, name: p.name.replace(/( \d+)?$/, '') + ' 2', price: p.price }); }
+    else if (a === 'copy') { const p = S.products.find(x => x.id === id); if (p) return this.openStudio({ kind: p.kind, spec: { ...p.spec }, look: { ...p.look }, build: p.build, name: p.name.replace(/( \d+)?$/, '') + ' 2', price: p.price }); }
     else if (a === 'research') { if (startResearch(b.dataset.id)) { this.toast(`研究を始めた：${RES_BY_ID[b.dataset.id].name}`); } }
     else if (a === 'hire') { const why = hire(id); if (why) this.toast(why, 'bad'); else { AU.coin(); } }
     else if (a === 'fire') { const m = S.staff.find(x => x.id === id); if (m) return this.ask(`${m.name}さん（${ROLES[m.role].name}）にやめてもらいますか？`, () => { fire(id); this.toast(`${m.name}さんがやめた`); }); }
@@ -242,9 +242,18 @@ const UI = {
     else if (a === 'stTab') { this.studio.tab = b.dataset.v; $('stBody').scrollTop = 0; this.renderStudio(); return; }
     else if (a === 'spec') { const d = this.studio.d; d.spec[b.dataset.k] = b.dataset.v; this.studio.changed(); return; }
     else if (a === 'look') { const d = this.studio.d; d.look[b.dataset.k] = b.dataset.v; this.studio.changed(); return; }
+    else if (a === 'mpre') { const d = this.studio.d, pr = MECH_PRESETS.find(x => x.id === b.dataset.v); if (pr) { d.build = Object.assign(JSON.parse(JSON.stringify(DEF_BUILD)), JSON.parse(JSON.stringify(pr.b))); for (const [k, v] of Object.entries(pr.spec || {})) { const o = optOf('mech', k, v); if (o && resDone(o.req)) d.spec[k] = v; } this.toast(`「${pr.name}」の型にした${mechLocks(d).length ? '（まだ研究していない部品があります）' : ''}`); } this.studio.changed(); return; }
+    else if (['mmat', 'mfin', 'msec', 'mwin', 'mcog', 'mgd', 'mgl', 'mtog'].includes(a)) {
+      const bd = mechBuild(this.studio.d), v = b.dataset.v;
+      if (a === 'mmat') { bd.mat[b.dataset.k] = v; if (!GRIP_FIN[bd.fin].ok(MECH_MATS[bd.mat.grip])) bd.fin = MECH_MATS[bd.mat.grip].soft ? 'dots' : 'plain'; if (bd.mat.clip === 'none') bd.clipret = false; }
+      else if (a === 'mfin') bd.fin = v; else if (a === 'msec') bd.sec = v; else if (a === 'mwin') bd.win = v; else if (a === 'mcog') bd.cog = v;
+      else if (a === 'mgd') bd.gripD = +v; else if (a === 'mgl') bd.gripL = +v; else if (a === 'mtog') bd[b.dataset.k] = !bd[b.dataset.k];
+      this.studio.changed(); return;
+    }
+    else if (a === 'reissue') { const p = S.products.find(x => x.id === id); if (p) return this.openStudio({ kind: p.kind, spec: { ...p.spec }, look: { ...p.look }, build: p.build, name: p.name.replace(/ 復刻版$/, '') + ' 復刻版', price: Math.round(p.price * 1.2), reissue: 0.9 }); }
     else if (a === 'polish') { const d = this.studio.d; d.polish = +b.dataset.v; d.bonus = polishBonus(d.kind, d.polish); this.studio.changed(); return; }
     else if (a === 'randName') { this.studio.d.name = randName(this.studio.d.kind); this.renderStudio(); return; }
-    else if (a === 'recPrice') { this.studio.d.price = recPrice(this.studio.d); this.renderStudio(); return; }
+    else if (a === 'recPrice') { this.studio.d.price = recPrice(this.studio.d); this.studio.d.priceAuto = true; this.renderStudio(); return; }
     else if (a === 'startDev') { const why = startDev(this.studio.d); if (why) { this.toast(why, 'bad'); AU.bad(); } else { AU.coin(); this.toast(`「${this.studio.d.name}」の開発を始めた！`, 'good'); this.closeStudio(); this.open('dev'); } return; }
     // モーダル
     else if (a === 'ad') { this.modalState.ad = b.dataset.v; this.renderLaunch(); return; }
@@ -262,26 +271,28 @@ const UI = {
     const t = e.target;
     if (this.studio && t.dataset.look) { this.studio.d.look[t.dataset.look] = t.value; this.studio.changed(t.type === 'text'); return; }
     if (this.studio && t.id === 'stName') { this.studio.d.name = t.value; return; }
-    if (this.studio && (t.id === 'stPrice' || t.id === 'stPriceR')) { const v = Math.max(1, Math.round(+t.value || 1)); this.studio.d.price = v; if (t.id === 'stPriceR') $('stPrice').value = v; else $('stPriceR').value = v; this.studioMeter(); this.studioFoot(); return; }
+    if (this.studio && t.dataset.mb) { const bd = mechBuild(this.studio.d), k = t.dataset.mb; bd[k] = +t.value; const lab = $({ L: 'mbL', D: 'mbD', clipTop: 'mbC' }[k]); if (lab) lab.textContent = k === 'D' ? (+t.value).toFixed(1) : t.value; this.studio.changed(true); this.studioFoot(); return; }
+    if (this.studio && (t.id === 'stPrice' || t.id === 'stPriceR')) { const v = Math.max(1, Math.round(+t.value || 1)); this.studio.d.price = v; this.studio.d.priceAuto = false; if (t.id === 'stPriceR') $('stPrice').value = v; else $('stPriceR').value = v; this.studioMeter(); this.studioFoot(); return; }
     if (this.modalOpen && (t.id === 'mPrice' || t.id === 'mPriceR')) { const v = Math.max(1, Math.round(+t.value || 1)); this.modalState.price = v; if (t.id === 'mPriceR') $('mPrice').value = v; else $('mPriceR').value = v; const ev = $('mPriceEval'); if (ev) ev.innerHTML = this.priceEval(this.modalState.d, v); }
   },
   // ---------- 開発スタジオ ----------
   openStudio(init) {
     const k = init.kind, spec = init.spec || {};
     for (const g of SPECS[k]) if (!spec[g.key]) { let o = g.opts[0]; for (const x of g.opts) if (resDone(x.req) && x.lv > o.lv) o = x; spec[g.key] = o.id; }   // 研究ずみでいちばん性能のよいもの
-    const d = { kind: k, spec, look: Object.assign({ ...DEF_LOOK[k] }, init.look || {}), name: init.name || randName(k), price: 0, polish: 0, bonus: 0 };
-    d.price = init.price || recPrice(d);
+    const d = { kind: k, spec, look: Object.assign({ ...DEF_LOOK[k] }, init.look || {}), name: init.name || randName(k), price: 0, polish: 0, bonus: 0, reissue: init.reissue || 0 };
+    if (k === 'mech') d.build = JSON.parse(JSON.stringify(init.build || DEF_BUILD));
+    d.price = init.price || recPrice(d); d.priceAuto = !init.price;   // 自分で値段を変えるまでは、おすすめの値段についていく
     this.open(null);
-    this.studio = { d, tab: 'spec', dirty: true, t: 0, changed: (soft) => { this.studio.dirty = !soft; this.studio.rebuild = true; if (soft) { this.studioMeter(); } } };
+    this.studio = { d, tab: 'spec', dirty: true, t: 0, changed: (soft) => { if (d.priceAuto) d.price = recPrice(d); this.studio.dirty = !soft; this.studio.rebuild = true; if (soft) { this.studioMeter(); } } };
     this.studio.rebuild = true;
-    $('studio').classList.remove('hidden'); document.body.classList.add('studio'); $('stTitle').textContent = `新しい${KINDS[k].name}`;
+    $('studio').classList.remove('hidden'); document.body.classList.add('studio'); $('stTitle').textContent = d.reissue ? `復刻版の${KINDS[k].name}` : `新しい${KINDS[k].name}`;
     STUDIO.zoom = 1; STUDIO.yaw = -0.5; STUDIO.spin = true;
     this.renderStudio();
   },
   closeStudio() { this.studio = null; $('studio').classList.add('hidden'); document.body.classList.remove('studio'); },
   renderStudio() {
     const st = this.studio; if (!st) return; const d = st.d, k = d.kind;
-    $('stTabs').innerHTML = [['spec', '性能'], ['look', '見た目'], ['name', '名前と値段']].map(([v, n]) => `<button type="button" class="${st.tab === v ? 'on' : ''}" data-act="stTab" data-v="${v}">${n}</button>`).join('');
+    $('stTabs').innerHTML = (k === 'mech' ? [['spec', '性能'], ['build', '設計'], ['look', '見た目'], ['name', '名前と値段']] : [['spec', '性能'], ['look', '見た目'], ['name', '名前と値段']]).map(([v, n]) => `<button type="button" class="${st.tab === v ? 'on' : ''}" data-act="stTab" data-v="${v}">${n}</button>`).join('');
     const body = $('stBody'), sc = body.scrollTop; let h = '';
     if (st.tab === 'spec') {
       h += `<div class="grp">仕上げ（研究ポイントで性能を上げる）</div><div class="chips">${POLISH.map(lv => { const c = polishRP(k, lv); return `<button type="button" class="chip ${(d.polish || 0) === lv ? 'on' : ''} ${S.rp < c ? 'lock' : ''}" ${S.rp >= c ? `data-act="polish" data-v="${lv}"` : ''}>${lv ? '+' + lv * 5 + '%' : 'なし'}<small>${lv ? c + ' RP・性能 +' + polishBonus(k, lv) : 'RPを使わない'}</small></button>`; }).join('')}</div>`;
@@ -294,6 +305,8 @@ const UI = {
         }
         h += '</div>';
       }
+    } else if (st.tab === 'build') {
+      h += this.studioBuild(d);
     } else if (st.tab === 'look') {
       for (const f of LOOKS[k]) {
         if (f.when && !f.when(d)) continue;
@@ -317,7 +330,53 @@ const UI = {
   },
   studioMeter() {
     const d = this.studio.d, P = perfP(d), ex = expected(d.kind), q = P / ex, des = designScore(d), c = costOf(d);
-    $('pvMeter').innerHTML = `性能 <b>${P}</b>（期待 ${ex.toFixed(0)}）<div class="bar ${q >= 1 ? 'g' : q >= 0.85 ? '' : 'r'}"><i style="width:${Math.min(100, q / 1.4 * 100)}%"></i><u style="left:${100 / 1.4}%"></u></div>デザイン <b>${des.toFixed(1)}</b><div class="bar o"><i style="width:${des * 10}%"></i></div>原価 <b>${yen(c)}</b>　値段 <b>${yen(d.price)}</b>`;
+    $('pvMeter').innerHTML = `性能 <b>${P}</b>（期待 ${ex.toFixed(0)}）<div class="bar ${q >= 1 ? 'g' : q >= 0.85 ? '' : 'r'}"><i style="width:${Math.min(100, q / 1.4 * 100)}%"></i><u style="left:${100 / 1.4}%"></u></div>デザイン <b>${des.toFixed(1)}</b><div class="bar o"><i style="width:${des * 10}%"></i></div>原価 <b>${yen(c)}</b>　値段 <b>${yen(d.price)}</b>${d.kind === 'mech' ? (() => { const m = mechStats(d); return `<br>重さ <b>${m.W.toFixed(1)}g</b>　重心 <b>${m.cogPct.toFixed(1)}%</b>`; })() : ''}`;
+    const rd = $('mbRead'); if (rd && d.kind === 'mech') rd.innerHTML = this.buildReadout(d);
+  },
+  // ---------- シャーペンの設計 ----------
+  buildReadout(d) {
+    const b = mechBuild(d), m = mechStats(d), st5 = v => { const n = Math.round(clamp(v, 0, 1) * 5); return '★'.repeat(n) + '☆'.repeat(5 - n); };
+    return `<div class="kv"><span>重さ</span><b>${m.W.toFixed(1)} g</b><span>重心</span><b>先から ${Math.round(m.cog)} mm（全長の ${m.cogPct.toFixed(1)}%）</b><span>書きやすさ</span><b class="stars">${st5(m.ergo)}</b><span>機能</span><b class="stars">${st5(m.func / 8)}</b><span>高級感</span><b class="stars">${st5(m.lux)}</b><span>学生の人気</span><b class="stars">${st5(m.seg.stu / 0.55)}</b><span>社会人の人気</span><b class="stars">${st5(m.seg.adu / 0.6)}</b><span>製図・プロの人気</span><b class="stars">${st5(m.seg.pro / 0.9)}</b></div>${m.notes.length ? `<div class="muted" style="color:var(--red);margin-top:6px">⚠ ${m.notes.map(esc).join('<br>⚠ ')}</div>` : ''}${this.balanceSvg(b, m, d)}`;
+  },
+  // 横から見た図：左が先。部品の素材の色、クリップ、硬度表示窓、重心（▲）
+  balanceSvg(b, m, d) {
+    const L = b.L, sx = 300 / (L + 8), X = x => (x + 6) * sx, cy = 30, R = b.D / 2, Rg = R + b.gripD / 2, ys = 2.1;
+    const col = { resin: d.look.body, clear: '#cfe6f2', rubber: d.look.grip, silicone: d.look.grip, alu: '#c3c8cf', brass: '#d6b25e', sus: '#b9bec5', wood: (WOOD_TONES[d.look.woodTone] || WOOD_TONES.maple)[1], wood2: (WOOD_TONES[d.look.woodTone] || WOOD_TONES.maple)[2] };
+    const c = k => (k === 'grip' && ['resin', 'alu'].includes(b.mat.grip) ? (b.mat.grip === 'alu' ? '#c3c8cf' : d.look.grip) : col[b.mat[k]] || '#ccc');
+    const rect = (x0, x1, r, fill) => `<rect x="${X(x0)}" y="${cy - r * ys}" width="${X(x1) - X(x0)}" height="${r * ys * 2}" rx="2" fill="${fill}" stroke="rgba(0,0,0,.35)" stroke-width=".8"/>`;
+    const pipe = d.spec.tip === 't1' ? 4 : 3, bx0 = MECH_TIP + b.gripL;
+    let g = `<rect x="${X(-pipe)}" y="${cy - 0.6}" width="${X(0) - X(-pipe)}" height="1.2" fill="#888"/>`;
+    g += `<polygon points="${X(0)},${cy - 1.2 * ys} ${X(MECH_TIP)},${cy - (Rg - 0.4) * ys} ${X(MECH_TIP)},${cy + (Rg - 0.4) * ys} ${X(0)},${cy + 1.2 * ys}" fill="${c('tip')}" stroke="rgba(0,0,0,.35)" stroke-width=".8"/>`;
+    g += rect(MECH_TIP, bx0, Rg, c('grip')) + rect(bx0, L - MECH_KNOCK, R, c('barrel')) + rect(L - MECH_KNOCK, L, 2.4, c('knock'));
+    if (b.fin === 'knurlF' || b.fin === 'knurlC') for (let x = MECH_TIP + 2; x < bx0 - 1; x += b.fin === 'knurlF' ? 1.6 : 2.6) g += `<line x1="${X(x)}" y1="${cy - Rg * ys}" x2="${X(x + 1.2)}" y2="${cy + Rg * ys}" stroke="rgba(0,0,0,.25)" stroke-width=".7"/>`;
+    if (b.win !== 'none') { const wx = mechWinX(b); g += `<rect x="${X(wx) - 5}" y="${cy - 3}" width="10" height="6" fill="#fff" stroke="#333" stroke-width=".7"/><text x="${X(wx)}" y="${cy + 2}" font-size="5" text-anchor="middle" fill="#111">HB</text>`; }
+    if (b.mat.clip !== 'none') { const r0 = L - b.clipTop; g += `<rect x="${X(r0 - MECH_CLIP)}" y="${cy - R * ys - 4}" width="${X(r0) - X(r0 - MECH_CLIP)}" height="2.6" rx="1.3" fill="${b.mat.clip === 'resin' ? d.look.clipColor : '#aab0b8'}" stroke="rgba(0,0,0,.4)" stroke-width=".6"/>`; }
+    g += `<polygon points="${X(m.cog)},${cy + R * ys + 3} ${X(m.cog) - 5},${cy + R * ys + 11} ${X(m.cog) + 5},${cy + R * ys + 11}" fill="#d9493e"/><text x="${X(m.cog)}" y="${cy + R * ys + 19}" font-size="7.5" text-anchor="middle" fill="#d9493e">重心 ${Math.round(m.cog)}mm</text>`;
+    g += `<text x="${X(-pipe)}" y="10" font-size="7" fill="#6f6a60">← 先</text><text x="${X(L)}" y="10" font-size="7" text-anchor="end" fill="#6f6a60">ノック →</text>`;
+    return `<svg viewBox="0 0 310 64" style="width:100%;height:auto;margin-top:8px;background:#fff;border-radius:10px;border:1px solid var(--line)">${g}</svg>`;
+  },
+  studioBuild(d) {
+    const b = mechBuild(d), M = MECH_MATS, lock = r => !!r && !resDone(r);
+    const chip = (act, k, v, on, name, small, locked) => `<button type="button" class="chip ${on ? 'on' : ''} ${locked ? 'lock' : ''}" ${locked ? '' : `data-act="${act}" data-k="${k}" data-v="${v}"`}>${name}${small ? `<small>${small}</small>` : ''}</button>`;
+    let h = `<div class="card" id="mbRead" style="margin-top:8px">${this.buildReadout(d)}</div>`;
+    h += `<div class="grp">参考の型（有名なシャーペンの特徴をもとにした出発点）</div><div class="chips">${MECH_PRESETS.map(p => chip('mpre', '', p.id, false, esc(p.name), esc(p.note))).join('')}</div>`;
+    h += `<div class="grp">寸法</div><div class="muted">全長 <b id="mbL">${b.L}</b> mm</div><input type="range" min="136" max="152" step="1" value="${b.L}" data-mb="L">`;
+    h += `<div class="muted">軸の太さ <b id="mbD">${b.D.toFixed(1)}</b> mm</div><input type="range" min="7.5" max="11.5" step="0.1" value="${b.D}" data-mb="D">`;
+    h += `<div class="muted" style="margin-top:6px">グリップの太さ（軸とのちがい）</div><div class="chips">${[-0.5, 0, 0.5, 1, 1.5].map(v => chip('mgd', '', v, b.gripD === v, (v > 0 ? '+' : v < 0 ? '−' : '±') + Math.abs(v) + 'mm', '')).join('')}</div>`;
+    h += `<div class="muted" style="margin-top:6px">グリップの長さ</div><div class="chips">${[24, 30, 34, 40].map(v => chip('mgl', '', v, b.gripL === v, v + 'mm', '')).join('')}</div>`;
+    h += `<div class="muted" style="margin-top:6px">軸の断面</div><div class="chips">${Object.entries(MECH_SECS).map(([k, v]) => chip('msec', '', k, b.sec === k, v.name, v.roll ? 'ころがりにくい' : '', lock(v.req))).join('')}</div>`;
+    h += `<div class="grp">部品ごとの素材（重さと重心が変わる）</div>`;
+    for (const [pk, P] of Object.entries(MECH_PARTS)) {
+      h += `<div class="muted" style="margin-top:6px">${P.name}</div><div class="chips">${P.mats.map(mk => { const m = M[mk], lk = lock(m.req) && !(P.free || []).includes(mk); return chip('mmat', pk, mk, b.mat[pk] === mk, m.name, mk === 'none' ? '' : `${m.dens} g/cm³${lk ? '・🔒' : ''}`, lk); }).join('')}</div>`;
+    }
+    const gm = M[b.mat.grip];
+    h += `<div class="grp">グリップの加工</div><div class="chips">${Object.entries(GRIP_FIN).filter(([, f]) => f.ok(gm)).map(([k, f]) => chip('mfin', '', k, b.fin === k, f.name, `にぎりやすさ ${Math.round(f.q(gm) * 100)}`, lock(f.req))).join('')}</div>`;
+    h += `<div class="grp">クリップの位置</div>${b.mat.clip === 'none' ? '<div class="muted">クリップなし（上の素材で選べる）</div>' : `<div class="muted">上のはしから <b id="mbC">${b.clipTop}</b> mm</div><input type="range" min="14" max="80" step="1" value="${b.clipTop}" data-mb="clipTop">`}`;
+    h += `<div class="grp">硬度表示窓の位置</div><div class="chips">${Object.entries(MECH_WIN).map(([k, n]) => chip('mwin', '', k, b.win === k, n, '', k !== 'none' && lock('r_hwin'))).join('')}</div>`;
+    h += `<div class="grp">重心のおもり</div><div class="chips">${Object.entries(MECH_COG).map(([k, c]) => chip('mcog', '', k, b.cog === k, c.name, c.mass ? `+${c.mass}g` : '', lock(c.req))).join('')}</div>`;
+    h += `<div class="grp">機能</div><div class="chips">${chip('mtog', 'cushion', '', b.cushion, '芯クッション', b.cushion ? 'あり' : 'なし', lock('r_cushion'))}${chip('mtog', 'clipret', '', b.clipret, 'クリップでパイプ収納', b.clipret ? 'あり' : 'なし', lock('r_clipret') || b.mat.clip === 'none')}</div>`;
+    h += `<div class="muted" style="margin-top:10px;line-height:1.6">重心は先から全長の45%くらいより下だと、先が安定して製図をする人に好まれます。学生は軽め（10〜14g）とやわらかいグリップ、社会人は金属や木の高級感が好き。クリップが下すぎると指に当たり、硬度表示窓をクリップの下にするとかくれます。</div>`;
+    return h;
   },
   studioFoot() {
     const d = this.studio.d, pl = devPlan(d), why = canStartDev(d);
