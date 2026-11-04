@@ -156,6 +156,62 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
 body.wide.sheeton #toasts { left: calc((100% - min(460px, 46%)) / 2); }
 body.studio #nav, body.studio #news, body.studio #top, body.studio #goal, body.studio #sheet { display: none; }
 body.intitle #nav, body.intitle #news, body.intitle #top, body.intitle #goal, body.intitle #toasts { display: none; }
+/* 不具合の一覧・特技・経験 */
+.iss { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.is { font-size: 11.5px; font-weight: 700; padding: 3px 8px; border-radius: 8px; background: #fbe6e3; color: var(--red); line-height: 1.3; }
+.is small { font-weight: 500; opacity: .75; margin-left: 4px; font-size: 10.5px; }
+.is.ok { background: #e2f3ea; color: var(--green); text-decoration: line-through; text-decoration-thickness: 1px; }
+.is.un { background: var(--paper2); color: var(--sub); }
+.trait { margin-top: 6px; font-size: 12.5px; color: var(--sub); background: #f8efd9; border-radius: 9px; padding: 5px 9px; }
+.trait b { color: #9a7316; margin-right: 6px; }
+.bar.xp { height: 7px; } .bar.xp i { background: linear-gradient(90deg, #f0c24a, #e39a1c); }
+/* レビューの発表 */
+.rvbars { margin: 12px 0 8px; }
+.rvb { display: flex; align-items: center; gap: 8px; margin: 5px 0; font-size: 13px; }
+.rvb span { width: 82px; text-align: left; color: var(--sub); font-weight: 700; }
+.rvb .bar { flex: 1; height: 10px; } .rvb .bar i { transition: none; }
+.rvb b { width: 36px; text-align: right; font-variant-numeric: tabular-nums; }
+.review .cm.rvc { opacity: 0; transform: translateY(8px); transition: opacity .35s, transform .35s; }
+.review .cm.rvc.show { opacity: 1; transform: none; }
+.review .rvs { font-variant-numeric: tabular-nums; }
+.review .rvs.pop { animation: rvpop .45s ease; }
+@keyframes rvpop { 0% { transform: scale(1); } 40% { transform: scale(1.25); } 100% { transform: scale(1); } }
+.rvhint { margin-top: 6px; font-size: 12px; }
+.rvok.show { animation: rvpop .4s ease; }
+/* 模様がえ（家具） */
+#furnBar { position: absolute; left: 0; right: 0; bottom: 0; z-index: 7; display: none; background: rgba(251,248,241,.97); border-top: 1px solid var(--line); padding: 8px calc(10px + var(--sar)) calc(8px + var(--sab)) calc(10px + var(--sal)); box-shadow: 0 -6px 20px rgba(60,45,20,.12); }
+body.furn #furnBar { display: block; }
+body.furn #nav, body.furn #news, body.furn #goal, body.furn #sheet, body.furn #menuB { display: none; }
+#fbTop { display: flex; align-items: center; gap: 8px; font-size: 13px; line-height: 1.35; }
+#fbHint { flex: 1; font-weight: 700; }
+#fbList { display: flex; gap: 8px; overflow-x: auto; padding: 8px 0; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+.fi { flex: 0 0 auto; width: 104px; border: 1.5px solid var(--line2); border-radius: 12px; background: var(--card); padding: 6px; text-align: center; font-size: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--ink); font-family: inherit; }
+.fi img { width: 64px; height: 64px; border-radius: 9px; }
+.fi b { font-size: 12px; line-height: 1.2; }
+.fi small { color: var(--sub); font-size: 11px; }
+.fi em { font-style: normal; color: var(--sub); font-size: 10px; line-height: 1.25; }
+.fi.on { border-color: var(--blue); background: var(--blue2); }
+.fi.lock { opacity: .45; }
+#fbBtns { display: flex; gap: 6px; flex-wrap: wrap; }
+#fbBtns .btn { padding: 8px 12px; font-size: 13px; }
+body.wide #fbList .fi { width: 116px; }
+@media (max-height: 520px) { #fbList { padding: 4px 0; } .fi { width: 86px; padding: 4px; } .fi img { width: 40px; height: 40px; } .fi em { display: none; } #fbBtns .btn { padding: 6px 10px; } }
+/* 発売のイベント */
+#evOv { position: absolute; inset: 0; z-index: 25; display: none; pointer-events: auto; cursor: pointer; }
+#evOv.on { display: block; }
+#evCap { position: absolute; left: 50%; bottom: calc(6% + var(--sab)); transform: translateX(-50%) scale(.9); opacity: 0; transition: opacity .4s, transform .4s; text-align: center; color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,.55); width: min(92%, 640px); }
+#evOv.show #evCap { opacity: 1; transform: translateX(-50%) scale(1); }
+#evCap small { display: block; font-size: 14px; font-weight: 700; letter-spacing: .1em; opacity: .9; }
+#evCap b { display: block; font-size: clamp(26px, 6vw, 46px); font-weight: 900; line-height: 1.2; margin: 4px 0; }
+#evCap span { display: inline-block; background: rgba(217,73,62,.92); padding: 3px 14px; border-radius: 99px; font-weight: 900; font-size: 17px; text-shadow: none; }
+#evPre { position: absolute; left: 50%; bottom: calc(18% + var(--sab)); transform: translateX(-50%); color: rgba(255,255,255,.85); font-weight: 900; font-size: 18px; letter-spacing: .3em; display: none; text-shadow: 0 2px 8px rgba(0,0,0,.6); }
+#evOv.pre #evPre { display: block; animation: evblink 1s infinite; }
+@keyframes evblink { 50% { opacity: .35; } }
+#evSkip { position: absolute; right: calc(14px + var(--sar)); top: calc(12px + var(--sat)); color: rgba(255,255,255,.8); background: rgba(0,0,0,.35); border-radius: 99px; padding: 5px 12px; font-size: 12px; font-weight: 700; }
+#evOv:not(.big) #evCap { color: #2b2a28; text-shadow: 0 1px 6px rgba(255,255,255,.9); }
+#evOv:not(.big) #evSkip { color: #2b2a28; background: rgba(255,255,255,.6); }
+body.hub #evSkip { right: calc(14px + var(--sar)); }
+body.event #nav, body.event #news, body.event #top, body.event #goal, body.event #sheet, body.event #toasts { display: none; }
 @keyframes tin2 { from { transform: translateY(-10px); opacity: 0; } }
 .toast { animation-name: tin2; }
 </style>
@@ -181,6 +237,8 @@ body.intitle #nav, body.intitle #news, body.intitle #top, body.intitle #goal, bo
   <div id="pv"><div id="pvMeter"></div><div id="pvHint">ドラッグで回す・2本指やホイールで拡大</div></div>
   <div id="stPanel"><div class="tabs" id="stTabs"></div><div id="stBody"></div><div id="stFoot"></div></div>
 </div>
+<div id="furnBar"></div>
+<div id="evOv"><div id="evPre">まもなく発表</div><div id="evCap"><small id="evSub"></small><b id="evName"></b><span id="evPrice"></span></div><div id="evSkip">タップでとばす</div></div>
 <div id="modal"><div id="modalBox"></div></div>
 <div class="screen" id="title"><div class="tpanel">
   <h1>文房具カンパニー<small>STATIONERY COMPANY</small></h1>
@@ -504,12 +562,51 @@ const OFFICES = [
 const EQUIP = {
   chair:   { name: 'いい椅子', desc: 'みんなの仕事が速くなる（+5%／Lv）', price: [400000, 1200000, 3500000] },
   monitor: { name: '2台目のモニター', desc: '研究と品質チェックが速くなる（+6%／Lv）', price: [600000, 1800000, 5000000] },
-  plant:   { name: '観葉植物', desc: '居心地がよくなる（みんな +4%／Lv）', price: [150000, 450000, 1200000] },
-  coffee:  { name: 'コーヒーマシン', desc: '休けいでやる気アップ（みんな +5%）', price: [300000], max: 1 },
   lab:     { name: '試作ラボ', desc: '開発中の不具合が減る（−12%／Lv）', price: [2000000, 8000000, 25000000] },
   line:    { name: '生産ライン', desc: '1週間に作れる数が増える', price: [0, 3000000, 12000000, 45000000, 150000000, 500000000], lv0: 1, maxBy: [2, 3, 5, 6] },
 };
 const LINE_CAP = [0, 26000, 60000, 140000, 320000, 700000, 1500000];   // 1週間に作れる手間（えんぴつ1本＝1）
+
+// 家具：床のマス（0.5m）に置く。r の中の机の人が速くなる（work＝みんな、res/qa/des/sal＝その役わり）。global は部屋全体
+const FURN = {
+  plant:      { name: '観葉植物', price: 30000, w: 1, d: 1, r: 2.5, eff: { work: 0.03 }, tier: 0, desc: 'まわり2.5mの人の仕事 +3%' },
+  lamp:       { name: 'スタンド照明', price: 60000, w: 1, d: 1, r: 2, eff: { qa: 0.06 }, tier: 0, desc: 'まわり2mの品質チェック +6%' },
+  whiteboard: { name: 'ホワイトボード', price: 200000, w: 3, d: 1, r: 3.5, eff: { res: 0.06 }, tier: 0, meet: 1, desc: 'まわり3.5mの研究 +6%。打ち合わせの場所になる' },
+  bookshelf:  { name: '資料の本棚', price: 180000, w: 3, d: 1, r: 3, eff: { res: 0.04, des: 0.04 }, tier: 0, look: 1, desc: 'まわり3mの研究とデザイン +4%' },
+  coffee:     { name: 'コーヒーマシン', price: 250000, w: 2, d: 1, global: 0.04, max: 2, tier: 0, brk: 'coffee', desc: '部屋のみんな +4%（2台まで）。休けいの場所' },
+  bigplant:   { name: '大きな観葉植物', price: 120000, w: 2, d: 2, r: 3.5, eff: { work: 0.05 }, tier: 1, desc: 'まわり3.5mの人の仕事 +5%' },
+  sofa:       { name: 'ソファ', price: 300000, w: 4, d: 2, global: 0.03, max: 3, tier: 1, brk: 'sofa', desc: '部屋のみんな +3%（3台まで）。休けいの場所' },
+  mood:       { name: 'アイデアの壁', price: 350000, w: 3, d: 1, r: 3.5, eff: { des: 0.08 }, tier: 1, meet: 1, desc: 'まわり3.5mのデザイン +8%' },
+  aquarium:   { name: '水そう', price: 500000, w: 3, d: 2, r: 4, eff: { work: 0.05 }, tier: 1, look: 1, desc: 'まわり4mの人の仕事 +5%' },
+  vending:    { name: '自動販売機', price: 400000, w: 2, d: 2, global: 0.03, max: 1, tier: 2, brk: 'coffee', desc: '部屋のみんな +3%（1台まで）' },
+  phone:      { name: '営業の電話ブース', price: 600000, w: 2, d: 2, r: 4, eff: { sal: 0.1 }, tier: 2, desc: 'まわり4mの営業 +10%' },
+  piano:      { name: 'ピアノ', price: 2500000, w: 4, d: 3, r: 5, eff: { work: 0.04, des: 0.05 }, tier: 3, look: 1, desc: 'まわり5mの人の仕事 +4%・デザイン +5%' },
+};
+const FURN_MAX = [5, 12, 20, 32];   // 事務所ごとの家具の数の上限
+
+// 社員の特技（とくぎ）
+const TRAITS = {
+  idea:    { name: 'ひらめき', desc: '研究ポイント +15%', role: 'res', mul: 0.15 },
+  careful: { name: '几帳面', desc: '不具合を直す速さ +15%', role: 'qa', mul: 0.15 },
+  sense:   { name: 'センス', desc: 'デザインの力 +20%', role: 'des', mul: 0.2 },
+  talk:    { name: '話し上手', desc: '営業の力 +20%', role: 'sal', mul: 0.2 },
+  early:   { name: '早起き', desc: '仕事 +6%', all: 0.06 },
+  coffee:  { name: 'コーヒー好き', desc: 'コーヒーマシン・自販機の効果が2倍', likes: 'coffee' },
+  green:   { name: '植物好き', desc: '観葉植物の効果が2倍', likes: 'plant' },
+  fast:    { name: 'のみこみが早い', desc: '昇格が早い（経験 +50%）', xp: 0.5 },
+};
+const LEVEL_XP = [0, 90, 240, 480, 840];   // 次のレベルまでの経験（働いた日数のめやす）
+
+// 開発中に見つかる不具合（試作テスト）
+const DEFECTS = {
+  pencil: ['芯が折れやすい', '塗装がはげる', '削るとささくれる', '芯がまん中にない', '消しゴムが外れる', '軸がそっている'],
+  eraser: ['消しくずが多い', 'ケースが破れる', '紙がよれる', '黒くよごれる', 'かたすぎる', '角がすぐ欠ける'],
+  lead:   ['芯が折れやすい', '濃さがばらつく', 'ケースが開きにくい', '芯が太さどおりでない', '書くとこすれる'],
+  mech:   ['芯づまり', 'ノックが重い', 'クリップがゆるい', 'グリップがべたつく', '口金がゆるむ', '芯が出すぎる', '消しゴムが落ちる'],
+  ball:   ['インク漏れ', '書き出しがかすれる', 'インクのボテが出る', 'ノックが戻らない', 'キャップがきつい', 'インクがにじむ'],
+  fountain: ['インク漏れ', '書き出しがかすれる', 'ペン先が引っかかる', 'キャップがゆるい', 'インクが出すぎる', '首がゆるむ'],
+};
+const TESTS = ['落下テスト', '書き味テスト', '耐久テスト', '温度テスト', '見た目チェック'];
 
 // 広告：最初の数週間の売れゆきが上がる
 const ADS = [
@@ -1183,13 +1280,14 @@ function productThumb(p) {
   return url;
 }
 // =========================================================================================
-//  3Dの事務所：広さは事務所のランク、机は雇える人数。雇った人がパソコンで働き、
-//  作った製品が生産ラインを流れ、棚に並ぶ。設備（椅子・モニター・植物・コーヒー・ラボ）も置かれる
+//  3Dの事務所：広さは事務所のランク、机は雇える人数。社員は机で働き、ときどき立ってコーヒーを飲みに行ったり、
+//  ソファで休んだり、ホワイトボードの前で話したりする。開発や研究が終わるとみんなで喜ぶ（頭の上にアイコン）。
+//  生産ラインの機械が動き、製品が箱につめられて積み上がる。試験台では開発中の試作品をテストしている。季節の飾りもつく
 //  単位は m。正面（カメラ側）が +z、奥の壁が −z、左の壁が −x
 // =========================================================================================
 const OFFICE = {
   scene: new THREE.Scene(), cam: new THREE.PerspectiveCamera(38, 1, 0.1, 200), root: null,
-  yaw: 0.62, pitch: 0.66, zoom: 1, people: [], belt: [], t: 0, key: '',
+  yaw: 0.62, pitch: 0.66, zoom: 1, agents: [], belt: [], mach: [], t: 0, key: '', events: [], models: new Map(),
   init() {
     const s = this.scene; s.environment = ENV; s.background = new THREE.Color(0xe9e2d3); s.environmentIntensity = 0.55;
     s.add(new THREE.HemisphereLight(0xfff6e8, 0xb9ab90, 0.9));
@@ -1198,155 +1296,454 @@ const OFFICE = {
     s.add(sun, sun.target); this.sun = sun;
     const fill = new THREE.DirectionalLight(0xe8f0ff, 0.6); fill.position.set(8, 6, 10); s.add(fill);
   },
-  // 状態が変わったら作り直す（雇う・引っ越す・設備・発売）
+  season(day) { const m = dateOf(day).getMonth(); return { 11: 'xmas', 0: 'newyear', 2: 'sakura', 3: 'sakura', 6: 'summer', 7: 'summer', 9: 'halloween' }[m] || ''; },
+  // 状態が変わったら作り直す（雇う・引っ越す・設備・家具・発売・季節・開発中の試作品）
   sync(S) {
-    const key = JSON.stringify([S.tier, S.equip, S.staff.map(m => m.role + m.id), S.products.slice(-14).map(p => p.id), S.company]);
+    const lk = S.tier + ',' + S.equip.line + ',' + S.equip.lab;
+    if (lk !== this.layK || S !== this.layS) { this.layK = lk; this.layS = S; FURNI.validate(S); }
+    const dev = S.devs.find(v => !v.ready);
+    const key = JSON.stringify([S.tier, S.equip, S.staff.map(m => m.role + m.id), S.products.slice(-14).map(p => p.id), S.company, S.furn || [], this.season(S.day), dev ? dev.id : 0]);
     if (key === this.key) return; this.key = key; this.build(S);
   },
+  // ---------- 部屋の配置（家具を置けない所もここで決める） ----------
+  layout(S) {
+    const O = OFFICES[S.tier], W = O.w, D = O.d, nd = O.desks, cols = Math.max(2, Math.min(6, Math.ceil(Math.sqrt(nd * 1.6))));
+    const dx = 1.9, dz = 1.75, x0 = W / 2 - 1.2 - (cols - 1) * dx, z0 = -D / 2 + 2.0, desks = [];
+    for (let i = 0; i < nd; i++) { const x = x0 + (i % cols) * dx, z = z0 + ((i / cols) | 0) * dz; if (z > D / 2 - 0.8) break; desks.push({ x, z, seat: { x, z: z + 0.58 } }); }
+    const lineLv = S.equip.line, bz = D / 2 - 0.85, bx0 = -W / 2 + 1.0, bx1 = Math.min(W / 2 - 2.0, bx0 + 2.2 + lineLv * 2.2), pack = { x: bx1 + 0.8, z: bz };
+    const ceo = { x: -W / 2 + 2.2, z: -D / 2 + 1.5 }, shelf = { x: -W / 2 + 0.05, z: D > 7 ? -0.6 : -0.2 }, bench = { x: W / 2 - 0.65, z: D / 2 - 2.0 };
+    const lab = S.equip.lab ? { x: -W / 2 + 1.3, z: D / 2 - 2.6 } : null, door = { x: -W / 2 + 0.6, z: D / 2 - 1.1 };
+    const blocked = [];
+    for (const d of desks) blocked.push([d.x - 0.8, d.z - 0.45, d.x + 0.8, d.z + 1.2]);
+    blocked.push([ceo.x - 1.05, ceo.z - 0.55, ceo.x + 1.05, ceo.z + 1.05], [bx0 - 0.1, bz - 0.55, pack.x + 0.65, D / 2], [-W / 2, shelf.z - 1.25, -W / 2 + 0.6, shelf.z + 1.25], [bench.x - 0.45, bench.z - 0.75, W / 2, bench.z + 0.75], [-W / 2, D / 2 - 1.8, -W / 2 + 1.2, D / 2]);
+    if (lab) blocked.push([lab.x - 0.6, lab.z - 0.9, lab.x + 0.6, lab.z + 0.9]);
+    blocked.push([-W / 2, -D / 2, -W / 2 + 0.9, -D / 2 + 0.9]);   // 奥の左の角（季節の飾り）
+    // 人が通れない所（机・棚・ライン…）。家具は navBuild で足す
+    const solid = desks.map(d => [d.x - 0.72, d.z - 0.38, d.x + 0.72, d.z + 0.38]);
+    solid.push([ceo.x - 0.95, ceo.z - 0.45, ceo.x + 0.95, ceo.z + 0.45], [bx0 - 0.05, bz - 0.4, pack.x + 0.35, bz + 0.4], [pack.x - 0.35, bz - 1.15, pack.x + 0.35, bz], [-W / 2, shelf.z - 1.18, -W / 2 + 0.45, shelf.z + 1.18], [bench.x - 0.35, bench.z - 0.65, bench.x + 0.35, bench.z + 0.65], [-W / 2, -D / 2, -W / 2 + 0.8, -D / 2 + 0.8]);
+    if (lab) solid.push([lab.x - 0.45, lab.z - 0.8, lab.x + 0.45, lab.z + 0.8]);
+    return { W, D, desks, ceo, bz, bx0, bx1, pack, shelf, bench, lab, door, blocked, solid };
+  },
+  // 製品のモデル（同じ製品は使い回す）
+  productModel(p, s) {
+    let t = this.models.get(p.id); if (!t) { t = buildProduct(p, { cheap: true }); t.traverse(c => { if (c.isMesh) { c.castShadow = true; } }); this.models.set(p.id, t); }
+    const m = t.clone(); m.traverse(c => { if (c.isMesh) c.userData.shared = true; }); m.userData.size = t.userData.size; m.scale.setScalar(s); return m;
+  },
   build(S) {
-    if (this.root) { this.scene.remove(this.root); disposeTree(this.root); }
-    const R = this.root = new THREE.Group(); this.scene.add(R); this.people = []; this.belt = [];
-    const O = OFFICES[S.tier], W = O.w, D = O.d, H = 3, tier = S.tier, cheap = SET.quality === 'low';
+    if (this.root) { this.scene.remove(this.root); this.root.traverse(c => { if (c.userData.shared) { c.geometry = null; c.material = null; } }); disposeTree(this.root); }
+    const R = this.root = new THREE.Group(); this.scene.add(R); this.agents = []; this.belt = []; this.mach = []; this.icons = [];
+    const Lo = this.lay = this.layout(S), W = Lo.W, D = Lo.D, H = 3, tier = S.tier, season = this.season(S.day);
     this.W = W; this.D = D;
-    const box = (w, h, d, mat, x, y, z, cast = true) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); m.castShadow = cast; m.receiveShadow = true; R.add(m); return m; };
-    // 床
+    const box = (w, h, d, mat, x, y, z, cast = true, par = R) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); m.castShadow = cast; m.receiveShadow = true; par.add(m); return m; };
+    this.box = box;
+    // 床・壁・窓・扉・ポスター
     const floorTex = this.floorTex(tier); floorTex.repeat.set(W / 2, D / 2);
-    const floor = new THREE.Mesh(new THREE.PlaneGeometry(W, D), new THREE.MeshStandardMaterial({ map: floorTex, roughness: tier === 3 ? 0.25 : 0.7 })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; R.add(floor);
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(W, D), new THREE.MeshStandardMaterial({ map: floorTex, roughness: tier === 3 ? 0.25 : 0.7 })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; R.add(floor); this.floor = floor;
     box(W + 0.4, 0.3, D + 0.4, new THREE.MeshStandardMaterial({ color: 0x8c7d63, roughness: 0.9 }), 0, -0.16, 0, false);
-    // 壁：奥は窓つき、左は扉とポスター
     const wallM = new THREE.MeshStandardMaterial({ color: [0xf1e6d2, 0xeef0ec, 0xe9edf2, 0xdfe6ee][tier], roughness: 0.9 });
     const trimM = new THREE.MeshStandardMaterial({ color: [0xa47b52, 0xd9d3c7, 0x9aa3ad, 0x5d6670][tier], roughness: 0.6 });
     const wz = -D / 2 - 0.08, nWin = Math.max(1, Math.floor(W / 3.4)), ww = Math.min(2.2, (W - 1) / nWin - 0.6);
     box(W, 0.95, 0.16, wallM, 0, 0.475, wz); box(W, H - 2.45, 0.16, wallM, 0, 2.45 + (H - 2.45) / 2, wz);
     const xs = []; for (let i = 0; i < nWin; i++) xs.push(-W / 2 + (i + 0.5) * W / nWin);
     let prev = -W / 2; for (const x of xs) { box(x - ww / 2 - prev, 1.5, 0.16, wallM, (prev + x - ww / 2) / 2, 1.7, wz); prev = x + ww / 2; } box(W / 2 - prev, 1.5, 0.16, wallM, (prev + W / 2) / 2, 1.7, wz);
-    const skyT = this.skyTex(tier);
+    const skyT = this.skyTex(tier, season);
     for (const x of xs) {
       box(ww + 0.1, 0.08, 0.22, trimM, x, 0.95, wz + 0.02); box(ww + 0.1, 0.06, 0.2, trimM, x, 2.45, wz); box(0.05, 1.5, 0.12, trimM, x, 1.7, wz);
       const sky = new THREE.Mesh(new THREE.PlaneGeometry(ww, 1.5), new THREE.MeshBasicMaterial({ map: skyT })); sky.position.set(x, 1.7, wz - 0.25); R.add(sky);
     }
+    this.winXs = xs;
     const lx = -W / 2 - 0.08;
     box(0.16, H, D, wallM, lx, H / 2, 0);
-    box(0.06, 2.1, 0.95, new THREE.MeshStandardMaterial({ color: 0x9b7650, roughness: 0.6 }), lx + 0.1, 1.05, D / 2 - 1.1);   // 扉
+    box(0.06, 2.1, 0.95, new THREE.MeshStandardMaterial({ color: 0x9b7650, roughness: 0.6 }), lx + 0.1, 1.05, D / 2 - 1.1);
     box(0.16, 0.12, D, trimM, lx + 0.02, 0.06, 0); box(W, 0.12, 0.16, trimM, 0, 0.06, wz + 0.02);
-    // ポスター（会社名）
     const post = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 0.76), new THREE.MeshStandardMaterial({ map: this.posterTex(S), roughness: 0.7 })); post.rotation.y = Math.PI / 2; post.position.set(lx + 0.1, 2.55, D / 2 - 1.1); R.add(post);
-    // 机の並び（右から前へ）
-    const nd = O.desks, cols = Math.max(2, Math.min(6, Math.ceil(Math.sqrt(nd * 1.6)))), rows = Math.ceil(nd / cols);
-    const dx = 1.9, dz = 1.75, x0 = W / 2 - 1.2 - (cols - 1) * dx, z0 = -D / 2 + 2.0;
+    // 机・椅子・モニター
     const deskM = new THREE.MeshStandardMaterial({ color: tier === 0 ? 0xb88b5d : 0xe9e4da, roughness: 0.55 }), legM = new THREE.MeshStandardMaterial({ color: 0x5b5f66, roughness: 0.4, metalness: 0.6 });
     const scrM = new THREE.MeshStandardMaterial({ color: 0x1a2230, emissive: 0x35557a, emissiveIntensity: 0.55, roughness: 0.3 }), monM = new THREE.MeshStandardMaterial({ color: 0x2a2c30, roughness: 0.5 });
-    const staff = S.staff;
-    for (let i = 0; i < nd; i++) {
-      const c = i % cols, r = (i / cols) | 0, x = x0 + c * dx, z = z0 + r * dz;
-      if (z > D / 2 - 0.8) break;
+    this.legM = legM;
+    Lo.desks.forEach((dk, i) => {
+      const { x, z } = dk;
       box(1.4, 0.05, 0.72, deskM, x, 0.74, z); for (const sx of [-0.62, 0.62]) box(0.05, 0.72, 0.62, legM, x + sx, 0.37, z, false);
       const nm = S.equip.monitor > 0 ? 2 : 1;
       for (let k = 0; k < nm; k++) { const mx = x + (nm === 2 ? (k ? 0.3 : -0.3) : 0); const m = box(0.56, 0.34, 0.03, monM, mx, 1.0, z - 0.2); m.rotation.y = nm === 2 ? (k ? -0.18 : 0.18) : 0; const sc = box(0.52, 0.3, 0.005, scrM, mx, 1.0, z - 0.183, false); sc.rotation.y = m.rotation.y; box(0.06, 0.16, 0.06, monM, mx, 0.84, z - 0.22, false); }
       box(0.42, 0.02, 0.14, monM, x, 0.775, z + 0.06, false);
       this.chair(R, x, z + 0.55, S.equip.chair);
-      const m = staff[i];
-      if (m) { const p = this.person(ROLES[m.role].shirt, m.hair, true); p.position.set(x, 0, z + 0.58); R.add(p); this.people.push(p); if (m.role === 'des') box(0.3, 0.012, 0.22, new THREE.MeshStandardMaterial({ color: 0x222222 }), x + 0.45, 0.775, z + 0.05, false); }
-    }
-    // 社長の机（窓ぎわ）
-    const cx = -W / 2 + 2.2, cz = -D / 2 + 1.5;
+      const m = S.staff[i];
+      if (m) {
+        if (m.role === 'des') box(0.3, 0.012, 0.22, new THREE.MeshStandardMaterial({ color: 0x222222 }), x + 0.45, 0.775, z + 0.05, false);
+        if (m.role === 'qa') { const mg = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.012, 8, 16), legM); mg.rotation.x = Math.PI / 2; mg.position.set(x - 0.5, 0.78, z + 0.1); R.add(mg); }
+        if (m.role === 'res') for (let k = 0; k < 3; k++) box(0.22, 0.04, 0.3, new THREE.MeshStandardMaterial({ color: [0xd9493e, 0x2b6fd6, 0xf0a03a][k] }), x - 0.48, 0.79 + k * 0.04, z + 0.12, false);
+        this.addAgent(m, dk);
+      }
+    });
+    // 社長の机
+    const cx = Lo.ceo.x, cz = Lo.ceo.z;
     box(1.9, 0.07, 0.9, new THREE.MeshStandardMaterial({ color: 0x7a5233, roughness: 0.45 }), cx, 0.76, cz); box(1.8, 0.7, 0.05, new THREE.MeshStandardMaterial({ color: 0x6b462b, roughness: 0.5 }), cx, 0.38, cz - 0.4);
     box(0.5, 0.34, 0.03, monM, cx + 0.3, 1.0, cz - 0.25); box(0.46, 0.3, 0.005, scrM, cx + 0.3, 1.0, cz - 0.233, false);
     this.chair(R, cx, cz + 0.62, 3);
-    const boss = this.person('#2c3a5c', '#2a211b', true, true); boss.position.set(cx, 0, cz + 0.65); R.add(boss); this.people.push(boss);
-    // 植物・コーヒー・ラボ
-    const pots = [[W / 2 - 0.5, -D / 2 + 0.5], [-W / 2 + 0.5, D / 2 - 0.5], [W / 2 - 0.5, D / 2 - 0.5], [-W / 2 + 0.5, -D / 2 + 0.6], [0, -D / 2 + 0.5], [W / 4, D / 2 - 0.5]];
-    for (let i = 0; i < Math.min(pots.length, S.equip.plant * 2); i++) this.plant(R, pots[i][0], pots[i][1], 0.7 + (i % 3) * 0.25);
-    if (S.equip.coffee) { box(1.0, 0.9, 0.5, new THREE.MeshStandardMaterial({ color: 0xcfc6b5, roughness: 0.6 }), -W / 2 + 4.2, 0.45, -D / 2 + 0.4); box(0.32, 0.42, 0.3, new THREE.MeshStandardMaterial({ color: 0x1f1f22, roughness: 0.35, metalness: 0.4 }), -W / 2 + 4.0, 1.11, -D / 2 + 0.4); box(0.09, 0.1, 0.09, new THREE.MeshStandardMaterial({ color: 0xffffff }), -W / 2 + 4.35, 0.95, -D / 2 + 0.4); }
-    if (S.equip.lab) { const lxp = -W / 2 + 1.0, lzp = D / 2 - 2.6; box(0.9, 0.05, 1.6, new THREE.MeshStandardMaterial({ color: 0xf2f2f2, roughness: 0.4 }), lxp + 0.3, 0.9, lzp); box(0.85, 0.88, 1.55, new THREE.MeshStandardMaterial({ color: 0x8aa0b4, roughness: 0.6 }), lxp + 0.3, 0.44, lzp); for (let k = 0; k < S.equip.lab; k++) box(0.22, 0.3 + k * 0.08, 0.22, new THREE.MeshStandardMaterial({ color: [0x4f7fb8, 0xd9493e, 0x2e9a63][k], roughness: 0.4 }), lxp + 0.3, 1.07 + k * 0.04, lzp - 0.5 + k * 0.5); }
-    // 生産ライン（手前の左から右へ流れるベルト）と製品
-    const lineLv = S.equip.line, bz = D / 2 - 0.85, bx0 = -W / 2 + 1.0, bx1 = Math.min(W / 2 - 1.0, bx0 + 2.2 + lineLv * 2.2);
-    this.bz = bz; this.bx0 = bx0; this.bx1 = bx1;
-    if (tier === 0 && lineLv <= 1) {
-      box(bx1 - bx0, 0.06, 0.8, new THREE.MeshStandardMaterial({ color: 0xa57a4f, roughness: 0.6 }), (bx0 + bx1) / 2, 0.85, bz); for (const sx of [bx0 + 0.1, bx1 - 0.1]) box(0.08, 0.84, 0.7, legM, sx, 0.42, bz, false);
-      this.beltY = 0.89; this.beltSpeed = 0;
-    } else {
-      box(bx1 - bx0, 0.12, 0.7, new THREE.MeshStandardMaterial({ map: this.beltTex(), roughness: 0.8 }), (bx0 + bx1) / 2, 0.78, bz);
-      box(bx1 - bx0 + 0.1, 0.08, 0.06, legM, (bx0 + bx1) / 2, 0.82, bz - 0.38); box(bx1 - bx0 + 0.1, 0.08, 0.06, legM, (bx0 + bx1) / 2, 0.82, bz + 0.38);
-      for (let x = bx0 + 0.3; x < bx1; x += 1.2) box(0.08, 0.72, 0.6, legM, x, 0.36, bz, false);
-      for (let k = 0; k < lineLv; k++) { const mx = bx0 + 0.9 + k * (bx1 - bx0 - 1.8) / Math.max(1, lineLv - 1); box(0.9, 0.9, 1.0, new THREE.MeshStandardMaterial({ color: [0x3f6f9e, 0xd9a03b, 0x5a8f63, 0xb5544a, 0x6d6aa8, 0x777f88][k % 6], roughness: 0.45, metalness: 0.2 }), mx, 1.26, bz); box(0.12, 0.12, 0.02, new THREE.MeshStandardMaterial({ color: 0x55ff88, emissive: 0x33dd66, emissiveIntensity: 1 }), mx + 0.25, 1.5, bz + 0.51, false); }
-      this.beltY = 0.85; this.beltSpeed = 0.55;
-    }
-    const onSale = S.products.filter(p => p.active), src = onSale.length ? onSale : S.products.slice(-3);
-    const n = src.length ? Math.min(10, Math.max(4, Math.floor((bx1 - bx0) / 0.8))) : 0;
-    for (let i = 0; i < n; i++) {
-      const pr = src[i % src.length], m = buildProduct(pr, { cheap: true }); m.scale.setScalar(pr.kind === 'eraser' || pr.kind === 'lead' ? 0.06 : 0.045);
-      m.traverse(c => { if (c.isMesh) c.castShadow = true; });
-      m.userData.t = i / n; R.add(m); this.belt.push(m);
-    }
-    // 製品の棚（左の壁ぎわ、部屋に向けて開いている）：発売した製品の最新12こ
-    const shx = -W / 2 + 0.05, shz = D > 7 ? -0.6 : 0.15, sw = 2.3, shM = new THREE.MeshStandardMaterial({ color: 0xf6f1e6, roughness: 0.55 }), shB = new THREE.MeshStandardMaterial({ color: 0xc8b89a, roughness: 0.7 });
+    this.addAgent({ id: 'boss', role: 'boss', hair: '#2a211b' }, { x: cx, z: cz, seat: { x: cx, z: cz + 0.65 } });
+    // 試作ラボ
+    if (Lo.lab) { const { x, z } = Lo.lab; box(0.9, 0.05, 1.6, new THREE.MeshStandardMaterial({ color: 0xf2f2f2, roughness: 0.4 }), x, 0.9, z); box(0.85, 0.88, 1.55, new THREE.MeshStandardMaterial({ color: 0x8aa0b4, roughness: 0.6 }), x, 0.44, z); for (let k = 0; k < S.equip.lab; k++) box(0.22, 0.3 + k * 0.08, 0.22, new THREE.MeshStandardMaterial({ color: [0x4f7fb8, 0xd9493e, 0x2e9a63][k], roughness: 0.4 }), x, 1.07 + k * 0.04, z - 0.5 + k * 0.5); }
+    this.buildLine(S, Lo);
+    this.buildBench(S, Lo);
+    // 製品の棚（左の壁ぎわ）：発売した製品の最新12こ
+    const shx = Lo.shelf.x, shz = Lo.shelf.z, sw = 2.3, shM = new THREE.MeshStandardMaterial({ color: 0xf6f1e6, roughness: 0.55 }), shB = new THREE.MeshStandardMaterial({ color: 0xc8b89a, roughness: 0.7 });
     box(0.04, 1.75, sw, shB, shx + 0.02, 0.875, shz); for (const sz of [-sw / 2, sw / 2]) box(0.42, 1.75, 0.04, shM, shx + 0.21, 0.875, shz + sz);
     for (let k = 0; k < 4; k++) box(0.42, 0.035, sw, shM, shx + 0.21, 0.08 + k * 0.52, shz, false);
     S.products.slice(-12).forEach((pr, i) => {
-      const m = buildProduct(pr, { cheap: true }), row = (i / 3) | 0, col = i % 3, sc = pr.kind === 'eraser' || pr.kind === 'lead' ? 0.06 : 0.04; m.scale.setScalar(sc);
-      m.rotation.y = -Math.PI / 2 + 0.35; m.position.set(shx + 0.22, 0.1 + (3 - row) * 0.52 + m.userData.size.y * sc / 2, shz - 0.75 + col * 0.75); m.traverse(c => { if (c.isMesh) c.castShadow = true; }); R.add(m);
+      const sc = pr.kind === 'eraser' || pr.kind === 'lead' ? 0.06 : 0.04, m = this.productModel(pr, sc), row = (i / 3) | 0, col = i % 3;
+      m.rotation.y = -Math.PI / 2 + 0.35; m.position.set(shx + 0.22, 0.1 + (3 - row) * 0.52 + m.userData.size.y * sc / 2, shz - 0.75 + col * 0.75); R.add(m);
     });
+    // 家具・季節の飾り
+    this.furnObjs = [];
+    for (const f of S.furn || []) { const o = FURNI.model(f.type); FURNI.placeObj(o, f, Lo); R.add(o); o.userData.furn = f; this.furnObjs.push(o); }
+    this.decor(S, Lo, season);
+    this.navBuild(S, Lo);
+    // 使わなくなった製品のモデルを片づける
+    const used = new Set([...S.products.slice(-14).map(p => p.id), ...S.products.filter(p => p.active).map(p => p.id), ...S.devs.map(v => v.id)]);
+    for (const [id, t] of this.models) if (!used.has(id)) { disposeTree(t); this.models.delete(id); }
     this.sun.target.position.set(0, 0, 0);
-    this.frame();
+    if (typeof FURNI !== 'undefined' && FURNI.on) FURNI.refreshLabels();
   },
-  frame() { const W = this.W || 8, D = this.D || 6; this.dist = Math.max(W, D * 1.3) * 1.05 + 2.5; },
-  update(dt) {
-    this.t += dt;
-    for (let i = 0; i < this.people.length; i++) { const p = this.people[i], a = p.userData; if (!a.arms) continue; const ph = this.t * 9 + i * 1.7; a.arms[0].rotation.x = 1.25 + Math.sin(ph) * 0.12; a.arms[1].rotation.x = 1.25 + Math.sin(ph + 2.1) * 0.12; a.head.rotation.x = 0.12 + Math.sin(this.t * 0.7 + i) * 0.05; a.head.rotation.y = Math.sin(this.t * 0.31 + i * 2) * 0.25; }
-    const L = this.bx1 - this.bx0;
-    for (const m of this.belt) {
-      m.userData.t = (m.userData.t + dt * (this.beltSpeed || 0) / L) % 1;
-      m.position.set(this.bx0 + 0.2 + m.userData.t * (L - 0.4), this.beltY + (m.userData.size ? m.userData.size.y * m.scale.y / 2 + 0.005 : 0.03), this.bz); m.rotation.y = 0.15;
+  // ---------- 生産ライン：ベルト・動く機械・箱づめ ----------
+  buildLine(S, Lo) {
+    const R = this.root, box = this.box, legM = this.legM, lineLv = S.equip.line, { bx0, bx1, bz, pack } = Lo;
+    this.bz = bz; this.bx0 = bx0; this.bx1 = bx1; this.beltTex = null;
+    if (S.tier === 0 && lineLv <= 1) {   // 手作りの作業台
+      box(bx1 - bx0, 0.06, 0.8, new THREE.MeshStandardMaterial({ color: 0xa57a4f, roughness: 0.6 }), (bx0 + bx1) / 2, 0.85, bz); for (const sx of [bx0 + 0.1, bx1 - 0.1]) box(0.08, 0.84, 0.7, legM, sx, 0.42, bz, false);
+      this.beltY = 0.89; this.beltBase = 0.18;
+    } else {
+      const bt = this.beltTex = this.beltTexMake(); bt.repeat.set((bx1 - bx0) * 4, 1);
+      box(bx1 - bx0, 0.12, 0.7, new THREE.MeshStandardMaterial({ map: bt, roughness: 0.8 }), (bx0 + bx1) / 2, 0.78, bz);
+      box(bx1 - bx0 + 0.1, 0.08, 0.06, legM, (bx0 + bx1) / 2, 0.82, bz - 0.38); box(bx1 - bx0 + 0.1, 0.08, 0.06, legM, (bx0 + bx1) / 2, 0.82, bz + 0.38);
+      for (let x = bx0 + 0.3; x < bx1; x += 1.2) box(0.08, 0.72, 0.6, legM, x, 0.36, bz, false);
+      const types = ['press', 'print', 'arm', 'press', 'print', 'arm'], cols = [0x3f6f9e, 0xd9a03b, 0x5a8f63, 0xb5544a, 0x6d6aa8, 0x777f88];
+      for (let k = 0; k < lineLv; k++) {
+        const mx = bx0 + 0.9 + k * (bx1 - bx0 - 1.8) / Math.max(1, lineLv - 1), type = types[k], cm = new THREE.MeshStandardMaterial({ color: cols[k], roughness: 0.45, metalness: 0.2 }), steel = new THREE.MeshStandardMaterial({ color: 0xb8bdc4, metalness: 0.8, roughness: 0.3 });
+        const g = new THREE.Group(); g.position.set(mx, 0, bz); R.add(g); const M = { type, g, x: mx, ph: k * 1.3 };
+        if (type === 'press') { box(0.12, 1.0, 0.12, cm, -0.38, 1.3, -0.3, true, g); box(0.12, 1.0, 0.12, cm, 0.38, 1.3, -0.3, true, g); box(0.12, 1.0, 0.12, cm, -0.38, 1.3, 0.3, true, g); box(0.12, 1.0, 0.12, cm, 0.38, 1.3, 0.3, true, g); box(0.9, 0.18, 0.75, cm, 0, 1.85, 0, true, g); M.head = box(0.4, 0.22, 0.4, steel, 0, 1.4, 0, true, g); M.rod = box(0.08, 0.4, 0.08, steel, 0, 1.6, 0, true, g); }
+        else if (type === 'print') { box(0.1, 0.75, 0.1, cm, -0.35, 1.2, -0.38, true, g); box(0.1, 0.75, 0.1, cm, 0.35, 1.2, -0.38, true, g); box(0.1, 0.75, 0.1, cm, -0.35, 1.2, 0.38, true, g); box(0.1, 0.75, 0.1, cm, 0.35, 1.2, 0.38, true, g); box(0.1, 0.1, 0.86, cm, 0, 1.55, 0, true, g); M.head = box(0.28, 0.2, 0.2, steel, 0, 1.4, 0, true, g); const ink = box(0.06, 0.08, 0.06, new THREE.MeshStandardMaterial({ color: 0xd9493e, emissive: 0x551510 }), 0, 1.27, 0, false, g); ink.parent.remove(ink); M.head.add(ink); ink.position.set(0, -0.13, 0); }
+        else { box(0.4, 0.3, 0.4, cm, 0, 0.15, -0.6, true, g); const base = new THREE.Group(); base.position.set(0, 0.3, -0.6); g.add(base); box(0.12, 0.6, 0.12, steel, 0, 0.3, 0, true, base); const el = new THREE.Group(); el.position.set(0, 0.6, 0); base.add(el); box(0.1, 0.1, 0.55, cm, 0, 0, 0.27, true, el); const grip = box(0.12, 0.14, 0.08, steel, 0, -0.05, 0.56, true, el); void grip; M.base = base; M.el = el; }
+        M.lamp = box(0.1, 0.1, 0.02, new THREE.MeshStandardMaterial({ color: 0x55ff88, emissive: 0x33dd66, emissiveIntensity: 1 }), 0.3, 1.6, 0.43, false, g);
+        this.mach.push(M);
+      }
+      this.beltY = 0.85; this.beltBase = 0.55;
     }
-    // 部屋がちょうど入る距離（縦長の画面では横の画角で決まる）
+    // 箱づめ：開いた箱に製品が入り、4こでふたが閉まって、となりに積まれる
+    const cardM = new THREE.MeshStandardMaterial({ color: 0xc49a62, roughness: 0.85 }), pg = new THREE.Group(); pg.position.set(pack.x, 0, pack.z); R.add(pg);
+    box(0.7, 0.6, 0.7, new THREE.MeshStandardMaterial({ color: 0x7a7f87, roughness: 0.5, metalness: 0.4 }), 0, 0.3, 0, true, pg);   // 台
+    const bx = new THREE.Group(); bx.position.set(0, 0.6, 0); pg.add(bx);
+    box(0.5, 0.02, 0.5, cardM, 0, 0.01, 0, true, bx); for (const [x, z, w, d] of [[-0.25, 0, 0.02, 0.5], [0.25, 0, 0.02, 0.5], [0, -0.25, 0.5, 0.02], [0, 0.25, 0.5, 0.02]]) box(w, 0.32, d, cardM, x, 0.17, z, true, bx);
+    const flaps = []; for (const s of [-1, 1]) { const f = new THREE.Group(); f.position.set(s * 0.25, 0.33, 0); bx.add(f); box(0.25, 0.015, 0.5, cardM, -s * 0.125, 0, 0, true, f); f.rotation.z = s * 1.9; flaps.push(f); }
+    const stack = new THREE.Group(); stack.position.set(0, 0, -0.85); pg.add(stack);
+    this.pack = { g: pg, box: bx, flaps, stack, n: 0, t: 0, phase: 'fill', cardM, h: 0 };
+    const onSale = S.products.filter(p => p.active), src = onSale.length ? onSale : S.products.slice(-3);
+    const n = src.length ? Math.min(10, Math.max(4, Math.floor((bx1 - bx0) / 0.8))) : 0;
+    for (let i = 0; i < n; i++) { const pr = src[i % src.length], m = this.productModel(pr, pr.kind === 'eraser' || pr.kind === 'lead' ? 0.06 : 0.045); m.userData.t = i / n; R.add(m); this.belt.push(m); }
+    this.onSale = onSale.length;
+  },
+  // ---------- 試験台：開発中の試作品を落としたり、書かせたりする ----------
+  buildBench(S, Lo) {
+    const R = this.root, box = this.box, { x, z } = Lo.bench, g = new THREE.Group(); g.position.set(x, 0, z); R.add(g);
+    box(0.7, 0.05, 1.3, new THREE.MeshStandardMaterial({ color: 0xe8e4dc, roughness: 0.5 }), 0, 0.85, 0, true, g); for (const sz of [-0.55, 0.55]) box(0.6, 0.83, 0.05, this.legM, 0, 0.42, sz, false, g);
+    // 落下テストの塔
+    const tw = new THREE.MeshStandardMaterial({ color: 0x6d7a88, roughness: 0.4, metalness: 0.5 });
+    for (const sx of [-0.2, 0.2]) box(0.03, 0.75, 0.03, tw, sx, 1.25, -0.4, true, g); box(0.43, 0.03, 0.03, tw, 0, 1.62, -0.4, true, g); box(0.4, 0.02, 0.3, new THREE.MeshStandardMaterial({ color: 0x3a3d42 }), 0, 0.885, -0.4, false, g);
+    // 書き味テスト：紙とロボットの腕
+    const c = newCanvas(256, 128), q = c.getContext('2d'); q.fillStyle = '#fbfbf6'; q.fillRect(0, 0, 256, 128);
+    const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+    const paper = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.3), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.9 })); paper.rotation.x = -Math.PI / 2; paper.rotation.z = Math.PI / 2; paper.position.set(0, 0.877, 0.3); g.add(paper);
+    this.bench = { g, paper: { c, q, tex }, item: null, t: 0, sign: null };
+    const dev = S.devs.find(v => !v.ready);
+    if (dev) { const m = this.productModel(dev, dev.kind === 'eraser' || dev.kind === 'lead' ? 0.05 : 0.035); g.add(m); this.bench.item = m; this.bench.kind = dev.kind; }
+  },
+  // ---------- 季節の飾り ----------
+  decor(S, Lo, season) {
+    const R = this.root, box = this.box, W = Lo.W, D = Lo.D;
+    const cx = -W / 2 + 0.5, cz = -D / 2 + 0.5;
+    if (season === 'xmas') {
+      const g = new THREE.Group(); g.position.set(cx, 0, cz); R.add(g); const gm = new THREE.MeshStandardMaterial({ color: 0x2f7a46, roughness: 0.7 });
+      box(0.3, 0.3, 0.3, new THREE.MeshStandardMaterial({ color: 0xb5544a }), 0, 0.15, 0, true, g);
+      for (let k = 0; k < 3; k++) { const c = new THREE.Mesh(new THREE.ConeGeometry(0.55 - k * 0.13, 0.7, 14), gm); c.position.y = 0.6 + k * 0.42; c.castShadow = true; g.add(c); }
+      const star = new THREE.Mesh(new THREE.OctahedronGeometry(0.1), new THREE.MeshStandardMaterial({ color: 0xffd34a, emissive: 0x806010 })); star.position.y = 1.72; g.add(star);
+      for (let k = 0; k < 12; k++) { const a = k * 2.4, h = 0.45 + (k % 6) * 0.17, r = 0.48 - (h - 0.45) * 0.36; const b = new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 6), new THREE.MeshStandardMaterial({ color: [0xd9493e, 0xf6c945, 0x2b8fd6, 0xffffff][k % 4], emissive: 0x222222, metalness: 0.5, roughness: 0.3 })); b.position.set(Math.sin(a) * r, h, Math.cos(a) * r); g.add(b); }
+    } else if (season === 'newyear') {
+      for (const dz2 of [-0.68, 0.68]) { const g = new THREE.Group(); g.position.set(-W / 2 + 0.3, 0, D / 2 - 1.1 + dz2); R.add(g); const bm = new THREE.MeshStandardMaterial({ color: 0x6e9a4a, roughness: 0.5 }); [[0, 0.9], [0.09, 0.7], [-0.09, 0.6]].forEach(([x, h]) => { const c = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, h, 10), bm); c.position.set(x, h / 2 + 0.25, 0); c.castShadow = true; g.add(c); }); box(0.34, 0.25, 0.34, new THREE.MeshStandardMaterial({ color: 0xc9a66b, roughness: 0.9 }), 0, 0.125, 0, true, g); const pine = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 6), new THREE.MeshStandardMaterial({ color: 0x2f5a35 })); pine.scale.set(1, 0.6, 1); pine.position.y = 0.35; g.add(pine); }
+    } else if (season === 'halloween') {
+      for (let k = 0; k < 3; k++) { const p = new THREE.Mesh(new THREE.SphereGeometry(0.16 - k * 0.03, 14, 10), new THREE.MeshStandardMaterial({ color: 0xe0782a, roughness: 0.6 })); p.scale.set(1.2, 0.85, 1.2); p.position.set(cx + k * 0.28 - 0.1, 0.13, cz + (k % 2) * 0.2); p.castShadow = true; R.add(p); const st = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.025, 0.08, 6), new THREE.MeshStandardMaterial({ color: 0x5a6a2a })); st.position.set(p.position.x, p.position.y + 0.15 - k * 0.02, p.position.z); R.add(st); }
+    } else if (season === 'summer') {
+      const g = new THREE.Group(); g.position.set(cx, 0, cz); R.add(g); const wm = new THREE.MeshStandardMaterial({ color: 0xf4f1ea, roughness: 0.4 });
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.12, 1.0, 12), wm); pole.position.y = 0.5; g.add(pole);
+      const head = new THREE.Group(); head.position.set(0, 1.05, 0.08); g.add(head); const blades = new THREE.Group(); head.add(blades);
+      for (let k = 0; k < 3; k++) { const b = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.2, 0.01), new THREE.MeshStandardMaterial({ color: 0x8fc8e8, transparent: true, opacity: 0.8 })); b.position.y = 0.1; const h = new THREE.Group(); h.rotation.z = k * TAU / 3; h.add(b); blades.add(h); }
+      const cage = new THREE.Mesh(new THREE.TorusGeometry(0.25, 0.008, 6, 24), wm); head.add(cage); this.fan = blades; this.fanHead = head;
+    }
+    if (season === 'sakura') {   // 社長の机に桜の枝
+      const v = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.22, 12), new THREE.MeshStandardMaterial({ color: 0x5a7a9a, roughness: 0.3 })); v.position.set(Lo.ceo.x - 0.7, 0.9, Lo.ceo.z - 0.2); R.add(v);
+      for (let k = 0; k < 9; k++) { const b = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 6), new THREE.MeshStandardMaterial({ color: 0xf6c3d3 })); b.position.set(v.position.x + Math.sin(k * 2.1) * 0.12, 1.08 + k * 0.035, v.position.z + Math.cos(k * 2.1) * 0.1); R.add(b); }
+    }
+    if (season !== 'summer') { this.fan = null; }
+  },
+  // ---------- 人：ひざ・ひじが曲がる（座る・立つ・歩く・喜ぶ） ----------
+  makePerson(shirt, hair, pantsCol = 0x3b4250, skin = 0xe9c4a2) {
+    const root = new THREE.Group(), hip = new THREE.Group(); root.add(hip);
+    const skinM = new THREE.MeshStandardMaterial({ color: skin, roughness: 0.7 }), shirtM = new THREE.MeshStandardMaterial({ color: shirt, roughness: 0.75 }), pants = new THREE.MeshStandardMaterial({ color: pantsCol, roughness: 0.8 }), shoe = new THREE.MeshStandardMaterial({ color: 0x2a2522, roughness: 0.6 });
+    const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.17, 0.3, 4, 10), shirtM); torso.position.set(0, 0.34, 0.02); hip.add(torso);
+    const head = new THREE.Group(); head.position.set(0, 0.73, 0); hip.add(head);
+    head.add(new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 12), skinM));
+    const hr = new THREE.Mesh(new THREE.SphereGeometry(0.137, 16, 10, 0, TAU, 0, Math.PI * 0.55), new THREE.MeshStandardMaterial({ color: hair || '#2b2118', roughness: 0.8 })); hr.position.set(0, 0.012, 0.012); hr.rotation.x = -0.25; head.add(hr);
+    const legs = [], arms = [];
+    for (const sx of [-0.1, 0.1]) {
+      const th = new THREE.Group(); th.position.set(sx, 0.02, 0); hip.add(th);
+      const tm = new THREE.Mesh(new THREE.CapsuleGeometry(0.075, 0.28, 4, 8), pants); tm.position.y = -0.21; th.add(tm);
+      const kn = new THREE.Group(); kn.position.y = -0.42; th.add(kn);
+      const sm = new THREE.Mesh(new THREE.CapsuleGeometry(0.065, 0.28, 4, 8), pants); sm.position.y = -0.2; kn.add(sm);
+      const ft = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.06, 0.2), shoe); ft.position.set(0, -0.43, -0.05); kn.add(ft);
+      legs.push({ th, kn });
+    }
+    for (const sx of [-0.21, 0.21]) {
+      const sh = new THREE.Group(); sh.position.set(sx, 0.52, 0.03); hip.add(sh);
+      const ua = new THREE.Mesh(new THREE.CapsuleGeometry(0.055, 0.2, 4, 8), shirtM); ua.position.y = -0.13; sh.add(ua);
+      const el = new THREE.Group(); el.position.y = -0.27; sh.add(el);
+      const fa = new THREE.Mesh(new THREE.CapsuleGeometry(0.05, 0.2, 4, 8), shirtM); fa.position.y = -0.12; el.add(fa);
+      const hand = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), skinM); hand.position.y = -0.26; el.add(hand);
+      arms.push({ sh, el, hand });
+    }
+    root.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+    return { root, hip, head, legs, arms };
+  },
+  // 姿勢：sit（キーボード）・sofa・stand・walk・cheer・drink・talk
+  pose(r, mode, t) {
+    const L = r.legs, A = r.arms;
+    const set = (a, b, c, d) => { L[0].th.rotation.x = a; L[1].th.rotation.x = b; L[0].kn.rotation.x = c; L[1].kn.rotation.x = d; };
+    A[0].sh.rotation.z = 0; A[1].sh.rotation.z = 0; r.head.rotation.set(0, 0, 0);
+    if (mode === 'sit' || mode === 'sofa') {
+      r.hip.position.y = mode === 'sofa' ? 0.45 : 0.5; set(Math.PI / 2, Math.PI / 2, -Math.PI / 2, -Math.PI / 2);
+      if (mode === 'sit') { A[0].sh.rotation.x = 0.35; A[1].sh.rotation.x = 0.35; A[0].el.rotation.x = 1.25 + Math.sin(t * 9) * 0.12; A[1].el.rotation.x = 1.25 + Math.sin(t * 9 + 2.1) * 0.12; r.head.rotation.x = 0.12; r.head.rotation.y = Math.sin(t * 0.31) * 0.25; }
+      else { A[0].sh.rotation.x = 0.15; A[1].sh.rotation.x = 0.15; A[0].el.rotation.x = 0.5; A[1].el.rotation.x = 0.5; r.head.rotation.x = -0.1; r.head.rotation.y = Math.sin(t * 0.5) * 0.4; }
+    } else if (mode === 'walk') {
+      const s = Math.sin(t * 8.5); r.hip.position.y = 0.9 + Math.abs(Math.cos(t * 8.5)) * 0.03;
+      set(0.5 * s, -0.5 * s, -0.7 * Math.max(0, -s), -0.7 * Math.max(0, s));
+      A[0].sh.rotation.x = -0.45 * s; A[1].sh.rotation.x = 0.45 * s; A[0].el.rotation.x = 0.3; A[1].el.rotation.x = 0.3;
+    } else if (mode === 'cheer') {
+      const j = Math.abs(Math.sin(t * 7)); r.hip.position.y = 0.9 + j * 0.18; set(-0.1 * j, -0.1 * j, -0.3 * j, -0.3 * j);
+      A[0].sh.rotation.x = Math.PI - 0.15; A[1].sh.rotation.x = Math.PI - 0.15; A[0].sh.rotation.z = -0.35; A[1].sh.rotation.z = 0.35; A[0].el.rotation.x = 0.2 * j; A[1].el.rotation.x = 0.2 * j; r.head.rotation.x = -0.25;
+    } else {
+      r.hip.position.y = 0.9; set(0, 0, 0, 0);
+      if (mode === 'drink') { const d = (Math.sin(t * 1.4) + 1) / 2; A[1].sh.rotation.x = 0.4 + d * 0.5; A[1].el.rotation.x = 1.6 + d * 0.5; A[0].sh.rotation.x = 0.05; A[0].el.rotation.x = 0.1; r.head.rotation.x = -0.15 * d; }
+      else if (mode === 'talk') { A[0].sh.rotation.x = 0.5 + Math.sin(t * 3) * 0.25; A[1].sh.rotation.x = 0.4 + Math.sin(t * 2.3 + 1) * 0.3; A[0].el.rotation.x = 0.9; A[1].el.rotation.x = 0.8; r.head.rotation.y = Math.sin(t * 0.9) * 0.3; }
+      else { A[0].sh.rotation.x = 0.05; A[1].sh.rotation.x = 0.05; A[0].el.rotation.x = 0.15; A[1].el.rotation.x = 0.15; r.head.rotation.y = Math.sin(t * 0.6) * 0.35; r.head.rotation.x = -0.05; }
+    }
+  },
+  addAgent(m, dk) {
+    const boss = m.role === 'boss', rig = this.makePerson(boss ? '#2c3a5c' : ROLES[m.role].shirt, m.hair, boss ? 0x232838 : 0x3b4250);
+    rig.root.position.set(dk.seat.x, 0, dk.seat.z); this.root.add(rig.root);
+    const a = { id: m.id, role: m.role, rig, seat: dk.seat, deskZ: dk.z, state: 'sit', t: boss ? rr(30, 70) : rr(6, 30), ph: Math.random() * 10, path: [], icon: null, iconT: 0, cheerT: 0, boss };
+    this.pose(rig, 'sit', a.ph); this.agents.push(a); return a;
+  },
+  // 行き先：休けい（コーヒー・ソファ・自販機）・打ち合わせ（ホワイトボード等）・見る（本棚・水そう・窓・棚）・試験台（品質チェック）・外回り（営業）
+  pickTrip(a) {
+    const Lo = this.lay, F = this.furnObjs || [], opts = [];
+    const front = (o, dist) => {
+      const f = o.userData.furn, fp = FURN[f.type], c = FURNI.center(f, Lo), r = f.rot || 0, dx = [0, 1, 0, -1][r], dz = [1, 0, -1, 0][r], off = fp.d * 0.25 + dist;
+      const kind = fp.brk || (fp.meet ? 'meet' : 'look'), t = { x: c.x + dx * off, z: c.z + dz * off, look: { x: c.x, z: c.z }, kind, fur: f.type, side: { x: dz, z: -dx } };
+      if (kind === 'sofa') {   // あいている側にすわる
+        const seats = [-0.45, 0.45].map(k => ({ x: c.x + dx * 0.05 + t.side.x * k, z: c.z + dz * 0.05 + t.side.z * k })).filter(q => !this.agents.some(b => b.trip && b.trip.sit && !b.back && b.state !== 'sit' && Math.hypot(b.trip.sit.x - q.x, b.trip.sit.z - q.z) < 0.3));
+        if (!seats.length) return null; t.sit = pick(seats); t.x += t.sit.x - c.x - dx * 0.05; t.z += t.sit.z - c.z - dz * 0.05; t.face = Math.atan2(-dx, -dz) + Math.PI;
+      }
+      return t;
+    };
+    for (const o of F) {
+      const fp = FURN[o.userData.furn.type];
+      if (fp.brk) { const t = front(o, fp.brk === 'sofa' ? 0.45 : 0.35); if (t) opts.push([t, a.boss ? 1 : 3]); }
+      else if (fp.meet) opts.push([front(o, 0.75), a.role === 'res' || a.role === 'des' ? 3 : 1]);
+      else if (fp.look || o.userData.furn.type === 'piano') opts.push([front(o, 0.5), 1.5]);
+    }
+    if (a.role === 'qa') opts.push([{ x: Lo.bench.x - 0.75, z: Lo.bench.z, look: { x: Lo.bench.x, z: Lo.bench.z }, kind: 'bench' }, 4]);
+    if (a.role === 'sal') opts.push([{ x: Lo.door.x + 0.3, z: Lo.door.z, look: { x: Lo.door.x - 1, z: Lo.door.z }, kind: 'out' }, 3]);
+    const wx = (this.winXs || [0])[(Math.random() * (this.winXs || [0]).length) | 0];
+    opts.push([{ x: wx, z: -Lo.D / 2 + 0.6, look: { x: wx, z: -Lo.D / 2 - 1 }, kind: 'look' }, 1]);
+    opts.push([{ x: Lo.shelf.x + 1.0, z: Lo.shelf.z, look: { x: Lo.shelf.x, z: Lo.shelf.z }, kind: 'look' }, a.boss ? 2 : 1]);
+    opts.push([{ x: (Lo.bx0 + Lo.bx1) / 2, z: Lo.bz - 0.9, look: { x: (Lo.bx0 + Lo.bx1) / 2, z: Lo.bz }, kind: 'look' }, a.boss ? 2 : 0.6]);
+    let sum = opts.reduce((s, o) => s + o[1], 0), r = Math.random() * sum; for (const [o, w] of opts) { r -= w; if (r <= 0) return o; } return opts[0][0];
+  },
+  // 打ち合わせ：もう一人を呼ぶ
+  callMate(a, trip) {
+    const mate = this.agents.filter(b => b !== a && !b.boss && b.state === 'sit' && b.t > 4); if (!mate.length || Math.random() < 0.35) return;
+    const b = pick(mate), t = Object.assign({}, trip, { x: trip.x + trip.side.x * 0.7, z: trip.z + trip.side.z * 0.7 });
+    trip.x -= trip.side.x * 0.35; trip.z -= trip.side.z * 0.35; b.trip = t; b.path = this.route(b.rig.root.position, t); b.state = 'walk'; b.back = false;
+  },
+  // ---------- 通り道：0.25m のマスで A*（机・棚・家具をよける） ----------
+  navBuild(S, Lo) {
+    const C = 0.25, nx = Math.round(Lo.W / C), nz = Math.round(Lo.D / C), g = new Uint8Array(nx * nz), R = 0.2, sol = Lo.solid.slice();
+    for (const f of S.furn || []) { const r = FURNI.rect(f, Lo); sol.push([r[0] + 0.05, r[1] + 0.05, r[2] - 0.05, r[3] - 0.05]); }
+    for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) {
+      const x = -Lo.W / 2 + (i + 0.5) * C, z = -Lo.D / 2 + (j + 0.5) * C;
+      let b = x < -Lo.W / 2 + R || z < -Lo.D / 2 + R || x > Lo.W / 2 - 0.15 || z > Lo.D / 2 - 0.15;
+      if (!b) for (const r of sol) if (x > r[0] - R && x < r[2] + R && z > r[1] - R && z < r[3] + R) { b = 1; break; }
+      g[j * nx + i] = b ? 1 : 0;
+    }
+    this.nav = { C, nx, nz, g, x0: -Lo.W / 2, z0: -Lo.D / 2 };
+  },
+  navCell(p) { const N = this.nav; return [clamp(Math.floor((p.x - N.x0) / N.C), 0, N.nx - 1), clamp(Math.floor((p.z - N.z0) / N.C), 0, N.nz - 1)]; },
+  navPt(c) { const N = this.nav; return { x: N.x0 + ((c % N.nx) + 0.5) * N.C, z: N.z0 + (((c / N.nx) | 0) + 0.5) * N.C }; },
+  nearFree(i, j) {
+    const N = this.nav; if (!N.g[j * N.nx + i]) return j * N.nx + i;
+    for (let r = 1; r < 14; r++) { let best = -1, bd = 1e9; for (let dj = -r; dj <= r; dj++) for (let di = -r; di <= r; di++) { if (Math.max(Math.abs(di), Math.abs(dj)) !== r) continue; const a = i + di, b = j + dj; if (a < 0 || b < 0 || a >= N.nx || b >= N.nz || N.g[b * N.nx + a]) continue; const d = di * di + dj * dj; if (d < bd) { bd = d; best = b * N.nx + a; } } if (best >= 0) return best; }
+    return j * N.nx + i;
+  },
+  los(a, b) {
+    const N = this.nav, d = Math.hypot(b.x - a.x, b.z - a.z), n = Math.ceil(d / 0.08);
+    for (let k = 1; k < n; k++) { const t = k / n, [i, j] = this.navCell({ x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t }); if (N.g[j * N.nx + i]) return false; }
+    return true;
+  },
+  astar(s, t) {
+    const N = this.nav, nx = N.nx, M = nx * N.nz, G = new Float32Array(M).fill(1e9), P = new Int32Array(M).fill(-1), done = new Uint8Array(M), H = [];
+    const h = c => { const dx = Math.abs(c % nx - t % nx), dz = Math.abs(((c / nx) | 0) - ((t / nx) | 0)); return Math.max(dx, dz) + 0.414 * Math.min(dx, dz); };
+    const push = (f, c) => { H.push([f, c]); let i = H.length - 1; while (i > 0) { const p = (i - 1) >> 1; if (H[p][0] <= H[i][0]) break; [H[p], H[i]] = [H[i], H[p]]; i = p; } };
+    const pop = () => { const top = H[0], last = H.pop(); if (H.length) { H[0] = last; let i = 0; for (;;) { const l = i * 2 + 1, r = l + 1; let m = i; if (l < H.length && H[l][0] < H[m][0]) m = l; if (r < H.length && H[r][0] < H[m][0]) m = r; if (m === i) break; [H[m], H[i]] = [H[i], H[m]]; i = m; } } return top; };
+    G[s] = 0; push(h(s), s);
+    while (H.length) {
+      const [, c] = pop(); if (c === t) break; if (done[c]) continue; done[c] = 1;
+      const ci = c % nx, cj = (c / nx) | 0;
+      for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) {
+        if (!di && !dj) continue; const ni = ci + di, nj = cj + dj; if (ni < 0 || nj < 0 || ni >= nx || nj >= N.nz) continue;
+        const n = nj * nx + ni; if (N.g[n] && n !== t) continue; if (di && dj && (N.g[cj * nx + ni] || N.g[nj * nx + ci])) continue;
+        const ng = G[c] + (di && dj ? 1.414 : 1); if (ng < G[n]) { G[n] = ng; P[n] = c; push(ng + h(n), n); }
+      }
+    }
+    if (s !== t && P[t] < 0) return null;
+    const out = []; for (let c = t; c !== s && c >= 0; c = P[c]) out.push(c); return out.reverse();
+  },
+  route(from, to) {
+    if (!this.nav) return [{ x: to.x, z: to.z }];
+    const [si, sj] = this.navCell(from), [ti, tj] = this.navCell(to), s = this.nearFree(si, sj), t = this.nearFree(ti, tj), cells = this.astar(s, t);
+    if (!cells) return [{ x: to.x, z: to.z }];
+    const pts = [this.navPt(s), ...cells.map(c => this.navPt(c))], out = []; let cur = { x: from.x, z: from.z }, k = 0;
+    while (k < pts.length) { let far = k; for (let m = pts.length - 1; m > k; m--) if (this.los(cur, pts[m])) { far = m; break; } cur = pts[far]; out.push(cur); k = far + 1; }
+    const end = out[out.length - 1]; if (!end || Math.hypot(end.x - to.x, end.z - to.z) > 0.02) out.push({ x: to.x, z: to.z });
+    return out;
+  },
+  // ---------- 出来事：喜ぶ・アイコン ----------
+  event(type, arg) { if (this.events.length < 24) this.events.push([type, arg]); },
+  icon(a, kind, sec = 3) {
+    if (a.icon) { this.root.remove(a.icon); a.icon.material.dispose(); a.icon = null; }
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: iconTex(kind), depthTest: false, transparent: true })); sp.renderOrder = 10; sp.scale.setScalar(0.38); this.root.add(sp); a.icon = sp; a.iconT = sec;
+  },
+  cheer(a, sec = 2.6, ic = 'star') { if (a.state === 'away') return; if (a.state === 'sit' || a.state === 'cheer') { a.state = 'cheer'; a.cheerT = sec; } this.icon(a, ic, sec + 0.5); },
+  update(dt, S) {
+    this.t += dt;
+    // 出来事
+    for (const [type, arg] of this.events.splice(0)) {
+      if (type === 'research') for (const a of this.agents) { if (a.role === 'res' || a.boss) this.cheer(a, 2.2, 'bulb'); }
+      else if (type === 'devdone' || type === 'launch' || type === 'goal') for (const a of this.agents) this.cheer(a, type === 'launch' ? 3 : 2.4, type === 'launch' ? 'heart' : 'star');
+      else if (type === 'levelup') { const a = this.agents.find(x => x.id === arg); if (a) this.cheer(a, 2.6, 'up'); }
+      else if (type === 'fix') { const a = this.agents.filter(x => x.role === 'qa' && x.state === 'sit'); if (a.length) this.icon(pick(a), 'wrench', 2.5); }
+    }
+    for (const a of this.agents) this.stepAgent(a, dt, S);
+    this.stepLine(dt, S); this.stepBench(dt);
+    for (const o of this.furnObjs || []) if (o.userData.anim) o.userData.anim(this.t);
+    if (this.fan) { this.fan.rotation.z += dt * 18; this.fanHead.rotation.y = Math.sin(this.t * 0.5) * 0.7; }
+    // カメラ：部屋がちょうど入る距離
     const vf = this.cam.fov * Math.PI / 360, hf = Math.atan(Math.tan(vf) * this.cam.aspect), W = this.W || 8, D = this.D || 6;
     const fit = Math.max(W, D) * 0.55 / Math.tan(Math.min(vf, hf)) + 1.5, d = fit / this.zoom, ty = 0.6;
     this.cam.position.set(Math.sin(this.yaw) * Math.cos(this.pitch) * d, ty + Math.sin(this.pitch) * d, Math.cos(this.yaw) * Math.cos(this.pitch) * d);
     this.cam.lookAt(0, ty, 0.3);
   },
+  stepAgent(a, dt, S) {
+    const r = a.rig, p = r.root.position;
+    a.ph += dt;
+    if (a.icon) { a.iconT -= dt; const k = Math.min(1, (3.5 - a.iconT) * 6, a.iconT * 3); a.icon.scale.setScalar(0.38 * clamp(k, 0, 1)); a.icon.position.set(p.x, (a.state === 'sit' || a.state === 'sofa' ? 1.55 : 1.95) + Math.sin(a.ph * 3) * 0.03, p.z); if (a.iconT <= 0) { this.root.remove(a.icon); a.icon.material.dispose(); a.icon = null; } }
+    if (a.state === 'sit') {
+      p.set(a.seat.x, 0, a.seat.z); r.root.rotation.y += angDiff2(r.root.rotation.y, 0) * Math.min(1, dt * 12); this.pose(r, 'sit', a.ph);
+      { a.t -= dt; if (a.t <= 0) { const trip = this.pickTrip(a); a.trip = trip; if (trip.kind === 'meet') this.callMate(a, trip); a.path = this.route(a.seat, trip); if (trip.sit) a.path.push({ x: trip.sit.x, z: trip.sit.z }); a.state = 'walk'; a.back = false; } }
+      if (a.role === 'qa' && S && S.devs.some(v => devFound(v) - v.fixed > 0.5) && !a.icon && Math.random() < dt * 0.08) this.icon(a, 'wrench', 2.5);
+      if (a.role === 'res' && S && S.research.cur && !a.icon && Math.random() < dt * 0.04) this.icon(a, 'think', 2.2);
+    } else if (a.state === 'cheer') {
+      p.set(a.seat.x, 0, a.seat.z - 0.05); r.root.rotation.y = 0; this.pose(r, 'cheer', a.ph); a.cheerT -= dt; if (a.cheerT <= 0) a.state = 'sit';
+    } else if (a.state === 'walk') {
+      const tg = a.path[0]; if (!tg) { this.arrive(a); return; }
+      const dx = tg.x - p.x, dz = tg.z - p.z, dist = Math.hypot(dx, dz), step = 1.15 * dt;
+      if (dist <= step) { p.x = tg.x; p.z = tg.z; a.path.shift(); if (!a.path.length) this.arrive(a); }
+      else { p.x += dx / dist * step; p.z += dz / dist * step; const ty = Math.atan2(-dx, -dz); r.root.rotation.y += angDiff2(r.root.rotation.y, ty) * Math.min(1, dt * 12); }
+      this.pose(r, 'walk', a.ph);
+    } else if (a.state === 'act') {
+      a.t -= dt; const tr = a.trip, k = tr.kind;
+      const fy = tr.face != null ? tr.face : tr.look ? Math.atan2(-(tr.look.x - p.x), -(tr.look.z - p.z)) : r.root.rotation.y; r.root.rotation.y += angDiff2(r.root.rotation.y, fy) * Math.min(1, dt * 10);
+      this.pose(r, k === 'coffee' ? 'drink' : k === 'meet' ? 'talk' : k === 'sofa' ? 'sofa' : 'stand', a.ph);
+      if (a.t <= 0) { a.back = true; a.state = 'walk'; a.path = this.route(p, a.seat); }
+    } else if (a.state === 'away') {
+      a.t -= dt; if (a.t <= 0) { r.root.visible = true; a.back = true; a.state = 'walk'; this.icon(a, 'yen', 2.5); a.path = this.route(p, a.seat); }
+    }
+  },
+  arrive(a) {
+    if (a.back) { a.state = 'sit'; a.t = a.boss ? rr(45, 100) : rr(18, 55); return; }
+    const k = a.trip.kind;
+    if (k === 'out') { a.state = 'away'; a.t = rr(10, 20); a.rig.root.visible = false; return; }
+    a.state = 'act'; a.t = k === 'sofa' ? rr(6, 10) : k === 'meet' ? rr(5, 9) : rr(3.5, 6);
+    if (k === 'coffee') this.icon(a, 'coffee', a.t); else if (k === 'meet') this.icon(a, 'chat', a.t); else if (k === 'bench') this.icon(a, 'wrench', a.t); else if (k === 'sofa' || a.trip.fur === 'piano') this.icon(a, 'note', a.t);
+  },
+  stepLine(dt, S) {
+    const busy = this.onSale > 0 ? clamp(0.5 + (S ? S.capUse : 0.5) * 0.6, 0.4, 1.3) : 0, spd = (this.beltBase || 0) * busy, L = this.bx1 - this.bx0;
+    if (this.beltTex) this.beltTex.offset.x -= dt * spd * 4;
+    for (const M of this.mach) {
+      const t = this.t * (busy ? 1 : 0) + M.ph;
+      if (M.type === 'press') { const s = Math.pow(Math.max(0, Math.sin(t * 3.2)), 6); M.head.position.y = 1.42 - s * 0.38; M.rod.position.y = 1.62 - s * 0.19; }
+      else if (M.type === 'print') M.head.position.z = Math.sin(t * 4) * 0.28;
+      else { M.base.rotation.y = Math.sin(t * 1.6) * 1.2; M.el.rotation.x = 0.3 + Math.sin(t * 3.2) * 0.35; }
+      M.lamp.material.emissiveIntensity = busy ? 0.6 + 0.6 * Math.max(0, Math.sin(t * 6)) : 0.1;
+    }
+    const pk = this.pack; let into = 0;
+    for (const m of this.belt) {
+      const t0 = m.userData.t; m.userData.t = (t0 + dt * spd / Math.max(0.5, L)) % 1; if (m.userData.t < t0) into++;
+      m.position.set(this.bx0 + 0.2 + m.userData.t * (L - 0.4), this.beltY + m.userData.size.y * m.scale.y / 2 + 0.005, this.bz); m.rotation.y = 0.15;
+    }
+    if (!pk) return;
+    pk.t += dt;
+    if (pk.phase === 'fill') { pk.n += into; if (pk.n >= 4) { pk.phase = 'close'; pk.t = 0; } }
+    else if (pk.phase === 'close') { const k = Math.min(1, pk.t / 0.5); pk.flaps[0].rotation.z = -1.9 * (1 - k); pk.flaps[1].rotation.z = 1.9 * (1 - k); if (k >= 1) { pk.phase = 'move'; pk.t = 0; } }
+    else if (pk.phase === 'move') {
+      const k = Math.min(1, pk.t / 0.6); pk.box.position.z = -0.85 * k; pk.box.position.y = 0.6 - 0.6 * k + (pk.h * 0.34) * k;
+      if (k >= 1) {   // 積む
+        const c = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.34, 0.5), pk.cardM); c.castShadow = true; c.position.set(0, 0.17 + pk.h * 0.34, 0); pk.stack.add(c);
+        const tape = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.005, 0.51), new THREE.MeshStandardMaterial({ color: 0xd9c7a0 })); tape.position.set(0, 0.343 + pk.h * 0.34, 0); pk.stack.add(tape);
+        pk.h++; if (pk.h >= 5) { for (const ch of pk.stack.children.slice()) { pk.stack.remove(ch); ch.geometry.dispose(); } pk.h = 0; }
+        pk.box.position.set(0, 0.6, 0); pk.flaps[0].rotation.z = -1.9; pk.flaps[1].rotation.z = 1.9; pk.n = 0; pk.phase = 'fill';
+      }
+    }
+  },
+  stepBench(dt) {
+    const b = this.bench; if (!b || !b.item) return;
+    b.t += dt; const T = b.t % 5, m = b.item, sz = m.userData.size, sc = m.scale.x, hy = (b.kind === 'eraser' || b.kind === 'lead' ? sz.y : sz.y) * sc / 2;
+    if (T < 1.8) {   // 落下テスト：落として、はねる
+      const f = T / 1.8, fall = f < 0.45 ? 1 - Math.pow(f / 0.45, 2) : Math.abs(Math.sin((f - 0.45) / 0.55 * Math.PI * 2)) * 0.25 * (1 - f);
+      m.position.set(0, 0.9 + hy + fall * 0.6, -0.4); m.rotation.set(0, Math.PI / 2, f < 0.45 ? 0 : (f - 0.45) * 0.6);
+      if (T < dt * 1.5) { const q = b.paper.q; q.fillStyle = '#fbfbf6'; q.fillRect(0, 0, 256, 128); b.paper.tex.needsUpdate = true; b.lx = null; }
+    } else {   // 書き味テスト：紙の上をジグザグに動いて線を引く
+      const f = (T - 1.8) / 3.2, px = -0.13 + f * 0.26, pz = 0.3 + Math.sin(f * Math.PI * 8) * 0.1;
+      m.position.set(px, 0.9 + hy + 0.03, pz); m.rotation.set(0, Math.PI / 2, -0.9);
+      const q = b.paper.q, cx = 20 + f * 216, cy = 64 + Math.sin(f * Math.PI * 8) * 40;
+      if (b.lx != null) { q.strokeStyle = b.kind === 'eraser' ? '#d8d2c4' : b.kind === 'ball' ? '#1f3fa8' : b.kind === 'fountain' ? '#24438f' : '#3a3a3c'; q.lineWidth = 3; q.beginPath(); q.moveTo(b.lx, b.ly); q.lineTo(cx, cy); q.stroke(); b.paper.tex.needsUpdate = true; }
+      b.lx = cx; b.ly = cy;
+    }
+  },
   // ---------- 部品 ----------
   chair(R, x, z, lv) {
     const g = new THREE.Group(), dark = new THREE.MeshStandardMaterial({ color: lv >= 1 ? 0x24262b : 0x5d6a7a, roughness: 0.7 }), metal = new THREE.MeshStandardMaterial({ color: 0x9aa0a8, metalness: 0.8, roughness: 0.3 });
-    const seat = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.07, 0.46), dark); seat.position.y = 0.47; g.add(seat);
-    const back = new THREE.Mesh(new THREE.BoxGeometry(0.46, lv >= 2 ? 0.75 : 0.5, 0.05), dark); back.position.set(0, lv >= 2 ? 0.92 : 0.8, 0.22); g.add(back);
-    if (lv >= 3) { const hr = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.14, 0.05), dark); hr.position.set(0, 1.38, 0.24); g.add(hr); }
-    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.4, 10), metal); pole.position.y = 0.24; g.add(pole);
+    const seat = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.07, 0.46), dark); seat.position.y = 0.42; g.add(seat);
+    const back = new THREE.Mesh(new THREE.BoxGeometry(0.46, lv >= 2 ? 0.75 : 0.5, 0.05), dark); back.position.set(0, lv >= 2 ? 0.87 : 0.75, 0.24); g.add(back);
+    if (lv >= 3) { const hr = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.14, 0.05), dark); hr.position.set(0, 1.33, 0.26); g.add(hr); }
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.36, 10), metal); pole.position.y = 0.22; g.add(pole);
     for (let k = 0; k < 5; k++) { const leg = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 0.3), metal); const a = k / 5 * TAU; leg.position.set(Math.sin(a) * 0.14, 0.04, Math.cos(a) * 0.14); leg.rotation.y = a; g.add(leg); }
     g.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
     g.position.set(x, 0, z); R.add(g);
   },
-  plant(R, x, z, h) {
+  plant(par, x, z, h) {
     const g = new THREE.Group(), pot = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.15, 0.36, 16), new THREE.MeshStandardMaterial({ color: 0xc9b79c, roughness: 0.8 })); pot.position.y = 0.18; g.add(pot);
     const leafM = new THREE.MeshStandardMaterial({ color: 0x4f8a45, roughness: 0.7 });
     for (let k = 0; k < 7; k++) { const l = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 8), leafM); const a = k * 2.4; l.position.set(Math.sin(a) * 0.14, 0.36 + h * (0.4 + (k / 7) * 0.6), Math.cos(a) * 0.14); l.scale.set(1, 1.5, 0.6); l.rotation.y = a; g.add(l); }
     g.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
-    g.position.set(x, 0, z); R.add(g);
-  },
-  // 人：座っている（キーボードを打つ）
-  person(shirt, hair, seated, boss) {
-    const g = new THREE.Group(), skin = new THREE.MeshStandardMaterial({ color: 0xe9c4a2, roughness: 0.7 }), shirtM = new THREE.MeshStandardMaterial({ color: shirt, roughness: 0.75 }), pants = new THREE.MeshStandardMaterial({ color: boss ? 0x232838 : 0x3b4250, roughness: 0.8 });
-    const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.17, 0.3, 4, 10), shirtM); torso.position.set(0, 0.86, 0.05); torso.rotation.x = -0.1; g.add(torso);
-    const head = new THREE.Group(); head.position.set(0, 1.2, 0.0); g.add(head);
-    const hd = new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 12), skin); head.add(hd);
-    const hr = new THREE.Mesh(new THREE.SphereGeometry(0.137, 16, 10, 0, TAU, 0, Math.PI * 0.55), new THREE.MeshStandardMaterial({ color: hair || '#2b2118', roughness: 0.8 })); hr.position.set(0, 0.012, 0.012); hr.rotation.x = -0.25; head.add(hr);
-    for (const sx of [-0.1, 0.1]) {
-      const th = new THREE.Mesh(new THREE.CapsuleGeometry(0.075, 0.32, 4, 8), pants); th.rotation.x = Math.PI / 2; th.position.set(sx, 0.52, -0.16); g.add(th);
-      const sh = new THREE.Mesh(new THREE.CapsuleGeometry(0.065, 0.36, 4, 8), pants); sh.position.set(sx, 0.27, -0.36); g.add(sh);
-    }
-    const arms = [];
-    for (const sx of [-0.21, 0.21]) {
-      const up = new THREE.Group(); up.position.set(sx, 1.0, 0.05); g.add(up);
-      const ua = new THREE.Mesh(new THREE.CapsuleGeometry(0.055, 0.22, 4, 8), shirtM); ua.position.y = -0.14; up.add(ua);
-      const el = new THREE.Group(); el.position.y = -0.27; up.add(el);
-      const fa = new THREE.Mesh(new THREE.CapsuleGeometry(0.05, 0.22, 4, 8), shirtM); fa.position.y = -0.13; el.add(fa);
-      const hand = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), skin); hand.position.y = -0.27; el.add(hand);
-      up.rotation.x = 0.35; el.rotation.x = 1.25; arms.push(el);
-    }
-    g.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
-    g.userData = { arms, head };
-    // 前（−z）を向いて座る形（机は −z 側にある）
-    return g;
+    g.position.set(x, 0, z); if (par) par.add(g); return g;
   },
   // ---------- テクスチャ ----------
   floorTex(tier) {
@@ -1358,12 +1755,16 @@ const OFFICE = {
     }
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = MAXANI; return t;
   },
-  skyTex(tier) {
+  skyTex(tier, season) {
     const c = newCanvas(256, 256), g = c.getContext('2d'), gr = g.createLinearGradient(0, 0, 0, 256);
-    gr.addColorStop(0, '#8fc3ec'); gr.addColorStop(0.75, '#d8ecf7'); gr.addColorStop(1, '#eef5ec'); g.fillStyle = gr; g.fillRect(0, 0, 256, 256);
+    const snow = season === 'xmas' || season === 'newyear';
+    gr.addColorStop(0, snow ? '#b9cad8' : season === 'halloween' ? '#e8b48a' : '#8fc3ec'); gr.addColorStop(0.75, snow ? '#e4eaf0' : '#d8ecf7'); gr.addColorStop(1, '#eef5ec'); g.fillStyle = gr; g.fillRect(0, 0, 256, 256);
     g.fillStyle = 'rgba(255,255,255,.85)'; for (let k = 0; k < 4; k++) { g.beginPath(); g.ellipse(40 + k * 60, 50 + (k % 2) * 30, 34, 12, 0, 0, TAU); g.fill(); }
-    if (tier === 0) { g.fillStyle = '#7fa86b'; g.beginPath(); for (let x = 0; x <= 256; x += 16) g.lineTo(x, 200 + Math.sin(x * 0.07) * 14); g.lineTo(256, 256); g.lineTo(0, 256); g.fill(); g.fillStyle = '#c9b49a'; g.fillRect(30, 170, 60, 60); g.fillStyle = '#9b5b43'; g.beginPath(); g.moveTo(24, 172); g.lineTo(60, 140); g.lineTo(96, 172); g.fill(); }
+    if (tier === 0) { g.fillStyle = snow ? '#f2f4f6' : '#7fa86b'; g.beginPath(); for (let x = 0; x <= 256; x += 16) g.lineTo(x, 200 + Math.sin(x * 0.07) * 14); g.lineTo(256, 256); g.lineTo(0, 256); g.fill(); g.fillStyle = '#c9b49a'; g.fillRect(30, 170, 60, 60); g.fillStyle = snow ? '#f6f6f6' : '#9b5b43'; g.beginPath(); g.moveTo(24, 172); g.lineTo(60, 140); g.lineTo(96, 172); g.fill(); }
     else { for (let k = 0; k < 9; k++) { const h = 40 + ((k * 53) % 90) * (tier >= 2 ? 1.6 : 0.8); g.fillStyle = ['#8d9bab', '#a4b0bd', '#7c8a9b'][k % 3]; g.fillRect(k * 30 - 4, 256 - h, 26, h); g.fillStyle = 'rgba(255,255,230,.5)'; for (let y = 256 - h + 6; y < 250; y += 10) g.fillRect(k * 30, y, 18, 3); } }
+    if (season === 'sakura') { g.fillStyle = '#6b4a35'; g.fillRect(186, 150, 10, 106); for (let k = 0; k < 40; k++) { g.fillStyle = k % 3 ? '#f6c3d3' : '#f9dce6'; g.beginPath(); g.arc(150 + Math.sin(k * 1.7) * 60, 130 + Math.cos(k * 2.3) * 35, 10 + (k % 4) * 3, 0, TAU); g.fill(); } }
+    if (season === 'summer') { for (let k = 0; k < 4; k++) { const x = 30 + k * 60; g.fillStyle = '#4f8a45'; g.fillRect(x - 2, 200, 4, 56); g.fillStyle = '#f6c945'; g.beginPath(); g.arc(x, 196, 14, 0, TAU); g.fill(); g.fillStyle = '#6b4a20'; g.beginPath(); g.arc(x, 196, 6, 0, TAU); g.fill(); } }
+    if (snow) { g.fillStyle = 'rgba(255,255,255,.9)'; for (let k = 0; k < 60; k++) { g.beginPath(); g.arc((k * 73) % 256, (k * 131) % 200, 2 + (k % 3), 0, TAU); g.fill(); } }
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
   },
   posterTex(S) {
@@ -1375,9 +1776,387 @@ const OFFICE = {
     cols.forEach((col, i) => { g.save(); g.translate(96 + i * 80, 250); g.rotate(-0.5); g.fillStyle = col; g.fillRect(-10, -70, 20, 120); g.fillStyle = '#e8c79a'; g.beginPath(); g.moveTo(-10, 50); g.lineTo(10, 50); g.lineTo(0, 78); g.fill(); g.restore(); });
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
   },
-  beltTex() {
-    const c = newCanvas(64, 64), g = c.getContext('2d'); g.fillStyle = '#2f3237'; g.fillRect(0, 0, 64, 64); g.fillStyle = '#3c4046'; for (let x = 0; x < 64; x += 8) g.fillRect(x, 0, 3, 64);
-    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(12, 1); return t;
+  beltTexMake() {
+    const c = newCanvas(64, 64), g = c.getContext('2d'); g.fillStyle = '#2f3237'; g.fillRect(0, 0, 64, 64); g.fillStyle = '#3c4046'; for (let x = 0; x < 64; x += 16) g.fillRect(x, 0, 5, 64);
+    const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
+  },
+};
+// 頭の上のアイコン（キャンバスに描く。絵文字は使わない）
+const _icons = {};
+function iconTex(kind) {
+  if (_icons[kind]) return _icons[kind];
+  const S = 128, c = newCanvas(S, S), g = c.getContext('2d');
+  g.fillStyle = '#ffffff'; g.strokeStyle = 'rgba(0,0,0,.25)'; g.lineWidth = 4; g.beginPath(); g.arc(64, 58, 50, 0, TAU); g.fill(); g.stroke();
+  g.beginPath(); g.moveTo(52, 104); g.lineTo(64, 122); g.lineTo(76, 104); g.fill();
+  g.lineCap = 'round'; g.lineJoin = 'round';
+  if (kind === 'bulb') { g.fillStyle = '#f6c945'; g.beginPath(); g.arc(64, 50, 22, Math.PI * 0.8, Math.PI * 2.2); g.lineTo(74, 74); g.lineTo(54, 74); g.closePath(); g.fill(); g.fillStyle = '#8a8f96'; g.fillRect(54, 76, 20, 10); g.strokeStyle = '#f0a03a'; g.lineWidth = 4; for (const a of [-2.4, -1.57, -0.7]) { g.beginPath(); g.moveTo(64 + Math.cos(a) * 30, 50 + Math.sin(a) * 30); g.lineTo(64 + Math.cos(a) * 40, 50 + Math.sin(a) * 40); g.stroke(); } }
+  else if (kind === 'star' || kind === 'up') { g.fillStyle = kind === 'up' ? '#2e9a63' : '#f6c945'; g.beginPath(); for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + k * Math.PI / 5, r = k & 1 ? 13 : 30; g.lineTo(64 + Math.cos(a) * r, 58 + Math.sin(a) * r); } g.closePath(); g.fill(); if (kind === 'up') { g.fillStyle = '#fff'; g.font = '900 22px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('UP', 64, 60); } }
+  else if (kind === 'heart') { g.fillStyle = '#e8566b'; g.beginPath(); g.moveTo(64, 84); g.bezierCurveTo(24, 58, 36, 22, 64, 40); g.bezierCurveTo(92, 22, 104, 58, 64, 84); g.fill(); }
+  else if (kind === 'coffee') { g.fillStyle = '#8a5a36'; g.fillRect(42, 46, 36, 34); g.strokeStyle = '#8a5a36'; g.lineWidth = 6; g.beginPath(); g.arc(80, 62, 9, -1.4, 1.4); g.stroke(); g.strokeStyle = '#bbb'; g.lineWidth = 3; for (const x of [52, 66]) { g.beginPath(); g.moveTo(x, 40); g.bezierCurveTo(x - 6, 32, x + 6, 26, x, 18); g.stroke(); } }
+  else if (kind === 'chat') { g.fillStyle = '#2b6fd6'; g.beginPath(); g.ellipse(64, 56, 32, 22, 0, 0, TAU); g.fill(); g.beginPath(); g.moveTo(48, 72); g.lineTo(42, 88); g.lineTo(60, 76); g.fill(); g.fillStyle = '#fff'; for (const x of [50, 64, 78]) { g.beginPath(); g.arc(x, 56, 4.5, 0, TAU); g.fill(); } }
+  else if (kind === 'wrench') { g.strokeStyle = '#6d7a88'; g.lineWidth = 11; g.beginPath(); g.moveTo(44, 80); g.lineTo(76, 46); g.stroke(); g.fillStyle = '#6d7a88'; g.beginPath(); g.arc(80, 42, 14, 0, TAU); g.fill(); g.fillStyle = '#fff'; g.fillRect(80, 28, 10, 12); }
+  else if (kind === 'note') { g.fillStyle = '#7b4bc4'; g.beginPath(); g.ellipse(52, 76, 10, 8, -0.4, 0, TAU); g.fill(); g.beginPath(); g.ellipse(80, 70, 10, 8, -0.4, 0, TAU); g.fill(); g.fillRect(58, 30, 5, 46); g.fillRect(86, 26, 5, 44); g.fillRect(58, 26, 33, 9); }
+  else if (kind === 'yen') { g.fillStyle = '#2e9a63'; g.font = '900 52px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('¥', 64, 60); }
+  else if (kind === 'think') { g.fillStyle = '#9aa6b8'; for (const [x, y, r] of [[48, 66, 8], [64, 52, 11], [82, 40, 14]]) { g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill(); } }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return (_icons[kind] = t);
+}
+// =========================================================================================
+//  家具：事務所の床のマス（0.5m）に置く。近くの机の人の仕事が速くなる（観葉植物・照明・ホワイトボード…）。
+//  模様がえモード：下の一覧から選んで床をタップ。置いた家具をタップすると動かしたり、回したり、しまったりできる
+//  向き rot：0＝正面（+z）向き、1＝右（+x）、2＝奥、3＝左。f = { type, x, z, rot }（x, z は奥・左の角からのマス）
+// =========================================================================================
+const FURNI = {
+  CELL: 0.5, on: false, sel: null, ghost: null, ring: null, labels: [], ver: 0, cacheK: '', thumbs: {}, hint: '',
+  dims(type, rot) { const F = FURN[type]; return (rot || 0) % 2 ? [F.d, F.w] : [F.w, F.d]; },
+  rect(f, Lo) { const [w, d] = this.dims(f.type, f.rot), x0 = -Lo.W / 2 + f.x * this.CELL, z0 = -Lo.D / 2 + f.z * this.CELL; return [x0, z0, x0 + w * this.CELL, z0 + d * this.CELL]; },
+  center(f, Lo) { const r = this.rect(f, Lo); return { x: (r[0] + r[2]) / 2, z: (r[1] + r[3]) / 2 }; },
+  placeObj(o, f, Lo) { const c = this.center(f, Lo); o.position.set(c.x, 0, c.z); o.rotation.y = (f.rot || 0) * Math.PI / 2; },
+  // 置けるか（部屋の中・机や通り道にかからない・ほかの家具と重ならない）
+  fits(S, Lo, f, list = S.furn, ignore = null) {
+    const r = this.rect(f, Lo), e = 0.001;
+    if (r[0] < -Lo.W / 2 - e || r[1] < -Lo.D / 2 - e || r[2] > Lo.W / 2 + e || r[3] > Lo.D / 2 + e) return false;
+    const hit = b => r[0] < b[2] - e && r[2] > b[0] + e && r[1] < b[3] - e && r[3] > b[1] + e;
+    for (const b of Lo.blocked) if (hit(b)) return false;
+    for (const g of list) if (g !== ignore && g !== f && hit(this.rect(g, Lo))) return false;
+    return true;
+  },
+  // 近い所から空いている場所をさがす
+  findSpot(S, Lo, type, rot, near, list = S.furn) {
+    const [w, d] = this.dims(type, rot), nx = Math.round(Lo.W / this.CELL) - w, nz = Math.round(Lo.D / this.CELL) - d, c = [];
+    for (let z = 0; z <= nz; z++) for (let x = 0; x <= nx; x++) { const f = { type, x, z, rot }, p = this.center(f, Lo); c.push([Math.hypot(p.x - near.x, p.z - near.z), f]); }
+    c.sort((a, b) => a[0] - b[0]);
+    for (const [, f] of c) if (this.fits(S, Lo, f, list)) return f;
+    return null;
+  },
+  count(S, type) { return (S.furn || []).filter(f => f.type === type).length; },
+  limit(S) { return FURN_MAX[S.tier]; },
+  why(S, type) {   // 買えない理由
+    const F = FURN[type];
+    if (F.tier > S.tier) return OFFICES[F.tier].name + 'から';
+    if (S.furn.length >= this.limit(S)) return '家具はこの事務所では ' + this.limit(S) + ' こまで';
+    if (F.max && this.count(S, type) >= F.max) return F.name + 'は ' + F.max + ' 台まで';
+    if (S.money < F.price) return 'お金が足りない';
+    return '';
+  },
+  // 古いセーブ（設備の観葉植物・コーヒーマシン）を家具にする
+  migrate(S) {
+    if (!S.furn) S.furn = [];
+    const e = S.equip, n = (e.plant || 0), cf = (e.coffee || 0);
+    delete e.plant; delete e.coffee;
+    if (!n && !cf) return;
+    const Lo = OFFICE.layout(S);
+    for (let i = 0; i < n * 2 && S.furn.length < FURN_MAX[S.tier]; i++) { const f = this.findSpot(S, Lo, 'plant', 0, { x: Lo.W / 2 - 0.5, z: -Lo.D / 2 + 0.5 + i }); if (f) S.furn.push(f); }
+    if (cf) { const f = this.findSpot(S, Lo, 'coffee', 0, { x: 0, z: -Lo.D / 2 }); if (f) S.furn.push(f); }
+  },
+  // 引っ越しや設備で部屋が変わったら、重なった家具を近くに動かす（置けなければ代金をもどす）
+  validate(S) {
+    if (!S.furn || !S.furn.length) return;
+    const Lo = OFFICE.layout(S), keep = [];
+    for (const f of S.furn) {
+      if (this.fits(S, Lo, f, keep)) { keep.push(f); continue; }
+      const g = this.findSpot(S, Lo, f.type, f.rot || 0, this.center(f, Lo), keep) || this.findSpot(S, Lo, f.type, ((f.rot || 0) + 1) % 4, this.center(f, Lo), keep);
+      if (g) { f.x = g.x; f.z = g.z; f.rot = g.rot; keep.push(f); }
+      else if (typeof S.money === 'number') { S.money += FURN[f.type].price; if (typeof UI !== 'undefined' && UI.toast) UI.toast(`${FURN[f.type].name}を置く場所がなくなったので売った`, ''); }
+    }
+    if (keep.length !== S.furn.length) this.ver++;
+    S.furn = keep;
+  },
+  // ---------- 効果：机ごと（近い家具）＋部屋全体（コーヒー・ソファ） ----------
+  calc(S, list = S.furn || []) {
+    const Lo = OFFICE.layout(S), per = {}, parts = {};
+    for (let i = 0; i < S.staff.length; i++) {
+      const m = S.staff[i], dk = Lo.desks[i]; if (!dk) { per[m.id] = 0; continue; }
+      const tr = TRAITS[m.trait] || {}; let sum = 0; const ps = [];
+      const cnt = {};
+      for (const f of list) {
+        const F = FURN[f.type]; cnt[f.type] = (cnt[f.type] || 0) + 1;
+        if (F.max && cnt[f.type] > F.max) continue;
+        let v = 0;
+        if (F.global) v = F.global * (tr.likes === 'coffee' && F.brk === 'coffee' ? 2 : 1);
+        else if (F.r) { const c = this.center(f, Lo); if (Math.hypot(c.x - dk.seat.x, c.z - dk.seat.z) <= F.r) v = (F.eff.work || 0) + (F.eff[m.role] || 0); if (tr.likes === 'plant' && (f.type === 'plant' || f.type === 'bigplant')) v *= 2; }
+        if (v > 0) { sum += v; ps.push([F.name, v]); }
+      }
+      per[m.id] = 0.3 * (1 - Math.exp(-sum / 0.3));   // たくさん置いても +30% まで（だんだん効きにくくなる）
+      parts[m.id] = ps;
+    }
+    let glob = 0; const cnt = {};
+    for (const f of list) { const F = FURN[f.type]; cnt[f.type] = (cnt[f.type] || 0) + 1; if (F.global && !(F.max && cnt[f.type] > F.max)) glob += F.global; }
+    return { per, parts, glob: Math.min(0.2, glob) };
+  },
+  get(S) {
+    const k = S.day + '|' + S.tier + '|' + S.equip.line + '|' + S.equip.lab + '|' + S.staff.length + '|' + (S.staff[0] ? S.staff[0].id : 0) + '|' + (S.furn || []).length + '|' + this.ver;
+    if (this.cacheK !== k || this.cacheS !== S) { this.cacheK = k; this.cacheS = S; this.cache = this.calc(S); }
+    return this.cache;
+  },
+  bonus(S, m) { return this.get(S).per[m.id] || 0; },
+  globalBonus(S) { return this.get(S).glob; },
+  // ---------- 3Dの家具 ----------
+  model(type) {
+    const g = new THREE.Group(), std = (c, r = 0.6, m = 0, o = {}) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: r, metalness: m }, o));
+    const B = (w, h, d, mat, x, y, z, par = g) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; par.add(m); return m; };
+    const Cy = (rt, rb, h, mat, x, y, z, n = 16, par = g) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, n), mat); m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; par.add(m); return m; };
+    const tex = (w, h, draw) => { const c = newCanvas(w, h), q = c.getContext('2d'); draw(q, w, h); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = MAXANI; return t; };
+    const metal = std(0xb9bec6, 0.3, 0.8), dark = std(0x34373d, 0.5, 0.3), ph = Math.random() * 10;
+    if (type === 'plant') {
+      const p = OFFICE.plant(g, 0, 0, 0.55); g.userData.anim = t => { p.rotation.z = Math.sin(t * 1.3 + ph) * 0.025; };
+    } else if (type === 'bigplant') {
+      Cy(0.32, 0.24, 0.48, std(0xe8e2d6, 0.7), 0, 0.24, 0, 20); Cy(0.3, 0.3, 0.03, std(0x5a4430, 0.95), 0, 0.47, 0, 20);
+      const top = new THREE.Group(); g.add(top); Cy(0.035, 0.05, 1.1, std(0x6b5236, 0.9), 0, 0.98, 0, 8, top);
+      const leafM = std(0x3f7d3c, 0.65, 0, { side: THREE.DoubleSide });
+      for (let k = 0; k < 11; k++) { const a = k * 2.35, h = 1.0 + (k % 4) * 0.22, l = new THREE.Mesh(new THREE.SphereGeometry(0.2, 10, 6), leafM); l.scale.set(0.45, 0.12, 1.6); l.position.set(Math.sin(a) * 0.3, h, Math.cos(a) * 0.3); l.rotation.set(-0.5 * Math.cos(a), a, 0.5 * Math.sin(a)); l.castShadow = true; top.add(l); }
+      g.userData.anim = t => { top.rotation.z = Math.sin(t * 0.9 + ph) * 0.02; top.rotation.x = Math.sin(t * 0.7 + ph) * 0.015; };
+    } else if (type === 'lamp') {
+      Cy(0.16, 0.18, 0.04, dark, 0, 0.02, 0, 20); Cy(0.015, 0.015, 1.45, metal, 0, 0.75, 0, 8);
+      const sh = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.2, 0.24, 20, 1, true), std(0xf3ead8, 0.8, 0, { side: THREE.DoubleSide, emissive: 0xffe2a8, emissiveIntensity: 0.35 })); sh.position.y = 1.5; g.add(sh);
+      const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.05, 10, 8), new THREE.MeshBasicMaterial({ color: 0xfff1c8 })); bulb.position.y = 1.45; g.add(bulb);
+      const glow = new THREE.Mesh(new THREE.CircleGeometry(0.45, 24), new THREE.MeshBasicMaterial({ color: 0xffe9b0, transparent: true, opacity: 0.22, depthWrite: false })); glow.rotation.x = -Math.PI / 2; glow.position.y = 0.006; g.add(glow);
+    } else if (type === 'whiteboard') {
+      for (const sx of [-0.68, 0.68]) { B(0.04, 1.85, 0.04, metal, sx, 0.93, 0); B(0.05, 0.04, 0.42, metal, sx, 0.04, 0); }
+      B(1.42, 0.96, 0.04, metal, 0, 1.38, 0);
+      const t = tex(512, 340, (q, w, h) => {
+        q.fillStyle = '#fbfcfd'; q.fillRect(0, 0, w, h); q.lineCap = 'round'; q.lineJoin = 'round';
+        q.strokeStyle = '#2b6fd6'; q.lineWidth = 5; q.beginPath(); q.moveTo(40, 230); q.lineTo(250, 120); q.lineTo(268, 136); q.lineTo(58, 246); q.closePath(); q.stroke();
+        q.beginPath(); q.moveTo(250, 120); q.lineTo(300, 104); q.lineTo(268, 136); q.stroke();
+        q.strokeStyle = '#d9493e'; q.lineWidth = 4; q.beginPath(); q.arc(390, 110, 52, 0, TAU); q.stroke(); q.beginPath(); q.moveTo(300, 104); q.quadraticCurveTo(330, 60, 340, 100); q.stroke();
+        q.fillStyle = '#2b2a28'; q.font = '700 30px "Zen Maru Gothic", sans-serif'; q.fillText('書きやすさ↑', 300, 220); q.fillText('重心 45%', 60, 70);
+        q.strokeStyle = '#2e9a63'; q.lineWidth = 4; for (let k = 0; k < 3; k++) { q.beginPath(); q.moveTo(310, 260 + k * 22); q.lineTo(470 - k * 30, 260 + k * 22); q.stroke(); }
+        q.fillStyle = '#f6e27a'; q.fillRect(150, 250, 70, 64); q.fillStyle = '#f7b6c8'; q.fillRect(30, 280, 64, 50);
+      });
+      const bd = new THREE.Mesh(new THREE.PlaneGeometry(1.36, 0.9), std(0xffffff, 0.25, 0, { map: t })); bd.position.set(0, 1.38, 0.022); g.add(bd);
+      B(1.2, 0.03, 0.08, metal, 0, 0.9, 0.05); for (let k = 0; k < 3; k++) B(0.12, 0.022, 0.022, std([0x2b6fd6, 0xd9493e, 0x2b2a28][k], 0.4), -0.3 + k * 0.16, 0.925, 0.06);
+    } else if (type === 'bookshelf' || type === 'mood') {
+      if (type === 'bookshelf') {
+        const wood = std(0x9b7650, 0.6);
+        B(1.46, 1.8, 0.03, wood, 0, 0.9, -0.19); for (const sx of [-0.715, 0.715]) B(0.03, 1.8, 0.4, wood, sx, 0.9, 0);
+        for (let k = 0; k < 5; k++) B(1.42, 0.03, 0.38, wood, 0, 0.02 + k * 0.44, 0);
+        for (let k = 0; k < 4; k++) {
+          let x = -0.68; while (x < 0.62) { const bw = rr(0.035, 0.07), bh = rr(0.24, 0.36), col = pick([0xd9493e, 0x2b6fd6, 0x2e9a63, 0xf0a03a, 0x6d6aa8, 0xe9e2d3, 0x34373d, 0x8a5a36]); const b = B(bw, bh, rr(0.22, 0.3), std(col, 0.7), x + bw / 2, 0.035 + k * 0.44 + bh / 2, 0.02); if (Math.random() < 0.1) { b.rotation.z = 0.25; b.position.x += 0.04; x += 0.06; } x += bw + 0.004; if (Math.random() < 0.06) x += 0.1; }
+        }
+      } else {
+        for (const sx of [-0.62, 0.62]) { B(0.045, 1.75, 0.045, std(0x8a6a45, 0.6), sx, 0.88, 0); B(0.05, 0.04, 0.4, std(0x8a6a45, 0.6), sx, 0.03, 0); }
+        const t = tex(512, 360, (q, w, h) => {
+          q.fillStyle = '#c9a26b'; q.fillRect(0, 0, w, h); for (let k = 0; k < 900; k++) { q.fillStyle = `rgba(${90 + (k % 40)},60,30,.18)`; q.fillRect((k * 97) % w, (k * 61) % h, 2, 2); }
+          const notes = ['#f6e27a', '#f7b6c8', '#9fd6f0', '#b7e3a0', '#fbd38d']; for (let k = 0; k < 14; k++) { const x = 18 + (k % 5) * 98, y = 16 + ((k / 5) | 0) * 112; q.save(); q.translate(x + 38, y + 38); q.rotate(((k * 37) % 9 - 4) * 0.03); q.fillStyle = notes[k % 5]; q.fillRect(-38, -38, 76, 76); q.fillStyle = 'rgba(0,0,0,.45)'; for (let l = 0; l < 3; l++) q.fillRect(-28, -20 + l * 16, 40 + ((k + l) % 3) * 8, 4); q.fillStyle = '#d9493e'; q.beginPath(); q.arc(0, -32, 5, 0, TAU); q.fill(); q.restore(); }
+          for (let k = 0; k < 6; k++) { q.fillStyle = ['#d9493e', '#f0a03a', '#f6c945', '#2e9a63', '#2b6fd6', '#7b4bc4'][k]; q.fillRect(330 + k * 26, 300, 22, 40); }
+        });
+        const bd = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.0, 0.04), [std(0x8a6a45), std(0x8a6a45), std(0x8a6a45), std(0x8a6a45), std(0xffffff, 0.8, 0, { map: t }), std(0x8a6a45)]); bd.position.set(0, 1.25, 0); bd.castShadow = true; g.add(bd);
+      }
+    } else if (type === 'coffee') {
+      B(0.98, 0.84, 0.46, std(0xf1ece2, 0.5), 0, 0.42, 0); B(1.0, 0.04, 0.48, std(0x7a5233, 0.45), 0, 0.86, 0);
+      const mc = new THREE.Group(); mc.position.set(-0.18, 0.88, -0.02); g.add(mc);
+      B(0.32, 0.44, 0.32, dark, 0, 0.22, 0, mc); B(0.26, 0.12, 0.02, std(0x101418, 0.3, 0, { emissive: 0x3a6f9a, emissiveIntensity: 0.4 }), 0, 0.34, 0.165, mc); B(0.08, 0.06, 0.08, metal, 0, 0.17, 0.15, mc); B(0.28, 0.02, 0.16, metal, 0, 0.02, 0.1, mc);
+      const cup = Cy(0.035, 0.03, 0.08, std(0xffffff, 0.3), -0.18, 0.95, 0.1, 14);
+      for (let k = 0; k < 3; k++) Cy(0.04, 0.035, 0.09, std([0xd9493e, 0x2b6fd6, 0xf6c945][k], 0.4), 0.14 + k * 0.1, 0.925, 0.06, 14);
+      B(0.22, 0.14, 0.14, std(0x8a5a36, 0.8), 0.32, 0.95, -0.12);
+      const steam = []; for (let k = 0; k < 3; k++) { const s = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5, depthWrite: false })); g.add(s); steam.push(s); }
+      g.userData.anim = t => steam.forEach((s, k) => { const f = (t * 0.6 + k / 3 + ph) % 1; s.position.set(cup.position.x + Math.sin(f * 8 + k) * 0.015, 1.0 + f * 0.25, cup.position.z); s.material.opacity = 0.45 * (1 - f); s.scale.setScalar(0.6 + f * 1.4); });
+    } else if (type === 'sofa' ) {
+      const cl = std(0x3f6f7a, 0.85), cl2 = std(0x4f8590, 0.85);
+      B(1.9, 0.24, 0.86, cl, 0, 0.2, 0); for (const sx of [-0.85, 0.85]) B(0.2, 0.42, 0.88, cl, sx, 0.43, 0);
+      B(1.9, 0.5, 0.22, cl, 0, 0.6, -0.33); for (const sx of [-0.38, 0.38]) B(0.74, 0.13, 0.64, cl2, sx, 0.385, 0.08);
+      for (const sx of [-0.55, 0.55]) { const p = B(0.34, 0.3, 0.1, std(sx < 0 ? 0xf6c945 : 0xe9e2d3, 0.9), sx, 0.6, -0.17); p.rotation.x = -0.2; }
+      for (const [x, z] of [[-0.85, -0.35], [0.85, -0.35], [-0.85, 0.35], [0.85, 0.35]]) Cy(0.025, 0.02, 0.09, dark, x, 0.045, z, 8);
+    } else if (type === 'aquarium') {
+      B(1.42, 0.74, 0.72, std(0x2f3a45, 0.5), 0, 0.37, 0);
+      const glass = new THREE.Mesh(new THREE.BoxGeometry(1.38, 0.6, 0.68), new THREE.MeshStandardMaterial({ color: 0xcfeaf6, transparent: true, opacity: 0.22, roughness: 0.05, metalness: 0.1, depthWrite: false })); glass.position.y = 1.05; g.add(glass);
+      const water = new THREE.Mesh(new THREE.BoxGeometry(1.34, 0.52, 0.64), new THREE.MeshStandardMaterial({ color: 0x4fa8d0, transparent: true, opacity: 0.3, roughness: 0.1, depthWrite: false, emissive: 0x0d3a55, emissiveIntensity: 0.4 })); water.position.y = 1.01; g.add(water);
+      B(1.34, 0.06, 0.64, std(0xe1cf9f, 0.95), 0, 0.78, 0); B(1.42, 0.05, 0.72, std(0x2f3a45, 0.5), 0, 1.375, 0);
+      for (let k = 0; k < 7; k++) { const w = new THREE.Mesh(new THREE.ConeGeometry(0.03, rr(0.2, 0.4), 6), std(0x3f8f4a, 0.7)); w.position.set(rr(-0.6, 0.6), 0.9, rr(-0.25, 0.1)); g.add(w); }
+      for (let k = 0; k < 3; k++) { const r = new THREE.Mesh(new THREE.DodecahedronGeometry(rr(0.05, 0.09)), std(0x8a8a86, 0.9)); r.position.set(rr(-0.5, 0.5), 0.83, rr(-0.2, 0.2)); g.add(r); }
+      const fish = [];
+      for (let k = 0; k < 6; k++) { const f = new THREE.Group(), col = [0xf0782a, 0xf6c945, 0x2b8fd6, 0xd9493e, 0xf0782a, 0x7cbf4d][k], m = std(col, 0.4, 0, { emissive: col, emissiveIntensity: 0.15 }); const b = new THREE.Mesh(new THREE.SphereGeometry(0.04, 10, 8), m); b.scale.set(1.6, 1, 0.6); f.add(b); const tl = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.05, 6), m); tl.rotation.z = Math.PI / 2; tl.position.x = -0.075; f.add(tl); g.add(f); fish.push({ f, r: rr(0.25, 0.55), y: rr(0.88, 1.18), s: rr(0.4, 0.8) * (k % 2 ? 1 : -1), p: rr(0, TAU), zr: rr(0.12, 0.22) }); }
+      g.userData.anim = t => fish.forEach(F => { const a = t * F.s + F.p; F.f.position.set(Math.cos(a) * F.r, F.y + Math.sin(a * 2.3) * 0.03, Math.sin(a) * F.zr); F.f.rotation.y = Math.atan2(-Math.cos(a) * F.zr * F.s, -Math.sin(a) * F.r * F.s); });
+    } else if (type === 'vending') {
+      const t = tex(256, 384, (q, w, h) => {
+        q.fillStyle = '#e9edf2'; q.fillRect(0, 0, w, h); q.fillStyle = '#1f2a36'; q.fillRect(12, 14, w - 24, 230);
+        for (let r = 0; r < 4; r++) for (let c = 0; c < 5; c++) { q.fillStyle = ['#d9493e', '#2b6fd6', '#f6c945', '#2e9a63', '#f0a03a', '#e86fa8', '#8a5a36'][(r * 5 + c) % 7]; q.fillRect(26 + c * 42, 26 + r * 56, 26, 40); q.fillStyle = 'rgba(255,255,255,.4)'; q.fillRect(30 + c * 42, 30 + r * 56, 6, 32); q.fillStyle = '#9aa6b8'; q.fillRect(26 + c * 42, 70 + r * 56, 26, 6); }
+        q.fillStyle = '#2b2a28'; q.font = '900 30px "Zen Maru Gothic", sans-serif'; q.textAlign = 'center'; q.fillText('のみもの', w / 2, 290); q.fillStyle = '#2b2a28'; q.fillRect(40, 320, 176, 40);
+      });
+      B(0.92, 1.8, 0.72, std(0xc8372e, 0.4, 0.1), 0, 0.9, 0);
+      const fr = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 1.6), std(0xffffff, 0.3, 0, { map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.35 })); fr.position.set(0, 0.95, 0.362); g.add(fr);
+    } else if (type === 'phone') {
+      const fm = std(0x3a4552, 0.4, 0.5), gl = new THREE.MeshStandardMaterial({ color: 0xcfe6f2, transparent: true, opacity: 0.25, roughness: 0.05, depthWrite: false, side: THREE.DoubleSide });
+      B(0.96, 0.05, 0.96, fm, 0, 0.025, 0); B(0.96, 0.08, 0.96, fm, 0, 2.1, 0);
+      for (const [x, z] of [[-0.46, -0.46], [0.46, -0.46], [-0.46, 0.46], [0.46, 0.46]]) B(0.05, 2.1, 0.05, fm, x, 1.05, z);
+      for (const [x, z, ry] of [[0, -0.46, 0], [-0.46, 0, Math.PI / 2], [0.46, 0, Math.PI / 2], [0.12, 0.46, 0]]) { const p = new THREE.Mesh(new THREE.PlaneGeometry(ry ? 0.88 : (z > 0 ? 0.6 : 0.88), 1.95), gl); p.position.set(x, 1.05, z); p.rotation.y = ry; g.add(p); }
+      B(0.7, 0.04, 0.32, std(0x9b7650, 0.5), 0, 1.0, -0.28); B(0.16, 0.06, 0.12, dark, 0.15, 1.05, -0.3); B(0.05, 0.04, 0.16, std(0xd9493e, 0.5), -0.1, 1.04, -0.3);
+      Cy(0.16, 0.16, 0.05, std(0x2e9a63, 0.7), 0, 0.62, 0, 16); Cy(0.025, 0.025, 0.6, metal, 0, 0.31, 0, 8);
+      const sign = tex(256, 64, (q, w, h) => { q.fillStyle = '#2e9a63'; q.fillRect(0, 0, w, h); q.fillStyle = '#fff'; q.font = '900 36px "Zen Maru Gothic", sans-serif'; q.textAlign = 'center'; q.textBaseline = 'middle'; q.fillText('でんわ', w / 2, h / 2 + 2); });
+      const sg = new THREE.Mesh(new THREE.PlaneGeometry(0.6, 0.15), new THREE.MeshBasicMaterial({ map: sign })); sg.position.set(0, 2.02, 0.49); g.add(sg);
+    } else if (type === 'piano') {   // 小さめのグランドピアノ（左がまっすぐ、右が丸い）。手前に鍵盤といす
+      const blk = std(0x0d0d10, 0.12, 0.2), sh = new THREE.Shape();
+      sh.moveTo(-0.7, 0.3); sh.lineTo(0.7, 0.3); sh.lineTo(0.7, 0.0); sh.bezierCurveTo(0.7, -0.3, 0.15, -0.3, 0.05, -0.5); sh.bezierCurveTo(-0.08, -0.75, -0.5, -0.75, -0.7, -0.72); sh.closePath();
+      const body = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth: 0.3, bevelEnabled: false, curveSegments: 18 }), blk); body.rotation.x = Math.PI / 2; body.position.y = 0.95; g.add(body);
+      const hinge = new THREE.Group(); hinge.position.set(-0.7, 0.97, 0); g.add(hinge);
+      const lid = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth: 0.02, bevelEnabled: false, curveSegments: 18 }), blk); lid.rotation.x = Math.PI / 2; lid.position.set(0.7, 0, 0); hinge.add(lid); hinge.rotation.z = 0.55;
+      B(0.02, 0.56, 0.02, blk, 0.22, 1.23, -0.2);
+      B(1.36, 0.05, 0.16, std(0xf6f4ee, 0.3), 0, 0.68, 0.38);
+      for (let k = 0; k < 19; k++) if ([0, 1, 3, 4, 5].includes(k % 7)) B(0.034, 0.035, 0.09, blk, -0.68 + (k + 1) * 0.068, 0.72, 0.35);
+      B(1.42, 0.1, 0.05, blk, 0, 0.61, 0.47);
+      for (const [x, z] of [[-0.6, 0.2], [0.6, 0.2], [-0.4, -0.6]]) Cy(0.045, 0.035, 0.66, blk, x, 0.33, z, 10);
+      B(0.7, 0.06, 0.3, blk, 0, 0.5, 0.66); for (const [x, z] of [[-0.3, 0.55], [0.3, 0.55], [-0.3, 0.77], [0.3, 0.77]]) B(0.04, 0.48, 0.04, blk, x, 0.24, z);
+    }
+    g.traverse(c => { if (c.isMesh && c.castShadow !== false) { c.castShadow = true; c.receiveShadow = true; } });
+    g.userData.type = type;
+    return g;
+  },
+  thumb(type) {
+    if (this.thumbs[type]) return this.thumbs[type];
+    const S = 96; if (!this.rt) this.rt = new THREE.WebGLRenderTarget(S, S, { samples: 4, colorSpace: THREE.SRGBColorSpace });
+    const sc = new THREE.Scene(); sc.environment = ENV; sc.background = new THREE.Color(0xf4efe4);
+    const l = new THREE.DirectionalLight(0xffffff, 2.2); l.position.set(-4, 8, 6); sc.add(l, new THREE.HemisphereLight(0xffffff, 0xd8cdb8, 0.8));
+    const o = this.model(type); sc.add(o); o.rotation.y = 0.35;
+    const bb = new THREE.Box3().setFromObject(o), ctr = bb.getCenter(new THREE.Vector3()), r = bb.getSize(new THREE.Vector3()).length() / 2;
+    const cam = new THREE.PerspectiveCamera(30, 1, 0.05, 50); cam.position.set(ctr.x + r * 1.2, ctr.y + r * 1.25, ctr.z + r * 2.8); cam.lookAt(ctr);
+    renderer.setRenderTarget(this.rt); renderer.render(sc, cam);
+    const px = new Uint8Array(S * S * 4); renderer.readRenderTargetPixels(this.rt, 0, 0, S, S, px); renderer.setRenderTarget(null);
+    const c = newCanvas(S, S), g = c.getContext('2d'), img = g.createImageData(S, S);
+    for (let y = 0; y < S; y++) img.data.set(px.subarray((S - 1 - y) * S * 4, (S - y) * S * 4), y * S * 4);
+    g.putImageData(img, 0, 0); disposeTree(o);
+    return (this.thumbs[type] = c.toDataURL('image/jpeg', 0.85));
+  },
+  // =====================================================================================
+  //  模様がえモード
+  // =====================================================================================
+  enter() {
+    if (!S) return; this.on = true; this.sel = null; this.cam0 = { pitch: OFFICE.pitch, zoom: OFFICE.zoom };
+    OFFICE.pitch = Math.max(OFFICE.pitch, 0.95); document.body.classList.add('furn');
+    this.hint = '置きたい家具を選んで、床をタップ。置いた家具をタップすると動かせます'; this.renderBar(); this.refreshLabels();
+  },
+  exit() {
+    this.cancel(); this.on = false; document.body.classList.remove('furn');
+    if (this.cam0) { OFFICE.pitch = this.cam0.pitch; OFFICE.zoom = this.cam0.zoom; }
+    this.clearLabels(); UI.dirty(); save();
+  },
+  // いま選んでいる家具（新しく買う／動かす）
+  choose(type) {
+    this.cancel();
+    const why = this.why(S, type); if (why) { UI.toast(why, 'bad'); AU.bad(); return; }
+    const Lo = OFFICE.lay, near = { x: 0, z: 0 }, f = this.findSpot(S, Lo, type, 0, near) || { type, x: 0, z: 0, rot: 0 };
+    this.sel = { type, x: f.x, z: f.z, rot: f.rot, moving: null };
+    this.hint = FURN[type].name + '：床をタップして場所を決め、「ここに置く」'; this.makeGhost(); this.renderBar();
+  },
+  grab(f) {
+    this.cancel();
+    this.sel = { type: f.type, x: f.x, z: f.z, rot: f.rot || 0, moving: f };
+    const o = (OFFICE.furnObjs || []).find(x => x.userData.furn === f); if (o) o.visible = false; this.hidden = o;
+    this.hint = FURN[f.type].name + '：動かす場所をタップ。「回す」「しまう」もできます'; this.makeGhost(); this.renderBar();
+  },
+  cancel() {
+    if (this.hidden) { this.hidden.visible = true; this.hidden = null; }
+    this.sel = null; this.dropGhost(); if (this.on) this.refreshLabels();
+  },
+  makeGhost() {
+    this.dropGhost(); const s = this.sel; if (!s) return;
+    const o = this.model(s.type), gm = new THREE.MeshStandardMaterial({ color: 0x8fd6a8, transparent: true, opacity: 0.55, roughness: 0.5, depthWrite: false });
+    o.traverse(c => { if (c.isMesh) { if (c.material) { const ms = Array.isArray(c.material) ? c.material : [c.material]; ms.forEach(m => { if (m.map) m.map.dispose(); m.dispose(); }); } c.material = gm; c.castShadow = false; } });
+    o.userData.anim = null;
+    const [w, d] = [FURN[s.type].w * this.CELL, FURN[s.type].d * this.CELL], pad = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshBasicMaterial({ color: 0x2e9a63, transparent: true, opacity: 0.35, depthWrite: false }));
+    pad.rotation.x = -Math.PI / 2; pad.position.y = 0.012; o.add(pad);
+    this.ghost = o; this.ghostM = gm; this.ghostPad = pad; OFFICE.scene.add(o);
+    const F = FURN[s.type]; if (F.r) { const ring = new THREE.Mesh(new THREE.RingGeometry(F.r - 0.05, F.r, 64), new THREE.MeshBasicMaterial({ color: 0x2b6fd6, transparent: true, opacity: 0.5, depthWrite: false })); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.015; OFFICE.scene.add(ring); this.ring = ring; }
+    this.moveGhost();
+  },
+  dropGhost() {
+    for (const k of ['ghost', 'ring']) if (this[k]) { OFFICE.scene.remove(this[k]); disposeTree(this[k]); this[k] = null; }
+  },
+  candidate() { const s = this.sel; return s ? { type: s.type, x: s.x, z: s.z, rot: s.rot } : null; },
+  valid() { const s = this.sel; if (!s) return false; return this.fits(S, OFFICE.lay, this.candidate(), S.furn, s.moving); },
+  moveGhost() {
+    const s = this.sel; if (!s || !this.ghost) return;
+    const Lo = OFFICE.lay, f = this.candidate(); this.placeObj(this.ghost, f, Lo);
+    const ok = this.valid(); this.ghostM.color.set(ok ? 0x8fd6a8 : 0xf0a0a0); this.ghostPad.material.color.set(ok ? 0x2e9a63 : 0xd9493e);
+    if (this.ring) { const c = this.center(f, Lo); this.ring.position.set(c.x, 0.015, c.z); }
+    this.refreshLabels(); this.renderBtns();
+  },
+  // 床の点 → 家具の左奥のマス
+  cellAt(p) {
+    const s = this.sel, Lo = OFFICE.lay, [w, d] = this.dims(s.type, s.rot), nx = Math.round(Lo.W / this.CELL), nz = Math.round(Lo.D / this.CELL);
+    return { x: clamp(Math.round((p.x + Lo.W / 2) / this.CELL - w / 2), 0, nx - w), z: clamp(Math.round((p.z + Lo.D / 2) / this.CELL - d / 2), 0, nz - d) };
+  },
+  ray(p) {
+    const rc = this._rc || (this._rc = new THREE.Raycaster()), v = new THREE.Vector2(p.x / VW() * 2 - 1, -(p.y / VH()) * 2 + 1);
+    rc.setFromCamera(v, OFFICE.cam); return rc;
+  },
+  floorAt(p) { const rc = this.ray(p), hit = new THREE.Vector3(); return rc.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), hit) ? hit : null; },
+  hover(p) { if (!this.on || !this.sel) return; const h = this.floorAt(p); if (!h) return; const c = this.cellAt(h); if (c.x !== this.sel.x || c.z !== this.sel.z) { this.sel.x = c.x; this.sel.z = c.z; this.moveGhost(); } },
+  tap(p, mouse) {
+    if (!this.on) return;
+    if (this.sel) {
+      const h = this.floorAt(p); if (!h) return; const c = this.cellAt(h);
+      if (c.x === this.sel.x && c.z === this.sel.z || mouse) { this.sel.x = c.x; this.sel.z = c.z; this.moveGhost(); if (this.valid()) { this.commit(); return; } if (mouse) { AU.bad(); return; } }
+      this.sel.x = c.x; this.sel.z = c.z; this.moveGhost(); AU.click(); return;
+    }
+    // 置いてある家具をタップ → 動かす
+    const rc = this.ray(p), objs = (OFFICE.furnObjs || []).filter(o => o.visible), hits = rc.intersectObjects(objs, true);
+    if (hits.length) { let o = hits[0].object; while (o && !o.userData.furn) o = o.parent; if (o) { AU.click(); this.grab(o.userData.furn); return; } }
+    const h = this.floorAt(p); if (!h) return;
+    const f = (S.furn || []).find(g => { const r = this.rect(g, OFFICE.lay); return h.x >= r[0] && h.x <= r[2] && h.z >= r[1] && h.z <= r[3]; });
+    if (f) { AU.click(); this.grab(f); }
+  },
+  commit() {
+    const s = this.sel; if (!s || !this.valid()) { AU.bad(); return; }
+    if (s.moving) { Object.assign(s.moving, { x: s.x, z: s.z, rot: s.rot }); this.hidden = null; this.sel = null; this.dropGhost(); AU.coin(); }
+    else {
+      const why = this.why(S, s.type); if (why) { UI.toast(why, 'bad'); AU.bad(); return; }
+      S.money -= FURN[s.type].price; S.furn.push({ type: s.type, x: s.x, z: s.z, rot: s.rot }); AU.coin();
+      UI.toast(`${FURN[s.type].name}を置いた（${yen(FURN[s.type].price)}）`, 'good');
+      if (this.why(S, s.type)) { this.sel = null; this.dropGhost(); }
+    }
+    this.ver++; OFFICE.key = ''; OFFICE.sync(S); if (this.sel) this.makeGhost();
+    this.hint = this.sel ? 'つづけて置けます。ほかの場所をタップ' : '置きました。家具をタップすると動かせます'; this.renderBar(); this.refreshLabels();
+  },
+  rotate() {
+    const s = this.sel; if (!s) return; const Lo = OFFICE.lay, c = this.center(this.candidate(), Lo);
+    s.rot = (s.rot + 1) % 4; const cell = this.cellAt(c); s.x = cell.x; s.z = cell.z; AU.click(); this.makeGhost();
+  },
+  sell() {
+    const s = this.sel; if (!s || !s.moving) return; const F = FURN[s.type], back = Math.round(F.price / 2);
+    S.furn = S.furn.filter(f => f !== s.moving); S.money += back; this.hidden = null; this.sel = null; this.dropGhost(); this.ver++; OFFICE.key = ''; OFFICE.sync(S);
+    UI.toast(`${F.name}をしまった（${yen(back, true)}）`); AU.coin(); this.hint = 'しまいました'; this.renderBar(); this.refreshLabels();
+  },
+  // ---------- 下のバー ----------
+  renderBar() {
+    const bar = $('furnBar'); if (!bar) return;
+    const list = Object.keys(FURN).map(k => {
+      const F = FURN[k], lock = F.tier > S.tier, n = this.count(S, k), on = this.sel && !this.sel.moving && this.sel.type === k;
+      return `<button type="button" class="fi ${on ? 'on' : ''} ${lock ? 'lock' : ''}" data-fa="pick" data-k="${k}"><img alt="" src="${this.thumb(k)}"><b>${esc(F.name)}</b><small>${lock ? OFFICES[F.tier].name + 'から' : yen(F.price)}${n ? `・${n}こ` : ''}</small><em>${esc(F.desc)}</em></button>`;
+    }).join('');
+    bar.innerHTML = `<div id="fbTop"><span id="fbHint">${esc(this.hint)}</span><span class="pill">家具 ${S.furn.length} / ${this.limit(S)}</span><span class="pill">${yen(S.money)}</span></div><div id="fbList">${list}</div><div id="fbBtns"></div>`;
+    this.renderBtns();
+  },
+  renderBtns() {
+    const b = $('fbBtns'); if (!b) return; const s = this.sel, ok = s && this.valid();
+    b.innerHTML = (s ? `<button type="button" class="btn green" data-fa="put" ${ok ? '' : 'disabled'}>${s.moving ? 'ここに動かす' : 'ここに置く（' + yen(FURN[s.type].price) + '）'}</button><button type="button" class="btn sub" data-fa="rot">回す</button>${s.moving ? `<button type="button" class="btn sub" data-fa="sell">しまう（${yen(Math.round(FURN[s.type].price / 2), true)}）</button>` : ''}<button type="button" class="btn sub" data-fa="cancel">やめる</button>` : '') + `<button type="button" class="btn" data-fa="done" style="margin-left:auto">完了</button>`;
+  },
+  onBar(e) {
+    const t = e.target.closest('[data-fa]'); if (!t || t.disabled) return; AU.resume();
+    const a = t.dataset.fa;
+    if (a === 'pick') { if (FURN[t.dataset.k].tier > S.tier) { UI.toast(`${OFFICES[FURN[t.dataset.k].tier].name}に引っ越すと置けます`, 'bad'); return; } AU.click(); this.choose(t.dataset.k); }
+    else if (a === 'put') this.commit();
+    else if (a === 'rot') this.rotate();
+    else if (a === 'sell') this.sell();
+    else if (a === 'cancel') { AU.click(); this.cancel(); this.hint = '置きたい家具を選んで、床をタップ'; this.renderBar(); }
+    else if (a === 'done') { AU.click(); this.exit(); }
+  },
+  // ---------- 机の上の効果の表示（置く前に、どれだけ速くなるか見える） ----------
+  clearLabels() { for (const l of this.labels) { if (l.parent) l.parent.remove(l); l.material.map.dispose(); l.material.dispose(); } this.labels = []; },
+  refreshLabels() {
+    this.clearLabels(); if (!this.on || !S || !OFFICE.lay) return;
+    const now = this.get(S).per; let prev = null;
+    if (this.sel) { const f = this.candidate(); if (this.valid()) { const list = S.furn.filter(g => g !== this.sel.moving).concat([f]); prev = this.calc(S, list).per; } }
+    S.staff.forEach((m, i) => {
+      const dk = OFFICE.lay.desks[i]; if (!dk) return;
+      const a = Math.round((now[m.id] || 0) * 100), b = prev ? Math.round((prev[m.id] || 0) * 100) : a, up = b > a, dn = b < a;
+      const c = newCanvas(192, 80), q = c.getContext('2d');
+      q.fillStyle = up ? '#2e9a63' : dn ? '#d9493e' : b > 0 ? '#ffffff' : 'rgba(255,255,255,.75)'; q.strokeStyle = 'rgba(0,0,0,.2)'; q.lineWidth = 3;
+      q.beginPath(); q.roundRect(4, 8, 184, 64, 30); q.fill(); q.stroke();
+      q.fillStyle = up || dn ? '#fff' : b > 0 ? '#2e9a63' : '#8a8478'; q.font = '900 38px "Zen Maru Gothic", sans-serif'; q.textAlign = 'center'; q.textBaseline = 'middle';
+      q.fillText((b > 0 ? '+' : '±') + b + '%' + (up ? ' ↑' : dn ? ' ↓' : ''), 96, 42);
+      const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false, transparent: true })); sp.renderOrder = 12; const k = Math.max(1, OFFICE.lay.W / 9); sp.scale.set(0.84 * k, 0.35 * k, 1); sp.position.set(dk.x, 1.75, dk.z);
+      OFFICE.scene.add(sp); this.labels.push(sp);
+    });
   },
 };
 // =========================================================================================
@@ -1390,7 +2169,7 @@ let S = null;          // いまのゲームの状態（セーブされる）
 function newState(company) {
   return {
     v: 1, company: company || 'ぶんぐ工房', day: 0, money: 3000000, rp: 12, tier: 0,
-    equip: { chair: 0, monitor: 0, plant: 0, coffee: 0, lab: 0, line: 1 },
+    equip: { chair: 0, monitor: 0, lab: 0, line: 1 }, furn: [],
     staff: [], cands: [], nextId: 1, research: { done: [], cur: null }, devs: [], products: [], markets: ['jp'],
     rivals: RIVALS.map(r => ({ id: r.id, owned: false, P: {}, value: r.value })),
     stats: { launched: 0, sales: 0, best: 0, value: 0, top1: false, monthRev: 0, monthProfit: 0, lastMonthProfit: 0, lastMonthRev: 0 },
@@ -1437,7 +2216,7 @@ function lookCats(d) {
   return out;
 }
 function designScore(d, withTrend = true) {
-  let s = 5 + Math.min(2.5, S.staff.filter(m => m.role === 'des').reduce((a, m) => a + ROLES.des.rate[m.lv - 1], 0)) + sumRes('design');
+  let s = 5 + Math.min(2.5, roleSum('des')) + sumRes('design');
   const D = DEF_LOOK[d.kind], L = d.look;
   if (L.pattern && L.pattern !== 'none') s += 0.3;
   if (L.logo && L.logo !== D.logo) s += 0.35;
@@ -1476,15 +2255,17 @@ function productA(p, month) {
   const ad = 1 + p.adBoost * (1 + sumRes('adBoost')) * Math.exp(-wk / 7);
   const fresh = (1 + 0.6 * Math.exp(-wk / 3)) * Math.max(0.45, 1 - wk / 300);
   const trend = lookCats(p).has(S.trend.id) ? 1.15 : 1;
-  const sales = 1 + Math.min(0.4, S.staff.filter(m => m.role === 'sal').reduce((a, m) => a + ROLES.sal.rate[m.lv - 1], 0)) + sumRes('sales');
+  const sales = 1 + Math.min(0.45, roleSum('sal')) + sumRes('sales');
   const re = 1 + (p.reissue || 0) * Math.exp(-wk / 26);   // 復刻版：昔のファンが買う
   return Math.pow(sc.R / 7, 2.6) * priceK * segFit(p, month) * popOf(p) * S.brand * ad * fresh * trend * sales * re;
 }
-// 仕事の速さ（設備）
-const workMul = () => 1 + 0.05 * S.equip.chair + 0.04 * S.equip.plant + (S.equip.coffee ? 0.05 : 0);
-const resRate = () => (0.12 + S.staff.filter(m => m.role === 'res').reduce((a, m) => a + ROLES.res.rate[m.lv - 1], 0)) * workMul() * (1 + 0.06 * S.equip.monitor);
-const qaRate = () => (0.2 + S.staff.filter(m => m.role === 'qa').reduce((a, m) => a + ROLES.qa.rate[m.lv - 1], 0)) * workMul() * (1 + 0.06 * S.equip.monitor) * (1 + 0.1 * S.equip.lab);
-const devSpeed = () => workMul() * (1 + 0.04 * S.staff.filter(m => m.role === 'des').length);
+// 仕事の速さ：いい椅子・部屋全体の家具（コーヒー・ソファ）＋ 一人ずつ（近くの家具・特技）
+const workMul = () => 1 + 0.05 * S.equip.chair + FURNI.globalBonus(S);
+const staffMul = m => { const tr = TRAITS[m.trait] || {}; return workMul() + FURNI.bonus(S, m) + (tr.all || 0) + (tr.role === m.role ? tr.mul : 0); };
+const roleSum = r => S.staff.reduce((a, m) => a + (m.role === r ? ROLES[r].rate[m.lv - 1] * staffMul(m) : 0), 0);
+const resRate = () => (0.12 * workMul() + roleSum('res')) * (1 + 0.06 * S.equip.monitor);
+const qaRate = () => (0.2 * workMul() + roleSum('qa')) * (1 + 0.06 * S.equip.monitor) * (1 + 0.1 * S.equip.lab);
+const devSpeed = () => workMul() * (1 + 0.04 * S.staff.reduce((a, m) => a + (m.role === 'des' ? staffMul(m) / workMul() : 0), 0));
 
 // ---------- 開発 ----------
 function devPlan(d) {
@@ -1506,8 +2287,15 @@ function startDev(d) {
   const pl = devPlan(d), pol = d.polish || 0, prp = polishRP(d.kind, pol);
   S.money -= pl.devCost; S.rp -= prp;
   S.devs.push({ id: S.nextId++, kind: d.kind, name: d.name.trim().slice(0, 24), spec: { ...d.spec }, look: { ...d.look }, build: d.kind === 'mech' ? JSON.parse(JSON.stringify(mechBuild(d))) : undefined, reissue: d.reissue || 0, price: d.price, devCost: pl.devCost, polish: pol, bonus: polishBonus(d.kind, pol), days: pl.days, left: pl.days, bugs: Math.max(1, Math.round(pl.bugs * rr(0.8, 1.2))), fixed: 0, ready: false });
+  const nv = S.devs[S.devs.length - 1]; nv.issues = makeIssues(nv.kind, nv.bugs);
   news(`「${d.name}」の開発を始めた（${KINDS[d.kind].short}・${pl.days}日）`);
   return '';
+}
+// 試作テストで見つかる不具合に名前をつける（見つかった順）
+function makeIssues(kind, n) {
+  const base = DEFECTS[kind].slice().sort(() => Math.random() - 0.5), out = [];
+  for (let i = 0; i < n; i++) { const rep = Math.floor(i / base.length); out.push({ n: base[i % base.length] + (rep ? `（${rep + 1}か所目）` : ''), t: TESTS[(Math.random() * TESTS.length) | 0] }); }
+  return out;
 }
 const devFound = v => Math.min(v.bugs, Math.floor(v.bugs * Math.min(1, (1 - v.left / v.days) * 1.15 + 0.05)));
 function fixWithRP(v) { const rest = Math.ceil(v.bugs - v.fixed), cost = rest * 3; if (rest <= 0 || S.rp < cost) return false; S.rp -= cost; v.fixed = v.bugs; return true; }
@@ -1526,7 +2314,7 @@ function launch(devId, price, adId) {
   p.review = Math.round(clamp(0.58 * perf + 0.27 * des + 0.15 * val - p.samePen + rr(-0.25, 0.25), 1, 10) * 10) / 10;
   p.scores = { perf: Math.round(perf * 10) / 10, des: Math.round(des * 10) / 10, val: Math.round(val * 10) / 10 };
   p.comments = reviewComments(p, q, perf, des, val, same);
-  S.products.push(p); S.stats.launched++; S.stats.best = Math.max(S.stats.best, p.review);
+  S.products.push(p); S.stats.launched++; for (const m of S.staff) if (m.role === 'sal' || m.role === 'des') gainXp(m, 4); S.stats.best = Math.max(S.stats.best, p.review);
   S.brand = clamp(S.brand + (p.review - 6.2) * 0.03 + ad.brand, 0.4, 1.8);
   news(`「${p.name}」発売！ レビュー ${p.review.toFixed(1)} 点`);
   if (p.reissue) news(`名品の復刻版「${p.name}」に行列ができた！`);
@@ -1578,7 +2366,20 @@ function startResearch(id) {
 const HAIR = ['#2b2118', '#1c1a18', '#5a3a22', '#7a5a3a', '#3a2a20', '#9a6b3d', '#222222'];
 function makeCand() {
   const roles = Object.keys(ROLES), role = pick(roles), maxLv = Math.min(5, S.tier + 2 + (Math.random() < 0.25 ? 1 : 0)), lv = ri(1, maxLv);
-  return { id: S.nextId++, name: pick(FAMILY) + ' ' + pick(GIVEN), role, lv, sal: Math.round(ROLES[role].sal[lv - 1] * rr(0.92, 1.1) / 1000) * 1000, hair: pick(HAIR) };
+  return { id: S.nextId++, name: pick(FAMILY) + ' ' + pick(GIVEN), role, lv, sal: Math.round(ROLES[role].sal[lv - 1] * rr(0.92, 1.1) / 1000) * 1000, hair: pick(HAIR), trait: pickTrait(role), xp: 0 };
+}
+// 特技：半分くらいの人が持っている（その役わりに合うものか、だれでも役立つもの）
+function pickTrait(role) {
+  if (Math.random() < 0.45) return '';
+  return pick(Object.keys(TRAITS).filter(k => !TRAITS[k].role || TRAITS[k].role === role));
+}
+// 経験：毎日たまる（特技「のみこみが早い」は +50%）。たまるとレベルが上がり、月給も上がる
+function gainXp(m, n) {
+  if (m.lv >= 5) return; m.xp = (m.xp || 0) + n * (1 + ((TRAITS[m.trait] || {}).xp || 0));
+  if (m.xp < LEVEL_XP[m.lv]) return;
+  m.xp = 0; m.lv++; m.sal = Math.round(m.sal * 1.25 / 1000) * 1000;
+  UI.toast(`${m.name}さんが昇格！ ${ROLES[m.role].name} ${'★'.repeat(m.lv)}（月給 ${yen(m.sal)}）`, 'gold'); news(`${m.name}さん（${ROLES[m.role].name}）が昇格した`); AU.chime();
+  OFFICE.event('levelup', m.id); FURNI.ver++;
 }
 function rerollCands(pay) { if (pay) { const c = 50000 * (S.tier + 1); if (S.money < c) return false; S.money -= c; } S.cands = Array.from({ length: 4 }, makeCand); return true; }
 function hire(id) {
@@ -1611,15 +2412,16 @@ function dayTick() {
   const date = dateOf(S.day), month = date.getMonth();
   // 研究ポイント・研究
   S.rp += resRate();
-  if (S.research.cur) { const c = S.research.cur; c.left -= workMul(); if (c.left <= 0) { const r = RES_BY_ID[c.id]; S.research.done.push(c.id); S.research.cur = null; UI.toast(`研究完了：${r.name}`, 'good'); if (r.unlock) UI.toast(`${r.unlock.map(k => KINDS[k].short).join('・')} を開発できるようになった！`, 'gold'); AU.chime(); news(`研究「${r.name}」が完了した`); UI.dirty(); } }
+  if (S.research.cur) { const c = S.research.cur; c.left -= workMul(); if (c.left <= 0) { const r = RES_BY_ID[c.id]; S.research.done.push(c.id); S.research.cur = null; OFFICE.event('research'); for (const m of S.staff) if (m.role === 'res') gainXp(m, 6); UI.toast(`研究完了：${r.name}`, 'good'); if (r.unlock) UI.toast(`${r.unlock.map(k => KINDS[k].short).join('・')} を開発できるようになった！`, 'gold'); AU.chime(); news(`研究「${r.name}」が完了した`); UI.dirty(); } }
   // 開発と不具合直し
   let fixPool = qaRate();
   const needs = S.devs.filter(v => devFound(v) - v.fixed > 0.01);
   for (const v of S.devs) {
     if (v.left > 0) v.left = Math.max(0, v.left - devSpeed());
-    const open = devFound(v) - v.fixed; if (open > 0 && fixPool > 0) { const f = Math.min(open, fixPool / Math.max(1, needs.length)); v.fixed += f; }
-    if (!v.ready && v.left <= 0 && v.fixed >= v.bugs - 0.001) { v.ready = true; UI.toast(`「${v.name}」の開発が終わった！ 発売しよう`, 'gold'); AU.chime(); UI.dirty(); UI.readyQueue(v.id); }
+    const open = devFound(v) - v.fixed; if (open > 0 && fixPool > 0) { const f = Math.min(open, fixPool / Math.max(1, needs.length)), f0 = Math.floor(v.fixed + 1e-6); v.fixed += f; if (Math.floor(v.fixed + 1e-6) > f0) OFFICE.event('fix'); }
+    if (!v.ready && v.left <= 0 && v.fixed >= v.bugs - 0.001) { v.ready = true; OFFICE.event('devdone'); for (const m of S.staff) if (m.role === 'qa' || m.role === 'des') gainXp(m, 5); UI.toast(`「${v.name}」の開発が終わった！ 発売しよう`, 'gold'); AU.chime(); UI.dirty(); UI.readyQueue(v.id); }
   }
+  for (const m of S.staff) gainXp(m, 1);
   // 売れゆき（種類ごとにシェアを計算）
   let rev = 0, cogs = 0, work = 0; const sold = [];
   S.share = {};
@@ -1683,7 +2485,7 @@ function monthTick(date) {
 }
 function checkGoals() {
   const g = GOALS[S.goal]; if (!g || !g.done(S)) return;
-  S.money += g.reward.money; S.rp += g.reward.rp; S.goal++;
+  S.money += g.reward.money; S.rp += g.reward.rp; S.goal++; OFFICE.event('goal');
   UI.toast(`目標達成：${g.text}　${g.reward.money ? yen(g.reward.money, true) + '　' : ''}+${g.reward.rp} RP`, 'gold'); AU.fanfare(); UI.dirty();
 }
 
@@ -1695,9 +2497,272 @@ function loadSave() {
     const d = newState(s.company); for (const k in d) if (s[k] === undefined) s[k] = d[k];
     s.equip = Object.assign(d.equip, s.equip); s.stats = Object.assign(d.stats, s.stats); s.research = Object.assign(d.research, s.research);
     for (const r of d.rivals) if (!s.rivals.find(x => x.id === r.id)) s.rivals.push(r);
+    for (const m of s.staff.concat(s.cands)) { if (m.trait === undefined) m.trait = pickTrait(m.role); if (m.xp === undefined) m.xp = 0; }
+    for (const v of s.devs) if (!v.issues) v.issues = makeIssues(v.kind, v.bugs);
+    FURNI.migrate(s);
     return s;
   } catch (e) { return null; }
 }
+// =========================================================================================
+//  発売のイベント：広告によって場面が変わる。
+//   なし・チラシ … お店の売り場に並び、お客さんが集まってくる
+//   雑誌・テレビ・発表会 … ステージで布をとって発表（スポットライト・記者のフラッシュ・紙ふぶき・観客）
+//  タップでとばせる。終わるとレビューの発表へ
+// =========================================================================================
+const EVENT = {
+  scene: null, cam: new THREE.PerspectiveCamera(40, 1, 0.1, 300), active: false, t: 0, dur: 6,
+  start(p, adId, done) {
+    this.p = p; this.ad = adId || 'none'; this.done = done; this.t = 0; this.active = true;
+    this.big = ['mag', 'tv', 'event'].includes(this.ad); this.dur = this.big ? (this.ad === 'event' ? 7.6 : 7.0) : 5.6; this.reveal = this.big ? 2.3 : 0;
+    this.people = []; this.flashes = []; this.sfx = {}; this.icons = []; this.heroT = 0;
+    this.build();
+    const ov = $('evOv'), names = { none: '店頭に並びました', flyer: 'チラシを見たお客さんが来ました', mag: '雑誌の取材つき発表会', tv: 'テレビ中継つき発表会', event: '新作発表会' };
+    $('evSub').textContent = names[this.ad]; $('evName').textContent = `「${p.name}」`; $('evPrice').textContent = yen(p.price);
+    ov.classList.add('on'); ov.classList.remove('show'); ov.classList.toggle('pre', this.big); ov.classList.toggle('big', this.big); document.body.classList.add('event');
+    this.t0real = performance.now(); AU.resume();
+    if (!this.big) AU.chime();
+  },
+  finish() {
+    if (!this.active) return; this.active = false;
+    $('evOv').classList.remove('on', 'show', 'pre'); document.body.classList.remove('event');
+    if (this.scene) { disposeTree(this.scene); this.scene = null; }
+    const f = this.done; this.done = null; if (f) f();
+  },
+  skip() { if (this.active && performance.now() - this.t0real > 400) this.finish(); },   // すぐの二度押しでとばさない
+  // ---------- 場面づくり ----------
+  hero(len) {   // 主役の製品（大きな見本）
+    const o = buildProduct(this.p, { cheap: SET.quality === 'low' }), sz = o.userData.size, flat = this.p.kind === 'eraser' || this.p.kind === 'lead';
+    o.traverse(c => { if (c.isMesh) c.castShadow = true; });
+    const s = (flat ? len * 0.55 : len) / Math.max(sz.x, sz.y, sz.z), piv = new THREE.Group(), tilt = new THREE.Group(); piv.add(tilt); tilt.add(o);
+    o.scale.setScalar(s); if (!flat) tilt.rotation.z = 0.32; else tilt.rotation.x = 0.25;
+    piv.userData.h = flat ? sz.y * s / 2 + 0.05 : Math.sin(0.32) * sz.x * s / 2 + Math.max(sz.y, sz.z) * s / 2;
+    return piv;
+  },
+  build() {
+    if (this.scene) disposeTree(this.scene);
+    const sc = this.scene = new THREE.Scene(); sc.environment = ENV;
+    const box = (w, h, d, mat, x, y, z, par = sc) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; par.add(m); return m; };
+    this.box = box;
+    if (this.big) this.buildStage(sc, box); else this.buildShop(sc, box);
+  },
+  canvasTex(w, h, draw) { const c = newCanvas(w, h), q = c.getContext('2d'); draw(q, w, h); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = MAXANI; return t; },
+  buildShop(sc, box) {
+    const p = this.p, flyer = this.ad === 'flyer', std = (c, r = 0.6, m = 0) => new THREE.MeshStandardMaterial({ color: c, roughness: r, metalness: m });
+    sc.background = new THREE.Color(0xf3ead9); sc.environmentIntensity = 0.5;
+    sc.add(new THREE.HemisphereLight(0xfff6e8, 0xb9ab90, 0.9));
+    const sun = new THREE.DirectionalLight(0xfff0d8, 2.2); sun.position.set(-3, 8, 5); sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); Object.assign(sun.shadow.camera, { left: -6, right: 6, top: 6, bottom: -6 }); sun.shadow.bias = -0.0005; sc.add(sun);
+    const spot = new THREE.SpotLight(0xfff2d6, 40, 12, 0.45, 0.6, 1.2); spot.position.set(0.5, 4.5, 2.5); spot.target.position.set(0, 1, 0); sc.add(spot, spot.target);
+    const ft = OFFICE.floorTex(1); ft.repeat.set(5, 4); const floor = new THREE.Mesh(new THREE.PlaneGeometry(10, 8), new THREE.MeshStandardMaterial({ map: ft, roughness: 0.6 })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; sc.add(floor);
+    box(10, 3.4, 0.1, std(0xf6efe2, 0.9), 0, 1.7, -3); box(0.1, 3.4, 8, std(0xefe6d6, 0.9), -5, 1.7, 1);
+    // 奥の棚：色とりどりの文房具の箱
+    const shM = std(0xffffff, 0.5), boxes = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ roughness: 0.6 }), 320); boxes.castShadow = true; let n = 0;
+    const tmp = new THREE.Object3D(), col = new THREE.Color(), cols = ['#d9493e', '#2b6fd6', '#2e9a63', '#f0a03a', '#f6c945', '#7b4bc4', '#e86fa8', '#f4f1ea', '#1d1d1f', '#2a9db0'];
+    for (const sx of [-3.2, 0, 3.2]) {
+      box(2.8, 2.4, 0.06, std(0xdccfb8, 0.7), sx, 1.2, -2.9); for (let k = 0; k < 5; k++) box(2.8, 0.04, 0.5, shM, sx, 0.15 + k * 0.52, -2.68, sc);
+      for (let k = 0; k < 4; k++) { let x = sx - 1.32; while (x < sx + 1.25 && n < 320) { const w = rr(0.08, 0.22), h = rr(0.14, 0.4); tmp.position.set(x + w / 2, 0.17 + k * 0.52 + h / 2, -2.7); tmp.scale.set(w, h, rr(0.2, 0.4)); tmp.rotation.set(0, 0, 0); tmp.updateMatrix(); boxes.setMatrixAt(n, tmp.matrix); boxes.setColorAt(n, col.set(pick(cols))); n++; x += w + 0.02; } }
+    }
+    boxes.count = n; sc.add(boxes);
+    // 売り場の台・製品・ポップ
+    const tbl = new THREE.Mesh(new THREE.CylinderGeometry(0.75, 0.8, 0.9, 32), std(0xffffff, 0.35)); tbl.position.set(0, 0.45, 0); tbl.castShadow = tbl.receiveShadow = true; sc.add(tbl);
+    const top = new THREE.Mesh(new THREE.CylinderGeometry(0.82, 0.82, 0.05, 32), std(0x2b6fd6, 0.4)); top.position.set(0, 0.92, 0); sc.add(top);
+    const riser = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 0.2, 24), std(0xf6c945, 0.4)); riser.position.set(0, 1.04, 0); riser.castShadow = true; sc.add(riser);
+    const hero = this.hero(1.05); hero.position.set(0, 1.14 + hero.userData.h, 0); sc.add(hero); this.heroObj = hero;
+    for (let k = 0; k < 6; k++) { const mini = this.hero(0.32); const a = k / 6 * TAU + 0.3; mini.position.set(Math.cos(a) * 0.6, 0.95 + mini.userData.h, Math.sin(a) * 0.6); mini.rotation.y = -a; sc.add(mini); }
+    const pop = this.canvasTex(512, 384, (q, w, h) => {
+      q.fillStyle = '#d9493e'; q.fillRect(0, 0, w, h); q.fillStyle = '#fff'; q.fillRect(14, 14, w - 28, h - 28);
+      q.fillStyle = '#d9493e'; q.font = '900 74px "Zen Maru Gothic", sans-serif'; q.textAlign = 'center'; q.textBaseline = 'middle'; q.fillText('新発売！', w / 2, 84, w - 60);
+      q.fillStyle = '#2b2a28'; q.font = '900 46px "Zen Maru Gothic", sans-serif'; q.fillText(p.name, w / 2, 190, w - 60);
+      q.fillStyle = '#2b6fd6'; q.font = '900 64px "Zen Maru Gothic", sans-serif'; q.fillText(yen(p.price), w / 2, 292, w - 60);
+    });
+    const sign = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.6), new THREE.MeshStandardMaterial({ map: pop, roughness: 0.7 })); sign.position.set(0.95, 1.55, 0.25); sign.rotation.y = -0.35; sc.add(sign);
+    box(0.03, 1.0, 0.03, std(0x777f88, 0.3, 0.8), 0.95, 0.75, 0.22);
+    // レジ
+    box(1.8, 1.0, 0.7, std(0x9b7650, 0.55), 3.4, 0.5, 0.2); box(0.4, 0.3, 0.35, std(0x34373d, 0.4), 3.2, 1.15, 0.2);
+    // チラシ：壁に貼る
+    if (flyer) {
+      const fl = this.canvasTex(256, 360, (q, w, h) => { q.fillStyle = '#fffaf0'; q.fillRect(0, 0, w, h); q.fillStyle = '#2b6fd6'; q.fillRect(0, 0, w, 70); q.fillStyle = '#fff'; q.font = '900 34px "Zen Maru Gothic", sans-serif'; q.textAlign = 'center'; q.textBaseline = 'middle'; q.fillText('新発売', w / 2, 36); q.fillStyle = '#2b2a28'; q.font = '900 26px "Zen Maru Gothic", sans-serif'; q.fillText(p.name, w / 2, 290, w - 20); q.fillStyle = '#d9493e'; q.fillText(yen(p.price), w / 2, 330, w - 20); });
+      const img = new Image(); img.onload = () => { const q = fl.image.getContext('2d'); q.drawImage(img, 28, 84, 200, 180); fl.needsUpdate = true; }; img.src = productThumb(p);
+      for (const [x, z, ry] of [[-4.94, -1.2, Math.PI / 2], [-4.94, 0.4, Math.PI / 2], [-1.6, -2.94, 0], [1.6, -2.94, 0]]) { const m = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.7), new THREE.MeshStandardMaterial({ map: fl, roughness: 0.8 })); m.position.set(x, 2.75, z); m.rotation.y = ry; if (ry === 0) m.position.y = 2.95; sc.add(m); }
+    }
+    // お客さん：入口から売り場へ
+    const nC = flyer ? 7 : 4, shirts = ['#d9493e', '#2b6fd6', '#2e9a63', '#f0a03a', '#7b4bc4', '#e86fa8', '#5b5e66'];
+    for (let i = 0; i < nC; i++) {
+      const r = OFFICE.makePerson(shirts[i % 7], pick(['#2b2118', '#5a3a22', '#1c1a18', '#9a6b3d']), pick([0x3b4250, 0x5a4a3a, 0x2a3a5a])), a = Math.PI + 0.2 + (i / Math.max(1, nC - 1)) * (Math.PI - 0.4);
+      const goal = { x: Math.cos(a) * (1.3 + (i % 2) * 0.25), z: Math.sin(a) * (1.1 + (i % 2) * 0.25) }; r.root.position.set(5.2 + i * 0.45, 0, -1.9); sc.add(r.root);
+      this.people.push({ r, path: [{ x: goal.x, z: -1.9 }, goal], goal, delay: i * 0.28, state: 'walk', like: 2.3 + i * 0.22 + rr(0, 0.3), ph: rr(0, 6) });
+    }
+    this.camA = { p: new THREE.Vector3(-1.2, 3.2, 7.4), l: new THREE.Vector3(0.3, 1.0, -0.6) }; this.camB = { p: new THREE.Vector3(0.5, 1.75, 2.7), l: new THREE.Vector3(0.1, 1.3, -0.2) };
+  },
+  buildStage(sc, box) {
+    const p = this.p, ad = this.ad, std = (c, r = 0.6, m = 0, o = {}) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: r, metalness: m }, o));
+    sc.background = new THREE.Color(0x07080b); sc.fog = new THREE.Fog(0x07080b, 14, 34); sc.environmentIntensity = 0.12;
+    sc.add(new THREE.HemisphereLight(0x8090b0, 0x101014, 0.35));
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 30), std(0x1a1c22, 0.55, 0.2)); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; sc.add(floor);
+    // ステージ
+    box(10, 0.6, 4.2, std(0x22252c, 0.5, 0.2), 0, 0.3, -2.1); box(10.04, 0.62, 0.05, std(0x7a1e24, 0.8), 0, 0.31, 0.0);
+    const bigEv = ad === 'event', bdTex = this.canvasTex(1024, 512, (q, w, h) => {
+      const gr = q.createLinearGradient(0, 0, w, h); gr.addColorStop(0, bigEv ? '#1b2a6b' : '#202a3a'); gr.addColorStop(1, bigEv ? '#5a1f6b' : '#1a1e26'); q.fillStyle = gr; q.fillRect(0, 0, w, h);
+      q.strokeStyle = 'rgba(255,255,255,.08)'; q.lineWidth = 2; for (let k = 0; k < 24; k++) { q.beginPath(); q.moveTo(k * 48, 0); q.lineTo(k * 48 - 200, h); q.stroke(); }
+      q.fillStyle = 'rgba(255,255,255,.75)'; q.font = '700 40px "Zen Maru Gothic", sans-serif'; q.textAlign = 'center'; q.textBaseline = 'middle'; q.fillText(S ? S.company : '', w / 2, 70, w - 80);
+      q.fillStyle = '#f6c945'; q.font = '900 64px "Zen Maru Gothic", sans-serif'; q.fillText('NEW RELEASE', w / 2, 150);
+      q.fillStyle = '#fff'; q.font = '900 96px "Zen Maru Gothic", sans-serif'; q.fillText(p.name, w / 2, 290, w - 80);
+      q.fillStyle = 'rgba(255,255,255,.7)'; q.font = '700 38px "Zen Maru Gothic", sans-serif'; q.fillText(KINDS[p.kind].name + '　' + yen(p.price), w / 2, 400, w - 80);
+    });
+    const bd = new THREE.Mesh(new THREE.PlaneGeometry(10, 5), new THREE.MeshStandardMaterial({ map: bdTex, emissive: 0xffffff, emissiveMap: bdTex, emissiveIntensity: 0.0, roughness: 0.8 })); bd.position.set(0, 3.1, -4.15); sc.add(bd); this.backdrop = bd;
+    if (bigEv) { box(10.6, 0.25, 0.3, std(0x333740, 0.4, 0.7), 0, 5.7, -4.1); for (const sx of [-5.15, 5.15]) box(0.3, 5.4, 0.3, std(0x333740, 0.4, 0.7), sx, 3.0, -4.1); }
+    // 台と布
+    const ped = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.62, 0.95, 40), std(0xf4f1ea, 0.3, 0.1)); ped.position.set(0, 0.6 + 0.475, -1.8); ped.castShadow = ped.receiveShadow = true; sc.add(ped);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.585, 0.025, 8, 48), std(0xd4a83a, 0.3, 0.9)); ring.rotation.x = Math.PI / 2; ring.position.set(0, 1.55, -1.8); sc.add(ring);
+    const hero = this.hero(1.45); hero.position.set(0, 1.55 + hero.userData.h, -1.8); sc.add(hero); this.heroObj = hero;
+    const cloth = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.78, 1.7, 32, 6, true), std(0x9a1b26, 0.85, 0, { side: THREE.DoubleSide, transparent: true }));
+    { const pos = cloth.geometry.attributes.position; for (let i = 0; i < pos.count; i++) { const y = pos.getY(i), x = pos.getX(i), z = pos.getZ(i), a = Math.atan2(z, x), k = 1 + Math.sin(a * 9) * 0.05 * (0.5 - y / 1.7); pos.setX(i, x * k); pos.setZ(i, z * k); } cloth.geometry.computeVertexNormals(); }
+    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 8, 0, TAU, 0, Math.PI / 2), cloth.material); cap.position.y = 0.85; cloth.add(cap);
+    cloth.position.set(0, 1.55 + 0.85, -1.8); cloth.castShadow = true; sc.add(cloth); this.cloth = cloth;
+    // 社長（発表する人）
+    const ceo = OFFICE.makePerson('#2c3a5c', '#2a211b', 0x232838); ceo.root.position.set(-2.3, 0.6, -1.4); ceo.root.rotation.y = Math.PI + 0.5; sc.add(ceo.root);
+    this.people.push({ r: ceo, ceo: true, ph: 0 });
+    const mic = box(0.04, 1.1, 0.04, std(0x777f88, 0.3, 0.8), -2.0, 1.15, -1.1); void mic;
+    // スポットライト（光の筋も見せる）
+    this.spots = [];
+    const cols = [0xffffff, 0xfff0d0, 0xd8e6ff];
+    for (let k = 0; k < 3; k++) {
+      const sp = new THREE.SpotLight(cols[k], 110, 30, 0.22, 0.45, 1.2); sp.position.set(-4 + k * 4, 7.5, 4.5); sc.add(sp, sp.target);
+      const cg = new THREE.ConeGeometry(1.2, 1, 24, 1, true); cg.rotateX(-Math.PI / 2); cg.translate(0, 0, 0.5);
+      const beam = new THREE.Mesh(cg, new THREE.MeshBasicMaterial({ color: cols[k], transparent: true, opacity: 0.05, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide })); sc.add(beam);
+      this.spots.push({ sp, beam, ph: k * 2.1 });
+    }
+    const key = new THREE.SpotLight(0xfff2dc, 0, 16, 0.32, 0.5, 1.0); key.position.set(0, 6.5, 1.5); key.target.position.set(0, 1.6, -1.8); key.castShadow = true; key.shadow.mapSize.set(1024, 1024); sc.add(key, key.target); this.key = key;
+    const house = new THREE.DirectionalLight(0xffe6c8, 0); house.position.set(0, 6, -3.5); house.target.position.set(0, 0, 4); sc.add(house, house.target); this.house = house;   // 発表のあと、客席も明るく
+    // 観客
+    const nA = { mag: 16, tv: 28, event: 46 }[ad], shirts = ['#d9493e', '#2b6fd6', '#2e9a63', '#f0a03a', '#7b4bc4', '#e86fa8', '#5b5e66', '#f4f4f0', '#3d7fd0'];
+    for (let i = 0; i < nA; i++) {
+      const row = Math.floor(i / 8), col = i % 8, x = -3.9 + col * 1.1 + (row % 2) * 0.5 + rr(-0.15, 0.15), z = 1.7 + row * 1.15 + rr(-0.1, 0.1);
+      const r = OFFICE.makePerson(pick(shirts), pick(['#2b2118', '#5a3a22', '#1c1a18', '#9a6b3d', '#3a2a20']), pick([0x3b4250, 0x5a4a3a, 0x2a3a5a, 0x222222])); r.root.position.set(x, 0, z); r.root.rotation.y = Math.atan2(x * 0.12, 1) * 0.6; sc.add(r.root);
+      const press = row === 0 && ad !== 'event';
+      if (press) { const cam = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.11, 0.1), std(0x1d1d1f, 0.4)); cam.position.set(0, -0.26, -0.06); r.arms[1].el.add(cam); }
+      this.people.push({ r, ph: rr(0, 6), jump: rr(0.7, 1.3), press, delay: rr(0, 0.35) });
+    }
+    if (ad === 'tv') for (const sx of [-4.6, 4.6]) {   // テレビカメラ
+      const g = new THREE.Group(); g.position.set(sx, 0, 1.2); g.rotation.y = sx < 0 ? -0.55 : 0.55; sc.add(g);
+      for (let k = 0; k < 3; k++) { const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.5, 6), std(0x2a2c30, 0.5)); const a = k / 3 * TAU; leg.position.set(Math.sin(a) * 0.25, 0.7, Math.cos(a) * 0.25); leg.rotation.set(Math.cos(a) * 0.3, 0, -Math.sin(a) * 0.3); g.add(leg); }
+      box(0.36, 0.34, 0.7, std(0x2a2c30, 0.4, 0.3), 0, 1.6, 0, g); const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.13, 0.3, 16), std(0x111111, 0.2, 0.5)); lens.rotation.x = Math.PI / 2; lens.position.set(0, 1.6, -0.48); g.add(lens);
+      box(0.06, 0.06, 0.02, new THREE.MeshBasicMaterial({ color: 0xff2a2a }), 0.12, 1.82, -0.35, g);
+    }
+    if (ad === 'tv') { const oa = this.canvasTex(256, 96, (q, w, h) => { q.fillStyle = '#c8261e'; q.beginPath(); q.roundRect(4, 4, w - 8, h - 8, 18); q.fill(); q.fillStyle = '#fff'; q.font = '900 52px sans-serif'; q.textAlign = 'center'; q.textBaseline = 'middle'; q.fillText('ON AIR', w / 2, h / 2 + 2); }); const m = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.52), new THREE.MeshBasicMaterial({ map: oa })); m.position.set(3.6, 5.2, -4.1); sc.add(m); }
+    // カメラのフラッシュ
+    const fc = newCanvas(64, 64), fq = fc.getContext('2d'), gr = fq.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.25, 'rgba(255,255,255,.7)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); fq.fillStyle = gr; fq.fillRect(0, 0, 64, 64);
+    const ft = new THREE.CanvasTexture(fc); this.flashTex = ft;
+    for (let k = 0; k < 10; k++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: ft, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, opacity: 0 })); s.scale.setScalar(0.9); sc.add(s); this.flashes.push({ s, t: 0 }); }
+    // 紙ふぶき（テレビ・発表会）
+    const nCf = { mag: 0, tv: 160, event: 420 }[ad];
+    if (nCf) {
+      const im = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.07, 0.11), new THREE.MeshStandardMaterial({ side: THREE.DoubleSide, roughness: 0.6, metalness: 0.3, emissive: 0x222222 }), nCf), col = new THREE.Color();
+      const pal = ['#f6c945', '#d9493e', '#2b8fd6', '#2e9a63', '#e86fa8', '#ffffff', '#f0a03a', '#d4a83a'];
+      this.conf = { im, n: nCf, p: [] };
+      for (let i = 0; i < nCf; i++) { im.setColorAt(i, col.set(pick(pal))); this.conf.p.push({ x: rr(-5.5, 5.5), y: rr(2.8, 8.5), z: rr(-3.5, 5), vy: rr(0.9, 1.5), ph: rr(0, 6), sp: rr(2, 6), ax: rr(0, TAU) }); }
+      im.frustumCulled = false; im.visible = false; sc.add(im);
+    }
+    // 吹き上げる火花（発表会）
+    if (bigEv) {
+      const N = 360, geo = new THREE.BufferGeometry(), pos = new Float32Array(N * 3); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      const pts = new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xffd98a, size: 0.09, map: ft, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); pts.frustumCulled = false; sc.add(pts);
+      this.sparks = { pts, pos, N, p: Array.from({ length: N }, (_, i) => ({ src: i % 4, life: -1 })) };
+    }
+    this.camA = { p: new THREE.Vector3(0, 4.6, 11.5), l: new THREE.Vector3(0, 1.8, -2) };
+    this.camA2 = { p: new THREE.Vector3(0, 3.4, 8.0), l: new THREE.Vector3(0, 1.8, -2) };
+    this.camR = { p: new THREE.Vector3(0.7, 2.25, 0.7), l: new THREE.Vector3(0, 2.0, -1.8) };
+    this.camR2 = { p: new THREE.Vector3(-0.5, 2.1, 0.45), l: new THREE.Vector3(0, 2.0, -1.8) };
+    this.camC = { p: new THREE.Vector3(2.6, 2.3, -1.0), l: new THREE.Vector3(-0.4, 1.3, 4.5) };
+    this.camC2 = { p: new THREE.Vector3(1.6, 2.6, -0.6), l: new THREE.Vector3(-0.6, 1.2, 4.5) };
+    this.camD = { p: new THREE.Vector3(5.5, 5.2, 10.5), l: new THREE.Vector3(0, 1.4, -1.0) };
+    this.camD2 = { p: new THREE.Vector3(3.5, 4.4, 9.5), l: new THREE.Vector3(0, 1.6, -1.4) };
+  },
+  // ---------- 毎フレーム ----------
+  update(dt) {
+    if (!this.active || !this.scene) return;
+    const t0 = this.t; this.t += dt; const t = this.t;
+    if (this.heroObj) { this.heroT = (this.heroT || 0) + (this.big && t < this.reveal ? 0 : dt); this.heroObj.rotation.y = Math.sin(this.heroT * 0.9) * 0.5; }   // カメラに向けたまま、ゆっくり左右に
+    if (this.big) this.stepStage(dt, t, t0); else this.stepShop(dt, t);
+    for (const ic of this.icons) { ic.t -= dt; const k = clamp(Math.min((1.6 - ic.t) * 6, ic.t * 3), 0, 1); ic.s.scale.setScalar(0.45 * k); ic.s.position.y = ic.y + (1.6 - ic.t) * 0.25; }
+    this.icons = this.icons.filter(ic => { if (ic.t > 0) return true; this.scene.remove(ic.s); ic.s.material.dispose(); return false; });
+    if (t >= this.dur) this.finish();
+  },
+  pop(r, kind) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: iconTex(kind), depthTest: false, transparent: true })); s.renderOrder = 10; const p = r.root.position; s.position.set(p.x, p.y + 2.0, p.z); this.scene.add(s); this.icons.push({ s, t: 1.6, y: p.y + 2.0 }); },
+  setCam(a, b, k) { const e = k * k * (3 - 2 * k); this.cam.position.lerpVectors(a.p, b.p, e); const l = new THREE.Vector3().lerpVectors(a.l, b.l, e); this.cam.lookAt(l); },
+  stepShop(dt, t) {
+    this.setCam(this.camA, this.camB, clamp(t / (this.dur - 0.6), 0, 1));
+    for (const c of this.people) {
+      const p = c.r.root.position; c.ph += dt;
+      if (t < c.delay) { OFFICE.pose(c.r, 'stand', c.ph); continue; }
+      if (c.state === 'walk') {
+        const g = c.path[0], dx = g.x - p.x, dz = g.z - p.z, d = Math.hypot(dx, dz), st = 1.9 * dt;
+        if (d <= st) { p.x = g.x; p.z = g.z; c.path.shift(); if (!c.path.length) c.state = 'look'; } else { p.x += dx / d * st; p.z += dz / d * st; c.r.root.rotation.y += angDiff2(c.r.root.rotation.y, Math.atan2(-dx, -dz)) * Math.min(1, dt * 12); }
+        OFFICE.pose(c.r, 'walk', c.ph);
+      } else {
+        c.r.root.rotation.y += angDiff2(c.r.root.rotation.y, Math.atan2(p.x, p.z)) * Math.min(1, dt * 8);
+        if (t >= c.like && !c.liked) { c.liked = true; c.cheerT = 0.9; this.pop(c.r, 'heart'); if (AU.ok()) AU.tone(1200 + rr(0, 400), AU.ac.currentTime, 0.12, 'sine', 0.06); }
+        if (c.cheerT > 0) { c.cheerT -= dt; OFFICE.pose(c.r, 'cheer', c.ph); } else OFFICE.pose(c.r, c.liked ? 'talk' : 'stand', c.ph);
+      }
+    }
+    if (t > 0.6) { $('evOv').classList.add('show'); }
+  },
+  stepStage(dt, t, t0) {
+    const R = this.reveal;
+    // カメラ：うしろから → 布をとる瞬間に近づく → 引いて会場全体
+    const c1 = R + 2.0, c2 = c1 + 1.9;   // 布をとる → 製品のアップ → 観客（ステージから） → 会場全体
+    if (t < R) this.setCam(this.camA, this.camA2, t / R);
+    else if (t < c1) this.setCam(this.camR, this.camR2, (t - R) / (c1 - R));
+    else if (t < c2) this.setCam(this.camC, this.camC2, (t - c1) / (c2 - c1));
+    else this.setCam(this.camD, this.camD2, clamp((t - c2) / Math.max(0.5, this.dur - c2), 0, 1));
+    // スポットライト：さがすように動き、発表で台に集まる
+    for (const s of this.spots) {
+      const k = clamp((t - R + 0.3) / 0.5, 0, 1), sx = Math.sin(t * 1.7 + s.ph) * 3.5, sz = -1.6 + Math.cos(t * 1.3 + s.ph) * 0.8;
+      s.sp.target.position.set(lerp(sx, 0, k), 0.6, lerp(sz, -1.8, k)); s.sp.target.updateMatrixWorld();
+      const a = s.sp.position, b = s.sp.target.position, d = a.distanceTo(b); s.beam.position.copy(a); s.beam.lookAt(b); s.beam.scale.set(d * Math.tan(0.22) / 1.2, d * Math.tan(0.22) / 1.2, d);
+    }
+    this.key.intensity = t < R ? 0 : Math.min(70, (t - R) * 220); this.house.intensity = t < R ? 0 : Math.min(1.3, (t - R) * 1.5);
+    this.backdrop.material.emissiveIntensity = t < R ? 0.08 : Math.min(0.55, 0.08 + (t - R) * 0.8);
+    // 布：ふわっと上がって消える
+    if (this.cloth) { const k = clamp((t - R + 0.15) / 0.8, 0, 1); this.cloth.position.y = 1.55 + 0.85 + k * k * 3.2; this.cloth.rotation.y = k * 1.2; this.cloth.material.opacity = 1 - clamp((k - 0.5) * 2, 0, 1); this.cloth.visible = k < 1; }
+    // 人
+    for (const c of this.people) {
+      c.ph += dt;
+      if (c.ceo) { if (t < R - 0.2) OFFICE.pose(c.r, 'talk', c.ph); else if (t < R + 1.6) OFFICE.pose(c.r, 'cheer', c.ph * 0.6); else OFFICE.pose(c.r, 'talk', c.ph); continue; }
+      if (t < R + c.delay) OFFICE.pose(c.r, 'stand', c.ph * 0.6);
+      else { OFFICE.pose(c.r, 'cheer', c.ph * c.jump); if (c.press) { c.r.arms[1].sh.rotation.x = 2.6; c.r.arms[1].el.rotation.x = 0.6; c.r.arms[0].sh.rotation.x = 2.5; } }
+    }
+    // フラッシュ（記者・観客）
+    const rate = t < R ? 2 : this.ad === 'event' ? 14 : 10;
+    for (const f of this.flashes) {
+      f.t -= dt; f.s.material.opacity = Math.max(0, f.t / 0.12);
+      if (f.t <= 0 && Math.random() < rate * dt / this.flashes.length * 3) { const c = pick(this.people.filter(q => !q.ceo)); if (c) { const p = c.r.root.position; f.s.position.set(p.x + rr(-0.1, 0.1), 1.6, p.z - 0.2); f.t = 0.12; if (AU.ok() && Math.random() < 0.5) this.shutter(); } }
+    }
+    // 紙ふぶき
+    if (this.conf && t >= R) {
+      const C = this.conf, m = new THREE.Object3D(); C.im.visible = true;
+      for (let i = 0; i < C.n; i++) { const q = C.p[i]; q.y -= q.vy * dt; q.ph += dt * q.sp; if (q.y < 0.02) { q.y = 0.02; } m.position.set(q.x + Math.sin(q.ph * 0.5) * 0.3, q.y, q.z); m.rotation.set(q.ph, q.ax + q.ph * 0.3, q.ph * 0.7); m.updateMatrix(); C.im.setMatrixAt(i, m.matrix); }
+      C.im.instanceMatrix.needsUpdate = true;
+    }
+    // 火花
+    if (this.sparks) {
+      const P = this.sparks, src = [[-4.2, -0.2], [-1.6, -0.2], [1.6, -0.2], [4.2, -0.2]], on = t >= R && t < R + 2.8;
+      for (let i = 0; i < P.N; i++) { const q = P.p[i]; if (q.life <= 0) { if (on && Math.random() < dt * 3) { const s = src[q.src]; Object.assign(q, { x: s[0], y: 0.62, z: s[1], vx: rr(-0.4, 0.4), vy: rr(4.5, 6.5), vz: rr(-0.3, 0.3), life: rr(0.7, 1.1) }); } else { P.pos[i * 3 + 1] = -10; continue; } } q.life -= dt; q.vy -= 9.8 * dt * 0.6; q.x += q.vx * dt; q.y += q.vy * dt; q.z += q.vz * dt; P.pos.set([q.x, q.y, q.z], i * 3); }
+      P.pts.geometry.attributes.position.needsUpdate = true;
+    }
+    // 音・字幕
+    if (t0 < 0.5 && t >= 0.5) this.drumroll(R - 0.5);
+    if (t0 < R && t >= R) { this.crash(); AU.fanfare(); this.crowd(2.6); $('evOv').classList.remove('pre'); $('evOv').classList.add('show'); }
+  },
+  // ---------- 効果音 ----------
+  noise(dur) { const a = AU.ac, b = a.createBuffer(1, Math.ceil(a.sampleRate * dur), a.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; const s = a.createBufferSource(); s.buffer = b; return s; },
+  drumroll(dur) {
+    if (!AU.ok()) return; const a = AU.ac, t = a.currentTime, n = Math.floor(dur / 0.045);
+    for (let i = 0; i < n; i++) { const s = this.noise(0.05), f = a.createBiquadFilter(), g = a.createGain(); f.type = 'bandpass'; f.frequency.value = 220; f.Q.value = 1.2; const v = 0.12 + 0.25 * i / n; g.gain.setValueAtTime(v, t + i * 0.045); g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.045 + 0.05); s.connect(f); f.connect(g); g.connect(AU.out); s.start(t + i * 0.045); }
+  },
+  crash() { if (!AU.ok()) return; const a = AU.ac, t = a.currentTime, s = this.noise(1.6), f = a.createBiquadFilter(), g = a.createGain(); f.type = 'highpass'; f.frequency.value = 3500; g.gain.setValueAtTime(0.35, t); g.gain.exponentialRampToValueAtTime(0.001, t + 1.5); s.connect(f); f.connect(g); g.connect(AU.out); s.start(t); },
+  crowd(dur) { if (!AU.ok()) return; const a = AU.ac, t = a.currentTime, s = this.noise(dur), f = a.createBiquadFilter(), g = a.createGain(); f.type = 'bandpass'; f.frequency.value = 1100; f.Q.value = 0.6; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(this.ad === 'event' ? 0.32 : 0.22, t + 0.25); g.gain.exponentialRampToValueAtTime(0.001, t + dur); s.connect(f); f.connect(g); g.connect(AU.out); s.start(t); },
+  shutter() { const a = AU.ac, t = a.currentTime, s = this.noise(0.04), f = a.createBiquadFilter(), g = a.createGain(); f.type = 'highpass'; f.frequency.value = 2500; g.gain.setValueAtTime(0.12, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.04); s.connect(f); f.connect(g); g.connect(AU.out); s.start(t); },
+};
 // =========================================================================================
 //  画面：上のバー・下のメニュー・シート（開発／製品／研究／スタッフ／会社／事務所）・開発スタジオ・発売とレビュー
 // =========================================================================================
@@ -1750,7 +2815,7 @@ const UI = {
       const dots = $('nav').querySelectorAll('i.dot');
       dots[0].classList.toggle('on', S.devs.some(v => v.ready)); dots[2].classList.toggle('on', !S.research.cur && RESEARCH.some(r => resState(r) === 'can' && S.rp >= r.rp));
       const g = GOALS[S.goal], gb = $('goal');
-      gb.classList.toggle('hidden', !g || !!this.tab || !!this.studio);
+      gb.classList.toggle('hidden', !g || !!this.tab || !!this.studio || FURNI.on);
       if (g) { const html = `<b>目標</b>${esc(g.text)}${g.hint ? `<small>${esc(g.hint)}</small>` : ''}<small>ごほうび：${g.reward.money ? yen(g.reward.money) + '・' : ''}${g.reward.rp} RP</small>`; if (gb._h !== html) { gb.innerHTML = html; gb._h = html; } }
     }
     // ニュースの帯
@@ -1761,9 +2826,10 @@ const UI = {
     this.refreshT -= dt;
     if (this.tab && (this.dirtyF || this.refreshT <= 0) && !this.editing()) { this.render(); this.dirtyF = false; this.refreshT = 0.6; }
     if (this.studio && this.studio.dirty) { this.studio.dirty = false; this.renderStudio(); }
-    if (this.queue.length && !this.modalOpen && !this.studio) { const id = this.queue.shift(); if (S.devs.find(v => v.id === id && v.ready)) this.launchModal(id); }
+    if (this.rv) this.stepReview(dt);
+    if (this.queue.length && !this.modalOpen && !this.studio && !EVENT.active && !FURNI.on) { const id = this.queue.shift(); if (S.devs.find(v => v.id === id && v.ready)) this.launchModal(id); }
   },
-  paused() { return !!this.studio || this.modalOpen || S.speed === 0; },
+  paused() { return !!this.studio || this.modalOpen || S.speed === 0 || FURNI.on || EVENT.active; },
   editing() { const a = document.activeElement; return a && (a.tagName === 'INPUT' || a.tagName === 'SELECT') && $('sheet').contains(a); },
   dirty() { this.dirtyF = true; },
   readyQueue(id) { if (!this.queue.includes(id)) this.queue.push(id); },
@@ -1802,7 +2868,9 @@ const UI = {
       if (v.ready) h += `<div class="row sb"><span class="pill green">完成！</span><button class="btn green" data-act="launchM" data-id="${v.id}" type="button">発売する</button></div>`;
       else {
         h += `<div class="muted">開発 ${Math.floor(prog * 100)}%　のこり ${Math.ceil(v.left)} 日</div><div class="bar"><i style="width:${prog * 100}%"></i></div>`;
-        h += `<div class="muted" style="margin-top:6px">不具合：見つかった ${found} 件のうち ${Math.floor(v.fixed)} 件直した（全部で約 ${v.bugs} 件）</div><div class="bar r"><i style="width:${(v.fixed / v.bugs) * 100}%"></i></div>`;
+        h += `<div class="muted" style="margin-top:6px">試作テスト：見つかった不具合 ${found} 件のうち ${Math.floor(v.fixed)} 件直した（全部で約 ${v.bugs} 件）</div><div class="bar r"><i style="width:${(v.fixed / v.bugs) * 100}%"></i></div>`;
+        const iss = v.issues || [], fx = Math.floor(v.fixed + 1e-6);
+        h += `<div class="iss">${iss.slice(0, found).map((x, i) => `<span class="is ${i < fx ? 'ok' : 'ng'}">${i < fx ? '✓' : '！'} ${esc(x.n)}<small>${esc(x.t)}</small></span>`).join('')}${found < v.bugs ? `<span class="is un">？ まだ見つかっていない不具合</span>` : ''}</div>`;
         h += `<div class="row" style="margin-top:8px;gap:6px"><button class="btn sub small" data-act="fixRP" data-id="${v.id}" type="button" ${S.rp < rest * 3 || rest <= 0 ? 'disabled' : ''}>RPで全部直す（${rest * 3} RP）</button><span class="muted">${openB ? '品質チェックの人が直しています' : ''}</span></div>`;
       }
       h += '</div>';
@@ -1846,7 +2914,9 @@ const UI = {
   pStaff(s) {
     const O = OFFICES[S.tier];
     let h = `<div class="muted" style="margin:2px 0 8px">机：${S.staff.length} / ${O.desks}　月給の合計：${yen(S.staff.reduce((a, m) => a + m.sal, 0))}</div>`;
-    const person = (m, btn) => `<div class="card"><div class="row sb"><h3 style="margin:0">${esc(m.name)}</h3><span class="pill ${m.role === 'res' ? 'blue' : m.role === 'qa' ? '' : m.role === 'des' ? 'gold' : 'green'}">${ROLES[m.role].name}</span></div><div class="row sb" style="margin-top:4px"><span class="stars">${'★'.repeat(m.lv)}${'☆'.repeat(5 - m.lv)}</span><span class="muted">月給 ${yen(m.sal)}</span></div><div class="muted">${ROLES[m.role].desc}${m.role === 'res' ? `（1日 +${ROLES.res.rate[m.lv - 1]} RP）` : m.role === 'qa' ? `（1日 ${ROLES.qa.rate[m.lv - 1]} 件）` : m.role === 'sal' ? `（売上 +${Math.round(ROLES.sal.rate[m.lv - 1] * 100)}%）` : `（デザイン +${ROLES.des.rate[m.lv - 1]}）`}</div><div style="margin-top:8px">${btn}</div></div>`;
+    const extra = m => { const tr = TRAITS[m.trait], fb = S.staff.includes(m) ? Math.round(FURNI.bonus(S, m) * 100) : 0, nx = m.lv < 5 ? LEVEL_XP[m.lv] : 0;
+      return `${tr ? `<div class="trait"><b>特技：${esc(tr.name)}</b>${esc(tr.desc)}</div>` : ''}${S.staff.includes(m) ? `<div class="row" style="gap:8px;margin-top:6px"><span class="muted" style="font-size:12px;white-space:nowrap">${m.lv < 5 ? '次の昇格' : '最高レベル'}</span><div class="bar xp" style="flex:1;margin:0"><i style="width:${nx ? Math.min(100, (m.xp || 0) / nx * 100) : 100}%"></i></div>${fb ? `<span class="pill green">家具 +${fb}%</span>` : ''}</div>` : ''}`; };
+    const person = (m, btn) => `<div class="card"><div class="row sb"><h3 style="margin:0">${esc(m.name)}</h3><span class="pill ${m.role === 'res' ? 'blue' : m.role === 'qa' ? '' : m.role === 'des' ? 'gold' : 'green'}">${ROLES[m.role].name}</span></div><div class="row sb" style="margin-top:4px"><span class="stars">${'★'.repeat(m.lv)}${'☆'.repeat(5 - m.lv)}</span><span class="muted">月給 ${yen(m.sal)}</span></div><div class="muted">${ROLES[m.role].desc}${m.role === 'res' ? `（1日 +${ROLES.res.rate[m.lv - 1]} RP）` : m.role === 'qa' ? `（1日 ${ROLES.qa.rate[m.lv - 1]} 件）` : m.role === 'sal' ? `（売上 +${Math.round(ROLES.sal.rate[m.lv - 1] * 100)}%）` : `（デザイン +${ROLES.des.rate[m.lv - 1]}）`}</div>${extra(m)}<div style="margin-top:8px">${btn}</div></div>`;
     if (s === 'list') {
       if (!S.staff.length) h += '<div class="list-empty">まだだれもいません。「採用」から仲間をふやそう</div>';
       for (const m of S.staff) h += person(m, `<button class="btn sub small" data-act="fire" data-id="${m.id}" type="button">やめてもらう</button>`);
@@ -1901,6 +2971,8 @@ const UI = {
     if (next) h += `<div class="card"><div class="row sb"><h3 style="margin:0">次：${next.name}</h3><span class="pill">${yen(next.cost)}</span></div><div class="muted">机 ${next.desks}・同時に開発 ${next.slots}・家賃 ${yen(next.rent)}／月</div><div class="muted">条件：発売 ${S.stats.launched}/${n.launched}・売上の合計 ${yen(S.stats.sales)} / ${yen(n.sales)}</div><div style="margin-top:8px"><button class="btn" data-act="move" type="button" ${n.ok ? '' : 'disabled'}>引っ越す</button></div></div>`;
     const cap = LINE_CAP[S.equip.line];
     h += `<div class="card"><div class="row sb"><h3 style="margin:0">生産</h3><span class="muted">1週間に ${num(cap)}（えんぴつなら${num(cap)}本）</span></div><div class="muted">いまの注文：${Math.round(S.capUse * 100)}%</div><div class="bar ${S.capUse > 1 ? 'r' : 'g'}"><i style="width:${Math.min(100, S.capUse * 100)}%"></i></div><div class="muted">シャーペンは3本分、万年筆は20本分の手間がかかる</div></div>`;
+    const fb = S.staff.map(m => FURNI.bonus(S, m)), avg = fb.length ? fb.reduce((a, b) => a + b, 0) / fb.length : 0;
+    h += `<div class="grp">家具</div><div class="card"><div class="row sb"><h3 style="margin:0">家具の配置</h3><span class="pill">${S.furn.length} / ${FURN_MAX[S.tier]}</span></div><div class="muted">観葉植物・照明・ホワイトボードなどを床に置くと、近くの机の人の仕事が速くなる。コーヒーマシンやソファは部屋のみんなに効いて、休けいの場所にもなる。</div><div class="muted" style="margin-top:4px">いまの効果：社員の平均 +${Math.round(avg * 100)}%（いちばん +${Math.round(Math.max(0, ...fb) * 100)}%）・部屋全体 +${Math.round(FURNI.globalBonus(S) * 100)}%</div><div style="margin-top:8px"><button class="btn" data-act="furnMode" type="button">家具を置く・模様がえ</button></div></div>`;
     h += '<div class="grp">設備</div>';
     for (const k of Object.keys(EQUIP)) {
       const E = EQUIP[k], lv = S.equip[k], mx = eqMax(k), pr = E.price[lv], top = (k === 'line' ? E.price.length : (E.max || 3));
@@ -1934,6 +3006,7 @@ const UI = {
     else if (a === 'expand') { if (expand(b.dataset.id)) { AU.fanfare(); } }
     else if (a === 'buyout') { if (buyout(b.dataset.id)) { AU.fanfare(); } }
     else if (a === 'move') { if (moveOffice()) { AU.fanfare(); this.toast(`${OFFICES[S.tier].name}へ引っ越した！`, 'gold'); OFFICE.zoom = 1; } }
+    else if (a === 'furnMode') { this.open(null); FURNI.enter(); return; }
     else if (a === 'equip') { if (buyEquip(b.dataset.k)) { AU.coin(); this.toast(`${EQUIP[b.dataset.k].name}を Lv${S.equip[b.dataset.k]} にした`, 'good'); } }
     else if (a === 'music') { SET.music = !SET.music; saveSet(); AU.setVol(); }
     else if (a === 'quality') { SET.quality = b.dataset.v; saveSet(); applyQuality(); OFFICE.key = ''; }
@@ -1957,10 +3030,11 @@ const UI = {
     else if (a === 'startDev') { const why = startDev(this.studio.d); if (why) { this.toast(why, 'bad'); AU.bad(); } else { AU.coin(); this.toast(`「${this.studio.d.name}」の開発を始めた！`, 'good'); this.closeStudio(); this.open('dev'); } return; }
     // モーダル
     else if (a === 'ad') { this.modalState.ad = b.dataset.v; this.renderLaunch(); return; }
-    else if (a === 'doLaunch') { const st = this.modalState, p = launch(st.id, st.price, st.ad); if (!p) { this.toast('お金が足りない', 'bad'); return; } AU.fanfare(); this.reviewModal(p); checkGoals(); return; }
+    else if (a === 'doLaunch') { const st = this.modalState, p = launch(st.id, st.price, st.ad); if (!p) { this.toast('お金が足りない', 'bad'); return; } this.closeModal(); this.open(null); EVENT.start(p, st.ad, () => this.reviewModal(p)); return; }
     else if (a === 'later') { this.closeModal(); return; }
     else if (a === 'setPrice') { const p = S.products.find(x => x.id === this.modalState.id); if (p) { p.price = Math.max(1, Math.round(this.modalState.price)); this.toast(`「${p.name}」を ${yen(p.price)} にした`); } this.closeModal(); return; }
-    else if (a === 'closeM') { this.closeModal(); return; }
+    else if (a === 'closeM') { const rv = this.modalState && this.modalState.review; this.closeModal(); if (rv) { OFFICE.event('launch'); checkGoals(); } return; }
+    else if (a === 'rvSkip') { if (this.rv) this.rv.t = 99; return; }
     else if (a === 'yes') { const f = this.modalState && this.modalState.yes; this.closeModal(); if (f) f(); this.dirty(); return; }
     else if (a === 'restart') { try { localStorage.removeItem('bungu-save'); } catch (er) { /* なし */ } location.reload(); return; }
     else if (a === 'startNew') { const v = ($('newCo').value || '').trim().slice(0, 16) || 'ぶんぐ工房'; this.closeModal(); GAMEFLOW.begin(newState(v), true); return; }
@@ -2085,7 +3159,7 @@ const UI = {
   priceEval(d, price) { const q = perfP(d) / expected(d.kind), fair = fairPrice(d, q), r = fair / price; return r > 1.25 ? '<span class="pill green">とても安い</span>' : r > 1.02 ? '<span class="pill green">お買い得</span>' : r > 0.85 ? '<span class="pill">ふつう</span>' : r > 0.65 ? '<span class="pill gold">少し高い</span>' : '<span class="pill red">高すぎる</span>'; },
   // ---------- モーダル ----------
   showModal(html) { $('modalBox').innerHTML = html; $('modal').classList.add('on'); this.modalOpen = true; $('modalBox').scrollTop = 0; },
-  closeModal() { $('modal').classList.remove('on'); this.modalOpen = false; this.modalState = null; this.dirty(); },
+  closeModal() { $('modal').classList.remove('on'); this.modalOpen = false; this.modalState = null; this.rv = null; this.dirty(); },
   launchModal(id) {
     const v = S.devs.find(x => x.id === id); if (!v || !v.ready) return;
     this.modalState = { id, price: v.price || recPrice(v), ad: 'none', d: v };
@@ -2099,13 +3173,28 @@ const UI = {
       <div class="grp">広告（最初の数週間よく売れる）</div><div class="chips">${ADS.map(a => `<button type="button" class="chip ${st.ad === a.id ? 'on' : ''}" data-act="ad" data-v="${a.id}" ${S.money < a.cost ? 'disabled style="opacity:.4"' : ''}>${a.name}<small>${a.cost ? yen(a.cost) + '・' : ''}${a.boost ? '売れゆき +' + Math.round(a.boost * 100) + '%' : 'お金はかからない'}</small></button>`).join('')}</div>
       <div class="row" style="margin-top:14px;gap:8px"><button class="btn sub" data-act="later" type="button">あとで</button><button class="btn green" style="flex:1" data-act="doLaunch" type="button" ${S.money < ad.cost ? 'disabled' : ''}>発売する${ad.cost ? `（広告 ${yen(ad.cost)}）` : ''}</button></div>`);
   },
+  // レビューの発表：点数が数えあがり、星・3つの点・コメントが順番に出る
   reviewModal(p) {
     const col = p.review >= 8 ? 'var(--green)' : p.review >= 6 ? 'var(--blue)' : p.review >= 4 ? 'var(--gold)' : 'var(--red)';
-    this.showModal(`<div class="review"><div class="muted">発売しました！ みんなの評価は…</div><img alt="" src="${productThumb(p)}" style="width:110px;height:110px;border-radius:14px;margin-top:8px"><h2>${esc(p.name)}</h2>
-      <div class="rvs" style="color:${col}">${p.review.toFixed(1)}</div><div class="stars" style="font-size:22px">${stars10(p.review)}</div>
-      <div class="grid2" style="margin:10px 0"><div class="card" style="margin:0"><div class="muted">性能</div><div class="score">${p.scores.perf}</div></div><div class="card" style="margin:0"><div class="muted">デザイン</div><div class="score">${p.scores.des}</div></div><div class="card" style="margin:0;grid-column:1/-1"><div class="muted">値段の満足</div><div class="score">${p.scores.val}</div></div></div>
-      ${p.comments.map(([w, t]) => `<div class="cm"><b>${esc(w)}</b>${esc(t)}</div>`).join('')}
-      <button class="btn big" style="margin-top:10px" data-act="closeM" type="button">OK</button></div>`);
+    const bar = (k, n) => `<div class="rvb"><span>${n}</span><div class="bar"><i id="rvb_${k}" style="width:0%"></i></div><b id="rvn_${k}">0.0</b></div>`;
+    this.showModal(`<div class="review" data-act="rvSkip"><div class="muted">発売しました！ みんなの評価は…</div><img alt="" src="${productThumb(p)}" style="width:110px;height:110px;border-radius:14px;margin-top:8px"><h2>${esc(p.name)}</h2>
+      <div class="rvs" id="rvScore" style="color:${col}">0.0</div><div class="stars rvstars" id="rvStars" style="font-size:22px">☆☆☆☆☆</div>
+      <div class="rvbars">${bar('perf', '性能')}${bar('des', 'デザイン')}${bar('val', '値段の満足')}</div>
+      ${p.comments.map(([w, t], i) => `<div class="cm rvc" id="rvc${i}"><b>${esc(w)}</b>${esc(t)}</div>`).join('')}
+      <div class="muted rvhint" id="rvHint">タップでとばす</div>
+      <button class="btn big rvok" id="rvOk" style="margin-top:10px" data-act="closeM" type="button">OK</button></div>`);
+    this.modalState = { review: true };
+    this.rv = { p, t: 0, tick: 0, end: false, shown: -1 };
+  },
+  stepReview(dt) {
+    const R = this.rv, p = R.p, T = 1.5; if (!$('rvScore')) { this.rv = null; return; }
+    R.t += dt; const k = clamp(R.t / T, 0, 1), e = 1 - Math.pow(1 - k, 3), v = p.review * e;
+    $('rvScore').textContent = v.toFixed(1); $('rvStars').textContent = stars10(v);
+    if (k < 1) { R.tick -= dt; if (R.tick <= 0) { R.tick = 0.07; if (AU.ok()) AU.tone(600 + v * 90, AU.ac.currentTime, 0.04, 'square', 0.03); } }
+    ['perf', 'des', 'val'].forEach((key, i) => { const kk = clamp((R.t - T - i * 0.25) / 0.5, 0, 1), x = p.scores[key] * (1 - Math.pow(1 - kk, 2)); $('rvb_' + key).style.width = x * 10 + '%'; $('rvn_' + key).textContent = x.toFixed(1); });
+    p.comments.forEach((c, i) => { if (R.t > T + 0.9 + i * 0.55) { const el = $('rvc' + i); if (el && !el.classList.contains('show')) { el.classList.add('show'); if (AU.ok()) AU.tone(880, AU.ac.currentTime, 0.08, 'triangle', 0.05); } } });
+    if (k >= 1 && !R.end) { R.end = true; $('rvScore').classList.add('pop'); if (p.review >= 8) AU.fanfare(); else if (p.review >= 6) AU.chime(); else if (p.review < 4) AU.bad(); else AU.coin(); }
+    if (R.t > T + 1.0 + p.comments.length * 0.55) { $('rvHint').classList.add('hidden'); $('rvOk').classList.add('show'); this.rv = null; }
   },
   priceModal(id) {
     const p = S.products.find(x => x.id === id); if (!p) return; const c = costOf(p), rp = recPrice(p), mx = Math.max(rp * 4, c * 6);
@@ -2146,19 +3235,25 @@ function stageRect(el) { let x = 0, y = 0, e = el; while (e && e !== $('rot')) {
 
 // ---------- ドラッグで回す・2本指とホイールで拡大（事務所と開発の見本） ----------
 function dragControl(el, get) {
-  const pts = new Map(); let pinch = 0;
-  el.addEventListener('pointerdown', e => { if (e.target !== el) return; pts.set(e.pointerId, toStage(e.clientX, e.clientY)); try { el.setPointerCapture(e.pointerId); } catch (er) { /* なし */ } const c = get(); if (c.onStart) c.onStart(); if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch = Math.hypot(a.x - b.x, a.y - b.y); } });
+  const pts = new Map(); let pinch = 0, down = null;
+  el.addEventListener('pointerdown', e => { if (e.target !== el) return; const sp = toStage(e.clientX, e.clientY); pts.set(e.pointerId, sp); down = pts.size === 1 ? { x: sp.x, y: sp.y, t: performance.now(), id: e.pointerId, moved: false } : null; try { el.setPointerCapture(e.pointerId); } catch (er) { /* なし */ } const c = get(); if (c.onStart) c.onStart(); if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch = Math.hypot(a.x - b.x, a.y - b.y); } });
   el.addEventListener('pointermove', e => {
-    if (!pts.has(e.pointerId)) return; const p = toStage(e.clientX, e.clientY), o = pts.get(e.pointerId), c = get();
+    if (!pts.has(e.pointerId)) { const c = get(); if (c.onHover && e.pointerType === 'mouse') c.onHover(toStage(e.clientX, e.clientY)); return; }
+    const p = toStage(e.clientX, e.clientY), o = pts.get(e.pointerId), c = get();
+    if (down && down.id === e.pointerId && Math.hypot(p.x - down.x, p.y - down.y) > 7) down.moved = true;
     if (pts.size === 1) { c.yaw -= (p.x - o.x) * 0.008; c.pitch = clamp(c.pitch + (p.y - o.y) * 0.006, c.pMin, c.pMax); }
     pts.set(e.pointerId, p);
     if (pts.size === 2) { const [a, b] = [...pts.values()], d = Math.hypot(a.x - b.x, a.y - b.y); if (pinch) c.zoom = clamp(c.zoom * d / pinch, c.zMin, c.zMax); pinch = d; }
   });
-  const end = e => { pts.delete(e.pointerId); pinch = 0; const c = get(); if (!pts.size && c.onEnd) c.onEnd(); };
+  const end = e => {
+    const c = get();
+    if (e.type === 'pointerup' && down && down.id === e.pointerId && !down.moved && pts.size === 1 && performance.now() - down.t < 600 && c.onTap) c.onTap(toStage(e.clientX, e.clientY), e.pointerType === 'mouse');
+    pts.delete(e.pointerId); pinch = 0; if (!pts.size) { down = null; if (c.onEnd) c.onEnd(); }
+  };
   el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
   el.addEventListener('wheel', e => { e.preventDefault(); const c = get(); c.zoom = clamp(c.zoom * Math.exp(-e.deltaY * 0.0015), c.zMin, c.zMax); }, { passive: false });
 }
-const OFFICE_CTL = { get yaw() { return OFFICE.yaw; }, set yaw(v) { OFFICE.yaw = clamp(v, -1.2, 1.3); }, get pitch() { return OFFICE.pitch; }, set pitch(v) { OFFICE.pitch = v; }, get zoom() { return OFFICE.zoom; }, set zoom(v) { OFFICE.zoom = v; }, pMin: 0.3, pMax: 1.2, zMin: 0.7, zMax: 2.4 };
+const OFFICE_CTL = { get yaw() { return OFFICE.yaw; }, set yaw(v) { OFFICE.yaw = clamp(v, -1.2, 1.3); }, get pitch() { return OFFICE.pitch; }, set pitch(v) { OFFICE.pitch = v; }, get zoom() { return OFFICE.zoom; }, set zoom(v) { OFFICE.zoom = v; }, pMin: 0.3, pMax: 1.25, zMin: 0.7, zMax: 2.4, onTap(p, mouse) { if (FURNI.on) FURNI.tap(p, mouse); }, onHover(p) { if (FURNI.on) FURNI.hover(p); } };
 const STUDIO_CTL = { get yaw() { return STUDIO.yaw; }, set yaw(v) { STUDIO.yaw = v; }, get pitch() { return STUDIO.pitch; }, set pitch(v) { STUDIO.pitch = v; }, get zoom() { return STUDIO.zoom; }, set zoom(v) { STUDIO.zoom = v; }, pMin: 0.05, pMax: 1.35, zMin: 0.6, zMax: 3.2, onStart() { STUDIO.spin = false; STUDIO.drag = true; }, onEnd() { STUDIO.drag = null; } };
 
 // ---------- タイトル・新しい会社・つづき ----------
@@ -2191,7 +3286,7 @@ const GAMEFLOW = {
   },
 };
 function demoState() {
-  const s = newState('文房具カンパニー'); s.tier = 1; s.equip = { chair: 1, monitor: 1, plant: 2, coffee: 1, lab: 1, line: 2 };
+  const s = newState('文房具カンパニー'); s.tier = 1; s.equip = { chair: 1, monitor: 1, lab: 1, line: 2 };
   s.staff = [['res', '#2b2118'], ['qa', '#5a3a22'], ['des', '#1c1a18'], ['sal', '#7a5a3a'], ['res', '#3a2a20']].map(([role, hair], i) => ({ id: 900 + i, role, hair, lv: 2, sal: 0, name: '' }));
   s.products = [
     { id: 991, kind: 'pencil', spec: { grade: 'HB', core: 'c1', wood: 'w1', shape: 'hex', erase: 'yes' }, look: { ...DEF_LOOK.pencil } },
@@ -2200,6 +3295,8 @@ function demoState() {
     { id: 994, kind: 'fountain', spec: { nib: 'k14', width: 'F', fill: 'conv', body: 'resin', cap: 'screw' }, look: { ...DEF_LOOK.fountain, body: '#24438f', cap: '#24438f', pattern: 'marble', pat: '#b9dcf2' } },
     { id: 995, kind: 'mech', spec: { size: 's05', mech: 'k0', grip: 'rubber', body: 'plastic', tip: 't0', erase: 'e0' }, look: { ...DEF_LOOK.mech } },
   ].map(p => Object.assign(p, { active: true, name: '' }));
+  const Lo = OFFICE.layout(s);
+  for (const [type, rot, x, z] of [['whiteboard', 0, 0.5, -3.6], ['coffee', 0, 3.2, -3.7], ['sofa', 3, 4.8, -2.2], ['plant', 0, -0.6, -3.7], ['bigplant', 0, 4.9, 0.4], ['bookshelf', 0, -2.2, -3.6], ['aquarium', 0, -3.3, 0.6], ['lamp', 0, 2.4, 0.9]]) { const f = FURNI.findSpot(s, Lo, type, rot, { x, z }, s.furn); if (f) s.furn.push(f); }
   return s;
 }
 
@@ -2214,19 +3311,24 @@ function frame(now) {
   } else if (GAMEFLOW.state === 'title') OFFICE.yaw = 0.62 + Math.sin(now / 5000) * 0.35;
   const st = UI.studio;
   if (st && st.rebuild) { st.rbT = (st.rbT || 0) + dt; if (st.rbT > 0.06) { st.rbT = 0; st.rebuild = false; STUDIO.set(st.d); } }
-  STUDIO.update(dt); OFFICE.update(dt); UI.update(dt); AU.music(dt);
+  STUDIO.update(dt); OFFICE.update(dt, GAMEFLOW.state === 'play' ? S : null); EVENT.update(dt); UI.update(dt); AU.music(dt);
   render();
 }
 function render() {
   const W = VW(), H = VH();
-  if (UI.studio && STUDIO.obj) {
+  if (EVENT.active && EVENT.scene) {
+    renderer.setViewport(0, 0, W, H); EVENT.cam.aspect = W / H; EVENT.cam.fov = W < H ? 58 : 40; EVENT.cam.updateProjectionMatrix(); renderer.render(EVENT.scene, EVENT.cam);
+  } else if (UI.studio && STUDIO.obj) {
     const r = stageRect($('pv'));
     renderer.setScissorTest(true); renderer.setViewport(r.x, H - r.y - r.h, r.w, r.h); renderer.setScissor(r.x, H - r.y - r.h, r.w, r.h);
     STUDIO.cam.aspect = r.w / Math.max(1, r.h); STUDIO.cam.updateProjectionMatrix(); renderer.render(STUDIO.scene, STUDIO.cam);
     renderer.setScissorTest(false);
   } else {
     renderer.setViewport(0, 0, W, H);
-    OFFICE.cam.aspect = W / H; OFFICE.cam.fov = W < H ? 52 : 38; OFFICE.cam.updateProjectionMatrix(); renderer.render(OFFICE.scene, OFFICE.cam);
+    OFFICE.cam.aspect = W / H; OFFICE.cam.fov = W < H ? 52 : 38;
+    const fb = FURNI.on ? $('furnBar').offsetHeight : 0;   // 模様がえのときは、下のバーの上に部屋が見えるようにずらす
+    if (fb) OFFICE.cam.setViewOffset(W, H, 0, fb * 0.5, W, H); else if (OFFICE.cam.view && OFFICE.cam.view.enabled) OFFICE.cam.clearViewOffset();
+    OFFICE.cam.updateProjectionMatrix(); renderer.render(OFFICE.scene, OFFICE.cam);
   }
 }
 
@@ -2241,6 +3343,7 @@ async function boot() {
   $('loadmsg').textContent = '事務所を準備しています…'; await nextFrame();
   STUDIO.init(); OFFICE.init(); UI.init();
   dragControl($('c'), () => OFFICE_CTL); dragControl($('pv'), () => STUDIO_CTL);
+  $('furnBar').addEventListener('click', e => FURNI.onBar(e)); $('evOv').addEventListener('click', () => EVENT.skip());
   $('tCont').onclick = () => { AU.resume(); AU.click(); const s = loadSave(); if (s) GAMEFLOW.begin(s, false); };
   $('tNew').onclick = () => { AU.click(); GAMEFLOW.newGame(); };
   addEventListener('pagehide', save); document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
@@ -2249,7 +3352,7 @@ async function boot() {
 }
 window.__BG = { get S() { return S; }, set S(v) { S = v; }, step(days) { for (let i = 0; i < days && !S.over; i++) dayTick(); }, THREE, renderer, UI, OFFICE, STUDIO, GAMEFLOW, AU,
   startDev, launch, startResearch, hire, fire, polishRP, polishBonus, mechStats, mechBuild, MECH_PRESETS, DEF_BUILD, buyEquip, moveOffice, expand, buyout, rerollCands, devPlan, costOf, expected, perfP, recPrice, currentScore, designScore, kindDemand, productThumb, buildProduct, save, loadSave, newState,
-  KINDS, SPECS, LOOKS, DEF_LOOK, RESEARCH, GOALS, OFFICES, EQUIP };
+  KINDS, SPECS, LOOKS, DEF_LOOK, RESEARCH, GOALS, OFFICES, EQUIP, FURN, FURNI, EVENT, TRAITS, makeIssues, devFound, staffMul, workMul, resRate, qaRate, devSpeed, gainXp, makeCand };
 boot();
 </script>
 </body></html>

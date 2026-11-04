@@ -8,7 +8,7 @@ let S = null;          // いまのゲームの状態（セーブされる）
 function newState(company) {
   return {
     v: 1, company: company || 'ぶんぐ工房', day: 0, money: 3000000, rp: 12, tier: 0,
-    equip: { chair: 0, monitor: 0, plant: 0, coffee: 0, lab: 0, line: 1 },
+    equip: { chair: 0, monitor: 0, lab: 0, line: 1 }, furn: [],
     staff: [], cands: [], nextId: 1, research: { done: [], cur: null }, devs: [], products: [], markets: ['jp'],
     rivals: RIVALS.map(r => ({ id: r.id, owned: false, P: {}, value: r.value })),
     stats: { launched: 0, sales: 0, best: 0, value: 0, top1: false, monthRev: 0, monthProfit: 0, lastMonthProfit: 0, lastMonthRev: 0 },
@@ -55,7 +55,7 @@ function lookCats(d) {
   return out;
 }
 function designScore(d, withTrend = true) {
-  let s = 5 + Math.min(2.5, S.staff.filter(m => m.role === 'des').reduce((a, m) => a + ROLES.des.rate[m.lv - 1], 0)) + sumRes('design');
+  let s = 5 + Math.min(2.5, roleSum('des')) + sumRes('design');
   const D = DEF_LOOK[d.kind], L = d.look;
   if (L.pattern && L.pattern !== 'none') s += 0.3;
   if (L.logo && L.logo !== D.logo) s += 0.35;
@@ -94,15 +94,17 @@ function productA(p, month) {
   const ad = 1 + p.adBoost * (1 + sumRes('adBoost')) * Math.exp(-wk / 7);
   const fresh = (1 + 0.6 * Math.exp(-wk / 3)) * Math.max(0.45, 1 - wk / 300);
   const trend = lookCats(p).has(S.trend.id) ? 1.15 : 1;
-  const sales = 1 + Math.min(0.4, S.staff.filter(m => m.role === 'sal').reduce((a, m) => a + ROLES.sal.rate[m.lv - 1], 0)) + sumRes('sales');
+  const sales = 1 + Math.min(0.45, roleSum('sal')) + sumRes('sales');
   const re = 1 + (p.reissue || 0) * Math.exp(-wk / 26);   // 復刻版：昔のファンが買う
   return Math.pow(sc.R / 7, 2.6) * priceK * segFit(p, month) * popOf(p) * S.brand * ad * fresh * trend * sales * re;
 }
-// 仕事の速さ（設備）
-const workMul = () => 1 + 0.05 * S.equip.chair + 0.04 * S.equip.plant + (S.equip.coffee ? 0.05 : 0);
-const resRate = () => (0.12 + S.staff.filter(m => m.role === 'res').reduce((a, m) => a + ROLES.res.rate[m.lv - 1], 0)) * workMul() * (1 + 0.06 * S.equip.monitor);
-const qaRate = () => (0.2 + S.staff.filter(m => m.role === 'qa').reduce((a, m) => a + ROLES.qa.rate[m.lv - 1], 0)) * workMul() * (1 + 0.06 * S.equip.monitor) * (1 + 0.1 * S.equip.lab);
-const devSpeed = () => workMul() * (1 + 0.04 * S.staff.filter(m => m.role === 'des').length);
+// 仕事の速さ：いい椅子・部屋全体の家具（コーヒー・ソファ）＋ 一人ずつ（近くの家具・特技）
+const workMul = () => 1 + 0.05 * S.equip.chair + FURNI.globalBonus(S);
+const staffMul = m => { const tr = TRAITS[m.trait] || {}; return workMul() + FURNI.bonus(S, m) + (tr.all || 0) + (tr.role === m.role ? tr.mul : 0); };
+const roleSum = r => S.staff.reduce((a, m) => a + (m.role === r ? ROLES[r].rate[m.lv - 1] * staffMul(m) : 0), 0);
+const resRate = () => (0.12 * workMul() + roleSum('res')) * (1 + 0.06 * S.equip.monitor);
+const qaRate = () => (0.2 * workMul() + roleSum('qa')) * (1 + 0.06 * S.equip.monitor) * (1 + 0.1 * S.equip.lab);
+const devSpeed = () => workMul() * (1 + 0.04 * S.staff.reduce((a, m) => a + (m.role === 'des' ? staffMul(m) / workMul() : 0), 0));
 
 // ---------- 開発 ----------
 function devPlan(d) {
@@ -124,8 +126,15 @@ function startDev(d) {
   const pl = devPlan(d), pol = d.polish || 0, prp = polishRP(d.kind, pol);
   S.money -= pl.devCost; S.rp -= prp;
   S.devs.push({ id: S.nextId++, kind: d.kind, name: d.name.trim().slice(0, 24), spec: { ...d.spec }, look: { ...d.look }, build: d.kind === 'mech' ? JSON.parse(JSON.stringify(mechBuild(d))) : undefined, reissue: d.reissue || 0, price: d.price, devCost: pl.devCost, polish: pol, bonus: polishBonus(d.kind, pol), days: pl.days, left: pl.days, bugs: Math.max(1, Math.round(pl.bugs * rr(0.8, 1.2))), fixed: 0, ready: false });
+  const nv = S.devs[S.devs.length - 1]; nv.issues = makeIssues(nv.kind, nv.bugs);
   news(`「${d.name}」の開発を始めた（${KINDS[d.kind].short}・${pl.days}日）`);
   return '';
+}
+// 試作テストで見つかる不具合に名前をつける（見つかった順）
+function makeIssues(kind, n) {
+  const base = DEFECTS[kind].slice().sort(() => Math.random() - 0.5), out = [];
+  for (let i = 0; i < n; i++) { const rep = Math.floor(i / base.length); out.push({ n: base[i % base.length] + (rep ? `（${rep + 1}か所目）` : ''), t: TESTS[(Math.random() * TESTS.length) | 0] }); }
+  return out;
 }
 const devFound = v => Math.min(v.bugs, Math.floor(v.bugs * Math.min(1, (1 - v.left / v.days) * 1.15 + 0.05)));
 function fixWithRP(v) { const rest = Math.ceil(v.bugs - v.fixed), cost = rest * 3; if (rest <= 0 || S.rp < cost) return false; S.rp -= cost; v.fixed = v.bugs; return true; }
@@ -144,7 +153,7 @@ function launch(devId, price, adId) {
   p.review = Math.round(clamp(0.58 * perf + 0.27 * des + 0.15 * val - p.samePen + rr(-0.25, 0.25), 1, 10) * 10) / 10;
   p.scores = { perf: Math.round(perf * 10) / 10, des: Math.round(des * 10) / 10, val: Math.round(val * 10) / 10 };
   p.comments = reviewComments(p, q, perf, des, val, same);
-  S.products.push(p); S.stats.launched++; S.stats.best = Math.max(S.stats.best, p.review);
+  S.products.push(p); S.stats.launched++; for (const m of S.staff) if (m.role === 'sal' || m.role === 'des') gainXp(m, 4); S.stats.best = Math.max(S.stats.best, p.review);
   S.brand = clamp(S.brand + (p.review - 6.2) * 0.03 + ad.brand, 0.4, 1.8);
   news(`「${p.name}」発売！ レビュー ${p.review.toFixed(1)} 点`);
   if (p.reissue) news(`名品の復刻版「${p.name}」に行列ができた！`);
@@ -196,7 +205,20 @@ function startResearch(id) {
 const HAIR = ['#2b2118', '#1c1a18', '#5a3a22', '#7a5a3a', '#3a2a20', '#9a6b3d', '#222222'];
 function makeCand() {
   const roles = Object.keys(ROLES), role = pick(roles), maxLv = Math.min(5, S.tier + 2 + (Math.random() < 0.25 ? 1 : 0)), lv = ri(1, maxLv);
-  return { id: S.nextId++, name: pick(FAMILY) + ' ' + pick(GIVEN), role, lv, sal: Math.round(ROLES[role].sal[lv - 1] * rr(0.92, 1.1) / 1000) * 1000, hair: pick(HAIR) };
+  return { id: S.nextId++, name: pick(FAMILY) + ' ' + pick(GIVEN), role, lv, sal: Math.round(ROLES[role].sal[lv - 1] * rr(0.92, 1.1) / 1000) * 1000, hair: pick(HAIR), trait: pickTrait(role), xp: 0 };
+}
+// 特技：半分くらいの人が持っている（その役わりに合うものか、だれでも役立つもの）
+function pickTrait(role) {
+  if (Math.random() < 0.45) return '';
+  return pick(Object.keys(TRAITS).filter(k => !TRAITS[k].role || TRAITS[k].role === role));
+}
+// 経験：毎日たまる（特技「のみこみが早い」は +50%）。たまるとレベルが上がり、月給も上がる
+function gainXp(m, n) {
+  if (m.lv >= 5) return; m.xp = (m.xp || 0) + n * (1 + ((TRAITS[m.trait] || {}).xp || 0));
+  if (m.xp < LEVEL_XP[m.lv]) return;
+  m.xp = 0; m.lv++; m.sal = Math.round(m.sal * 1.25 / 1000) * 1000;
+  UI.toast(`${m.name}さんが昇格！ ${ROLES[m.role].name} ${'★'.repeat(m.lv)}（月給 ${yen(m.sal)}）`, 'gold'); news(`${m.name}さん（${ROLES[m.role].name}）が昇格した`); AU.chime();
+  OFFICE.event('levelup', m.id); FURNI.ver++;
 }
 function rerollCands(pay) { if (pay) { const c = 50000 * (S.tier + 1); if (S.money < c) return false; S.money -= c; } S.cands = Array.from({ length: 4 }, makeCand); return true; }
 function hire(id) {
@@ -229,15 +251,16 @@ function dayTick() {
   const date = dateOf(S.day), month = date.getMonth();
   // 研究ポイント・研究
   S.rp += resRate();
-  if (S.research.cur) { const c = S.research.cur; c.left -= workMul(); if (c.left <= 0) { const r = RES_BY_ID[c.id]; S.research.done.push(c.id); S.research.cur = null; UI.toast(`研究完了：${r.name}`, 'good'); if (r.unlock) UI.toast(`${r.unlock.map(k => KINDS[k].short).join('・')} を開発できるようになった！`, 'gold'); AU.chime(); news(`研究「${r.name}」が完了した`); UI.dirty(); } }
+  if (S.research.cur) { const c = S.research.cur; c.left -= workMul(); if (c.left <= 0) { const r = RES_BY_ID[c.id]; S.research.done.push(c.id); S.research.cur = null; OFFICE.event('research'); for (const m of S.staff) if (m.role === 'res') gainXp(m, 6); UI.toast(`研究完了：${r.name}`, 'good'); if (r.unlock) UI.toast(`${r.unlock.map(k => KINDS[k].short).join('・')} を開発できるようになった！`, 'gold'); AU.chime(); news(`研究「${r.name}」が完了した`); UI.dirty(); } }
   // 開発と不具合直し
   let fixPool = qaRate();
   const needs = S.devs.filter(v => devFound(v) - v.fixed > 0.01);
   for (const v of S.devs) {
     if (v.left > 0) v.left = Math.max(0, v.left - devSpeed());
-    const open = devFound(v) - v.fixed; if (open > 0 && fixPool > 0) { const f = Math.min(open, fixPool / Math.max(1, needs.length)); v.fixed += f; }
-    if (!v.ready && v.left <= 0 && v.fixed >= v.bugs - 0.001) { v.ready = true; UI.toast(`「${v.name}」の開発が終わった！ 発売しよう`, 'gold'); AU.chime(); UI.dirty(); UI.readyQueue(v.id); }
+    const open = devFound(v) - v.fixed; if (open > 0 && fixPool > 0) { const f = Math.min(open, fixPool / Math.max(1, needs.length)), f0 = Math.floor(v.fixed + 1e-6); v.fixed += f; if (Math.floor(v.fixed + 1e-6) > f0) OFFICE.event('fix'); }
+    if (!v.ready && v.left <= 0 && v.fixed >= v.bugs - 0.001) { v.ready = true; OFFICE.event('devdone'); for (const m of S.staff) if (m.role === 'qa' || m.role === 'des') gainXp(m, 5); UI.toast(`「${v.name}」の開発が終わった！ 発売しよう`, 'gold'); AU.chime(); UI.dirty(); UI.readyQueue(v.id); }
   }
+  for (const m of S.staff) gainXp(m, 1);
   // 売れゆき（種類ごとにシェアを計算）
   let rev = 0, cogs = 0, work = 0; const sold = [];
   S.share = {};
@@ -301,7 +324,7 @@ function monthTick(date) {
 }
 function checkGoals() {
   const g = GOALS[S.goal]; if (!g || !g.done(S)) return;
-  S.money += g.reward.money; S.rp += g.reward.rp; S.goal++;
+  S.money += g.reward.money; S.rp += g.reward.rp; S.goal++; OFFICE.event('goal');
   UI.toast(`目標達成：${g.text}　${g.reward.money ? yen(g.reward.money, true) + '　' : ''}+${g.reward.rp} RP`, 'gold'); AU.fanfare(); UI.dirty();
 }
 
@@ -313,6 +336,9 @@ function loadSave() {
     const d = newState(s.company); for (const k in d) if (s[k] === undefined) s[k] = d[k];
     s.equip = Object.assign(d.equip, s.equip); s.stats = Object.assign(d.stats, s.stats); s.research = Object.assign(d.research, s.research);
     for (const r of d.rivals) if (!s.rivals.find(x => x.id === r.id)) s.rivals.push(r);
+    for (const m of s.staff.concat(s.cands)) { if (m.trait === undefined) m.trait = pickTrait(m.role); if (m.xp === undefined) m.xp = 0; }
+    for (const v of s.devs) if (!v.issues) v.issues = makeIssues(v.kind, v.bugs);
+    FURNI.migrate(s);
     return s;
   } catch (e) { return null; }
 }

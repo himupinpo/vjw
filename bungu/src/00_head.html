@@ -156,6 +156,62 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
 body.wide.sheeton #toasts { left: calc((100% - min(460px, 46%)) / 2); }
 body.studio #nav, body.studio #news, body.studio #top, body.studio #goal, body.studio #sheet { display: none; }
 body.intitle #nav, body.intitle #news, body.intitle #top, body.intitle #goal, body.intitle #toasts { display: none; }
+/* 不具合の一覧・特技・経験 */
+.iss { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.is { font-size: 11.5px; font-weight: 700; padding: 3px 8px; border-radius: 8px; background: #fbe6e3; color: var(--red); line-height: 1.3; }
+.is small { font-weight: 500; opacity: .75; margin-left: 4px; font-size: 10.5px; }
+.is.ok { background: #e2f3ea; color: var(--green); text-decoration: line-through; text-decoration-thickness: 1px; }
+.is.un { background: var(--paper2); color: var(--sub); }
+.trait { margin-top: 6px; font-size: 12.5px; color: var(--sub); background: #f8efd9; border-radius: 9px; padding: 5px 9px; }
+.trait b { color: #9a7316; margin-right: 6px; }
+.bar.xp { height: 7px; } .bar.xp i { background: linear-gradient(90deg, #f0c24a, #e39a1c); }
+/* レビューの発表 */
+.rvbars { margin: 12px 0 8px; }
+.rvb { display: flex; align-items: center; gap: 8px; margin: 5px 0; font-size: 13px; }
+.rvb span { width: 82px; text-align: left; color: var(--sub); font-weight: 700; }
+.rvb .bar { flex: 1; height: 10px; } .rvb .bar i { transition: none; }
+.rvb b { width: 36px; text-align: right; font-variant-numeric: tabular-nums; }
+.review .cm.rvc { opacity: 0; transform: translateY(8px); transition: opacity .35s, transform .35s; }
+.review .cm.rvc.show { opacity: 1; transform: none; }
+.review .rvs { font-variant-numeric: tabular-nums; }
+.review .rvs.pop { animation: rvpop .45s ease; }
+@keyframes rvpop { 0% { transform: scale(1); } 40% { transform: scale(1.25); } 100% { transform: scale(1); } }
+.rvhint { margin-top: 6px; font-size: 12px; }
+.rvok.show { animation: rvpop .4s ease; }
+/* 模様がえ（家具） */
+#furnBar { position: absolute; left: 0; right: 0; bottom: 0; z-index: 7; display: none; background: rgba(251,248,241,.97); border-top: 1px solid var(--line); padding: 8px calc(10px + var(--sar)) calc(8px + var(--sab)) calc(10px + var(--sal)); box-shadow: 0 -6px 20px rgba(60,45,20,.12); }
+body.furn #furnBar { display: block; }
+body.furn #nav, body.furn #news, body.furn #goal, body.furn #sheet, body.furn #menuB { display: none; }
+#fbTop { display: flex; align-items: center; gap: 8px; font-size: 13px; line-height: 1.35; }
+#fbHint { flex: 1; font-weight: 700; }
+#fbList { display: flex; gap: 8px; overflow-x: auto; padding: 8px 0; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+.fi { flex: 0 0 auto; width: 104px; border: 1.5px solid var(--line2); border-radius: 12px; background: var(--card); padding: 6px; text-align: center; font-size: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--ink); font-family: inherit; }
+.fi img { width: 64px; height: 64px; border-radius: 9px; }
+.fi b { font-size: 12px; line-height: 1.2; }
+.fi small { color: var(--sub); font-size: 11px; }
+.fi em { font-style: normal; color: var(--sub); font-size: 10px; line-height: 1.25; }
+.fi.on { border-color: var(--blue); background: var(--blue2); }
+.fi.lock { opacity: .45; }
+#fbBtns { display: flex; gap: 6px; flex-wrap: wrap; }
+#fbBtns .btn { padding: 8px 12px; font-size: 13px; }
+body.wide #fbList .fi { width: 116px; }
+@media (max-height: 520px) { #fbList { padding: 4px 0; } .fi { width: 86px; padding: 4px; } .fi img { width: 40px; height: 40px; } .fi em { display: none; } #fbBtns .btn { padding: 6px 10px; } }
+/* 発売のイベント */
+#evOv { position: absolute; inset: 0; z-index: 25; display: none; pointer-events: auto; cursor: pointer; }
+#evOv.on { display: block; }
+#evCap { position: absolute; left: 50%; bottom: calc(6% + var(--sab)); transform: translateX(-50%) scale(.9); opacity: 0; transition: opacity .4s, transform .4s; text-align: center; color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,.55); width: min(92%, 640px); }
+#evOv.show #evCap { opacity: 1; transform: translateX(-50%) scale(1); }
+#evCap small { display: block; font-size: 14px; font-weight: 700; letter-spacing: .1em; opacity: .9; }
+#evCap b { display: block; font-size: clamp(26px, 6vw, 46px); font-weight: 900; line-height: 1.2; margin: 4px 0; }
+#evCap span { display: inline-block; background: rgba(217,73,62,.92); padding: 3px 14px; border-radius: 99px; font-weight: 900; font-size: 17px; text-shadow: none; }
+#evPre { position: absolute; left: 50%; bottom: calc(18% + var(--sab)); transform: translateX(-50%); color: rgba(255,255,255,.85); font-weight: 900; font-size: 18px; letter-spacing: .3em; display: none; text-shadow: 0 2px 8px rgba(0,0,0,.6); }
+#evOv.pre #evPre { display: block; animation: evblink 1s infinite; }
+@keyframes evblink { 50% { opacity: .35; } }
+#evSkip { position: absolute; right: calc(14px + var(--sar)); top: calc(12px + var(--sat)); color: rgba(255,255,255,.8); background: rgba(0,0,0,.35); border-radius: 99px; padding: 5px 12px; font-size: 12px; font-weight: 700; }
+#evOv:not(.big) #evCap { color: #2b2a28; text-shadow: 0 1px 6px rgba(255,255,255,.9); }
+#evOv:not(.big) #evSkip { color: #2b2a28; background: rgba(255,255,255,.6); }
+body.hub #evSkip { right: calc(14px + var(--sar)); }
+body.event #nav, body.event #news, body.event #top, body.event #goal, body.event #sheet, body.event #toasts { display: none; }
 @keyframes tin2 { from { transform: translateY(-10px); opacity: 0; } }
 .toast { animation-name: tin2; }
 </style>
@@ -181,6 +237,8 @@ body.intitle #nav, body.intitle #news, body.intitle #top, body.intitle #goal, bo
   <div id="pv"><div id="pvMeter"></div><div id="pvHint">ドラッグで回す・2本指やホイールで拡大</div></div>
   <div id="stPanel"><div class="tabs" id="stTabs"></div><div id="stBody"></div><div id="stFoot"></div></div>
 </div>
+<div id="furnBar"></div>
+<div id="evOv"><div id="evPre">まもなく発表</div><div id="evCap"><small id="evSub"></small><b id="evName"></b><span id="evPrice"></span></div><div id="evSkip">タップでとばす</div></div>
 <div id="modal"><div id="modalBox"></div></div>
 <div class="screen" id="title"><div class="tpanel">
   <h1>文房具カンパニー<small>STATIONERY COMPANY</small></h1>

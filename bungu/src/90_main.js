@@ -22,19 +22,25 @@ function stageRect(el) { let x = 0, y = 0, e = el; while (e && e !== $('rot')) {
 
 // ---------- ドラッグで回す・2本指とホイールで拡大（事務所と開発の見本） ----------
 function dragControl(el, get) {
-  const pts = new Map(); let pinch = 0;
-  el.addEventListener('pointerdown', e => { if (e.target !== el) return; pts.set(e.pointerId, toStage(e.clientX, e.clientY)); try { el.setPointerCapture(e.pointerId); } catch (er) { /* なし */ } const c = get(); if (c.onStart) c.onStart(); if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch = Math.hypot(a.x - b.x, a.y - b.y); } });
+  const pts = new Map(); let pinch = 0, down = null;
+  el.addEventListener('pointerdown', e => { if (e.target !== el) return; const sp = toStage(e.clientX, e.clientY); pts.set(e.pointerId, sp); down = pts.size === 1 ? { x: sp.x, y: sp.y, t: performance.now(), id: e.pointerId, moved: false } : null; try { el.setPointerCapture(e.pointerId); } catch (er) { /* なし */ } const c = get(); if (c.onStart) c.onStart(); if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch = Math.hypot(a.x - b.x, a.y - b.y); } });
   el.addEventListener('pointermove', e => {
-    if (!pts.has(e.pointerId)) return; const p = toStage(e.clientX, e.clientY), o = pts.get(e.pointerId), c = get();
+    if (!pts.has(e.pointerId)) { const c = get(); if (c.onHover && e.pointerType === 'mouse') c.onHover(toStage(e.clientX, e.clientY)); return; }
+    const p = toStage(e.clientX, e.clientY), o = pts.get(e.pointerId), c = get();
+    if (down && down.id === e.pointerId && Math.hypot(p.x - down.x, p.y - down.y) > 7) down.moved = true;
     if (pts.size === 1) { c.yaw -= (p.x - o.x) * 0.008; c.pitch = clamp(c.pitch + (p.y - o.y) * 0.006, c.pMin, c.pMax); }
     pts.set(e.pointerId, p);
     if (pts.size === 2) { const [a, b] = [...pts.values()], d = Math.hypot(a.x - b.x, a.y - b.y); if (pinch) c.zoom = clamp(c.zoom * d / pinch, c.zMin, c.zMax); pinch = d; }
   });
-  const end = e => { pts.delete(e.pointerId); pinch = 0; const c = get(); if (!pts.size && c.onEnd) c.onEnd(); };
+  const end = e => {
+    const c = get();
+    if (e.type === 'pointerup' && down && down.id === e.pointerId && !down.moved && pts.size === 1 && performance.now() - down.t < 600 && c.onTap) c.onTap(toStage(e.clientX, e.clientY), e.pointerType === 'mouse');
+    pts.delete(e.pointerId); pinch = 0; if (!pts.size) { down = null; if (c.onEnd) c.onEnd(); }
+  };
   el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
   el.addEventListener('wheel', e => { e.preventDefault(); const c = get(); c.zoom = clamp(c.zoom * Math.exp(-e.deltaY * 0.0015), c.zMin, c.zMax); }, { passive: false });
 }
-const OFFICE_CTL = { get yaw() { return OFFICE.yaw; }, set yaw(v) { OFFICE.yaw = clamp(v, -1.2, 1.3); }, get pitch() { return OFFICE.pitch; }, set pitch(v) { OFFICE.pitch = v; }, get zoom() { return OFFICE.zoom; }, set zoom(v) { OFFICE.zoom = v; }, pMin: 0.3, pMax: 1.2, zMin: 0.7, zMax: 2.4 };
+const OFFICE_CTL = { get yaw() { return OFFICE.yaw; }, set yaw(v) { OFFICE.yaw = clamp(v, -1.2, 1.3); }, get pitch() { return OFFICE.pitch; }, set pitch(v) { OFFICE.pitch = v; }, get zoom() { return OFFICE.zoom; }, set zoom(v) { OFFICE.zoom = v; }, pMin: 0.3, pMax: 1.25, zMin: 0.7, zMax: 2.4, onTap(p, mouse) { if (FURNI.on) FURNI.tap(p, mouse); }, onHover(p) { if (FURNI.on) FURNI.hover(p); } };
 const STUDIO_CTL = { get yaw() { return STUDIO.yaw; }, set yaw(v) { STUDIO.yaw = v; }, get pitch() { return STUDIO.pitch; }, set pitch(v) { STUDIO.pitch = v; }, get zoom() { return STUDIO.zoom; }, set zoom(v) { STUDIO.zoom = v; }, pMin: 0.05, pMax: 1.35, zMin: 0.6, zMax: 3.2, onStart() { STUDIO.spin = false; STUDIO.drag = true; }, onEnd() { STUDIO.drag = null; } };
 
 // ---------- タイトル・新しい会社・つづき ----------
@@ -67,7 +73,7 @@ const GAMEFLOW = {
   },
 };
 function demoState() {
-  const s = newState('文房具カンパニー'); s.tier = 1; s.equip = { chair: 1, monitor: 1, plant: 2, coffee: 1, lab: 1, line: 2 };
+  const s = newState('文房具カンパニー'); s.tier = 1; s.equip = { chair: 1, monitor: 1, lab: 1, line: 2 };
   s.staff = [['res', '#2b2118'], ['qa', '#5a3a22'], ['des', '#1c1a18'], ['sal', '#7a5a3a'], ['res', '#3a2a20']].map(([role, hair], i) => ({ id: 900 + i, role, hair, lv: 2, sal: 0, name: '' }));
   s.products = [
     { id: 991, kind: 'pencil', spec: { grade: 'HB', core: 'c1', wood: 'w1', shape: 'hex', erase: 'yes' }, look: { ...DEF_LOOK.pencil } },
@@ -76,6 +82,8 @@ function demoState() {
     { id: 994, kind: 'fountain', spec: { nib: 'k14', width: 'F', fill: 'conv', body: 'resin', cap: 'screw' }, look: { ...DEF_LOOK.fountain, body: '#24438f', cap: '#24438f', pattern: 'marble', pat: '#b9dcf2' } },
     { id: 995, kind: 'mech', spec: { size: 's05', mech: 'k0', grip: 'rubber', body: 'plastic', tip: 't0', erase: 'e0' }, look: { ...DEF_LOOK.mech } },
   ].map(p => Object.assign(p, { active: true, name: '' }));
+  const Lo = OFFICE.layout(s);
+  for (const [type, rot, x, z] of [['whiteboard', 0, 0.5, -3.6], ['coffee', 0, 3.2, -3.7], ['sofa', 3, 4.8, -2.2], ['plant', 0, -0.6, -3.7], ['bigplant', 0, 4.9, 0.4], ['bookshelf', 0, -2.2, -3.6], ['aquarium', 0, -3.3, 0.6], ['lamp', 0, 2.4, 0.9]]) { const f = FURNI.findSpot(s, Lo, type, rot, { x, z }, s.furn); if (f) s.furn.push(f); }
   return s;
 }
 
@@ -90,19 +98,24 @@ function frame(now) {
   } else if (GAMEFLOW.state === 'title') OFFICE.yaw = 0.62 + Math.sin(now / 5000) * 0.35;
   const st = UI.studio;
   if (st && st.rebuild) { st.rbT = (st.rbT || 0) + dt; if (st.rbT > 0.06) { st.rbT = 0; st.rebuild = false; STUDIO.set(st.d); } }
-  STUDIO.update(dt); OFFICE.update(dt); UI.update(dt); AU.music(dt);
+  STUDIO.update(dt); OFFICE.update(dt, GAMEFLOW.state === 'play' ? S : null); EVENT.update(dt); UI.update(dt); AU.music(dt);
   render();
 }
 function render() {
   const W = VW(), H = VH();
-  if (UI.studio && STUDIO.obj) {
+  if (EVENT.active && EVENT.scene) {
+    renderer.setViewport(0, 0, W, H); EVENT.cam.aspect = W / H; EVENT.cam.fov = W < H ? 58 : 40; EVENT.cam.updateProjectionMatrix(); renderer.render(EVENT.scene, EVENT.cam);
+  } else if (UI.studio && STUDIO.obj) {
     const r = stageRect($('pv'));
     renderer.setScissorTest(true); renderer.setViewport(r.x, H - r.y - r.h, r.w, r.h); renderer.setScissor(r.x, H - r.y - r.h, r.w, r.h);
     STUDIO.cam.aspect = r.w / Math.max(1, r.h); STUDIO.cam.updateProjectionMatrix(); renderer.render(STUDIO.scene, STUDIO.cam);
     renderer.setScissorTest(false);
   } else {
     renderer.setViewport(0, 0, W, H);
-    OFFICE.cam.aspect = W / H; OFFICE.cam.fov = W < H ? 52 : 38; OFFICE.cam.updateProjectionMatrix(); renderer.render(OFFICE.scene, OFFICE.cam);
+    OFFICE.cam.aspect = W / H; OFFICE.cam.fov = W < H ? 52 : 38;
+    const fb = FURNI.on ? $('furnBar').offsetHeight : 0;   // 模様がえのときは、下のバーの上に部屋が見えるようにずらす
+    if (fb) OFFICE.cam.setViewOffset(W, H, 0, fb * 0.5, W, H); else if (OFFICE.cam.view && OFFICE.cam.view.enabled) OFFICE.cam.clearViewOffset();
+    OFFICE.cam.updateProjectionMatrix(); renderer.render(OFFICE.scene, OFFICE.cam);
   }
 }
 
@@ -117,6 +130,7 @@ async function boot() {
   $('loadmsg').textContent = '事務所を準備しています…'; await nextFrame();
   STUDIO.init(); OFFICE.init(); UI.init();
   dragControl($('c'), () => OFFICE_CTL); dragControl($('pv'), () => STUDIO_CTL);
+  $('furnBar').addEventListener('click', e => FURNI.onBar(e)); $('evOv').addEventListener('click', () => EVENT.skip());
   $('tCont').onclick = () => { AU.resume(); AU.click(); const s = loadSave(); if (s) GAMEFLOW.begin(s, false); };
   $('tNew').onclick = () => { AU.click(); GAMEFLOW.newGame(); };
   addEventListener('pagehide', save); document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
@@ -125,7 +139,7 @@ async function boot() {
 }
 window.__BG = { get S() { return S; }, set S(v) { S = v; }, step(days) { for (let i = 0; i < days && !S.over; i++) dayTick(); }, THREE, renderer, UI, OFFICE, STUDIO, GAMEFLOW, AU,
   startDev, launch, startResearch, hire, fire, polishRP, polishBonus, mechStats, mechBuild, MECH_PRESETS, DEF_BUILD, buyEquip, moveOffice, expand, buyout, rerollCands, devPlan, costOf, expected, perfP, recPrice, currentScore, designScore, kindDemand, productThumb, buildProduct, save, loadSave, newState,
-  KINDS, SPECS, LOOKS, DEF_LOOK, RESEARCH, GOALS, OFFICES, EQUIP };
+  KINDS, SPECS, LOOKS, DEF_LOOK, RESEARCH, GOALS, OFFICES, EQUIP, FURN, FURNI, EVENT, TRAITS, makeIssues, devFound, staffMul, workMul, resRate, qaRate, devSpeed, gainXp, makeCand };
 boot();
 </script>
 </body></html>

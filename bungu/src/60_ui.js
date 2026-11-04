@@ -50,7 +50,7 @@ const UI = {
       const dots = $('nav').querySelectorAll('i.dot');
       dots[0].classList.toggle('on', S.devs.some(v => v.ready)); dots[2].classList.toggle('on', !S.research.cur && RESEARCH.some(r => resState(r) === 'can' && S.rp >= r.rp));
       const g = GOALS[S.goal], gb = $('goal');
-      gb.classList.toggle('hidden', !g || !!this.tab || !!this.studio);
+      gb.classList.toggle('hidden', !g || !!this.tab || !!this.studio || FURNI.on);
       if (g) { const html = `<b>目標</b>${esc(g.text)}${g.hint ? `<small>${esc(g.hint)}</small>` : ''}<small>ごほうび：${g.reward.money ? yen(g.reward.money) + '・' : ''}${g.reward.rp} RP</small>`; if (gb._h !== html) { gb.innerHTML = html; gb._h = html; } }
     }
     // ニュースの帯
@@ -61,9 +61,10 @@ const UI = {
     this.refreshT -= dt;
     if (this.tab && (this.dirtyF || this.refreshT <= 0) && !this.editing()) { this.render(); this.dirtyF = false; this.refreshT = 0.6; }
     if (this.studio && this.studio.dirty) { this.studio.dirty = false; this.renderStudio(); }
-    if (this.queue.length && !this.modalOpen && !this.studio) { const id = this.queue.shift(); if (S.devs.find(v => v.id === id && v.ready)) this.launchModal(id); }
+    if (this.rv) this.stepReview(dt);
+    if (this.queue.length && !this.modalOpen && !this.studio && !EVENT.active && !FURNI.on) { const id = this.queue.shift(); if (S.devs.find(v => v.id === id && v.ready)) this.launchModal(id); }
   },
-  paused() { return !!this.studio || this.modalOpen || S.speed === 0; },
+  paused() { return !!this.studio || this.modalOpen || S.speed === 0 || FURNI.on || EVENT.active; },
   editing() { const a = document.activeElement; return a && (a.tagName === 'INPUT' || a.tagName === 'SELECT') && $('sheet').contains(a); },
   dirty() { this.dirtyF = true; },
   readyQueue(id) { if (!this.queue.includes(id)) this.queue.push(id); },
@@ -102,7 +103,9 @@ const UI = {
       if (v.ready) h += `<div class="row sb"><span class="pill green">完成！</span><button class="btn green" data-act="launchM" data-id="${v.id}" type="button">発売する</button></div>`;
       else {
         h += `<div class="muted">開発 ${Math.floor(prog * 100)}%　のこり ${Math.ceil(v.left)} 日</div><div class="bar"><i style="width:${prog * 100}%"></i></div>`;
-        h += `<div class="muted" style="margin-top:6px">不具合：見つかった ${found} 件のうち ${Math.floor(v.fixed)} 件直した（全部で約 ${v.bugs} 件）</div><div class="bar r"><i style="width:${(v.fixed / v.bugs) * 100}%"></i></div>`;
+        h += `<div class="muted" style="margin-top:6px">試作テスト：見つかった不具合 ${found} 件のうち ${Math.floor(v.fixed)} 件直した（全部で約 ${v.bugs} 件）</div><div class="bar r"><i style="width:${(v.fixed / v.bugs) * 100}%"></i></div>`;
+        const iss = v.issues || [], fx = Math.floor(v.fixed + 1e-6);
+        h += `<div class="iss">${iss.slice(0, found).map((x, i) => `<span class="is ${i < fx ? 'ok' : 'ng'}">${i < fx ? '✓' : '！'} ${esc(x.n)}<small>${esc(x.t)}</small></span>`).join('')}${found < v.bugs ? `<span class="is un">？ まだ見つかっていない不具合</span>` : ''}</div>`;
         h += `<div class="row" style="margin-top:8px;gap:6px"><button class="btn sub small" data-act="fixRP" data-id="${v.id}" type="button" ${S.rp < rest * 3 || rest <= 0 ? 'disabled' : ''}>RPで全部直す（${rest * 3} RP）</button><span class="muted">${openB ? '品質チェックの人が直しています' : ''}</span></div>`;
       }
       h += '</div>';
@@ -146,7 +149,9 @@ const UI = {
   pStaff(s) {
     const O = OFFICES[S.tier];
     let h = `<div class="muted" style="margin:2px 0 8px">机：${S.staff.length} / ${O.desks}　月給の合計：${yen(S.staff.reduce((a, m) => a + m.sal, 0))}</div>`;
-    const person = (m, btn) => `<div class="card"><div class="row sb"><h3 style="margin:0">${esc(m.name)}</h3><span class="pill ${m.role === 'res' ? 'blue' : m.role === 'qa' ? '' : m.role === 'des' ? 'gold' : 'green'}">${ROLES[m.role].name}</span></div><div class="row sb" style="margin-top:4px"><span class="stars">${'★'.repeat(m.lv)}${'☆'.repeat(5 - m.lv)}</span><span class="muted">月給 ${yen(m.sal)}</span></div><div class="muted">${ROLES[m.role].desc}${m.role === 'res' ? `（1日 +${ROLES.res.rate[m.lv - 1]} RP）` : m.role === 'qa' ? `（1日 ${ROLES.qa.rate[m.lv - 1]} 件）` : m.role === 'sal' ? `（売上 +${Math.round(ROLES.sal.rate[m.lv - 1] * 100)}%）` : `（デザイン +${ROLES.des.rate[m.lv - 1]}）`}</div><div style="margin-top:8px">${btn}</div></div>`;
+    const extra = m => { const tr = TRAITS[m.trait], fb = S.staff.includes(m) ? Math.round(FURNI.bonus(S, m) * 100) : 0, nx = m.lv < 5 ? LEVEL_XP[m.lv] : 0;
+      return `${tr ? `<div class="trait"><b>特技：${esc(tr.name)}</b>${esc(tr.desc)}</div>` : ''}${S.staff.includes(m) ? `<div class="row" style="gap:8px;margin-top:6px"><span class="muted" style="font-size:12px;white-space:nowrap">${m.lv < 5 ? '次の昇格' : '最高レベル'}</span><div class="bar xp" style="flex:1;margin:0"><i style="width:${nx ? Math.min(100, (m.xp || 0) / nx * 100) : 100}%"></i></div>${fb ? `<span class="pill green">家具 +${fb}%</span>` : ''}</div>` : ''}`; };
+    const person = (m, btn) => `<div class="card"><div class="row sb"><h3 style="margin:0">${esc(m.name)}</h3><span class="pill ${m.role === 'res' ? 'blue' : m.role === 'qa' ? '' : m.role === 'des' ? 'gold' : 'green'}">${ROLES[m.role].name}</span></div><div class="row sb" style="margin-top:4px"><span class="stars">${'★'.repeat(m.lv)}${'☆'.repeat(5 - m.lv)}</span><span class="muted">月給 ${yen(m.sal)}</span></div><div class="muted">${ROLES[m.role].desc}${m.role === 'res' ? `（1日 +${ROLES.res.rate[m.lv - 1]} RP）` : m.role === 'qa' ? `（1日 ${ROLES.qa.rate[m.lv - 1]} 件）` : m.role === 'sal' ? `（売上 +${Math.round(ROLES.sal.rate[m.lv - 1] * 100)}%）` : `（デザイン +${ROLES.des.rate[m.lv - 1]}）`}</div>${extra(m)}<div style="margin-top:8px">${btn}</div></div>`;
     if (s === 'list') {
       if (!S.staff.length) h += '<div class="list-empty">まだだれもいません。「採用」から仲間をふやそう</div>';
       for (const m of S.staff) h += person(m, `<button class="btn sub small" data-act="fire" data-id="${m.id}" type="button">やめてもらう</button>`);
@@ -201,6 +206,8 @@ const UI = {
     if (next) h += `<div class="card"><div class="row sb"><h3 style="margin:0">次：${next.name}</h3><span class="pill">${yen(next.cost)}</span></div><div class="muted">机 ${next.desks}・同時に開発 ${next.slots}・家賃 ${yen(next.rent)}／月</div><div class="muted">条件：発売 ${S.stats.launched}/${n.launched}・売上の合計 ${yen(S.stats.sales)} / ${yen(n.sales)}</div><div style="margin-top:8px"><button class="btn" data-act="move" type="button" ${n.ok ? '' : 'disabled'}>引っ越す</button></div></div>`;
     const cap = LINE_CAP[S.equip.line];
     h += `<div class="card"><div class="row sb"><h3 style="margin:0">生産</h3><span class="muted">1週間に ${num(cap)}（えんぴつなら${num(cap)}本）</span></div><div class="muted">いまの注文：${Math.round(S.capUse * 100)}%</div><div class="bar ${S.capUse > 1 ? 'r' : 'g'}"><i style="width:${Math.min(100, S.capUse * 100)}%"></i></div><div class="muted">シャーペンは3本分、万年筆は20本分の手間がかかる</div></div>`;
+    const fb = S.staff.map(m => FURNI.bonus(S, m)), avg = fb.length ? fb.reduce((a, b) => a + b, 0) / fb.length : 0;
+    h += `<div class="grp">家具</div><div class="card"><div class="row sb"><h3 style="margin:0">家具の配置</h3><span class="pill">${S.furn.length} / ${FURN_MAX[S.tier]}</span></div><div class="muted">観葉植物・照明・ホワイトボードなどを床に置くと、近くの机の人の仕事が速くなる。コーヒーマシンやソファは部屋のみんなに効いて、休けいの場所にもなる。</div><div class="muted" style="margin-top:4px">いまの効果：社員の平均 +${Math.round(avg * 100)}%（いちばん +${Math.round(Math.max(0, ...fb) * 100)}%）・部屋全体 +${Math.round(FURNI.globalBonus(S) * 100)}%</div><div style="margin-top:8px"><button class="btn" data-act="furnMode" type="button">家具を置く・模様がえ</button></div></div>`;
     h += '<div class="grp">設備</div>';
     for (const k of Object.keys(EQUIP)) {
       const E = EQUIP[k], lv = S.equip[k], mx = eqMax(k), pr = E.price[lv], top = (k === 'line' ? E.price.length : (E.max || 3));
@@ -234,6 +241,7 @@ const UI = {
     else if (a === 'expand') { if (expand(b.dataset.id)) { AU.fanfare(); } }
     else if (a === 'buyout') { if (buyout(b.dataset.id)) { AU.fanfare(); } }
     else if (a === 'move') { if (moveOffice()) { AU.fanfare(); this.toast(`${OFFICES[S.tier].name}へ引っ越した！`, 'gold'); OFFICE.zoom = 1; } }
+    else if (a === 'furnMode') { this.open(null); FURNI.enter(); return; }
     else if (a === 'equip') { if (buyEquip(b.dataset.k)) { AU.coin(); this.toast(`${EQUIP[b.dataset.k].name}を Lv${S.equip[b.dataset.k]} にした`, 'good'); } }
     else if (a === 'music') { SET.music = !SET.music; saveSet(); AU.setVol(); }
     else if (a === 'quality') { SET.quality = b.dataset.v; saveSet(); applyQuality(); OFFICE.key = ''; }
@@ -257,10 +265,11 @@ const UI = {
     else if (a === 'startDev') { const why = startDev(this.studio.d); if (why) { this.toast(why, 'bad'); AU.bad(); } else { AU.coin(); this.toast(`「${this.studio.d.name}」の開発を始めた！`, 'good'); this.closeStudio(); this.open('dev'); } return; }
     // モーダル
     else if (a === 'ad') { this.modalState.ad = b.dataset.v; this.renderLaunch(); return; }
-    else if (a === 'doLaunch') { const st = this.modalState, p = launch(st.id, st.price, st.ad); if (!p) { this.toast('お金が足りない', 'bad'); return; } AU.fanfare(); this.reviewModal(p); checkGoals(); return; }
+    else if (a === 'doLaunch') { const st = this.modalState, p = launch(st.id, st.price, st.ad); if (!p) { this.toast('お金が足りない', 'bad'); return; } this.closeModal(); this.open(null); EVENT.start(p, st.ad, () => this.reviewModal(p)); return; }
     else if (a === 'later') { this.closeModal(); return; }
     else if (a === 'setPrice') { const p = S.products.find(x => x.id === this.modalState.id); if (p) { p.price = Math.max(1, Math.round(this.modalState.price)); this.toast(`「${p.name}」を ${yen(p.price)} にした`); } this.closeModal(); return; }
-    else if (a === 'closeM') { this.closeModal(); return; }
+    else if (a === 'closeM') { const rv = this.modalState && this.modalState.review; this.closeModal(); if (rv) { OFFICE.event('launch'); checkGoals(); } return; }
+    else if (a === 'rvSkip') { if (this.rv) this.rv.t = 99; return; }
     else if (a === 'yes') { const f = this.modalState && this.modalState.yes; this.closeModal(); if (f) f(); this.dirty(); return; }
     else if (a === 'restart') { try { localStorage.removeItem('bungu-save'); } catch (er) { /* なし */ } location.reload(); return; }
     else if (a === 'startNew') { const v = ($('newCo').value || '').trim().slice(0, 16) || 'ぶんぐ工房'; this.closeModal(); GAMEFLOW.begin(newState(v), true); return; }
@@ -385,7 +394,7 @@ const UI = {
   priceEval(d, price) { const q = perfP(d) / expected(d.kind), fair = fairPrice(d, q), r = fair / price; return r > 1.25 ? '<span class="pill green">とても安い</span>' : r > 1.02 ? '<span class="pill green">お買い得</span>' : r > 0.85 ? '<span class="pill">ふつう</span>' : r > 0.65 ? '<span class="pill gold">少し高い</span>' : '<span class="pill red">高すぎる</span>'; },
   // ---------- モーダル ----------
   showModal(html) { $('modalBox').innerHTML = html; $('modal').classList.add('on'); this.modalOpen = true; $('modalBox').scrollTop = 0; },
-  closeModal() { $('modal').classList.remove('on'); this.modalOpen = false; this.modalState = null; this.dirty(); },
+  closeModal() { $('modal').classList.remove('on'); this.modalOpen = false; this.modalState = null; this.rv = null; this.dirty(); },
   launchModal(id) {
     const v = S.devs.find(x => x.id === id); if (!v || !v.ready) return;
     this.modalState = { id, price: v.price || recPrice(v), ad: 'none', d: v };
@@ -399,13 +408,28 @@ const UI = {
       <div class="grp">広告（最初の数週間よく売れる）</div><div class="chips">${ADS.map(a => `<button type="button" class="chip ${st.ad === a.id ? 'on' : ''}" data-act="ad" data-v="${a.id}" ${S.money < a.cost ? 'disabled style="opacity:.4"' : ''}>${a.name}<small>${a.cost ? yen(a.cost) + '・' : ''}${a.boost ? '売れゆき +' + Math.round(a.boost * 100) + '%' : 'お金はかからない'}</small></button>`).join('')}</div>
       <div class="row" style="margin-top:14px;gap:8px"><button class="btn sub" data-act="later" type="button">あとで</button><button class="btn green" style="flex:1" data-act="doLaunch" type="button" ${S.money < ad.cost ? 'disabled' : ''}>発売する${ad.cost ? `（広告 ${yen(ad.cost)}）` : ''}</button></div>`);
   },
+  // レビューの発表：点数が数えあがり、星・3つの点・コメントが順番に出る
   reviewModal(p) {
     const col = p.review >= 8 ? 'var(--green)' : p.review >= 6 ? 'var(--blue)' : p.review >= 4 ? 'var(--gold)' : 'var(--red)';
-    this.showModal(`<div class="review"><div class="muted">発売しました！ みんなの評価は…</div><img alt="" src="${productThumb(p)}" style="width:110px;height:110px;border-radius:14px;margin-top:8px"><h2>${esc(p.name)}</h2>
-      <div class="rvs" style="color:${col}">${p.review.toFixed(1)}</div><div class="stars" style="font-size:22px">${stars10(p.review)}</div>
-      <div class="grid2" style="margin:10px 0"><div class="card" style="margin:0"><div class="muted">性能</div><div class="score">${p.scores.perf}</div></div><div class="card" style="margin:0"><div class="muted">デザイン</div><div class="score">${p.scores.des}</div></div><div class="card" style="margin:0;grid-column:1/-1"><div class="muted">値段の満足</div><div class="score">${p.scores.val}</div></div></div>
-      ${p.comments.map(([w, t]) => `<div class="cm"><b>${esc(w)}</b>${esc(t)}</div>`).join('')}
-      <button class="btn big" style="margin-top:10px" data-act="closeM" type="button">OK</button></div>`);
+    const bar = (k, n) => `<div class="rvb"><span>${n}</span><div class="bar"><i id="rvb_${k}" style="width:0%"></i></div><b id="rvn_${k}">0.0</b></div>`;
+    this.showModal(`<div class="review" data-act="rvSkip"><div class="muted">発売しました！ みんなの評価は…</div><img alt="" src="${productThumb(p)}" style="width:110px;height:110px;border-radius:14px;margin-top:8px"><h2>${esc(p.name)}</h2>
+      <div class="rvs" id="rvScore" style="color:${col}">0.0</div><div class="stars rvstars" id="rvStars" style="font-size:22px">☆☆☆☆☆</div>
+      <div class="rvbars">${bar('perf', '性能')}${bar('des', 'デザイン')}${bar('val', '値段の満足')}</div>
+      ${p.comments.map(([w, t], i) => `<div class="cm rvc" id="rvc${i}"><b>${esc(w)}</b>${esc(t)}</div>`).join('')}
+      <div class="muted rvhint" id="rvHint">タップでとばす</div>
+      <button class="btn big rvok" id="rvOk" style="margin-top:10px" data-act="closeM" type="button">OK</button></div>`);
+    this.modalState = { review: true };
+    this.rv = { p, t: 0, tick: 0, end: false, shown: -1 };
+  },
+  stepReview(dt) {
+    const R = this.rv, p = R.p, T = 1.5; if (!$('rvScore')) { this.rv = null; return; }
+    R.t += dt; const k = clamp(R.t / T, 0, 1), e = 1 - Math.pow(1 - k, 3), v = p.review * e;
+    $('rvScore').textContent = v.toFixed(1); $('rvStars').textContent = stars10(v);
+    if (k < 1) { R.tick -= dt; if (R.tick <= 0) { R.tick = 0.07; if (AU.ok()) AU.tone(600 + v * 90, AU.ac.currentTime, 0.04, 'square', 0.03); } }
+    ['perf', 'des', 'val'].forEach((key, i) => { const kk = clamp((R.t - T - i * 0.25) / 0.5, 0, 1), x = p.scores[key] * (1 - Math.pow(1 - kk, 2)); $('rvb_' + key).style.width = x * 10 + '%'; $('rvn_' + key).textContent = x.toFixed(1); });
+    p.comments.forEach((c, i) => { if (R.t > T + 0.9 + i * 0.55) { const el = $('rvc' + i); if (el && !el.classList.contains('show')) { el.classList.add('show'); if (AU.ok()) AU.tone(880, AU.ac.currentTime, 0.08, 'triangle', 0.05); } } });
+    if (k >= 1 && !R.end) { R.end = true; $('rvScore').classList.add('pop'); if (p.review >= 8) AU.fanfare(); else if (p.review >= 6) AU.chime(); else if (p.review < 4) AU.bad(); else AU.coin(); }
+    if (R.t > T + 1.0 + p.comments.length * 0.55) { $('rvHint').classList.add('hidden'); $('rvOk').classList.add('show'); this.rv = null; }
   },
   priceModal(id) {
     const p = S.products.find(x => x.id === id); if (!p) return; const c = costOf(p), rp = recPrice(p), mx = Math.max(rp * 4, c * 6);
