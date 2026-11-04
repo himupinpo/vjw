@@ -7,7 +7,7 @@ let S = null;          // いまのゲームの状態（セーブされる）
 
 function newState(company) {
   return {
-    v: 1, company: company || 'ぶんぐ工房', day: 0, money: 3000000, rp: 12, tier: 0,
+    v: 1, company: company || 'ぶんぐ工房', day: 0, money: 3000000, debt: 0, rp: 12, tier: 0,
     equip: { chair: 0, monitor: 0, lab: 0, line: 1 }, furn: [],
     staff: [], cands: [], nextId: 1, research: { done: [], cur: null }, devs: [], products: [], markets: ['jp'],
     rivals: RIVALS.map(r => ({ id: r.id, owned: false, P: {}, value: r.value })),
@@ -242,6 +242,25 @@ function expand(id) { const m = MARKETS.find(x => x.id === id); if (!m || !marke
 const buyoutPrice = r => Math.round(r.value * (1 + 0.05 * (yearOf(S.day) - 2000)) / 1e6) * 1e6;
 function buyout(id) { const r = S.rivals.find(x => x.id === id); if (!r || r.owned) return false; const pr = buyoutPrice(r); if (S.money < pr) return false; S.money -= pr; r.owned = true; r.paid = pr; S.brand = clamp(S.brand + 0.1, 0.4, 1.8); news(`${RIVALS.find(x => x.id === id).name}を買収した！`); return true; }
 
+// ---------- 借金：会社が育つ（事務所・発売・売上・地域）ほど多く借りられる。上限をこえたら倒産 ----------
+const LOAN = { base: [10e6, 40e6, 400e6, 4e9], per: [1e6, 3e6, 15e6, 60e6], rate: [0.06, 0.05, 0.04, 0.03] };
+function loanParts(s = S) {
+  const t = s.tier;
+  return [[`事務所（${OFFICES[t].name}）`, LOAN.base[t]], [`発売した製品 ${s.stats.launched}こ`, s.stats.launched * LOAN.per[t]], ['売上の合計の 8%', s.stats.sales * 0.08], [`進出した地域 ${s.markets.length - 1}つ`, (s.markets.length - 1) * LOAN.base[t] * 0.5]];
+}
+const debtLimit = (s = S) => Math.floor(loanParts(s).reduce((a, p) => a + p[1], 0) / 1e6) * 1e6 + (s.limitExtra || 0);
+const loanRoom = () => Math.max(0, debtLimit() - S.debt);
+function borrow(n) { n = Math.min(Math.round(n), loanRoom()); if (n <= 0) return 0; S.debt += n; S.money += n; return n; }
+function repay(n) { n = Math.min(Math.round(n), S.debt, Math.max(0, Math.floor(S.money))); if (n <= 0) return 0; S.debt -= n; S.money -= n; return n; }
+// お金がマイナスになったら自動で借りる。借金が上限をこえたら倒産
+function checkDebt() {
+  if (S.money < 0) {
+    const n = Math.ceil(-S.money); S.debt += n; S.money = 0;
+    if (S.day - (S.autoLoanDay ?? -99) >= 7) { S.autoLoanDay = S.day; UI.toast(`お金が足りないので ${yen(n)} を自動で借りた（借金 ${yen(S.debt)}）`, 'bad'); }
+  }
+  if (S.debt > debtLimit() && !S.over) { S.over = true; UI.gameOver('debt'); }
+}
+
 // ---------- ニュース・お知らせ ----------
 function news(t, kind) { S.news.unshift({ d: S.day, t }); S.news.length = Math.min(S.news.length, 30); if (typeof UI !== 'undefined') UI.newsTick(t, kind); }
 
@@ -280,6 +299,7 @@ function dayTick() {
   // 季節のお知らせ
   if (date.getMonth() === 1 && date.getDate() === 15) news('もうすぐ新学期。学生向けの文房具がよく売れる季節です（3〜4月）');
   if (date.getMonth() === 10 && date.getDate() === 20) news('年末の贈り物シーズン。万年筆やいいペンがよく売れます（12月）');
+  checkDebt(); if (S.over) return;
   checkGoals();
 }
 // 名品：評価が高くて販売を終えた製品は、1年たつと中古で高くなる（高級なものほど）
@@ -295,14 +315,15 @@ function weekTick() {
   S.stats.top1 = S.stats.top1 || KIND_IDS.some(k => S.share[k] && S.share[k].me > 0.05 && S.share[k].rivals.every(r => r < S.share[k].me));
   S.hist.push(Math.round(S.money)); if (S.hist.length > 104) S.hist.shift();
   // 会社の価値
-  S.stats.value = Math.max(0, S.money) + Math.max(0, S.stats.lastMonthProfit) * 36 + S.brand * 8e7 * S.markets.length + S.rivals.filter(r => r.owned).reduce((a, r) => a + (r.paid || 0) * 0.8, 0);
+  S.stats.value = Math.max(0, S.money - S.debt) + Math.max(0, S.stats.lastMonthProfit) * 36 + S.brand * 8e7 * S.markets.length + S.rivals.filter(r => r.owned).reduce((a, r) => a + (r.paid || 0) * 0.8, 0);
   if (S.day % 28 === 0) save();
 }
 function monthTick(date) {
-  const sal = S.staff.reduce((a, m) => a + m.sal, 0), rent = OFFICES[S.tier].rent, div = S.rivals.filter(r => r.owned).reduce((a, r) => a + (r.paid || 0) * 0.006, 0);
-  S.money -= sal + rent; S.money += div;
-  S.stats.lastMonthProfit = S.stats.monthProfit - sal - rent + div; S.stats.lastMonthRev = S.stats.monthRev; S.stats.monthProfit = 0; S.stats.monthRev = 0;
-  if (sal + rent > 0) UI.toast(`給料と家賃：${yen(sal + rent)}`, '');
+  const sal = S.staff.reduce((a, m) => a + m.sal, 0), rent = OFFICES[S.tier].rent, div = S.rivals.filter(r => r.owned).reduce((a, r) => a + (r.paid || 0) * 0.006, 0), intr = Math.round(S.debt * LOAN.rate[S.tier] / 12);
+  S.money -= sal + rent + intr; S.money += div; S.stats.lastInterest = intr;
+  S.stats.lastMonthProfit = S.stats.monthProfit - sal - rent - intr + div; S.stats.lastMonthRev = S.stats.monthRev; S.stats.monthProfit = 0; S.stats.monthRev = 0;
+  if (sal + rent + intr > 0) UI.toast(`給料と家賃：${yen(sal + rent)}${intr ? `・借金の利息：${yen(intr)}` : ''}`, '');
+  if (S.debt > debtLimit() * 0.8) { UI.toast(`借金が上限の${Math.round(S.debt / debtLimit() * 100)}%！ 上限（${yen(debtLimit())}）をこえると倒産します`, 'bad'); AU.bad(); }
   if (div > 0) UI.toast(`買収した会社からの利益：${yen(div, true)}`, 'good');
   // ライバルの新製品
   for (const r of S.rivals) {
@@ -318,8 +339,6 @@ function monthTick(date) {
     const k = pick(KIND_IDS.filter(kindOpen)), g = pick(SPECS[k].filter(g => g.opts.some(o => o.cost > 3))), o = pick(g.opts.filter(o => o.cost > 3 && resDone(o.req)));
     if (o) { S.drops.push({ kind: k, key: g.key, opt: o.id, mult: 0.8, until: S.day + 365 }); news(`${KINDS[k].short}の「${o.name}」の部品が値下がり（原価 −20%・1年間）`); }
   }
-  if (S.money < 0) { UI.toast('お金がマイナスです！ 売れる製品を作るか、人や設備を見直そう', 'bad'); AU.bad(); }
-  if (S.money < -20000000) { S.over = true; UI.gameOver(); }
   void date;
 }
 function checkGoals() {
@@ -339,6 +358,7 @@ function loadSave() {
     for (const m of s.staff.concat(s.cands)) { if (m.trait === undefined) m.trait = pickTrait(m.role); if (m.xp === undefined) m.xp = 0; }
     for (const v of s.devs) if (!v.issues) v.issues = makeIssues(v.kind, v.bugs);
     FURNI.migrate(s);
+    if (s.money < 0) { s.debt = (s.debt || 0) - s.money; s.money = 0; const lim = debtLimit(s); if (s.debt > lim) s.limitExtra = Math.ceil((s.debt - lim) / 1e6 + 5) * 1e6; }   // 前の版のマイナスのお金は借金にする
     return s;
   } catch (e) { return null; }
 }

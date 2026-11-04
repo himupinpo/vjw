@@ -29,6 +29,7 @@ const UI = {
     nav.onclick = e => { const b = e.target.closest('button'); if (!b) return; AU.resume(); AU.click(); this.open(this.tab === b.dataset.tab ? null : b.dataset.tab); };
     $('speed').onclick = e => { const b = e.target.closest('button'); if (!b || !S) return; AU.resume(); AU.click(); S.speed = +b.dataset.s; this.topT = 0; };
     $('menuB').onclick = () => { AU.resume(); AU.click(); this.open(this.tab === 'menu' ? null : 'menu'); };
+    $('debtS').onclick = () => { if (!S || FURNI.on) return; AU.resume(); AU.click(); this.sub.co = 'loan'; this.open('co'); };
     $('shClose').onclick = () => this.open(null);
     $('stClose').onclick = () => this.closeStudio();
     $('goal').onclick = () => { const g = GOALS[S.goal]; if (!g) return; this.open({ g1: 'dev', g2: 'staff', g3: 'res', g4: 'dev', g6: 'office', g9: 'co', g10: 'office', g12: 'co', g13: 'co', g14: 'office' }[g.id] || 'co'); };
@@ -46,6 +47,7 @@ const UI = {
       $('coName').textContent = S.company; $('date').textContent = dateStr(S.day);
       const m = $('money'); m.textContent = yen(S.money); m.classList.toggle('neg', S.money < 0);
       $('rp').textContent = Math.floor(S.rp) + ' RP';
+      const ds = $('debtS'); ds.classList.toggle('hidden', !(S.debt > 0)); if (S.debt > 0) { $('debt').textContent = '借金 ' + yen(S.debt); ds.classList.toggle('warn', S.debt > debtLimit() * 0.8); }
       for (const b of $('speed').children) b.classList.toggle('on', +b.dataset.s === S.speed && !this.paused());
       const dots = $('nav').querySelectorAll('i.dot');
       dots[0].classList.toggle('on', S.devs.some(v => v.ready)); dots[2].classList.toggle('on', !S.research.cur && RESEARCH.some(r => resState(r) === 'can' && S.rp >= r.rp));
@@ -85,7 +87,7 @@ const UI = {
     else if (t === 'prod') { const s = this.sub.prod || 'on'; tabs = this.tabsHtml('prod', { on: '販売中', off: '販売終了' }, s); html = this.pProd(s); }
     else if (t === 'res') { const s = this.sub.res || 'gen'; tabs = this.tabsHtml('res', RES_CATS, s); html = this.pRes(s); }
     else if (t === 'staff') { const s = this.sub.staff || 'list'; tabs = this.tabsHtml('staff', { list: '社員', hire: '採用' }, s); html = this.pStaff(s); }
-    else if (t === 'co') { const s = this.sub.co || 'sum'; tabs = this.tabsHtml('co', { sum: 'まとめ', share: 'シェア', mkt: '売る地域', rival: 'ライバル', goal: '目標' }, s); html = this.pCo(s); }
+    else if (t === 'co') { const s = this.sub.co || 'sum'; tabs = this.tabsHtml('co', { sum: 'まとめ', loan: '借金', share: 'シェア', mkt: '売る地域', rival: 'ライバル', goal: '目標' }, s); html = this.pCo(s); }
     else if (t === 'office') html = this.pOffice();
     else if (t === 'menu') html = this.pMenu();
     $('shTabs').innerHTML = tabs; $('shTabs').classList.toggle('hidden', !tabs);
@@ -167,10 +169,20 @@ const UI = {
     let h = '';
     if (s === 'sum') {
       h += `<div class="card"><div class="grp" style="margin-top:0">会社の名前</div><div class="row"><input class="txt" id="coIn" maxlength="16" value="${esc(S.company)}"><button class="btn small" data-act="rename" type="button">変える</button></div></div>`;
-      h += `<div class="card"><div class="kv"><span>会社の価値</span><b>${yen(S.stats.value)}</b><span>先月の利益</span><b style="color:${S.stats.lastMonthProfit < 0 ? 'var(--red)' : 'var(--green)'}">${yen(S.stats.lastMonthProfit, true)}</b><span>先月の売上</span><b>${yen(S.stats.lastMonthRev)}</b><span>売上の合計</span><b>${yen(S.stats.sales)}</b><span>評判</span><b class="stars">${'★'.repeat(Math.round(clamp(S.brand, 0.4, 2.4) / 2.4 * 5))}${'☆'.repeat(5 - Math.round(clamp(S.brand, 0.4, 2.4) / 2.4 * 5))}</b><span>発売した数</span><b>${S.stats.launched}</b><span>いまの流行</span><b>${TRENDS[S.trend.id]}</b></div></div>`;
+      h += `<div class="card"><div class="kv"><span>会社の価値</span><b>${yen(S.stats.value)}</b><span>先月の利益</span><b style="color:${S.stats.lastMonthProfit < 0 ? 'var(--red)' : 'var(--green)'}">${yen(S.stats.lastMonthProfit, true)}</b><span>先月の売上</span><b>${yen(S.stats.lastMonthRev)}</b><span>借金</span><b style="color:${S.debt > 0 ? 'var(--red)' : 'inherit'}">${yen(S.debt)}（上限 ${yen(debtLimit())}）</b><span>売上の合計</span><b>${yen(S.stats.sales)}</b><span>評判</span><b class="stars">${'★'.repeat(Math.round(clamp(S.brand, 0.4, 2.4) / 2.4 * 5))}${'☆'.repeat(5 - Math.round(clamp(S.brand, 0.4, 2.4) / 2.4 * 5))}</b><span>発売した数</span><b>${S.stats.launched}</b><span>いまの流行</span><b>${TRENDS[S.trend.id]}</b></div></div>`;
       h += `<div class="card"><div class="grp" style="margin-top:0">お金の動き（週ごと）</div><canvas class="chart" id="chart" width="600" height="220"></canvas></div>`;
       h += `<div class="card"><div class="grp" style="margin-top:0">最近のニュース</div>${S.news.slice(0, 8).map(n => `<div class="muted">${dateStr(n.d)}　${esc(n.t)}</div>`).join('') || '<div class="muted">まだありません</div>'}</div>`;
       setTimeout(() => this.drawChart(), 0);
+    } else if (s === 'loan') {
+      const lim = debtLimit(), room = loanRoom(), r = LOAN.rate[S.tier], k = lim ? S.debt / lim : 0, AMT = [1e6, 5e6, 1e7, 5e7, 1e8, 5e8, 1e9, 5e9, 1e10, 5e10, 1e11];
+      const chips = (act, max, all) => { const a = AMT.filter(v => v <= max).slice(-5); return a.map(v => `<button class="btn small ${act === 'repay' ? 'sub' : ''}" data-act="${act}" data-v="${v}" type="button">${yen(v)}</button>`).join('') + (max >= 1 ? `<button class="btn small ${act === 'repay' ? 'green' : 'gold'}" data-act="${act}" data-v="${Math.floor(max)}" type="button">${all}（${yen(max)}）</button>` : ''); };
+      h += `<div class="card"><div class="kv"><span>借金</span><b style="color:${S.debt > 0 ? 'var(--red)' : 'inherit'};font-size:18px">${yen(S.debt)}</b><span>借りられる上限</span><b>${yen(lim)}</b><span>あと借りられる額</span><b>${yen(room)}</b><span>金利</span><b>年 ${(r * 100).toFixed(0)}%（毎月 約${yen(S.debt * r / 12)}）</b></div>
+        <div class="bar ${k > 0.8 ? 'r' : k > 0.5 ? 'o' : 'g'}" style="margin-top:10px;height:12px"><i style="width:${Math.min(100, k * 100)}%"></i></div>
+        <div class="muted" style="margin-top:6px;line-height:1.6">借りたお金で開発・広告・設備・引っ越しができます。利息は毎月はらいます。お金が足りなくなると自動で借ります。<b style="color:var(--red)">借金が上限をこえると倒産</b>します。</div></div>`;
+      h += `<div class="card"><h3>借りる</h3><div class="row" style="gap:6px;flex-wrap:wrap">${room >= 1e6 ? chips('borrow', room, '上限まで') : '<span class="muted">いまはこれ以上借りられません</span>'}</div></div>`;
+      const canPay = Math.min(S.debt, Math.max(0, Math.floor(S.money)));
+      h += `<div class="card"><h3>返す</h3><div class="row" style="gap:6px;flex-wrap:wrap">${S.debt <= 0 ? '<span class="muted">借金はありません</span>' : canPay >= 1 ? chips('repay', canPay, canPay >= S.debt ? '全部返す' : '返せるだけ') : '<span class="muted">返すお金がありません</span>'}</div></div>`;
+      h += `<div class="card"><h3>上限の内訳</h3><div class="kv">${loanParts().map(([n, v]) => `<span>${esc(n)}</span><b>${yen(v)}</b>`).join('')}${S.limitExtra ? `<span>前の版からの引きつぎ</span><b>${yen(S.limitExtra)}</b>` : ''}</div><div class="muted" style="margin-top:6px">事務所を広げる・製品を発売する・売上をのばす・海外に進出すると、上限が上がります。大きな事務所ほど金利も下がります。</div></div>`;
     } else if (s === 'share') {
       for (const k of KIND_IDS) {
         const sh = S.share[k]; if (!sh) continue;
@@ -218,7 +230,7 @@ const UI = {
   pMenu() {
     return `<div class="card"><div class="row sb"><b>BGM</b><button class="btn small ${SET.music ? '' : 'sub'}" data-act="music" type="button">${SET.music ? 'オン' : 'オフ'}</button></div></div>
       <div class="card"><b>画質</b><div class="chips" style="margin-top:8px">${[['high', '高画質'], ['std', '標準'], ['low', '軽量']].map(([k, n]) => `<button class="chip ${SET.quality === k ? 'on' : ''}" data-act="quality" data-v="${k}" type="button">${n}</button>`).join('')}</div></div>
-      <div class="card"><b>遊び方</b><div class="muted" style="margin-top:6px;line-height:1.7">① 「開発」で文房具を選び、性能（芯・インク・機構など）と見た目（色・模様・ロゴ）を決めて開発する。<br>② 開発が終わったら値段と広告を決めて発売。レビューの点と値段で売れゆきが決まる。<br>③ 「研究」で新しい技術を開くと、もっといい製品が作れる。年がたつとお客さんの期待も上がる。<br>④ 「スタッフ」で研究員・品質チェック・デザイナー・営業をやとう。<br>⑤ 「事務所」で設備を買い、引っ越して会社を大きくしよう。季節（新学期・年末）や流行の色もねらおう。<br>上の ▶ で時間の速さ、Ⅱ で一時停止。自動でセーブされます。</div></div>
+      <div class="card"><b>遊び方</b><div class="muted" style="margin-top:6px;line-height:1.7">① 「開発」で文房具を選び、性能（芯・インク・機構など）と見た目（色・模様・ロゴ）を決めて開発する。<br>② 開発が終わったら値段と広告を決めて発売。レビューの点と値段で売れゆきが決まる。<br>③ 「研究」で新しい技術を開くと、もっといい製品が作れる。年がたつとお客さんの期待も上がる。<br>④ 「スタッフ」で研究員・品質チェック・デザイナー・営業をやとう。<br>⑤ 「事務所」で設備を買い、引っ越して会社を大きくしよう。季節（新学期・年末）や流行の色もねらおう。<br>⑥ お金が足りないときは「会社」の「借金」で借りられます（開発や広告も借りて始められる）。上限は会社が育つと上がり、こえると倒産です。<br>上の ▶ で時間の速さ、Ⅱ で一時停止。自動でセーブされます。</div></div>
       <div class="card"><button class="btn red small" data-act="reset" type="button">最初からやり直す</button></div>`;
   },
   // ---------- クリック ----------
@@ -241,6 +253,9 @@ const UI = {
     else if (a === 'expand') { if (expand(b.dataset.id)) { AU.fanfare(); } }
     else if (a === 'buyout') { if (buyout(b.dataset.id)) { AU.fanfare(); } }
     else if (a === 'move') { if (moveOffice()) { AU.fanfare(); this.toast(`${OFFICES[S.tier].name}へ引っ越した！`, 'gold'); OFFICE.zoom = 1; } }
+    else if (a === 'borrow') { const n = borrow(+b.dataset.v); if (n) { AU.coin(); this.toast(`${yen(n)}を借りた（借金 ${yen(S.debt)}）`, 'gold'); } }
+    else if (a === 'repay') { const n = repay(+b.dataset.v); if (n) { AU.coin(); this.toast(S.debt > 0 ? `${yen(n)}を返した（のこり ${yen(S.debt)}）` : `借金を全部返した！`, 'good'); } }
+    else if (a === 'borrowDev') { const d = this.studio.d, short = devPlan(d).devCost - S.money; if (short > 0 && borrow(short) < short) { this.toast('借りられる額が足りない', 'bad'); return; } this.toast(`${yen(Math.max(0, short))}を借りた`, 'gold'); const why = startDev(d); if (why) { this.toast(why, 'bad'); AU.bad(); } else { AU.coin(); this.toast(`「${d.name}」の開発を始めた！`, 'good'); this.closeStudio(); this.open('dev'); } return; }
     else if (a === 'furnMode') { this.open(null); FURNI.enter(); return; }
     else if (a === 'equip') { if (buyEquip(b.dataset.k)) { AU.coin(); this.toast(`${EQUIP[b.dataset.k].name}を Lv${S.equip[b.dataset.k]} にした`, 'good'); } }
     else if (a === 'music') { SET.music = !SET.music; saveSet(); AU.setVol(); }
@@ -265,7 +280,7 @@ const UI = {
     else if (a === 'startDev') { const why = startDev(this.studio.d); if (why) { this.toast(why, 'bad'); AU.bad(); } else { AU.coin(); this.toast(`「${this.studio.d.name}」の開発を始めた！`, 'good'); this.closeStudio(); this.open('dev'); } return; }
     // モーダル
     else if (a === 'ad') { this.modalState.ad = b.dataset.v; this.renderLaunch(); return; }
-    else if (a === 'doLaunch') { const st = this.modalState, p = launch(st.id, st.price, st.ad); if (!p) { this.toast('お金が足りない', 'bad'); return; } this.closeModal(); this.open(null); EVENT.start(p, st.ad, () => this.reviewModal(p)); return; }
+    else if (a === 'doLaunch') { const st = this.modalState, ad = ADS.find(x => x.id === st.ad), short = ad.cost - S.money; if (short > 0) { if (short > loanRoom()) { this.toast('お金が足りない', 'bad'); return; } borrow(short); this.toast(`広告のために ${yen(short)} を借りた`, 'gold'); } const p = launch(st.id, st.price, st.ad); if (!p) { this.toast('お金が足りない', 'bad'); return; } this.closeModal(); this.open(null); EVENT.start(p, st.ad, () => this.reviewModal(p)); return; }
     else if (a === 'later') { this.closeModal(); return; }
     else if (a === 'setPrice') { const p = S.products.find(x => x.id === this.modalState.id); if (p) { p.price = Math.max(1, Math.round(this.modalState.price)); this.toast(`「${p.name}」を ${yen(p.price)} にした`); } this.closeModal(); return; }
     else if (a === 'closeM') { const rv = this.modalState && this.modalState.review; this.closeModal(); if (rv) { OFFICE.event('launch'); checkGoals(); } return; }
@@ -388,8 +403,11 @@ const UI = {
     return h;
   },
   studioFoot() {
-    const d = this.studio.d, pl = devPlan(d), why = canStartDev(d);
-    $('stFoot').innerHTML = `<div class="muted">開発費 <b>${yen(pl.devCost)}</b>・${pl.days}日・不具合 約${Math.max(1, Math.round(pl.bugs))}件${why ? `<br><span style="color:var(--red)">${esc(why)}</span>` : ''}</div><button class="btn green" data-act="startDev" type="button" ${why ? 'disabled' : ''}>開発スタート</button>`;
+    const d = this.studio.d, pl = devPlan(d), why = canStartDev(d), short = pl.devCost - S.money;
+    // お金だけが足りないなら、借りて開発できる
+    let loanBtn = '';
+    if (short > 0) { const m = S.money; S.money = pl.devCost; const why2 = canStartDev(d); S.money = m; if (!why2) loanBtn = short <= loanRoom() ? `<button class="btn gold" data-act="borrowDev" type="button">${yen(short)}借りて開発</button>` : `<span class="muted" style="color:var(--red)">借金の上限まであと${yen(loanRoom())}</span>`; }
+    $('stFoot').innerHTML = `<div class="muted">開発費 <b>${yen(pl.devCost)}</b>・${pl.days}日・不具合 約${Math.max(1, Math.round(pl.bugs))}件${why ? `<br><span style="color:var(--red)">${esc(why)}</span>` : ''}</div>${loanBtn || `<button class="btn green" data-act="startDev" type="button" ${why ? 'disabled' : ''}>開発スタート</button>`}`;
   },
   priceEval(d, price) { const q = perfP(d) / expected(d.kind), fair = fairPrice(d, q), r = fair / price; return r > 1.25 ? '<span class="pill green">とても安い</span>' : r > 1.02 ? '<span class="pill green">お買い得</span>' : r > 0.85 ? '<span class="pill">ふつう</span>' : r > 0.65 ? '<span class="pill gold">少し高い</span>' : '<span class="pill red">高すぎる</span>'; },
   // ---------- モーダル ----------
@@ -405,8 +423,8 @@ const UI = {
     this.showModal(`<h2>「${esc(v.name)}」を発売</h2><div class="row" style="gap:12px"><img alt="" src="${productThumb(v)}" style="width:96px;height:96px;border-radius:12px"><div class="kv"><span>種類</span><b>${KINDS[v.kind].name}</b><span>原価</span><b>${yen(c)}</b><span>おすすめ</span><b>${yen(rp)}</b></div></div>
       <div class="grp">値段</div><div class="row"><input class="txt" id="mPrice" type="number" inputmode="numeric" min="1" value="${st.price}" style="width:130px"><span id="mPriceEval">${this.priceEval(v, st.price)}</span></div>
       <input type="range" id="mPriceR" min="${Math.max(1, Math.floor(c * 0.8))}" max="${Math.ceil(mx)}" value="${st.price}" style="margin-top:8px">
-      <div class="grp">広告（最初の数週間よく売れる）</div><div class="chips">${ADS.map(a => `<button type="button" class="chip ${st.ad === a.id ? 'on' : ''}" data-act="ad" data-v="${a.id}" ${S.money < a.cost ? 'disabled style="opacity:.4"' : ''}>${a.name}<small>${a.cost ? yen(a.cost) + '・' : ''}${a.boost ? '売れゆき +' + Math.round(a.boost * 100) + '%' : 'お金はかからない'}</small></button>`).join('')}</div>
-      <div class="row" style="margin-top:14px;gap:8px"><button class="btn sub" data-act="later" type="button">あとで</button><button class="btn green" style="flex:1" data-act="doLaunch" type="button" ${S.money < ad.cost ? 'disabled' : ''}>発売する${ad.cost ? `（広告 ${yen(ad.cost)}）` : ''}</button></div>`);
+      <div class="grp">広告（最初の数週間よく売れる）</div><div class="chips">${ADS.map(a => `<button type="button" class="chip ${st.ad === a.id ? 'on' : ''}" data-act="ad" data-v="${a.id}" ${S.money + loanRoom() < a.cost ? 'disabled style="opacity:.4"' : ''}>${a.name}<small>${a.cost ? yen(a.cost) + '・' : ''}${a.boost ? '売れゆき +' + Math.round(a.boost * 100) + '%' : 'お金はかからない'}</small></button>`).join('')}</div>
+      <div class="row" style="margin-top:14px;gap:8px"><button class="btn sub" data-act="later" type="button">あとで</button><button class="btn green" style="flex:1" data-act="doLaunch" type="button" ${S.money + loanRoom() < ad.cost ? 'disabled' : ''}>${S.money < ad.cost ? `足りない${yen(ad.cost - S.money)}を借りて発売` : `発売する${ad.cost ? `（広告 ${yen(ad.cost)}）` : ''}`}</button></div>`);
   },
   // レビューの発表：点数が数えあがり、星・3つの点・コメントが順番に出る
   reviewModal(p) {
@@ -442,7 +460,7 @@ const UI = {
   // はい／いいえ（ブラウザの confirm は埋めこみ先で使えないことがあるので、ゲームの中に出す）
   ask(text, yes) { this.showModal(`<h2>確認</h2><p class="muted" style="line-height:1.7">${esc(text)}</p><div class="row" style="gap:8px"><button class="btn sub" data-act="closeM" type="button">やめる</button><button class="btn red" style="flex:1" data-act="yes" type="button">はい</button></div>`); this.modalState = { yes }; },
   gameOver() {
-    this.showModal(`<div class="review"><h2>倒産…</h2><p class="muted">お金のマイナスが2,000万円をこえて、会社をたたむことになりました。<br>${S.day > 0 ? `${dateStr(S.day)}までの記録：発売 ${S.stats.launched}こ・売上の合計 ${yen(S.stats.sales)}` : ''}</p><button class="btn big" data-act="restart" type="button">新しい会社をつくる</button></div>`);
+    this.showModal(`<div class="review"><h2>倒産…</h2><p class="muted">借金が上限（${yen(debtLimit())}）をこえて、お金を返せなくなり、会社をたたむことになりました。<br>${S.day > 0 ? `${dateStr(S.day)}までの記録：発売 ${S.stats.launched}こ・売上の合計 ${yen(S.stats.sales)}` : ''}</p><button class="btn big" data-act="restart" type="button">新しい会社をつくる</button></div>`);
     try { localStorage.removeItem('bungu-save'); } catch (e) { /* なし */ }
   },
 };

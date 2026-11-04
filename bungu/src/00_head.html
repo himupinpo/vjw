@@ -27,6 +27,8 @@ body.hub #top { padding-left: calc(58px + var(--sal)); }
 #coName { font-weight: 900; font-size: 16px; max-width: 34vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #date { font-size: 13px; color: var(--sub); white-space: nowrap; }
 .stat { display: flex; align-items: baseline; gap: 4px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+#debtS { font-size: 12.5px; font-weight: 800; color: var(--red); background: #fbe6e3; border-radius: 99px; padding: 2px 9px; cursor: pointer; }
+#debtS.warn { background: var(--red); color: #fff; animation: evblink 1.2s infinite; }
 #money { font-weight: 900; font-size: 18px; color: var(--green); }
 #money.neg { color: var(--red); }
 #rp { font-weight: 700; font-size: 15px; color: var(--blue); }
@@ -224,6 +226,7 @@ body.event #nav, body.event #news, body.event #top, body.event #goal, body.event
   <div id="date">2000年4月1日</div>
   <div class="stat"><span id="money">0円</span></div>
   <div class="stat"><span id="rp">0 RP</span></div>
+  <div class="stat hidden" id="debtS"><span id="debt"></span></div>
   <div class="sp" id="speed"><button data-s="0" type="button" aria-label="止める">Ⅱ</button><button data-s="1" type="button" class="on">▶</button><button data-s="2" type="button">▶▶</button><button data-s="4" type="button">▶▶▶</button></div>
   <button id="menuB" type="button" aria-label="メニュー">≡</button>
 </div>

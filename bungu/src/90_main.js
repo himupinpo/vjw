@@ -139,7 +139,7 @@ async function boot() {
 }
 window.__BG = { get S() { return S; }, set S(v) { S = v; }, step(days) { for (let i = 0; i < days && !S.over; i++) dayTick(); }, THREE, renderer, UI, OFFICE, STUDIO, GAMEFLOW, AU,
   startDev, launch, startResearch, hire, fire, polishRP, polishBonus, mechStats, mechBuild, MECH_PRESETS, DEF_BUILD, buyEquip, moveOffice, expand, buyout, rerollCands, devPlan, costOf, expected, perfP, recPrice, currentScore, designScore, kindDemand, productThumb, buildProduct, save, loadSave, newState,
-  KINDS, SPECS, LOOKS, DEF_LOOK, RESEARCH, GOALS, OFFICES, EQUIP, FURN, FURNI, EVENT, TRAITS, makeIssues, devFound, staffMul, workMul, resRate, qaRate, devSpeed, gainXp, makeCand };
+  KINDS, SPECS, LOOKS, DEF_LOOK, RESEARCH, GOALS, OFFICES, EQUIP, FURN, FURNI, EVENT, TRAITS, makeIssues, devFound, staffMul, workMul, resRate, qaRate, devSpeed, gainXp, makeCand, borrow, repay, debtLimit, loanRoom, LOAN, checkDebt };
 boot();
 </script>
 </body></html>
