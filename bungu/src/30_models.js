@@ -268,7 +268,11 @@ const BUILD = {
   mech(d, o) {
     // 設計（部品ごとの素材・太さ・断面・クリップ・窓）から組み立てる。+x が先
     const g = new THREE.Group(), L = d.look, sp = d.spec, b = mechBuild(d), M = MECH_MATS, cm = v => v / 10;
-    const Lc = cm(b.L), R = cm(b.D / 2), Rg = cm(b.D / 2 + b.gripD / 2), kx1 = cm(MECH_KNOCK), gx0 = Lc - cm(MECH_TIP + b.gripL), tx0 = Lc - cm(MECH_TIP);
+    const Lc = cm(b.L), R = cm(b.D / 2), Rr = cm(bDr(b) / 2), Rg = cm(b.D / 2 + b.gripD / 2), kx1 = cm(bCap(b)), gx0 = Lc - cm(bTip(b) + b.gripL), tx0 = Lc - cm(bTip(b));
+    // 部品の形：グリップのふくらみ・くびれ、胴軸の太さの変化（後ろ→前）
+    const gShape = u => ({ waist: 1 - 0.1 * Math.sin(Math.PI * u), bulge: 1 + 0.1 * Math.sin(Math.PI * u), taper: 1 - 0.14 * u })[b.gripShape] || 1;
+    const bScale = x => (Rr + (R - Rr) * clamp((x - kx1) / Math.max(0.01, gx0 - kx1), 0, 1)) / R;
+    const radAt = x => x < kx1 ? Math.min(Rr * 0.62, 0.3) : x < gx0 ? R * bScale(x) : x < tx0 ? Rg * gShape((x - gx0) / Math.max(0.01, tx0 - gx0)) : 0.15;
     const wt = WOOD_TONES[L.woodTone] || WOOD_TONES.maple, metalM = () => matMetal(L.metal, o.cheap);
     const secOf = (r, part) => b.sec === 'hex' ? secPoly(6, r, 0.03) : b.sec === 'dodeca' ? secPoly(12, r, 0.006) : b.sec === 'tri' ? secPoly(3, r * 0.95, 0.12) : secCircle(r, 56);
     // 部品の材質（表面のテクスチャ：模様・ロゴ・木目）
@@ -284,10 +288,10 @@ const BUILD = {
     // 胴軸
     const bLen = gx0 - kx1, bsec = secOf(R, 'barrel');
     const bm = partMat(b.mat.barrel, bLen, bsec.per, L.body, [{ text: L.logo, color: L.logoColor, font: L.font, size: Math.min(0.32, R * 0.7), from: bLen * 0.42, to: bLen * 0.95 }], 'barrel');
-    mesh(sweep([kx1, kx1 + 0.06, gx0 - 0.04, gx0], bsec, (x, p, i) => (i === 0 ? 0.96 : 1), { u0: kx1, u1: gx0 }), bm, g);
+    { const xs = [kx1, kx1 + 0.06]; for (let k = 1; k < 10; k++) xs.push(kx1 + (gx0 - kx1) * k / 10); xs.push(gx0 - 0.04, gx0); mesh(sweep(xs, bsec, (x, p, i) => bScale(x) * (i === 0 ? 0.96 : 1), { u0: kx1, u1: gx0 }), bm, g); }
     if (M[b.mat.barrel].clear) mesh(lathe([[kx1 + 0.2, 0.13], [tx0, 0.13]], { n: 16 }), matSolid(0x3a3a3c, 0.4, 0.3), g);
     // グリップ（みぞは形で、ローレット・つぶつぶは法線マップで）
-    const gm = M[b.mat.grip], round = gm.metal || gm.soft || b.sec === 'round', gsec = round ? secCircle(Rg, 56) : secOf(Rg, 'grip');
+    const gm = M[b.mat.grip], round = gm.metal || gm.soft || b.sec === 'round', gsec = b.gripShape === 'tri' ? secPoly(3, Rg * 0.98, 0.2) : round ? secCircle(Rg, 56) : secOf(Rg, 'grip');
     const gxs = [gx0, gx0 + 0.05], rr0 = []; for (let x = gx0 + 0.1; x < tx0 - 0.05; x += 0.05) gxs.push(x); gxs.push(tx0 - 0.05, tx0);
     const groove = x => (b.fin === 'rings' && ((x - gx0) % 0.28) < 0.09 && x > gx0 + 0.15 && x < tx0 - 0.15 ? 0.94 : 1);
     void rr0;
@@ -297,30 +301,63 @@ const BUILD = {
     else if (b.mat.grip === 'alu') gmat = matPaint('metal', null, o.cheap, new THREE.Color(L.grip));
     else gmat = partMat(b.mat.grip, tx0 - gx0, gsec.per, L.grip, [], 'grip');
     if (b.fin === 'dots' && !gm.soft) { gmat.normalMap = bumpTex('dimple'); gmat.normalScale = new THREE.Vector2(0.6, 0.6); }
-    mesh(sweep(gxs, gsec, (x, p, i) => (i === 0 || i === gxs.length - 1 ? 0.97 : groove(x)), { u0: gx0, u1: tx0 }), gmat, g);
+    mesh(sweep(gxs, gsec, (x, p, i) => gShape((x - gx0) / Math.max(0.01, tx0 - gx0)) * (i === 0 || i === gxs.length - 1 ? 0.97 : groove(x)), { u0: gx0, u1: tx0 }), gmat, g);
     // 口金・パイプ・芯
     const tipM = M[b.mat.tip].metal || b.mat.tip === 'alu' ? metalM() : matPaint('gloss', null, o.cheap, new THREE.Color(mixHex(L.body, '#000000', 0.35)));
-    mesh(lathe([[tx0 - 0.01, Rg - 0.035], [tx0 + 0.3, Rg - 0.07], [Lc, 0.11]], { n: 40 }), tipM, g);
+    { const r0 = Rg * gShape(1), tl = Lc - tx0, P = {   // 口金の形
+        cone: [[tx0 - 0.01, r0 - 0.035], [tx0 + 0.3, r0 - 0.07], [Lc, 0.11]],
+        step: [[tx0 - 0.01, r0 - 0.035], [tx0 + tl * 0.4, r0 * 0.72], [tx0 + tl * 0.44, r0 * 0.5], [tx0 + tl * 0.5, r0 * 0.44], [Lc, 0.1]],
+        long: Array.from({ length: 8 }, (_, k) => [tx0 - 0.01 + (tl + 0.01) * k / 7, 0.11 + (r0 - 0.045 - 0.11) * Math.pow(1 - k / 7, 1.8)]),
+        round: [[tx0 - 0.01, r0 - 0.03], [tx0 + tl * 0.3, r0 * 0.96], [tx0 + tl * 0.6, r0 * 0.78], [tx0 + tl * 0.85, r0 * 0.45], [Lc, 0.14]],
+        needle: [[tx0 - 0.01, r0 - 0.035], [tx0 + tl * 0.28, r0 * 0.55], [tx0 + tl * 0.34, 0.13], [Lc, 0.085]],
+      }[b.tipShape] || null;
+      mesh(lathe(P || [[tx0 - 0.01, r0 - 0.035], [tx0 + 0.3, r0 - 0.07], [Lc, 0.11]], { n: 40 }), tipM, g); }
     const pipe = cm(sp.tip === 't1' ? 4 : sp.tip === 't2' ? 2.5 : 3), ls = { s05: 0.026, s07: 0.035, s03: 0.016, s09: 0.045, s02: 0.011 }[sp.size] || 0.026;
     mesh(lathe([[Lc - 0.02, 0.055], [Lc + pipe, 0.05]], { n: 16 }), matMetal('silver'), g);
     mesh(lathe([[Lc + pipe - 0.02, ls], [Lc + pipe + 0.1, ls]], { n: 10 }), matSolid(0x232325, 0.35, 0.4), g);
     // ノック（天冠）と消しゴム
     const knM = M[b.mat.knock].metal || b.mat.knock === 'alu' ? metalM() : matPaint('gloss', null, o.cheap, new THREE.Color(L.body));
-    mesh(lathe([...roundEnd(0.02, 0.22, 0.22, 'start'), [kx1 * 0.6, 0.24], [kx1 + 0.02, 0.25]], { n: 36 }), knM, g);
-    mesh(lathe([[kx1 * 0.62, 0.252], [kx1 + 0.02, Math.min(R, 0.3)]], { n: 36 }), knM, g);
-    if (sp.erase === 'e1') mesh(lathe([[-0.35, 0.16], [0.04, 0.17]], { n: 20 }), matSolid(0xf2f0ea, 0.9), g);
+    { const rc = clamp(Rr * 0.62, 0.2, 0.3), tail = [[kx1 * 0.6, rc + 0.01], [kx1 + 0.02, rc + 0.02]];   // 天冠の形
+      const P = { flat: [[0, 0.001], [0.004, rc * 0.92], [0.03, rc], ...tail], rocket: [[-0.22, 0.001], [-0.06, rc * 0.55], [0.12, rc * 0.9], [0.26, rc], ...tail], eraser: [[0, rc * 0.84], [0.01, rc], ...tail] }[b.capShape] || [...roundEnd(0.0, rc, rc, 'start'), ...tail];
+      mesh(lathe(P, { n: 36 }), knM, g);
+      mesh(lathe([[kx1 * 0.62, rc + 0.012], [kx1 + 0.02, Math.min(Rr, rc + 0.08)]], { n: 36 }), knM, g);
+      if (b.capShape === 'ring') mesh(lathe([[kx1 * 0.34, rc + 0.035], [kx1 * 0.52, rc + 0.035]], { n: 36 }), metalM(), g);
+      if (b.capShape === 'eraser') mesh(lathe([...roundEnd(-0.42, -0.3, rc * 0.8, 'start'), [0.04, rc * 0.8]], { n: 24 }), matSolid(0xf2f0ea, 0.9), g);
+      else if (sp.erase === 'e1') mesh(lathe([[-0.35, 0.16], [0.04, 0.17]], { n: 20 }), matSolid(0xf2f0ea, 0.9), g); }
     // クリップ（上のはしからの位置）
     if (b.mat.clip !== 'none') {
-      const x0 = Math.max(kx1 + 0.02, cm(b.clipTop)), cmat = b.mat.clip === 'resin' ? matPaint('gloss', null, o.cheap, new THREE.Color(L.clipColor)) : metalM();
-      addClip(g, x0, x0 + cm(MECH_CLIP) - 0.2, x0 < gx0 ? R : Rg, cmat, Math.min(0.3, R * 0.75));
+      const x0 = Math.max(kx1 + 0.02, cm(b.clipTop)), x1 = x0 + cm(bClipL(b)) - 0.2, cmat = b.mat.clip === 'resin' ? matPaint('gloss', null, o.cheap, new THREE.Color(L.clipColor)) : metalM(), r = radAt(x0 + 0.2), w = Math.min(0.3, R * 0.75);
+      if (b.clipShape === 'wire') {   // 針金を曲げたクリップ
+        mesh(lathe([[x0 - 0.05, r + 0.012], [x0 + 0.35, r + 0.012]]), cmat, g);
+        for (const z of [-w * 0.35, w * 0.35]) { const bar = mesh(new THREE.CylinderGeometry(0.022, 0.022, x1 - x0, 8), cmat, g); bar.rotation.z = Math.PI / 2; bar.position.set((x0 + x1) / 2 + 0.15, r + 0.12, z); }
+        const end = mesh(new THREE.CylinderGeometry(0.022, 0.022, w * 0.7, 8), cmat, g); end.rotation.x = Math.PI / 2; end.position.set(x1 + 0.15, r + 0.1, 0);
+        const hd = mesh(new THREE.BoxGeometry(0.3, 0.1, w * 0.8), cmat, g); hd.position.set(x0 + 0.2, r + 0.09, 0);
+      } else {
+        addClip(g, x0, x1, r, cmat, b.clipShape === 'wide' ? w * 1.7 : w);
+        if (b.clipShape === 'ball') { const bl = mesh(new THREE.SphereGeometry(w * 0.55, 16, 12), cmat, g); bl.position.set(x1 + 0.2, r + 0.1, 0); }
+      }
     }
-    // 硬度表示窓：小さな窓に「HB」。ノックの下は回す輪つき
+    // 硬度表示窓：軸の曲面にそって埋めこんだ窓（ふち付き）。大きさ・表示する硬さを選べる。「回す輪」は硬さが全部書かれた輪
     if (b.win !== 'none') {
-      const wx = Lc - cm(mechWinX(b)), rAt = wx < kx1 ? 0.25 : wx < gx0 ? R : Rg;
-      if (b.win === 'knock') mesh(lathe([[wx - 0.22, rAt + 0.012], [wx + 0.22, rAt + 0.012]], { n: 40 }), metalM(), g);
-      const c2 = newCanvas(128, 64), q = c2.getContext('2d'); q.fillStyle = '#fbfbf6'; q.fillRect(0, 0, 128, 64); q.strokeStyle = '#333'; q.lineWidth = 6; q.strokeRect(3, 3, 122, 58); q.fillStyle = '#111'; q.font = '900 40px sans-serif'; q.textAlign = 'center'; q.textBaseline = 'middle'; q.fillText('HB', 64, 34);
-      const wtx = new THREE.CanvasTexture(c2); wtx.colorSpace = THREE.SRGBColorSpace;
-      const win = mesh(new THREE.PlaneGeometry(0.42, 0.21), new THREE.MeshStandardMaterial({ map: wtx, roughness: 0.3 }), g, false); win.position.set(wx, 0, rAt + 0.016);
+      const wx = Lc - cm(mechWinX(b)), rAt = radAt(wx) + 0.004, WS = MECH_WSIZE[b.winSize] || MECH_WSIZE.mid, txt = b.winText || 'HB';
+      const cyl = (r, len, th0, th, mat) => { const m = mesh(new THREE.CylinderGeometry(r, r, len, 40, 1, true, th0, th), mat, g, false); m.rotation.z = -Math.PI / 2; m.position.set(wx, 0, 0); return m; };
+      if (b.win === 'knock' || b.winSize === 'band') { mesh(lathe([[wx - cm(WS.w) / 2 - 0.08, rAt + 0.01], [wx - cm(WS.w) / 2, rAt + 0.01]], { n: 40 }), metalM(), g); mesh(lathe([[wx + cm(WS.w) / 2, rAt + 0.01], [wx + cm(WS.w) / 2 + 0.08, rAt + 0.01]], { n: 40 }), metalM(), g); }
+      if (b.winSize === 'band') {
+        const c3 = newCanvas(1024, 96), q3 = c3.getContext('2d'); q3.fillStyle = '#f4f2ec'; q3.fillRect(0, 0, 1024, 96); q3.fillStyle = '#1d1d1f'; q3.font = '900 54px sans-serif'; q3.textAlign = 'center'; q3.textBaseline = 'middle';
+        WIN_TEXT.forEach((t, i) => { q3.fillStyle = t === txt ? '#d9493e' : '#1d1d1f'; q3.save(); q3.translate((i + 0.5) * 1024 / WIN_TEXT.length, 48); q3.rotate(-Math.PI / 2); q3.fillText(t, 0, 0); q3.restore(); });
+        const t3 = new THREE.CanvasTexture(c3); t3.colorSpace = THREE.SRGBColorSpace; t3.anisotropy = MAXANI;
+        const ring = cyl(rAt + 0.006, cm(WS.w), 0, Math.PI * 2, new THREE.MeshStandardMaterial({ map: t3, roughness: 0.35 }));
+        ring.rotation.x = -(WIN_TEXT.indexOf(txt) + 0.5) / WIN_TEXT.length * Math.PI * 2;   // 選んだ硬さを正面（手前）に
+        const pt = mesh(new THREE.ConeGeometry(0.035, 0.08, 3), new THREE.MeshStandardMaterial({ color: 0xd9493e }), g, false); pt.rotation.z = Math.PI / 2; pt.position.set(wx - cm(WS.w) / 2 - 0.14, 0, rAt + 0.02);
+      } else {
+        const wl = cm(WS.w), th = cm(WS.h) / rAt;
+        cyl(rAt + 0.002, wl + 0.08, -th / 2 - 0.12, th + 0.24, new THREE.MeshStandardMaterial({ color: 0x24262b, roughness: 0.35, metalness: 0.4, side: THREE.DoubleSide }));   // ふち
+        const c2 = newCanvas(160, 256), q = c2.getContext('2d'), gr = q.createLinearGradient(0, 0, 160, 0); gr.addColorStop(0, '#d9d6cf'); gr.addColorStop(0.5, '#fbfbf6'); gr.addColorStop(1, '#d9d6cf'); q.fillStyle = gr; q.fillRect(0, 0, 160, 256);
+        q.fillStyle = '#111'; q.font = `900 ${txt.length > 1 ? 108 : 130}px sans-serif`; q.textAlign = 'center'; q.textBaseline = 'middle'; q.save(); q.translate(80, 128); q.rotate(-Math.PI / 2); q.fillText(txt, 0, 6); q.restore();
+        const wtx = new THREE.CanvasTexture(c2); wtx.colorSpace = THREE.SRGBColorSpace; wtx.anisotropy = MAXANI;
+        cyl(rAt + 0.007, wl, -th / 2, th, new THREE.MeshStandardMaterial({ map: wtx, roughness: 0.15, metalness: 0.05 }));
+        const gl = cyl(rAt + 0.012, wl, -th / 2, th, new THREE.MeshPhysicalMaterial({ color: 0xffffff, transparent: true, opacity: 0.18, roughness: 0.05, clearcoat: 1 })); gl.renderOrder = 2;   // ガラスの光
+      }
     }
     // 機構の見た目のちがい
     if (sp.mech === 'k1') { const bt = mesh(new THREE.BoxGeometry(0.6, 0.14, 0.2), metalM(), g); bt.position.set(gx0 - 1.4, 0, R + 0.05); }

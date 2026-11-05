@@ -31,9 +31,41 @@ const GRIP_FIN = {
   knurlC: { name: 'ローレット（粗い）', ok: m => !!m.metal, cost: 15, req: 'r_g3', q: () => 0.85 },
 };
 const MECH_SECS = { round: { name: '丸' }, hex: { name: '六角', roll: 1, cost: 2 }, dodeca: { name: '十二角', roll: 1, cost: 4, req: 'r_12' }, tri: { name: '三角', roll: 1, cost: 3, req: 'r_ptri' } };
-const MECH_WIN = { none: '窓なし', knock: 'ノックの下（回して合わせる）', top: '軸の上のほう', clip: 'クリップの根もと', grip: 'グリップのすぐ上' };
+const MECH_WIN = { none: '窓なし', knock: 'ノックの下（回して合わせる）', top: '軸の上のほう', clip: 'クリップの根もと', grip: 'グリップのすぐ上', free: 'すきな位置' };
+// 部品の形（その部品らしい特徴）：v=重さの倍率、q=にぎりやすさ、seg=好む人、func=機能、lux=高級感、cost=原価
+const MECH_TIPS = {
+  cone:   { name: '円すい', note: 'ふつうの口金', v: 1 },
+  step:   { name: '段付き', note: '製図用。先がよく見える', v: 1.1, seg: { pro: 0.1 }, cost: 3 },
+  long:   { name: 'ロング', note: '長くなだらか', v: 1.15, seg: { pro: 0.05 }, cost: 2 },
+  round:  { name: '丸み', note: '短く丸い。ペンケースで引っかからない', v: 1.25, seg: { stu: 0.06 }, cost: 1 },
+  needle: { name: 'ニードル', note: '細いパイプが長く出る', v: 0.9, seg: { pro: 0.12 }, cost: 5 },
+};
+const MECH_GRIPS = {
+  straight: { name: 'まっすぐ', note: '', v: 1 },
+  waist:    { name: 'くびれ', note: '指が自然に止まる', v: 0.92, q: 0.05, d: -0.4, cost: 2 },
+  bulge:    { name: 'ふくらみ', note: '太めで力がいらない', v: 1.12, q: 0.04, d: 0.6, seg: { stu: 0.04 }, cost: 2 },
+  taper:    { name: '先細り', note: '先に向かって細い', v: 0.95, d: -0.2, seg: { pro: 0.03 }, cost: 1 },
+  tri:      { name: '三角', note: '正しい持ち方になる', v: 1, q: 0.08, d: 0.2, seg: { stu: 0.1 }, cost: 4 },
+};
+const MECH_CAPS = {
+  dome:   { name: 'ドーム', note: '丸い天冠', v: 1 },
+  flat:   { name: 'フラット', note: '平らでシャープ', v: 1, cost: 1 },
+  rocket: { name: 'とんがり', note: 'ロケットのような先', v: 1.1, cost: 1 },
+  ring:   { name: '金属リング付き', note: '飾りの輪', v: 1.2, lux: 0.03, cost: 6 },
+  eraser: { name: '消しゴムが見える', note: 'すぐに消せる', v: 0.8, func: 0.4, cost: 2 },
+};
+const MECH_CLIPS = {
+  std:  { name: 'ふつう', note: '', v: 1 },
+  wide: { name: '幅広', note: 'はさむ力が強い', v: 1.5, func: 0.2, cost: 3 },
+  ball: { name: '玉付き', note: '先が丸く、紙がすべりこむ', v: 1.15, func: 0.1, seg: { stu: 0.03 }, cost: 2 },
+  wire: { name: '針金', note: '細い線を曲げた形', v: 0.8, lux: 0.02, cost: 2 },
+};
+const MECH_WSIZE = { small: { name: '小さめ', w: 5, h: 3, func: 1.5, cost: 6 }, mid: { name: 'ふつう', w: 7, h: 4, func: 2, cost: 8 }, large: { name: '大きめ', w: 9, h: 5, func: 2.3, cost: 10 }, band: { name: '回す輪（全部の硬さ）', w: 7, h: 0, func: 2.2, cost: 14, lux: 0.02 } };
+const WIN_TEXT = ['HB', 'B', '2B', 'F', 'H', '2H', '4B'];
+const MECH_EXTRA = { tipShape: 'cone', tipL: 12, gripShape: 'straight', capShape: 'dome', capL: 14, clipShape: 'std', clipLen: 38, Dr: 0, winSize: 'mid', winX: 30, winText: 'HB' };
+const bTip = b => b.tipL || 12, bCap = b => b.capL || 14, bClipL = b => b.clipLen || 38, bDr = b => b.Dr || b.D;
 const MECH_COG = { none: { name: 'なし', mass: 0 }, tip: { name: '先に真ちゅうのおもり（低重心）', mass: 3.5, cost: 12, req: 'r_cog' }, rear: { name: '後ろにおもり（高重心）', mass: 3, cost: 10, req: 'r_cog' } };
-const DEF_BUILD = { L: 145, D: 9, gripD: 0, gripL: 32, sec: 'round', mat: { tip: 'alu', grip: 'resin', barrel: 'resin', knock: 'resin', clip: 'resin' }, fin: 'rings', clipTop: 22, win: 'none', cog: 'none', cushion: false, clipret: false };
+const DEF_BUILD = { L: 145, D: 9, gripD: 0, gripL: 32, sec: 'round', mat: { tip: 'alu', grip: 'resin', barrel: 'resin', knock: 'resin', clip: 'resin' }, fin: 'rings', clipTop: 22, win: 'none', cog: 'none', cushion: false, clipret: false, ...MECH_EXTRA };
 // 有名なシャーペンの「型」を参考にした出発点（名前はオリジナル）
 const MECH_PRESETS = [
   { id: 'hexmetal', name: '金属六角の製図用', note: '全部金属・六角・細かいローレット・長いパイプ。重くてどっしり', b: { L: 140, D: 8, gripD: 0, gripL: 30, sec: 'hex', mat: { tip: 'brass', grip: 'brass', barrel: 'brass', knock: 'brass', clip: 'sus' }, fin: 'knurlF', clipTop: 16, win: 'knock', cog: 'none' }, spec: { tip: 't1', mech: 'k0' } },
@@ -49,14 +81,13 @@ const MECH_PRESETS = [
 
 // 古いセーブ（グリップ・軸を「性能」で選んでいたころ）から設計を作る
 function mechBuild(d) {
-  if (d.build) return d.build;
+  if (d.build) { for (const k in MECH_EXTRA) if (d.build[k] === undefined) d.build[k] = MECH_EXTRA[k]; return d.build; }
   const b = JSON.parse(JSON.stringify(DEF_BUILD)), g = d.spec && d.spec.grip, body = d.spec && d.spec.body;
   if (g === 'rubber' || g === 'silicone') { b.mat.grip = g; b.fin = 'dots'; } else if (g === 'knurl') { b.mat.grip = 'alu'; b.fin = 'knurlF'; }
   if (body === 'clear') b.mat.barrel = 'clear'; else if (body === 'alu') { b.mat.barrel = 'alu'; if (b.mat.grip === 'resin') b.mat.grip = 'alu'; } else if (body === 'wood') { b.mat.barrel = 'wood'; if (b.mat.grip === 'resin') b.mat.grip = 'wood'; }
   return (d.build = b);
 }
-const mechWinX = (b) => ({ knock: b.L - 16, top: b.L - 30, clip: b.L - b.clipTop + 3, grip: 12 + b.gripL + 4 })[b.win] || 0;   // 先からの距離（mm）
-const MECH_TIP = 12, MECH_KNOCK = 14, MECH_CLIP = 38;
+const mechWinX = (b) => ({ knock: b.L - bCap(b) - 2.5, top: b.L - bCap(b) - 16, clip: b.L - b.clipTop + 4, grip: bTip(b) + b.gripL + 5, free: b.L - (b.winX || 30) })[b.win] || 0;   // 先からの距離（mm）
 // 重さ（g）・重心（先からmm）と、点のもと
 const _msCache = new WeakMap();
 function mechStats(d) {
@@ -65,15 +96,15 @@ function mechStats(d) {
   const v = mechStats0(d); _msCache.set(d, { key, v }); return v;
 }
 function mechStats0(d) {
-  const b = mechBuild(d), M = MECH_MATS, L = b.L, R = b.D / 2, Rg = R + b.gripD / 2, parts = [];
+  const b = mechBuild(d), M = MECH_MATS, L = b.L, R = b.D / 2, Rr = bDr(b) / 2, TIP = bTip(b), KNOCK = bCap(b), CLIP = bClipL(b), GS = MECH_GRIPS[b.gripShape] || MECH_GRIPS.straight, TS = MECH_TIPS[b.tipShape] || MECH_TIPS.cone, CS = MECH_CAPS[b.capShape] || MECH_CAPS.dome, KS = MECH_CLIPS[b.clipShape] || MECH_CLIPS.std, WS = MECH_WSIZE[b.winSize] || MECH_WSIZE.mid, Rg = R + b.gripD / 2, parts = [];
   const tube = (mat, r, len, x0, tag) => { const m = M[mat]; if (!m || !m.dens) return; const rin = m.solid ? 2.6 : Math.max(2.4, r - m.wall), v = Math.PI * (r * r - rin * rin) * len / 1000; parts.push([v * m.dens, x0 + len / 2, tag]); return rin; };
-  { const m = M[b.mat.tip], R1 = 1.1, R2 = Math.max(1.5, Rg - 0.4), v = (Math.PI * MECH_TIP / 3 * (R1 * R1 + R1 * R2 + R2 * R2) - Math.PI * 0.81 * MECH_TIP) / 1000; parts.push([v * m.dens, MECH_TIP * 0.55, 'tip']); }
-  const rin = tube(b.mat.grip, Rg, b.gripL, MECH_TIP, 'grip');
-  if (M[b.mat.grip].soft) tube('resin', rin, b.gripL, MECH_TIP, 'core');
-  const bx0 = MECH_TIP + b.gripL, bLen = L - MECH_KNOCK - bx0; tube(b.mat.barrel, R, bLen, bx0, 'barrel');
-  { const m = M[b.mat.knock], v = Math.PI * (2.4 * 2.4 - 1.5 * 1.5) * 9 / 1000 + 0.05; parts.push([v * m.dens, L - 6, 'knock']); }
+  { const m = M[b.mat.tip], R1 = 1.1, R2 = Math.max(1.5, Rg - 0.4), v = (Math.PI * TIP / 3 * (R1 * R1 + R1 * R2 + R2 * R2) - Math.PI * 0.81 * TIP) / 1000 * TS.v; parts.push([v * m.dens, TIP * 0.55, 'tip']); }
+  const rin = tube(b.mat.grip, Rg * Math.sqrt(GS.v), b.gripL, TIP, 'grip');
+  if (M[b.mat.grip].soft) tube('resin', rin, b.gripL, TIP, 'core');
+  const bx0 = TIP + b.gripL, bLen = L - KNOCK - bx0; tube(b.mat.barrel, (R + Rr) / 2, bLen, bx0, 'barrel');
+  { const m = M[b.mat.knock], v = (Math.PI * (2.4 * 2.4 - 1.5 * 1.5) * 9 / 1000 + 0.05) * (KNOCK / 14) * CS.v; parts.push([v * m.dens, L - KNOCK * 0.43, 'knock']); }
   const clipRoot = L - b.clipTop, hasClip = b.mat.clip !== 'none';
-  if (hasClip) { const m = M[b.mat.clip]; parts.push([m.dens * 0.16 + (m.metal ? 0.1 : 0), clipRoot - MECH_CLIP / 2, 'clip']); }
+  if (hasClip) { const m = M[b.mat.clip]; parts.push([(m.dens * 0.16 + (m.metal ? 0.1 : 0)) * (CLIP / 38) * KS.v, clipRoot - CLIP / 2, 'clip']); }
   parts.push([1.3, 26], [1.2, L * 0.55], [0.35, L * 0.42], [0.3, L - 8]);   // 中の部品（チャック・芯パイプとばね・芯・消しゴム）
   const MX = { k1: [0.6, 60], k2: [2.4, 80], k3: [1.6, 30], k4: [1.2, 18], k5: [2.2, 26] }[d.spec.mech]; if (MX) parts.push(MX);
   if (d.spec.erase === 'e1') parts.push([0.5, L - 10]);
@@ -83,10 +114,10 @@ function mechStats0(d) {
   if (b.clipret) parts.push([0.5, clipRoot - 10]);
   const W = parts.reduce((a, p) => a + p[0], 0), cog = parts.reduce((a, p) => a + p[0] * p[1], 0) / W, cogPct = cog / L * 100;
   // 書きやすさ（重さ・重心・太さ・グリップ）
-  const gm = M[b.mat.grip], fin = GRIP_FIN[b.fin] && GRIP_FIN[b.fin].ok(gm) ? GRIP_FIN[b.fin] : GRIP_FIN.plain, gripQ = fin.q(gm), Dg = Rg * 2, notes = [];
+  const gm = M[b.mat.grip], fin = GRIP_FIN[b.fin] && GRIP_FIN[b.fin].ok(gm) ? GRIP_FIN[b.fin] : GRIP_FIN.plain, gripQ = Math.min(1, fin.q(gm) + (GS.q || 0)), Dg = Rg * 2 + (GS.d || 0), notes = [];
   const gs = x => Math.exp(-x * x / 2);
   let ergo = 0.25 * gs((W - 15.5) / 6) + 0.3 * clamp((51 - cogPct) / 7, 0, 1) + 0.2 * gs((Dg - 9.4) / 1.3) + 0.25 * gripQ;
-  const clipLow = hasClip && clipRoot - MECH_CLIP < MECH_TIP + b.gripL + 6;
+  const clipLow = hasClip && clipRoot - CLIP < TIP + b.gripL + 6;
   if (clipLow) { ergo -= 0.15; notes.push('クリップが指に当たる（クリップをもっと上へ）'); }
   if (cogPct > 52) notes.push('重心が高くて、先がふらつきやすい');
   if (W > 24) notes.push('重い。長く書くと疲れやすい');
@@ -94,7 +125,13 @@ function mechStats0(d) {
   if (Dg > 11.5) notes.push('太すぎて、手の小さい人には使いにくい');
   // 機能
   let func = 0, winHidden = false;
-  if (b.win !== 'none') { const wx = mechWinX(b); winHidden = hasClip && b.win === 'top' && wx < clipRoot && wx > clipRoot - MECH_CLIP; func += winHidden ? 0.6 : 2 + (b.win === 'grip' ? 0.5 : 0); if (winHidden) notes.push('硬度表示窓がクリップにかくれる'); }
+  if (b.win !== 'none') {
+    const wx = mechWinX(b); winHidden = hasClip && (b.win === 'top' || b.win === 'free') && wx < clipRoot && wx > clipRoot - CLIP && b.winSize !== 'band';
+    const wOut = b.win === 'free' && (wx < TIP + 2 || wx > L - 2);
+    func += winHidden || wOut ? 0.6 : WS.func + (b.win === 'grip' ? 0.5 : 0); if (winHidden) notes.push('硬度表示窓がクリップにかくれる');
+    if (b.winSize === 'small' && !winHidden) notes.push('硬度表示窓が小さくて、少し読みにくい');
+  }
+  func += (CS.func || 0) + (hasClip ? KS.func || 0 : 0);
   if (hasClip) func += 1.2 + (M[b.mat.clip].metal ? 0.3 : 0);
   if (b.clipret && hasClip) func += 1.2;
   if (b.cushion) func += 1.4;
@@ -104,7 +141,7 @@ function mechStats0(d) {
   let mat = 0; if (M[b.mat.tip].metal) mat += 1.2; if (gm.metal) mat += 0.8; if (gm.wood || M[b.mat.barrel].wood) mat += 0.8; if (M[b.mat.barrel].metal) mat += 0.6; mat = Math.min(4, mat);
   // 高級感（値段の高さが受け入れられる）
   let lux = 0; for (const k in MECH_PARTS) lux += MECH_PARTS[k].lw * (M[b.mat[k]].lux || 0);
-  if (b.fin === 'knurlF' || b.fin === 'knurlC') lux += 0.1; if (W >= 18) lux += 0.05; if (d.look && (d.look.metal === 'gold' || d.look.metal === 'rose') && Object.values(b.mat).some(x => M[x].metal)) lux += 0.05;
+  if (b.fin === 'knurlF' || b.fin === 'knurlC') lux += 0.1; lux += (CS.lux || 0) + (hasClip ? KS.lux || 0 : 0) + (b.win !== 'none' ? WS.lux || 0 : 0); if (W >= 18) lux += 0.05; if (d.look && (d.look.metal === 'gold' || d.look.metal === 'rose') && Object.values(b.mat).some(x => M[x].metal)) lux += 0.05;
   lux = clamp(lux, 0, 1);
   // 層ごとの人気
   const knurl = b.fin === 'knurlF' || b.fin === 'knurlC', soft = !!gm.soft, wood = !!(gm.wood || M[b.mat.barrel].wood);
@@ -113,10 +150,11 @@ function mechStats0(d) {
     stu: 0.25 * gs((W - 12) / 3.5) + (soft ? 0.2 : 0) + (Dg >= 9 && Dg <= 10.8 ? 0.1 : 0),
     adu: 0.3 * lux + (wood ? 0.15 : 0) + (hasClip ? 0.1 : 0) + 0.15 * gs((W - 17) / 5),
   };
+  for (const X of [TS, GS, hasClip ? KS : null]) if (X && X.seg) for (const k in X.seg) seg[k] += X.seg[k];
   // 部品の原価
   const sz = Math.pow(b.D / 9, 1.5) * (L / 145);
   let cost = 0; for (const k in MECH_PARTS) cost += MECH_PARTS[k].cw * (M[b.mat[k]].cost || 0) * (k === 'barrel' || k === 'grip' ? sz : 1) + (k === 'clip' && b.mat.clip === 'resin' ? 1 : 0);
-  cost += (fin.cost || 0) + (b.win !== 'none' ? 8 : 0) + (MECH_COG[b.cog].cost || 0) + (b.cushion ? 15 : 0) + (b.clipret ? 30 : 0) + (MECH_SECS[b.sec].cost || 0);
+  cost += (fin.cost || 0) + (b.win !== 'none' ? WS.cost : 0) + (TS.cost || 0) + (GS.cost || 0) + (CS.cost || 0) + (hasClip ? KS.cost || 0 : 0) + (Math.abs(bDr(b) - b.D) > 0.05 ? 2 : 0) + (MECH_COG[b.cog].cost || 0) + (b.cushion ? 15 : 0) + (b.clipret ? 30 : 0) + (MECH_SECS[b.sec].cost || 0);
   return { W, cog, cogPct, ergo: clamp(ergo, 0, 1), ergoPts: 14 * clamp(ergo, 0, 1), func, mat, lux, seg, cost, notes, gripQ, Dg, fin, winHidden };
 }
 // 研究がまだの部品

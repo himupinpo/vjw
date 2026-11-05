@@ -303,11 +303,12 @@ const UI = {
     else if (a === 'spec') { const d = this.studio.d; d.spec[b.dataset.k] = b.dataset.v; this.studio.changed(); return; }
     else if (a === 'look') { const d = this.studio.d; d.look[b.dataset.k] = b.dataset.v; this.studio.changed(); return; }
     else if (a === 'mpre') { const d = this.studio.d, pr = MECH_PRESETS.find(x => x.id === b.dataset.v); if (pr) { d.build = Object.assign(JSON.parse(JSON.stringify(DEF_BUILD)), JSON.parse(JSON.stringify(pr.b))); for (const [k, v] of Object.entries(pr.spec || {})) { const o = optOf('mech', k, v); if (o && resDone(o.req)) d.spec[k] = v; } this.toast(`「${pr.name}」の型にした${mechLocks(d).length ? '（まだ研究していない部品があります）' : ''}`); } this.studio.changed(); return; }
-    else if (['mmat', 'mfin', 'msec', 'mwin', 'mcog', 'mgd', 'mgl', 'mtog'].includes(a)) {
+    else if (['mmat', 'mfin', 'msec', 'mwin', 'mcog', 'mgd', 'mgl', 'mtog', 'mshape'].includes(a)) {
       const bd = mechBuild(this.studio.d), v = b.dataset.v;
       if (a === 'mmat') { bd.mat[b.dataset.k] = v; if (v === 'wood') learn('土地', '天然木の軸（天然物は生産の三要素の土地）'); else if (v === 'wood2' || v === 'resin') learn('資本', '強化木や樹脂の軸（人工物は生産の三要素の資本）'); if (!GRIP_FIN[bd.fin].ok(MECH_MATS[bd.mat.grip])) bd.fin = MECH_MATS[bd.mat.grip].soft ? 'dots' : 'plain'; if (bd.mat.clip === 'none') bd.clipret = false; }
       else if (a === 'mfin') bd.fin = v; else if (a === 'msec') bd.sec = v; else if (a === 'mwin') bd.win = v; else if (a === 'mcog') bd.cog = v;
-      else if (a === 'mgd') bd.gripD = +v; else if (a === 'mgl') bd.gripL = +v; else if (a === 'mtog') bd[b.dataset.k] = !bd[b.dataset.k];
+      else if (a === 'mgd') bd.gripD = +v; else if (a === 'mgl') bd.gripL = +v; else if (a === 'mtog') bd[b.dataset.k] = !bd[b.dataset.k]; else if (a === 'mshape') bd[b.dataset.k] = v;
+      if (a === 'mwin' && v === 'free') bd.winX = Math.min(bd.L - 22, (bd.mat.clip === 'none' ? 20 : bd.clipTop + bClipL(bd) + 6));   // クリップのすぐ下から
       this.studio.changed(); return;
     }
     else if (a === 'reissue') { const p = S.products.find(x => x.id === id); if (p) return this.openStudio({ kind: p.kind, spec: { ...p.spec }, look: { ...p.look }, build: p.build, name: p.name.replace(/ 復刻版$/, '') + ' 復刻版', price: Math.round(p.price * 1.2), reissue: 0.9 }); }
@@ -333,7 +334,7 @@ const UI = {
     const t = e.target;
     if (this.studio && t.dataset.look) { this.studio.d.look[t.dataset.look] = t.value; this.studio.changed(t.type === 'text'); return; }
     if (this.studio && t.id === 'stName') { this.studio.d.name = t.value; return; }
-    if (this.studio && t.dataset.mb) { const bd = mechBuild(this.studio.d), k = t.dataset.mb; bd[k] = +t.value; const lab = $({ L: 'mbL', D: 'mbD', clipTop: 'mbC' }[k]); if (lab) lab.textContent = k === 'D' ? (+t.value).toFixed(1) : t.value; this.studio.changed(true); this.studioFoot(); return; }
+    if (this.studio && t.dataset.mb) { const bd = mechBuild(this.studio.d), k = t.dataset.mb; bd[k] = +t.value; if (k === 'D' && !bd.Dr) bd.Dr = 0; const lab = $('mb_' + k); if (lab) lab.textContent = (+t.value).toFixed(+(t.dataset.fix || 0)); this.studio.changed(true); this.studioFoot(); const rd = $('mbRead'); if (rd) rd.innerHTML = this.buildReadout(this.studio.d); return; }
     if (this.studio && (t.id === 'stPrice' || t.id === 'stPriceR')) { const v = Math.max(1, Math.round(+t.value || 1)); this.studio.d.price = v; this.studio.d.priceAuto = false; if (t.id === 'stPriceR') $('stPrice').value = v; else $('stPriceR').value = v; this.studioMeter(); this.studioFoot(); return; }
     if (this.modalOpen && (t.id === 'mPrice' || t.id === 'mPriceR')) { const v = Math.max(1, Math.round(+t.value || 1)); this.modalState.price = v; if (t.id === 'mPriceR') $('mPrice').value = v; else $('mPriceR').value = v; const ev = $('mPriceEval'); if (ev) ev.innerHTML = this.priceEval(this.modalState.d, v); }
   },
@@ -407,13 +408,13 @@ const UI = {
     const col = { resin: d.look.body, clear: '#cfe6f2', rubber: d.look.grip, silicone: d.look.grip, alu: '#c3c8cf', brass: '#d6b25e', sus: '#b9bec5', wood: (WOOD_TONES[d.look.woodTone] || WOOD_TONES.maple)[1], wood2: (WOOD_TONES[d.look.woodTone] || WOOD_TONES.maple)[2] };
     const c = k => (k === 'grip' && ['resin', 'alu'].includes(b.mat.grip) ? (b.mat.grip === 'alu' ? '#c3c8cf' : d.look.grip) : col[b.mat[k]] || '#ccc');
     const rect = (x0, x1, r, fill) => `<rect x="${X(x0)}" y="${cy - r * ys}" width="${X(x1) - X(x0)}" height="${r * ys * 2}" rx="2" fill="${fill}" stroke="rgba(0,0,0,.35)" stroke-width=".8"/>`;
-    const pipe = d.spec.tip === 't1' ? 4 : 3, bx0 = MECH_TIP + b.gripL;
+    const pipe = d.spec.tip === 't1' ? 4 : 3, TIP = bTip(b), KN = bCap(b), CL = bClipL(b), Rr = bDr(b) / 2, bx0 = TIP + b.gripL, WS = MECH_WSIZE[b.winSize] || MECH_WSIZE.mid;
     let g = `<rect x="${X(-pipe)}" y="${cy - 0.6}" width="${X(0) - X(-pipe)}" height="1.2" fill="#888"/>`;
-    g += `<polygon points="${X(0)},${cy - 1.2 * ys} ${X(MECH_TIP)},${cy - (Rg - 0.4) * ys} ${X(MECH_TIP)},${cy + (Rg - 0.4) * ys} ${X(0)},${cy + 1.2 * ys}" fill="${c('tip')}" stroke="rgba(0,0,0,.35)" stroke-width=".8"/>`;
-    g += rect(MECH_TIP, bx0, Rg, c('grip')) + rect(bx0, L - MECH_KNOCK, R, c('barrel')) + rect(L - MECH_KNOCK, L, 2.4, c('knock'));
-    if (b.fin === 'knurlF' || b.fin === 'knurlC') for (let x = MECH_TIP + 2; x < bx0 - 1; x += b.fin === 'knurlF' ? 1.6 : 2.6) g += `<line x1="${X(x)}" y1="${cy - Rg * ys}" x2="${X(x + 1.2)}" y2="${cy + Rg * ys}" stroke="rgba(0,0,0,.25)" stroke-width=".7"/>`;
-    if (b.win !== 'none') { const wx = mechWinX(b); g += `<rect x="${X(wx) - 5}" y="${cy - 3}" width="10" height="6" fill="#fff" stroke="#333" stroke-width=".7"/><text x="${X(wx)}" y="${cy + 2}" font-size="5" text-anchor="middle" fill="#111">HB</text>`; }
-    if (b.mat.clip !== 'none') { const r0 = L - b.clipTop; g += `<rect x="${X(r0 - MECH_CLIP)}" y="${cy - R * ys - 4}" width="${X(r0) - X(r0 - MECH_CLIP)}" height="2.6" rx="1.3" fill="${b.mat.clip === 'resin' ? d.look.clipColor : '#aab0b8'}" stroke="rgba(0,0,0,.4)" stroke-width=".6"/>`; }
+    g += `<polygon points="${X(0)},${cy - 1.2 * ys} ${X(TIP)},${cy - (Rg - 0.4) * ys} ${X(TIP)},${cy + (Rg - 0.4) * ys} ${X(0)},${cy + 1.2 * ys}" fill="${c('tip')}" stroke="rgba(0,0,0,.35)" stroke-width=".8"/>`;
+    g += rect(TIP, bx0, Rg, c('grip')) + `<polygon points="${X(bx0)},${cy - R * ys} ${X(L - KN)},${cy - Rr * ys} ${X(L - KN)},${cy + Rr * ys} ${X(bx0)},${cy + R * ys}" fill="${c('barrel')}" stroke="rgba(0,0,0,.35)" stroke-width=".8"/>` + rect(L - KN, L, 2.4, c('knock'));
+    if (b.fin === 'knurlF' || b.fin === 'knurlC') for (let x = TIP + 2; x < bx0 - 1; x += b.fin === 'knurlF' ? 1.6 : 2.6) g += `<line x1="${X(x)}" y1="${cy - Rg * ys}" x2="${X(x + 1.2)}" y2="${cy + Rg * ys}" stroke="rgba(0,0,0,.25)" stroke-width=".7"/>`;
+    if (b.win !== 'none') { const wx = mechWinX(b), ww = WS.w * sx * 1.2; g += `<rect x="${X(wx) - ww / 2}" y="${cy - 3.5}" width="${ww}" height="7" rx="1" fill="#fff" stroke="#333" stroke-width=".8"/><text x="${X(wx)}" y="${cy + 2.4}" font-size="6" font-weight="700" text-anchor="middle" fill="#111">${b.winSize === 'band' ? '◀' + (b.winText || 'HB') : b.winText || 'HB'}</text>`; }
+    if (b.mat.clip !== 'none') { const r0 = L - b.clipTop; g += `<rect x="${X(r0 - CL)}" y="${cy - R * ys - 4}" width="${X(r0) - X(r0 - CL)}" height="${b.clipShape === 'wide' ? 3.6 : b.clipShape === 'wire' ? 1.6 : 2.6}" rx="1.3" fill="${b.mat.clip === 'resin' ? d.look.clipColor : '#aab0b8'}" stroke="rgba(0,0,0,.4)" stroke-width=".6"/>`; }
     g += `<polygon points="${X(m.cog)},${cy + R * ys + 3} ${X(m.cog) - 5},${cy + R * ys + 11} ${X(m.cog) + 5},${cy + R * ys + 11}" fill="#d9493e"/><text x="${X(m.cog)}" y="${cy + R * ys + 19}" font-size="7.5" text-anchor="middle" fill="#d9493e">重心 ${Math.round(m.cog)}mm</text>`;
     g += `<text x="${X(-pipe)}" y="10" font-size="7" fill="#6f6a60">← 先</text><text x="${X(L)}" y="10" font-size="7" text-anchor="end" fill="#6f6a60">ノック →</text>`;
     return `<svg viewBox="0 0 310 64" style="width:100%;height:auto;margin-top:8px;background:#fff;border-radius:10px;border:1px solid var(--line)">${g}</svg>`;
@@ -421,24 +422,31 @@ const UI = {
   studioBuild(d) {
     const b = mechBuild(d), M = MECH_MATS, lock = r => !!r && !resDone(r);
     const chip = (act, k, v, on, name, small, locked) => `<button type="button" class="chip ${on ? 'on' : ''} ${locked ? 'lock' : ''}" ${locked ? '' : `data-act="${act}" data-k="${k}" data-v="${v}"`}>${name}${small ? `<small>${small}</small>` : ''}</button>`;
+    const slider = (k, label, min, max, step, val, unit = 'mm', fix = 0) => `<div class="muted" style="margin-top:6px">${label} <b id="mb_${k}">${(+val).toFixed(fix)}</b> ${unit}</div><input type="range" min="${min}" max="${max}" step="${step}" value="${val}" data-mb="${k}" data-fix="${fix}">`;
+    const shapes = (k, tbl) => `<div class="chips">${Object.entries(tbl).map(([v, t]) => chip('mshape', k, v, b[k] === v, t.name, t.note || '')).join('')}</div>`;
     let h = `<div class="card" id="mbRead" style="margin-top:8px">${this.buildReadout(d)}</div>`;
-    h += `<div class="grp">参考の型（有名なシャーペンの特徴をもとにした出発点）</div><div class="chips">${MECH_PRESETS.map(p => chip('mpre', '', p.id, false, esc(p.name), esc(p.note))).join('')}</div>`;
-    h += `<div class="grp">寸法</div><div class="muted">全長 <b id="mbL">${b.L}</b> mm</div><input type="range" min="136" max="152" step="1" value="${b.L}" data-mb="L">`;
-    h += `<div class="muted">軸の太さ <b id="mbD">${b.D.toFixed(1)}</b> mm</div><input type="range" min="7.5" max="11.5" step="0.1" value="${b.D}" data-mb="D">`;
-    h += `<div class="muted" style="margin-top:6px">グリップの太さ（軸とのちがい）</div><div class="chips">${[-0.5, 0, 0.5, 1, 1.5].map(v => chip('mgd', '', v, b.gripD === v, (v > 0 ? '+' : v < 0 ? '−' : '±') + Math.abs(v) + 'mm', '')).join('')}</div>`;
-    h += `<div class="muted" style="margin-top:6px">グリップの長さ</div><div class="chips">${[24, 30, 34, 40].map(v => chip('mgl', '', v, b.gripL === v, v + 'mm', '')).join('')}</div>`;
+    h += `<div class="grp">寸法</div>` + slider('L', '全長', 128, 160, 1, b.L) + slider('D', '軸の太さ（前）', 7, 12, 0.1, b.D, 'mm', 1) + slider('Dr', '軸の太さ（後ろ）', 6.5, 12, 0.1, bDr(b), 'mm', 1);
     h += `<div class="muted" style="margin-top:6px">軸の断面</div><div class="chips">${Object.entries(MECH_SECS).map(([k, v]) => chip('msec', '', k, b.sec === k, v.name, v.roll ? 'ころがりにくい' : '', lock(v.req))).join('')}</div>`;
+    h += `<div class="grp">口金（先の金具）</div>` + shapes('tipShape', MECH_TIPS) + slider('tipL', '口金の長さ', 8, 22, 1, bTip(b));
+    h += `<div class="grp">グリップ</div>` + shapes('gripShape', MECH_GRIPS) + slider('gripL', 'グリップの長さ', 16, 52, 1, b.gripL) + slider('gripD', 'グリップの太さ（軸とのちがい）', -1.5, 3, 0.1, b.gripD, 'mm', 1);
+    const gm = M[b.mat.grip];
+    h += `<div class="muted" style="margin-top:6px">グリップの加工</div><div class="chips">${Object.entries(GRIP_FIN).filter(([, f]) => f.ok(gm)).map(([k, f]) => chip('mfin', '', k, b.fin === k, f.name, `にぎりやすさ ${Math.round(f.q(gm) * 100)}`, lock(f.req))).join('')}</div>`;
+    h += `<div class="grp">天冠（ノック）</div>` + shapes('capShape', MECH_CAPS) + slider('capL', '天冠の長さ', 9, 26, 1, bCap(b));
+    h += `<div class="grp">クリップ</div>${b.mat.clip === 'none' ? '<div class="muted">クリップなし（下の素材で「なし」以外を選ぶとつけられる）</div>' : shapes('clipShape', MECH_CLIPS) + slider('clipLen', 'クリップの長さ', 22, 56, 1, bClipL(b)) + slider('clipTop', 'クリップの位置（上のはしから）', 10, 90, 1, b.clipTop)}`;
+    h += `<div class="grp">硬度表示窓</div><div class="muted">位置</div><div class="chips">${Object.entries(MECH_WIN).map(([k, n]) => chip('mwin', '', k, b.win === k, n, '', k !== 'none' && lock('r_hwin'))).join('')}</div>`;
+    if (b.win !== 'none') {
+      if (b.win === 'free') h += slider('winX', '窓の位置（上のはしから）', 12, b.L - 20, 1, b.winX || 30);
+      h += `<div class="muted" style="margin-top:6px">窓の大きさ</div><div class="chips">${Object.entries(MECH_WSIZE).map(([k, w]) => chip('mshape', 'winSize', k, (b.winSize || 'mid') === k, w.name, w.h ? `${w.w}×${w.h}mm` : '輪に全部の硬さ')).join('')}</div>`;
+      h += `<div class="muted" style="margin-top:6px">窓に出す硬さ</div><div class="chips">${WIN_TEXT.map(t => chip('mshape', 'winText', t, (b.winText || 'HB') === t, t, '')).join('')}</div>`;
+    }
     h += `<div class="grp">部品ごとの素材（重さと重心が変わる）</div>`;
     for (const [pk, P] of Object.entries(MECH_PARTS)) {
       h += `<div class="muted" style="margin-top:6px">${P.name}</div><div class="chips">${P.mats.map(mk => { const m = M[mk], lk = lock(m.req) && !(P.free || []).includes(mk); return chip('mmat', pk, mk, b.mat[pk] === mk, m.name, mk === 'none' ? '' : `${m.dens} g/cm³${lk ? '・🔒' : ''}`, lk); }).join('')}</div>`;
     }
-    const gm = M[b.mat.grip];
-    h += `<div class="grp">グリップの加工</div><div class="chips">${Object.entries(GRIP_FIN).filter(([, f]) => f.ok(gm)).map(([k, f]) => chip('mfin', '', k, b.fin === k, f.name, `にぎりやすさ ${Math.round(f.q(gm) * 100)}`, lock(f.req))).join('')}</div>`;
-    h += `<div class="grp">クリップの位置</div>${b.mat.clip === 'none' ? '<div class="muted">クリップなし（上の素材で選べる）</div>' : `<div class="muted">上のはしから <b id="mbC">${b.clipTop}</b> mm</div><input type="range" min="14" max="80" step="1" value="${b.clipTop}" data-mb="clipTop">`}`;
-    h += `<div class="grp">硬度表示窓の位置</div><div class="chips">${Object.entries(MECH_WIN).map(([k, n]) => chip('mwin', '', k, b.win === k, n, '', k !== 'none' && lock('r_hwin'))).join('')}</div>`;
     h += `<div class="grp">重心のおもり</div><div class="chips">${Object.entries(MECH_COG).map(([k, c]) => chip('mcog', '', k, b.cog === k, c.name, c.mass ? `+${c.mass}g` : '', lock(c.req))).join('')}</div>`;
     h += `<div class="grp">機能</div><div class="chips">${chip('mtog', 'cushion', '', b.cushion, '芯クッション', b.cushion ? 'あり' : 'なし', lock('r_cushion'))}${chip('mtog', 'clipret', '', b.clipret, 'クリップでパイプ収納', b.clipret ? 'あり' : 'なし', lock('r_clipret') || b.mat.clip === 'none')}</div>`;
     h += `<div class="muted" style="margin-top:10px;line-height:1.6">重心は先から全長の45%くらいより下だと、先が安定して製図をする人に好まれます。学生は軽め（10〜14g）とやわらかいグリップ、社会人は金属や木の高級感が好き。クリップが下すぎると指に当たり、硬度表示窓をクリップの下にするとかくれます。</div>`;
+    h += `<div class="grp">見本から始める（あとから部品を自由に変えられる）</div><div class="chips">${MECH_PRESETS.map(p => chip('mpre', '', p.id, false, esc(p.name), esc(p.note))).join('')}</div>`;
     return h;
   },
   studioFoot() {
