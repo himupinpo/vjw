@@ -242,6 +242,23 @@ body.event #nav, body.event #news, body.event #top, body.event #goal, body.event
 .ngq { border-top: 1px solid var(--line); padding: 8px 0; font-size: 13.5px; line-height: 1.55; }
 #nav button span { white-space: nowrap; }
 body.narrow #nav button { font-size: 10.5px; } body.narrow #nav button svg { width: 22px; height: 22px; }
+/* 用語カード */
+.tcard { display: flex; flex-direction: column; gap: 8px; }
+.tc-word { font-size: clamp(30px, 9vw, 44px); font-weight: 900; color: #7b4bc4; text-align: center; line-height: 1.15; margin: 6px 0 2px; animation: tcpop .5s cubic-bezier(.2,1.6,.4,1); letter-spacing: .02em; }
+.tc-word.long { font-size: clamp(22px, 6.4vw, 30px); }
+.tc-word.sm { font-size: 22px; animation: none; text-align: left; margin: 2px 0 0; }
+@keyframes tcpop { 0% { transform: scale(.4); opacity: 0; } 100% { transform: none; opacity: 1; } }
+.tc-ctx { font-size: 13px; color: #7b4bc4; background: #f4effc; border-radius: 10px; padding: 6px 10px; line-height: 1.5; }
+.tc-fig { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 4px; }
+.tc-fig:empty { display: none; }
+.tc-fig.sm { margin: 6px 0; }
+.tfig { display: block; width: 100%; height: auto; font-family: inherit; }
+.tc-def { font-size: 17px; font-weight: 800; line-height: 1.6; }
+.tc-more { font-size: 14px; line-height: 1.75; color: var(--ink); }
+.tc-game { font-size: 12.5px; color: var(--sub); line-height: 1.55; }
+.tc-btns { display: flex; gap: 8px; margin-top: 6px; align-items: stretch; }
+.tc-btns .btn.big { flex: 1; width: auto; }
+.link { background: none; border: 0; color: var(--sub); text-decoration: underline; font-size: 12.5px; padding: 4px; align-self: center; cursor: pointer; font-family: inherit; }
 @keyframes tin2 { from { transform: translateY(-10px); opacity: 0; } }
 .toast { animation-name: tin2; }
 </style>

@@ -1,21 +1,29 @@
 // =========================================================================================
 //  学習：用語ノート・経済クイズ（ゲームの出来事で出る）・テスト（ノートの問題を全部）・家計・経済のページ
 // =========================================================================================
-function learn(id, ctx) { LEARN.learn(id, ctx); }
+function learn(id, ctx, opt) { LEARN.learn(id, ctx, opt); }
 const normA = v => String(v || '').normalize('NFKC').replace(/[\s・･、。,.()（）「」『』]/g, '').toLowerCase();
 const LEARN = {
-  queue: [], cool: 3, drill: null, newN: 0, sel: null,
+  queue: [], cards: [], cool: 3, drill: null, newN: 0, sel: null,
   hist() { try { return JSON.parse(localStorage.getItem('bstudy-drill')) || { ok: {}, ng: {} }; } catch (e) { return { ok: {}, ng: {} }; } },
   saveHist(h) { try { localStorage.setItem('bstudy-drill', JSON.stringify(h)); } catch (e) { /* 保存できない */ } },
-  learn(id, ctx) {
+  // 新しい用語：画面に大きな用語カードを出す（図と説明 → 「次へ」で問題）
+  learn(id, ctx, opt = {}) {
     if (!S || !S.learn || !TERM_BY[id] || S.learn.seen[id]) return;
-    S.learn.seen[id] = { d: S.day, c: ctx || '' }; this.newN++;
-    UI.toast(`新しい用語「${id}」を覚えた（学習 → 用語ノート）`, 'learn'); UI.dirty();
-    if ((SET.quiz || 'mid') !== 'off' && Math.random() < (SET.quiz === 'many' ? 0.9 : 0.55)) this.ask(id, ctx);
+    S.learn.seen[id] = { d: S.day, c: ctx || '' }; this.newN++; UI.dirty();
+    if (opt.quiet) return;
+    if ((SET.quiz || 'mid') === 'off') { UI.toast(`新しい用語「${id}」（学習 → 用語ノート）`, 'learn'); return; }
+    this.cards.push({ t: id, ctx: ctx || '', kind: 'new' });
+  },
+  // もう知っている用語がまた起きた（超過需要など）：ときどき大きく出す
+  again(id, ctx) {
+    if (!S || (SET.quiz || 'mid') === 'off' || !S.learn.seen[id]) return false;
+    const A = S.learn.again || (S.learn.again = {}); if (S.day - (A[id] ?? -999) < 150 || this.cards.some(c => c.t === id)) return false;
+    A[id] = S.day; this.cards.push({ t: id, ctx: ctx || '', kind: 'again' }); return true;
   },
   // その用語の問題をクイズに出す（まだ正解していない問題から）
   ask(id, ctx) {
-    if (!S || (SET.quiz || 'mid') === 'off') return; const qs = TERM_Q[id] || []; if (!qs.length || this.queue.some(x => x.t === id) || this.queue.length > 3) return;
+    if (!S || (SET.quiz || 'mid') === 'off') return; const qs = TERM_Q[id] || []; if (!qs.length || this.queue.some(x => x.t === id) || this.cards.some(c => c.t === id) || this.queue.length > 3) return;
     const L = S.learn, qi = qs.slice().sort((a, b) => (L.ok[a] || 0) - (L.ok[b] || 0) || Math.random() - 0.5)[0];
     this.queue.push({ qi, t: id, ctx: ctx || '' });
   },
@@ -27,7 +35,38 @@ const LEARN = {
       const pool = seen.flatMap(t => (TERM_Q[t] || []).map(qi => [qi, t])); if (pool.length) { pool.sort((a, b) => ((S.learn.ng[b[0]] || 0) - (S.learn.ok[b[0]] || 0)) - ((S.learn.ng[a[0]] || 0) - (S.learn.ok[a[0]] || 0)) || Math.random() - 0.5); const [qi, t] = pool[(Math.random() * Math.min(6, pool.length)) | 0]; this.queue.push({ qi, t, ctx: '復習' }); }
       S.learn.quizDay = S.day;
     }
-    if (this.queue.length && this.cool <= 0 && !UI.modalOpen && !UI.studio && !EVENT.active && !FURNI.on && !UI.queue.length && !UI.choiceQ.length) this.showQuiz(this.queue.shift());
+    const idle = !UI.modalOpen && !UI.studio && !EVENT.active && !FURNI.on && !UI.queue.length && !UI.choiceQ.length;
+    if (this.cards.length && idle && this.cool <= 18) { this.showCard(this.cards.shift()); return; }
+    if (this.queue.length && this.cool <= 0 && idle) this.showQuiz(this.queue.shift());
+  },
+  // ---------- 用語カード ----------
+  showCard(c) {
+    this.cool = Math.max(this.cool, 4);
+    UI.modalState = { card: Object.assign({ step: 'card', done: false, n: 0 }, c) }; this.renderCard();
+    if (c.kind === 'new') AU.chime(); else AU.click();
+  },
+  renderCard() {
+    const st = UI.modalState && UI.modalState.card; if (!st) return;
+    const T = TERM_BY[st.t], more = this.cards.length, head = `<div class="row sb"><span class="pill ${st.kind === 'new' ? 'blue' : 'gold'}">${st.kind === 'new' ? '新しい用語を覚えた！' : 'また起きた！'}</span><span class="muted">${esc(T.sec)}</span></div>`;
+    if (st.step === 'card') {
+      UI.showModal(`<div class="tcard">${head}<div class="tc-word ${T.id.length > 7 ? 'long' : ''}">${esc(T.id)}</div>${st.ctx ? `<div class="tc-ctx">いま起きたこと：${esc(st.ctx)}</div>` : ''}<div class="tc-fig">${termFig(T.id)}</div><div class="tc-def">${esc(T.d)}</div>${EXPL[T.id] ? `<div class="tc-more">${esc(EXPL[T.id])}</div>` : ''}<div class="tc-game">ゲームでは：${esc(T.g)}</div>
+        <div class="tc-btns"><button class="btn sub" data-act="Ltx" type="button">${more ? `あとで（ほか${more}つ）` : 'とじる'}</button><button class="btn big green" data-act="Ltn" type="button">次へ：問題を解く ▶</button></div>${more > 1 ? '<button class="link" data-act="Ltz" type="button">ほかの用語はノートでまとめて見る</button>' : ''}</div>`);
+      return;
+    }
+    const q = ECON_Q[st.qi], right = this.rightLabel(q);
+    let h = `<div class="tcard">${head}<div class="tc-word sm">${esc(T.id)}</div><div class="muted" style="margin-top:2px">期末テスト対策の問題（${esc(q.sec)}${q.imp >= 3 ? '・★★★' : ''}）</div><h3 class="qq">${esc(q.q)}</h3><div class="chlist">${st.ch.map((c, i) => `<button class="chopt ${st.done ? (c === right ? 'right' : i === st.pick ? 'wrong' : '') : ''}" data-act="Lta" data-i="${i}" type="button" ${st.done ? 'disabled' : ''}><b>${'ABCD'[i]}</b><span>${esc(c)}</span></button>`).join('')}</div>`;
+    if (st.done) {
+      const others = (TERM_Q[st.t] || []).filter(i => !st.asked.includes(i));
+      h += `<div class="verdict ${st.ok ? 'ok' : 'ng'}"><b>${st.ok ? `正解！ +${st.bonus} RP` : 'ざんねん…'}</b><span>答え：<b class="ans">${esc(q.type === 'l' ? q.ans[0][0] : q.ans.map(g => g.join('＝')).join('・'))}</b></span><span class="muted">${esc(T.d)}</span></div>`;
+      h += `<div class="tc-btns">${others.length ? '<button class="btn sub" data-act="Lt2" type="button">もう1問</button>' : ''}<button class="btn big" data-act="Ltx" type="button">${this.cards.length ? `次の用語へ（あと${this.cards.length}つ）` : 'とじる'}</button></div>`;
+    } else h += `<div class="tc-btns"><button class="btn sub small" data-act="Ltb" type="button">◀ 説明にもどる</button></div>`;
+    UI.showModal(h + '</div>');
+  },
+  cardQuestion(st) {
+    const qs = TERM_Q[st.t] || []; st.asked = st.asked || [];
+    const cand = qs.filter(i => !st.asked.includes(i)), L = S.learn; if (!cand.length) return false;
+    const qi = cand.slice().sort((a, b) => (L.ok[a] || 0) - (L.ok[b] || 0) || a - b)[0];
+    st.asked.push(qi); Object.assign(st, { step: 'q', qi, ch: this.choices(ECON_Q[qi]), done: false, pick: -1 }); return true;
   },
   // 4択の選択肢
   choices(q) {
@@ -79,7 +118,7 @@ const LEARN = {
     h += `<div class="chips" style="margin-bottom:8px">${ECON_SECS.map(s => { const ts = TERMS.filter(t => t.sec === s), n = ts.filter(t => S.learn.seen[t.id]).length; return `<button class="chip ${s === sec ? 'on' : ''}" data-act="Lsec" data-v="${s}" type="button">${s}<small>${n}/${ts.length}</small></button>`; }).join('')}</div>`;
     for (const t of TERMS.filter(x => x.sec === sec)) {
       const sn = S.learn.seen[t.id], qs = TERM_Q[t.id] || [], okN = qs.filter(i => P.okSet.has(i)).length;
-      h += `<div class="card term ${sn ? '' : 'unseen'}"><div class="row sb"><h3 style="margin:0">${esc(t.id)}</h3>${sn ? '<span class="pill green">出会った</span>' : '<span class="pill">まだ</span>'}</div><div class="tdef">${esc(t.d)}</div><div class="muted tgame">ゲームでは：${esc(t.g)}</div>${sn ? `<div class="muted tctx">${dateStr(sn.d)}　${esc(sn.c)}</div>` : ''}${qs.length ? `<div class="row sb" style="margin-top:6px"><span class="muted">この用語の問題 ${okN}/${qs.length} 正解ずみ</span><button class="btn small sub" data-act="Lterm" data-v="${esc(t.id)}" type="button">問題を解く</button></div>` : ''}</div>`;
+      h += `<div class="card term ${sn ? '' : 'unseen'}"><div class="row sb"><h3 style="margin:0">${esc(t.id)}</h3>${sn ? '<span class="pill green">出会った</span>' : '<span class="pill">まだ</span>'}</div><div class="tdef">${esc(t.d)}</div><div class="tc-fig sm">${termFig(t.id)}</div>${EXPL[t.id] ? `<div class="tc-more">${esc(EXPL[t.id])}</div>` : ''}<div class="muted tgame">ゲームでは：${esc(t.g)}</div>${sn ? `<div class="muted tctx">${dateStr(sn.d)}　${esc(sn.c)}</div>` : ''}${qs.length ? `<div class="row sb" style="margin-top:6px"><span class="muted">この用語の問題 ${okN}/${qs.length} 正解ずみ</span><button class="btn small sub" data-act="Lterm" data-v="${esc(t.id)}" type="button">問題を解く</button></div>` : ''}</div>`;
     }
     return h;
   },
@@ -135,7 +174,7 @@ const LEARN = {
   },
   // ---------- 家計 ----------
   pHome() {
-    for (const t of ['家計', '収入', '支出', '消費支出', '貯蓄']) learn(t, '「学習」の「家計」を見た');
+    for (const t of ['家計', '収入', '支出', '消費支出', '貯蓄']) learn(t, '「学習」の「家計」を見た', { quiet: true });
     const B = hhBook(), w = v => (v / B.inc * 100).toFixed(1) + '%', mul = econMul();
     let h = `<div class="card"><h3>お客さんの家計（モデルの家族の1か月）</h3><div class="muted">文房具を買ってくれるのは、家庭（家計）です。家計に余裕があるほど、文房具がよく売れます。</div>
       <div class="hbar">${[['非消費支出', B.non, '#c8433a'], ['消費支出', B.cons, '#2b6fd6'], ['貯蓄', B.sav, '#2e9a63']].map(([n, v, c]) => `<i style="width:${w(v)};background:${c}" title="${n}"></i>`).join('')}</div>
@@ -162,6 +201,18 @@ const LEARN = {
   // ---------- クリック ----------
   onClick(a, b) {
     if (a === 'Lq') return this.answerQuiz(+b.dataset.i);
+    if (a[1] === 't' && UI.modalState && UI.modalState.card) {
+      const st = UI.modalState.card;
+      if (a === 'Ltn' || a === 'Lt2') { if (!this.cardQuestion(st)) { UI.closeModal(); return; } AU.click(); return this.renderCard(); }
+      if (a === 'Ltb') { st.step = 'card'; return this.renderCard(); }
+      if (a === 'Lta') {
+        if (st.done) return; st.done = true; st.pick = +b.dataset.i; const q = ECON_Q[st.qi]; st.ok = st.ch[st.pick] === this.rightLabel(q); st.bonus = 4 + 4 * S.tier;
+        if (st.ok) { S.rp += st.bonus; AU.chime(); } else AU.bad();
+        this.record(st.qi, st.ok); return this.renderCard();
+      }
+      if (a === 'Ltz') { this.cards.length = 0; UI.closeModal(); UI.sub.learn = 'note'; UI.open('learn'); return; }
+      if (a === 'Ltx') { UI.closeModal(); this.cool = Math.max(this.cool, 0.6); return; }
+    }
     if (a === 'Lskip') { const st = UI.modalState && UI.modalState.quiz; if (st && !st.done) this.queue.push({ qi: st.qi, t: st.t, ctx: '' }); UI.closeModal(); this.cool = st && st.done ? 12 : 60; return; }
     if (a === 'Lsec') { this.sel = b.dataset.v; }
     else if (a === 'Lterm') { const id = b.dataset.v; this.cfg = this.cfg || { secs: ECON_SECS.slice(), mode: 'choice', order: 'seq' }; this.drill = { list: (TERM_Q[id] || []).slice(), i: 0, ok: 0, ng: [], cur: null }; UI.sub.learn = 'test'; }

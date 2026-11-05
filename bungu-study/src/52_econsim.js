@@ -65,8 +65,8 @@ function econWeek() {
     p.wDemL = p.wDem || 0; p.wProdL = (p.wProd || 0) / 7; p.wShortL = p.wShort || 0; p.wDem = 0; p.wProd = 0; p.wShort = 0; supplyBase(p);
     const days = p.dEMA > 0.01 ? (p.stock || 0) / p.dEMA : 0, shortR = p.wDemL > 0 ? p.wShortL / p.wDemL : 0;
     p.state = days > 10 && p.wProdL * 7 > p.wDemL * 1.05 ? 'over' : shortR > 0.06 ? 'short' : 'ok';
-    if (p.state === 'over' && (!p.warnO || S.day - p.warnO > 70)) { p.warnO = S.day; UI.toast(`「${p.name}」が売れ残っています（超過供給：需要＜供給）。値段を下げると売れやすい`, 'bad'); learn('超過供給', `「${p.name}」の在庫が${Math.round(days)}日分になった`); }
-    if (p.state === 'short' && (!p.warnS || S.day - p.warnS > 70)) { p.warnS = S.day; UI.toast(`「${p.name}」が品薄です（超過需要：需要＞供給）。値段を上げても売れそう`, 'gold'); learn('超過需要', `「${p.name}」が${Math.round(shortR * 100)}%品切れした`); }
+    if (p.state === 'over' && (!p.warnO || S.day - p.warnO > 70)) { p.warnO = S.day; const cx = `「${p.name}」が売れ残り、在庫が${Math.round(days)}日分になった。値段を下げると売れやすい`; if (S.learn.seen['超過供給']) { if (!LEARN.again('超過供給', cx)) UI.toast(`「${p.name}」が売れ残っています（超過供給）`, 'bad'); } else learn('超過供給', cx); }
+    if (p.state === 'short' && (!p.warnS || S.day - p.warnS > 70)) { p.warnS = S.day; const cx = `「${p.name}」が${Math.round(shortR * 100)}%品切れした。値段を上げても売れそう`; if (S.learn.seen['超過需要']) { if (!LEARN.again('超過需要', cx)) UI.toast(`「${p.name}」が品薄です（超過需要）`, 'gold'); } else learn('超過需要', cx); }
     if (p.auto && !(S.ev.cartel && S.day < S.ev.cartel.until)) {   // 神の見えざる手：売れ残れば下げ、品薄なら上げる
       const c = costOf(p), P0 = p.price; let P = P0;
       if (p.state === 'over') P = P0 * (days > 30 ? 0.93 : 0.97); else if (p.state === 'short') P = P0 * (shortR > 0.3 ? 1.08 : 1.04); else { const pe = balPrice(p); P = P0 + (pe - P0) * 0.25; }
