@@ -30,6 +30,7 @@ button { font-family: inherit; color: inherit; cursor: pointer; }
 #tB { left: calc(50% + 76px); }
 .teamRow i { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: 15px; border: 2.5px solid rgba(255,255,255,.85); box-shadow: 0 2px 0 rgba(0,0,0,.35); }
 .teamRow i.dead { opacity: .3; filter: grayscale(1); border-style: dashed; }
+.teamRow i svg { width: 70%; height: 70%; }
 .teamRow i.me { outline: 3px solid #fff; outline-offset: 1px; }
 .teamRow i.spOn { box-shadow: 0 0 0 3px #fff8, 0 0 12px #fff; }
 #mini { position: absolute; left: calc(10px + var(--sal)); bottom: calc(10px + var(--sab)); width: 104px; height: 156px; border-radius: 10px; border: 2px solid rgba(255,255,255,.5); background: #1b1925; image-rendering: pixelated; }
@@ -83,7 +84,9 @@ body.hub #pauseB { right: calc(10px + var(--sar)); }
 /* ---------- 画面（タイトル・ブキ・結果） ---------- */
 .screen { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; overflow-y: auto; touch-action: pan-y;
   padding: calc(18px + var(--sat)) calc(14px + var(--sar)) calc(22px + var(--sab)) calc(14px + var(--sal)); }
-#title { justify-content: center; background: radial-gradient(120% 90% at 50% 110%, rgba(13,11,18,.92) 30%, rgba(13,11,18,.35) 80%); }
+#title { justify-content: flex-start; background: radial-gradient(120% 90% at 50% 110%, rgba(13,11,18,.92) 30%, rgba(13,11,18,.35) 80%); }
+#title > :first-child { margin-top: auto; } #title > :last-child { margin-bottom: auto; }
+@media (max-height: 640px) { #title .logo { font-size: 46px; } #title .tag { margin: 10px 0 8px; font-size: 12.5px; } #title .btn { min-height: 44px; } #title .btn.main { min-height: 52px; font-size: 19px; } }
 .logo { font-family: var(--d); font-size: clamp(44px, 12vmin, 104px); line-height: 1; letter-spacing: .02em; text-align: center; position: relative;
   color: #fff; text-shadow: 0 5px 0 var(--cB), 0 10px 0 rgba(0,0,0,.35); transform: rotate(-3deg); }
 .logo span { color: var(--cA); }
@@ -131,6 +134,30 @@ table.st { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 13
 table.st td { padding: 4px 6px; border-bottom: 1px solid var(--line); }
 table.st tr.me td { background: rgba(255,255,255,.08); font-weight: 900; }
 table.st td.n { text-align: right; font-variant-numeric: tabular-nums; }
+/* ゾーン争奪のカウント */
+#zoneBar { position: absolute; top: calc(52px + var(--sat)); left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; font-family: var(--d); text-shadow: 0 2px 0 rgba(0,0,0,.4); }
+#zoneBar b { min-width: 44px; padding: 2px 8px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 400; }
+#zA { background: var(--cA); } #zB { background: var(--cB); color: #111; }
+#zMid { width: 70px; height: 26px; border-radius: 8px; border: 2px solid #fff; position: relative; overflow: hidden; background: #4a4757; }
+#zMid i { position: absolute; top: 0; bottom: 0; opacity: .85; }
+#zBarA { left: 0; background: var(--cA); } #zBarB { right: 0; background: var(--cB); }
+#zMid span { position: absolute; inset: 0; display: grid; place-items: center; font-size: 11px; font-family: var(--f); font-weight: 900; }
+/* 撃たれたときのしぶき */
+#splats { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.splat { position: absolute; animation: splatFade 1.6s ease-in forwards; opacity: .9; }
+.splat svg { width: 100%; height: 100%; }
+@keyframes splatFade { 0% { transform: scale(.4); opacity: .95; } 15% { transform: scale(1); } 70% { opacity: .75; } 100% { opacity: 0; transform: translateY(18px) scale(1.04); } }
+/* スーパージャンプ */
+#sjBtn { pointer-events: auto; position: absolute; left: calc(10px + var(--sal)); bottom: calc(172px + var(--sab)); padding: 6px 10px; border-radius: 10px; border: 2px solid rgba(255,255,255,.5); background: rgba(0,0,0,.45); font-size: 12px; font-weight: 900; }
+#mini { pointer-events: auto; cursor: pointer; }
+#jumpUI { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(360px, 92%); max-height: 80%; overflow-y: auto; pointer-events: auto; background: rgba(20,18,28,.94); border: 2px solid rgba(255,255,255,.3); border-radius: 18px; padding: 12px; z-index: 5; }
+#jumpUI h3 { margin: 0 0 8px; font-family: var(--d); font-weight: 400; font-size: 18px; display: flex; justify-content: space-between; align-items: center; }
+#jumpList { display: flex; flex-direction: column; gap: 6px; }
+#jumpList .btn { min-height: 44px; font-size: 15px; text-align: left; }
+.zres { font-family: var(--d); font-size: 26px; margin-top: 4px; }
+.zres small { display: block; font-family: var(--f); font-size: 11px; font-weight: 700; opacity: .75; }
+.tabs button small { margin-left: 4px; font-size: 10px; opacity: .65; }
+.chips.stage button.on { background: #fff; color: #15121d; border-color: #fff; }
 #load { position: absolute; inset: 0; display: grid; place-items: center; background: #0d0b12; font-weight: 800; z-index: 50; }
 .help { font-size: 12.5px; line-height: 1.75; opacity: .9; }
 .help b { color: #fff; }
@@ -147,9 +174,11 @@ table.st td.n { text-align: right; font-variant-numeric: tabular-nums; }
 <div id="rot">
 <canvas id="c"></canvas>
 <div id="hud" class="hidden">
+  <div id="splats"></div>
   <div id="vig"></div>
   <div id="timer">3:00</div>
   <div class="teamRow" id="tA"></div><div class="teamRow" id="tB"></div>
+  <div id="zoneBar" class="hidden"><b id="zA">100</b><div id="zMid"><i id="zBarA"></i><i id="zBarB"></i><span>ゾーン</span></div><b id="zB">100</b></div>
   <canvas id="mini" width="128" height="192"></canvas>
   <div id="wpName"></div>
   <svg id="charge" viewBox="0 0 64 64" class="hidden"><circle cx="32" cy="32" r="27" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="5"/><circle id="chargeArc" cx="32" cy="32" r="27" fill="none" stroke="#fff" stroke-width="5" stroke-dasharray="0 170" transform="rotate(-90 32 32)" stroke-linecap="round"/></svg>
@@ -168,14 +197,18 @@ table.st td.n { text-align: right; font-variant-numeric: tabular-nums; }
     <div class="tb" id="bDive">もぐる</div>
     <div class="tb" id="bFire">うつ</div>
   </div>
+  <button id="sjBtn">ジャンプ先（R）</button>
+  <div id="jumpUI" class="hidden"><h3>スーパージャンプ<button class="x" data-close="jumpUI">×</button></h3><div id="jumpList"></div></div>
   <button id="pauseB">II</button>
 </div>
 
 <div id="title" class="screen hidden">
   <div class="logo">ペイント<span>リーグ</span></div>
-  <div class="tag">4対4のぬりあいバトル。3分間で、より広く自分の色にぬったチームの勝ち！<br>自分の色のペンキにもぐると、すばやく泳いでペンキを補給できる。</div>
+  <div class="tag">4対4のぬりあいバトル。自分の色のペンキにもぐると、すばやく泳いでペンキを補給できる。<br>自分の色にぬった壁は、もぐったまま進むとのぼれる。</div>
   <div class="col">
-    <button class="btn main" id="goBattle">ぬりあいバトル<small>4対4・3分</small></button>
+    <button class="btn main" id="goBattle">ぬりあいバトル<small>4対4・3分・ぬった広さで勝負</small></button>
+    <button class="btn sub2" id="goZone" style="background:#ffe14d">ゾーン争奪<small>まんなかのゾーンを6割ぬると確保。カウントを先に0に</small></button>
+    <div class="chips stage" id="stageChips" style="justify-content:center;margin:2px 0"></div>
     <button class="btn" id="goWeapon"><div class="wcard" id="wcard"></div></button>
     <button class="btn sub2" id="goPractice">試しうち<small>まとを相手にブキをためす</small></button>
     <button class="btn" id="goSet">設定・操作</button>
@@ -200,9 +233,9 @@ table.st td.n { text-align: right; font-variant-numeric: tabular-nums; }
   <div class="chips" id="musChips"><button data-m="1">音楽あり</button><button data-m="0">音楽なし</button></div>
   <div class="chips" id="qChips"><button data-q="low">画質：軽い</button><button data-q="mid">画質：ふつう</button><button data-q="high">画質：きれい</button></div>
   <div class="help">
-    <b>パソコン</b>：<span class="kbd">W A S D</span> 移動 ／ マウス 視点（画面をクリックで固定）／ <span class="kbd">左クリック</span> うつ ／ <span class="kbd">Shift</span>・<span class="kbd">右クリック</span> もぐる ／ <span class="kbd">Space</span> ジャンプ ／ <span class="kbd">E</span> サブ ／ <span class="kbd">Q</span> スペシャル ／ <span class="kbd">Esc</span> 一時停止<br>
+    <b>パソコン</b>：<span class="kbd">W A S D</span> 移動 ／ マウス 視点（画面をクリックで固定）／ <span class="kbd">左クリック</span> うつ ／ <span class="kbd">Shift</span>・<span class="kbd">右クリック</span> もぐる ／ <span class="kbd">Space</span> ジャンプ ／ <span class="kbd">E</span> サブ ／ <span class="kbd">Q</span> スペシャル ／ <span class="kbd">R</span> スーパージャンプ ／ <span class="kbd">Esc</span> 一時停止<br>
     <b>スマホ</b>：左側をなぞって移動、右側をなぞって視点。「うつ」は押したまま指を動かすとねらいも動きます。「もぐる」は押している間だけ。<br>
-    <b>ルール</b>：自分の色の上でもぐると速く泳げて、ペンキがたまります。相手の色の上は動きがおそく、少しずつダメージ。ぬるとスペシャルがたまり、満タンで使えます。水に落ちるとやられます。
+    <b>ルール</b>：自分の色の上でもぐると速く泳げて、ペンキがたまります。自分の色の壁にもぐったまま進むと、壁をのぼれます。ミニマップ（または「ジャンプ先」）から味方の所へスーパージャンプできます。相手の色の上は動きがおそく、少しずつダメージ。ぬるとスペシャルがたまり、満タンで使えます。水に落ちるとやられます。
   </div>
 </div></div>
 

@@ -6,12 +6,18 @@ function toTitle() {
   G.state = 'title'; G.paused = false; AU.musicOn(false);
   try { document.exitPointerLock(); } catch (e) { /* */ }
   hideScreens(); $('hud').classList.add('hidden'); $('title').classList.remove('hidden');
-  drawWeaponCard();
+  closeJumpUI();
+  drawWeaponCard(); drawTitleChips();
   $('recLine').textContent = REC.games ? `これまで ${REC.games} 試合・${REC.wins} 勝・たおした数 ${REC.kills}・いちばんぬった ${REC.best}㎡` : '';
 }
 function drawWeaponCard() {
   const w = WBY[SET.weapon];
-  $('wcard').innerHTML = `${classIcon(w.cls, G.pal[0])}<div><div class="t">${w.name}</div><div class="s">${CLASSES[w.cls].name}・サブ：${SUBS[w.sub].name}<br>スペシャル：${SPECIALS[w.sp].name}　<u>ブキをかえる</u></div></div>`;
+  $('wcard').innerHTML = `${classIcon(w.cls, G.pal[0])}<div><div class="t">${w.name}</div><div class="s">${CLASSES[w.cls].name}・サブ：${SUBS[w.sub].name}<br>スペシャル：${SPECIALS[w.sp].name}　<u>ブキをかえる（全${WEAPONS.length}種）</u></div></div>`;
+}
+function drawTitleChips() {
+  const st = $('stageChips');
+  st.innerHTML = [['random', 'ランダム'], ...STAGE_IDS.map(id => [id, STAGES[id].name])].map(([id, n]) => `<button data-s="${id}" class="${SET.stage === id ? 'on' : ''}">${n}</button>`).join('');
+  st.querySelectorAll('button').forEach(b => b.onclick = () => { AU.ui(); SET.stage = b.dataset.s; saveSet(); drawTitleChips(); if (SET.stage !== 'random' && SET.stage !== STAGE_ID) { loadStage(SET.stage); } });
 }
 let armCls = null, armSel = null, armFrom = 'title';
 function openArmory(from) {
@@ -19,7 +25,7 @@ function openArmory(from) {
   hideScreens(); $('armory').classList.remove('hidden'); drawArmory();
 }
 function drawArmory() {
-  $('clsTabs').innerHTML = CLASS_ORDER.map(c => `<button data-c="${c}" class="${c === armCls ? 'on' : ''}">${CLASSES[c].name}</button>`).join('');
+  $('clsTabs').innerHTML = CLASS_ORDER.map(c => `<button data-c="${c}" class="${c === armCls ? 'on' : ''}">${CLASSES[c].name}<small>${WEAPONS.filter(w => w.cls === c).length}</small></button>`).join('');
   $('wgrid').innerHTML = WEAPONS.filter(w => w.cls === armCls).map(w => `<button class="witem ${w.id === armSel ? 'on' : ''}" data-w="${w.id}">${classIcon(w.cls, w.id === armSel ? G.pal[0] : '#fff')}<div><b>${w.name}</b><span>${SUBS[w.sub].name}／${SPECIALS[w.sp].name}</span></div></button>`).join('');
   const w = WBY[armSel], st = wStats(w), bar = (n, v) => `<div>${n}<i><u style="width:${Math.round(v * 100)}%"></u></i></div>`;
   $('wdetail').innerHTML = `<div><b style="font-size:17px">${w.name}</b><p>${CLASSES[w.cls].desc}</p><p>${w.desc}</p></div>
@@ -33,7 +39,7 @@ $('wOk').onclick = () => {
   if (armFrom === 'pause' && G.me) { setPlayerWeapon(WBY[armSel]); hideScreens(); togglePause(false); }
   else toTitle();
 };
-document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => { AU.ui(); const id = b.dataset.close; $(id).classList.add('hidden'); if ((id === 'armory' && armFrom === 'pause') || (id === 'settings' && setFrom === 'pause')) $('pause').classList.remove('hidden'); else if (G.state === 'title') toTitle(); });
+document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => { AU.ui(); const id = b.dataset.close; $(id).classList.add('hidden'); if (id === 'jumpUI') return; if ((id === 'armory' && armFrom === 'pause') || (id === 'settings' && setFrom === 'pause')) $('pause').classList.remove('hidden'); else if (G.state === 'title') toTitle(); });
 let setFrom = 'title';
 function openSettings(from) {
   setFrom = from; hideScreens(); $('settings').classList.remove('hidden');
@@ -46,14 +52,17 @@ $('invChips').onclick = e => { const b = e.target.closest('button'); if (!b) ret
 $('musChips').onclick = e => { const b = e.target.closest('button'); if (!b) return; SET.music = b.dataset.m === '1'; saveSet(); AU.applyVol(); openSettings(setFrom); };
 $('qChips').onclick = e => { const b = e.target.closest('button'); if (!b) return; SET.quality = b.dataset.q; saveSet(); applyQuality(); openSettings(setFrom); };
 $('sens').oninput = () => { SET.sens = +$('sens').value; $('sensV').textContent = SET.sens.toFixed(1); saveSet(); };
-$('goBattle').onclick = () => { AU.init(); AU.ui(); startMatch('battle'); };
+$('goBattle').onclick = () => { AU.init(); AU.ui(); startMatch('turf'); };
+$('goZone').onclick = () => { AU.init(); AU.ui(); startMatch('zone'); };
 $('goPractice').onclick = () => { AU.init(); AU.ui(); startMatch('practice'); };
 $('goWeapon').onclick = () => { AU.init(); AU.ui(); openArmory('title'); };
 $('goSet').onclick = () => { AU.init(); AU.ui(); openSettings('title'); };
+$('sjBtn').onclick = () => { AU.ui(); if ($('jumpUI').classList.contains('hidden')) openJumpUI(); else closeJumpUI(); };
+$('mini').addEventListener('pointerdown', e => { if (G.state === 'play' && G.mode !== 'practice') { e.stopPropagation(); openJumpUI(); } });
 function togglePause(on) {
   if (G.state !== 'play' && G.state !== 'count') return;
   G.paused = on; IN.mouseFire = IN.mouseDive = IN.tFire = IN.tDive = false;
-  if (on) { try { document.exitPointerLock(); } catch (e) { /* */ } hideScreens(); $('pause').classList.remove('hidden'); $('pWeapon').disabled = G.mode !== 'practice'; $('pWeapon').style.opacity = G.mode === 'practice' ? 1 : .4; }
+  if (on) { try { document.exitPointerLock(); } catch (e) { /* */ } hideScreens(); closeJumpUI(); $('pause').classList.remove('hidden'); $('pWeapon').disabled = G.mode !== 'practice'; $('pWeapon').style.opacity = G.mode === 'practice' ? 1 : .4; }
   else $('pause').classList.add('hidden');
 }
 $('pauseB').onclick = () => { AU.ui(); togglePause(true); };

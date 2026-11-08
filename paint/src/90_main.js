@@ -7,7 +7,7 @@ function applyHome(S) {
   if (typeof S.vol === 'number') HUB.vol = clamp(S.vol, 0, 1);
   AU.applyVol();
 }
-// タイトルの後ろ：ステージの上をゆっくり回り、ときどきペンキが飛ぶ
+// タイトルの後ろ：ステージの上をゆっくり回り、ときどきペンキが飛ぶ（床と壁）
 let titleSplat = 0;
 function titleTick(dt) {
   clock += dt;
@@ -17,8 +17,9 @@ function titleTick(dt) {
   titleSplat -= dt;
   if (titleSplat <= 0) {
     titleSplat = .12;
-    const x = rand(-28, 28), z = rand(-46, 46), t = z > 0 ? (Math.random() < .7 ? 1 : 2) : (Math.random() < .7 ? 2 : 1);
-    paintCircle(x, hAt(x, z) + .2, z, rand(1, 2.6), t);
+    const x = rand(GROUND[0] + 2, GROUND[2] - 2), z = rand(GROUND[1] + 2, GROUND[3] - 2), t = z > 0 ? (Math.random() < .7 ? 1 : 2) : (Math.random() < .7 ? 2 : 1);
+    const r2 = rand(1, 2.6);
+    paintCircle(x, hAt(x, z) + .2, z, r2, t); paintWallsNear(x, hAt(x, z) + .6, z, r2 * .8, t);
     if ((PCNT[1] + PCNT[2]) / PTOTAL > .55) clearPaint();
   }
   sun.position.set(30, 60, 20); sun.target.position.set(0, 0, 0); sun.target.updateMatrixWorld();
@@ -37,19 +38,20 @@ async function boot() {
     addEventListener('message', e => { if (e.data && e.data.h3dSet) applyHome(e.data.h3dSet); });
   }
   onResize();
-  buildHeight(); buildNav(); buildTerrain(scene);
-  G.pal = PALETTES[0].slice(); setTeamColors(G.pal[0], G.pal[1]); refreshTeamMats();
+  G.pal = PALETTES[0].slice(); refreshTeamMats();
+  loadStage(SET.stage && STAGES[SET.stage] ? SET.stage : 'minato');
   applyQuality();
   try { await Promise.race([document.fonts.load('400 20px "Dela Gothic One"', 'ペイントリーグ'), new Promise(r => setTimeout(r, 2000))]); } catch (e) { /* 文字が読めなくてもつづける */ }
   $('load').classList.add('hidden');
   toTitle();
   requestAnimationFrame(loop);
-  // 最初にさわったら音を出せるように
   addEventListener('pointerdown', () => AU.init(), { once: true });
 }
 // テスト用
 window.__P = {
-  G, SET, actors, proj, devices, WEAPONS, WBY, PCNT, get PTOTAL() { return PTOTAL; }, startMatch, toTitle, setPlayerWeapon, useSpecial, throwSub, hAt, paintAtCell, findPath, navOf, NOK, clearPaint,
+  G, SET, actors, proj, devices, WEAPONS, WBY, SUBS, SPECIALS, STAGES, PCNT, get PTOTAL() { return PTOTAL; }, get STAGE_ID() { return STAGE_ID; }, get ZONE() { return ZONE; }, FACES,
+  startMatch, toTitle, setPlayerWeapon, useSpecial, throwSub, startSuperJump, loadStage, hAt, paintAtCell, findPath, navOf, NOK, clearPaint, paintFace, wallTeamAt, crossFace, BOXES: () => BOXES,
+  wallPainted() { let n = 0; for (let i = 0; i < WP.length; i++) if (WP[i]) n++; return n; },
   hold(v) { hold = !!v; },
   step(sec, dt = 1 / 60, draw = true) { for (let t = 0; t < sec; t += dt) { if (G.state === 'title') titleTick(dt); else update(dt); } if (draw) renderer.render(scene, camera); },
   input: IN, renderer, camera

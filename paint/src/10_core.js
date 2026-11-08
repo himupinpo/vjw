@@ -15,7 +15,7 @@ const store = {
   get(k, d) { try { const v = localStorage.getItem(SK + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem(SK + k, JSON.stringify(v)); } catch (e) { /* 保存できない環境 */ } }
 };
-const SET = Object.assign({ weapon: 'basic', diff: 1, sens: 1, invY: false, music: true, quality: 'mid' }, store.get('set', {}));
+const SET = Object.assign({ weapon: 'basic', diff: 1, sens: 1, invY: false, music: true, quality: 'mid', stage: 'random' }, store.get('set', {}));
 const saveSet = () => store.set('set', SET);
 const REC = Object.assign({ games: 0, wins: 0, kills: 0, paint: 0, best: 0 }, store.get('rec', {}));
 const saveRec = () => store.set('rec', REC);
@@ -30,10 +30,10 @@ const toStage = (cx, cy) => (ROT.on ? { x: cy, y: innerWidth - cx } : { x: cx, y
 // ================= 入力（キーボード・マウス・タッチ） =================
 const IN = {
   keys: new Set(), lookX: 0, lookY: 0, mouseFire: false, mouseDive: false,
-  jumpE: false, subE: false, spE: false, touchOn: matchMedia('(pointer: coarse)').matches,
+  jumpE: false, subE: false, spE: false, sjE: false, touchOn: matchMedia('(pointer: coarse)').matches,
   stick: null, stickX: 0, stickY: 0, tFire: false, tDive: false, looks: new Map()
 };
-const GAME_KEYS = ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'ShiftLeft', 'ShiftRight', 'KeyE', 'KeyQ'];
+const GAME_KEYS = ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'ShiftLeft', 'ShiftRight', 'KeyE', 'KeyQ', 'KeyR'];
 addEventListener('keydown', e => {
   if (GAME_KEYS.includes(e.code) && G.state === 'play') e.preventDefault();
   if (e.repeat) return;
@@ -41,6 +41,7 @@ addEventListener('keydown', e => {
   if (e.code === 'Space') IN.jumpE = true;
   if (e.code === 'KeyE') IN.subE = true;
   if (e.code === 'KeyQ') IN.spE = true;
+  if (e.code === 'KeyR') IN.sjE = true;
   if (e.code === 'Escape' && G.state === 'play') togglePause(true);
 });
 addEventListener('keyup', e => IN.keys.delete(e.code));
@@ -173,10 +174,12 @@ const AU = (() => {
       if (cls === 'slosher') { noise(.35, 'bandpass', 600, 300, 1.5, .5 * g); return; }
       if (cls === 'blade') { noise(.18, 'bandpass', 3000, 900, 2, .45 * g); return; }
       if (cls === 'stringer') { tone(600, .12, .25 * g, 'triangle', 0, 300); noise(.12, 'highpass', 3000, 2000, 1, .2 * g); return; }
+      if (cls === 'hose') { noise(.16, 'bandpass', 1400 + Math.random() * 300, 900, 1.5, .22 * g); return; }
       noise(.07, 'bandpass', 2200 + Math.random() * 600, 900, 2, .32 * g); tone(520 + Math.random() * 80, .06, .08 * g, 'square', 0, 240);
     },
     splat(g = 1) { noise(.12, 'lowpass', 1200, 300, 1, .25 * g); },
-    boom(big = 1) { noise(.5 * big, 'lowpass', 1400, 120, 1, .7); tone(90, .4 * big, .5, 'sine', 0, 40); },
+    boom(big = 1, g = 1) { noise(.5 * big, 'lowpass', 1400, 120, 1, .7 * g); tone(90, .4 * big, .5 * g, 'sine', 0, 40); },
+    sj() { tone(300, .7, .2, 'sawtooth', 0, 1200); noise(.8, 'bandpass', 500, 2500, 1.5, .25); },
     dive() { noise(.25, 'bandpass', 500, 1200, 3, .3); tone(300, .15, .1, 'sine', 0, 600); },
     hurt() { tone(220, .1, .2, 'square', 0, 120); },
     die() { noise(.5, 'lowpass', 2000, 200, 1, .6); tone(500, .5, .25, 'sawtooth', 0, 80); },
