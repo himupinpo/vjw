@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>ペイントリーグ</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=M+PLUS+Rounded+1c:wght@500;800;900&display=swap">
+<style>
+:root {
+  --f: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+  --d: "Dela Gothic One", "M PLUS Rounded 1c", "Hiragino Sans", sans-serif;
+  --cA: #ff2d87; --cB: #1fd1ff; --bg: #14121c; --card: #1f1c2b; --line: rgba(255,255,255,.14);
+  --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px); --sal: env(safe-area-inset-left, 0px); --sar: env(safe-area-inset-right, 0px);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: #0d0b12; color: #fff; font-family: var(--f);
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; overscroll-behavior: none; -webkit-tap-highlight-color: transparent; touch-action: none; }
+button { font-family: inherit; color: inherit; cursor: pointer; }
+#rot { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; transform-origin: 0 0; overflow: hidden; }
+#c { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+.hidden { display: none !important; }
+
+/* ---------- 試合の表示 ---------- */
+#hud { position: absolute; inset: 0; pointer-events: none; }
+#timer { position: absolute; top: calc(8px + var(--sat)); left: 50%; transform: translateX(-50%); font-family: var(--d); font-size: 30px; letter-spacing: .04em;
+  text-shadow: 0 3px 0 rgba(0,0,0,.45); padding: 2px 16px; border-radius: 14px; background: rgba(0,0,0,.35); }
+#timer.hurry { color: #ffe14d; animation: pulse 1s infinite; }
+@keyframes pulse { 50% { transform: translateX(-50%) scale(1.08); } }
+.teamRow { position: absolute; top: calc(12px + var(--sat)); display: flex; gap: 5px; }
+#tA { right: calc(50% + 76px); flex-direction: row-reverse; }
+#tB { left: calc(50% + 76px); }
+.teamRow i { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: 15px; border: 2.5px solid rgba(255,255,255,.85); box-shadow: 0 2px 0 rgba(0,0,0,.35); }
+.teamRow i.dead { opacity: .3; filter: grayscale(1); border-style: dashed; }
+.teamRow i.me { outline: 3px solid #fff; outline-offset: 1px; }
+.teamRow i.spOn { box-shadow: 0 0 0 3px #fff8, 0 0 12px #fff; }
+#mini { position: absolute; left: calc(10px + var(--sal)); bottom: calc(10px + var(--sab)); width: 104px; height: 156px; border-radius: 10px; border: 2px solid rgba(255,255,255,.5); background: #1b1925; image-rendering: pixelated; }
+body.hub #mini { bottom: calc(10px + var(--sab)); }
+#cross { position: absolute; left: 50%; top: 46%; width: 34px; height: 34px; margin: -17px 0 0 -17px; }
+#cross::before, #cross::after { content: ""; position: absolute; background: #fff; box-shadow: 0 0 2px #000; border-radius: 2px; }
+#cross::before { left: 16px; top: 4px; width: 2px; height: 26px; opacity: .0; }
+#cross b { position: absolute; inset: 7px; border: 2.5px solid #fff; border-radius: 50%; box-shadow: 0 0 3px rgba(0,0,0,.7), inset 0 0 3px rgba(0,0,0,.5); }
+#cross em { position: absolute; left: 15px; top: 15px; width: 4px; height: 4px; border-radius: 50%; background: #fff; }
+#cross.hit b { border-color: #ffe14d; transform: scale(1.25); }
+#cross.kill b { border-color: #ff4d4d; transform: scale(1.4); }
+#charge { position: absolute; left: 50%; top: 46%; width: 64px; height: 64px; margin: -32px 0 0 -32px; }
+#ink { position: absolute; left: calc(50% + 46px); top: calc(46% - 34px); width: 12px; height: 68px; border-radius: 6px; border: 2px solid rgba(255,255,255,.75); background: rgba(0,0,0,.4); overflow: hidden; }
+#ink i { position: absolute; left: 0; right: 0; bottom: 0; height: 100%; background: var(--cA); }
+#ink.low { animation: shake .3s infinite; border-color: #ff5050; }
+@keyframes shake { 25% { transform: translateX(-2px); } 75% { transform: translateX(2px); } }
+#inkMsg { position: absolute; left: 50%; top: calc(46% + 30px); transform: translateX(-50%); font-weight: 900; font-size: 14px; color: #ffd0d0; text-shadow: 0 2px 4px #000; }
+#spBox { position: absolute; right: calc(14px + var(--sar)); top: calc(56px + var(--sat)); width: 74px; height: 74px; }
+#spBox svg { width: 100%; height: 100%; }
+#spBox b { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--d); font-size: 15px; text-shadow: 0 2px 0 rgba(0,0,0,.5); }
+#spBox.full { animation: spGlow .7s infinite alternate; }
+@keyframes spGlow { to { filter: drop-shadow(0 0 10px #fff); } }
+#spName { position: absolute; right: calc(10px + var(--sar)); top: calc(132px + var(--sat)); font-size: 11px; font-weight: 800; text-align: right; opacity: .85; text-shadow: 0 1px 3px #000; max-width: 110px; }
+#feed { position: absolute; right: calc(12px + var(--sar)); top: calc(160px + var(--sat)); display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+#feed div { font-size: 12.5px; font-weight: 800; padding: 3px 9px; border-radius: 9px; background: rgba(0,0,0,.5); animation: feedIn .25s; }
+@keyframes feedIn { from { transform: translateX(30px); opacity: 0; } }
+#vig { position: absolute; inset: 0; opacity: 0; background: radial-gradient(ellipse at center, rgba(0,0,0,0) 45%, var(--hurt, rgba(30,200,255,.85)) 100%); }
+#msg { position: absolute; left: 50%; top: 34%; transform: translate(-50%, -50%); text-align: center; font-family: var(--d); font-size: clamp(36px, 9vmin, 72px); text-shadow: 0 4px 0 rgba(0,0,0,.45); white-space: nowrap; }
+#msg small { display: block; font-family: var(--f); font-weight: 900; font-size: 18px; margin-top: 6px; }
+#msg.pop { animation: pop .4s cubic-bezier(.2,1.6,.4,1); }
+@keyframes pop { from { transform: translate(-50%, -50%) scale(.3); opacity: 0; } }
+#wpName { position: absolute; left: calc(124px + var(--sal)); bottom: calc(12px + var(--sab)); font-size: 12px; font-weight: 800; opacity: .9; text-shadow: 0 1px 3px #000; line-height: 1.4; }
+#wpName b { font-size: 15px; }
+#pauseB { pointer-events: auto; position: absolute; top: calc(8px + var(--sat)); right: calc(10px + var(--sar)); width: 40px; height: 38px; border-radius: 11px; border: 2px solid rgba(255,255,255,.5); background: rgba(0,0,0,.45); font-size: 15px; font-weight: 900; }
+body.hub #pauseB { right: calc(10px + var(--sar)); }
+
+/* ---------- タッチ操作 ---------- */
+#touch { position: absolute; inset: 0; pointer-events: auto; touch-action: none; }
+#touch.off { display: none; }
+#stick { position: absolute; width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%; border: 3px solid rgba(255,255,255,.35); background: rgba(255,255,255,.07); display: none; }
+#stick i { position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; margin: -26px 0 0 -26px; border-radius: 50%; background: rgba(255,255,255,.55); }
+.tb { position: absolute; border-radius: 50%; border: 3px solid rgba(255,255,255,.55); background: rgba(0,0,0,.35); font-weight: 900; font-size: 12.5px; white-space: nowrap; display: grid; place-items: center; touch-action: none; }
+.tb.on { background: rgba(255,255,255,.4); }
+#bFire { right: calc(26px + var(--sar)); bottom: calc(40px + var(--sab)); width: 92px; height: 92px; font-size: 17px; }
+#bDive { right: calc(132px + var(--sar)); bottom: calc(20px + var(--sab)); width: 70px; height: 70px; }
+#bJump { right: calc(122px + var(--sar)); bottom: calc(100px + var(--sab)); width: 62px; height: 62px; }
+#bSub { right: calc(40px + var(--sar)); bottom: calc(146px + var(--sab)); width: 56px; height: 56px; font-size: 13px; }
+#bSp { right: calc(104px + var(--sar)); bottom: calc(170px + var(--sab)); width: 56px; height: 56px; font-size: 13px; opacity: .45; }
+#bSp.ready { opacity: 1; border-color: #fff; animation: spGlow .7s infinite alternate; }
+
+/* ---------- 画面（タイトル・ブキ・結果） ---------- */
+.screen { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; overflow-y: auto; touch-action: pan-y;
+  padding: calc(18px + var(--sat)) calc(14px + var(--sar)) calc(22px + var(--sab)) calc(14px + var(--sal)); }
+#title { justify-content: center; background: radial-gradient(120% 90% at 50% 110%, rgba(13,11,18,.92) 30%, rgba(13,11,18,.35) 80%); }
+.logo { font-family: var(--d); font-size: clamp(44px, 12vmin, 104px); line-height: 1; letter-spacing: .02em; text-align: center; position: relative;
+  color: #fff; text-shadow: 0 5px 0 var(--cB), 0 10px 0 rgba(0,0,0,.35); transform: rotate(-3deg); }
+.logo span { color: var(--cA); }
+.tag { margin: 18px 0 16px; font-weight: 800; font-size: 14px; opacity: .9; text-align: center; line-height: 1.6; text-shadow: 0 2px 6px #000; }
+.col { display: flex; flex-direction: column; gap: 10px; width: min(340px, 100%); }
+.btn { min-height: 52px; border-radius: 16px; border: 2px solid rgba(255,255,255,.25); background: rgba(31,28,43,.9); font-size: 17px; font-weight: 900; padding: 8px 14px; }
+.btn.main { background: var(--cA); border-color: #fff; color: #fff; font-family: var(--d); font-size: 22px; min-height: 62px; box-shadow: 0 5px 0 rgba(0,0,0,.35); }
+.btn.sub2 { background: var(--cB); border-color: #fff; color: #10131c; font-family: var(--d); font-size: 18px; }
+.btn small { display: block; font-family: var(--f); font-size: 11px; font-weight: 700; opacity: .8; }
+.wcard { display: flex; gap: 12px; align-items: center; text-align: left; }
+.wcard svg { width: 54px; height: 54px; flex: none; }
+.wcard .t { font-size: 16px; font-weight: 900; }
+.wcard .s { font-size: 11.5px; opacity: .78; font-weight: 700; line-height: 1.45; }
+.panel { width: min(760px, 100%); background: rgba(31,28,43,.96); border: 1px solid var(--line); border-radius: 20px; padding: 14px; }
+.panel h2 { margin: 0 0 10px; font-family: var(--d); font-size: 22px; display: flex; align-items: center; justify-content: space-between; }
+.x { width: 40px; height: 40px; border-radius: 12px; border: 1.5px solid rgba(255,255,255,.3); background: transparent; font-size: 20px; padding: 0; }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.tabs button { padding: 7px 11px; border-radius: 99px; border: 1.5px solid rgba(255,255,255,.25); background: transparent; font-weight: 800; font-size: 13px; }
+.tabs button.on { background: #fff; color: #15121d; }
+.wgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.witem { border-radius: 14px; border: 2px solid rgba(255,255,255,.14); background: rgba(255,255,255,.04); padding: 8px; text-align: left; display: flex; gap: 8px; align-items: center; }
+.witem svg { width: 38px; height: 38px; flex: none; }
+.witem b { display: block; font-size: 13.5px; }
+.witem span { font-size: 10.5px; opacity: .7; }
+.witem.on { border-color: #fff; background: rgba(255,255,255,.12); }
+.detail { margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.detail p { margin: 4px 0; font-size: 12.5px; line-height: 1.6; opacity: .9; }
+.bars div { display: grid; grid-template-columns: 52px 1fr; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 800; margin: 5px 0; }
+.bars i { display: block; height: 9px; border-radius: 5px; background: rgba(255,255,255,.12); position: relative; overflow: hidden; }
+.bars i u { position: absolute; left: 0; top: 0; bottom: 0; background: var(--cA); border-radius: 5px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0 12px; }
+.chips button { padding: 8px 13px; border-radius: 99px; border: 1.5px solid rgba(255,255,255,.3); background: transparent; font-weight: 800; font-size: 13px; }
+.chips button.on { background: var(--cA); border-color: var(--cA); }
+.row2 { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 800; }
+.row2 input { flex: 1; }
+#result { justify-content: flex-start; background: rgba(13,11,18,.86); }
+.res { width: min(680px, 100%); text-align: center; margin-block: auto; }
+.res .big { font-family: var(--d); font-size: clamp(40px, 10vmin, 84px); line-height: 1.05; text-shadow: 0 6px 0 rgba(0,0,0,.35); }
+.meter { display: flex; height: 46px; border-radius: 16px; overflow: hidden; margin: 16px 0 6px; border: 3px solid #fff; background: #333; }
+.meter div { height: 100%; display: flex; align-items: center; font-family: var(--d); font-size: 20px; transition: flex-grow 2.2s cubic-bezier(.2,.8,.2,1); min-width: 0; padding: 0 10px; white-space: nowrap; overflow: hidden; }
+.meter .a { justify-content: flex-start; background: var(--cA); }
+.meter .b { justify-content: flex-end; background: var(--cB); color: #111; }
+.meter .n { background: #4a4757; }
+table.st { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 13px; }
+table.st td { padding: 4px 6px; border-bottom: 1px solid var(--line); }
+table.st tr.me td { background: rgba(255,255,255,.08); font-weight: 900; }
+table.st td.n { text-align: right; font-variant-numeric: tabular-nums; }
+#load { position: absolute; inset: 0; display: grid; place-items: center; background: #0d0b12; font-weight: 800; z-index: 50; }
+.help { font-size: 12.5px; line-height: 1.75; opacity: .9; }
+.help b { color: #fff; }
+.kbd { display: inline-block; padding: 0 6px; border-radius: 5px; border: 1px solid rgba(255,255,255,.4); font-size: 11.5px; }
+@media (max-width: 560px) {
+  .teamRow i { width: 22px; height: 22px; font-size: 11px; border-width: 2px; }
+  #tA { right: calc(50% + 62px); } #tB { left: calc(50% + 62px); }
+  #timer { font-size: 24px; }
+  .detail { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div id="rot">
+<canvas id="c"></canvas>
+<div id="hud" class="hidden">
+  <div id="vig"></div>
+  <div id="timer">3:00</div>
+  <div class="teamRow" id="tA"></div><div class="teamRow" id="tB"></div>
+  <canvas id="mini" width="128" height="192"></canvas>
+  <div id="wpName"></div>
+  <svg id="charge" viewBox="0 0 64 64" class="hidden"><circle cx="32" cy="32" r="27" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="5"/><circle id="chargeArc" cx="32" cy="32" r="27" fill="none" stroke="#fff" stroke-width="5" stroke-dasharray="0 170" transform="rotate(-90 32 32)" stroke-linecap="round"/></svg>
+  <div id="cross"><b></b><em></em></div>
+  <div id="ink"><i></i></div>
+  <div id="inkMsg"></div>
+  <div id="spBox"><svg viewBox="0 0 74 74"><circle cx="37" cy="37" r="31" fill="rgba(0,0,0,.4)" stroke="rgba(255,255,255,.3)" stroke-width="6"/><circle id="spArc" cx="37" cy="37" r="31" fill="none" stroke="#fff" stroke-width="6" stroke-dasharray="0 195" transform="rotate(-90 37 37)" stroke-linecap="round"/></svg><b>SP</b></div>
+  <div id="spName"></div>
+  <div id="feed"></div>
+  <div id="msg"></div>
+  <div id="touch" class="off">
+    <div id="stick"><i></i></div>
+    <div class="tb" id="bSp">SP</div>
+    <div class="tb" id="bSub">サブ</div>
+    <div class="tb" id="bJump">ジャンプ</div>
+    <div class="tb" id="bDive">もぐる</div>
+    <div class="tb" id="bFire">うつ</div>
+  </div>
+  <button id="pauseB">II</button>
+</div>
+
+<div id="title" class="screen hidden">
+  <div class="logo">ペイント<span>リーグ</span></div>
+  <div class="tag">4対4のぬりあいバトル。3分間で、より広く自分の色にぬったチームの勝ち！<br>自分の色のペンキにもぐると、すばやく泳いでペンキを補給できる。</div>
+  <div class="col">
+    <button class="btn main" id="goBattle">ぬりあいバトル<small>4対4・3分</small></button>
+    <button class="btn" id="goWeapon"><div class="wcard" id="wcard"></div></button>
+    <button class="btn sub2" id="goPractice">試しうち<small>まとを相手にブキをためす</small></button>
+    <button class="btn" id="goSet">設定・操作</button>
+  </div>
+  <div class="tag" id="recLine" style="font-size:12px;opacity:.7;margin-top:14px"></div>
+</div>
+
+<div id="armory" class="screen hidden"><div class="panel">
+  <h2>ブキをえらぶ<button class="x" data-close="armory">×</button></h2>
+  <div class="tabs" id="clsTabs"></div>
+  <div class="wgrid" id="wgrid"></div>
+  <div class="detail" id="wdetail"></div>
+  <div style="margin-top:12px;display:flex;justify-content:flex-end"><button class="btn main" id="wOk" style="min-width:200px">これにする</button></div>
+</div></div>
+
+<div id="settings" class="screen hidden"><div class="panel">
+  <h2>設定・操作<button class="x" data-close="settings">×</button></h2>
+  <div class="row2">相手の強さ</div>
+  <div class="chips" id="diffChips"><button data-d="0">やさしい</button><button data-d="1">ふつう</button><button data-d="2">つよい</button></div>
+  <div class="row2">視点の速さ <input type="range" id="sens" min="0.4" max="2.2" step="0.1"> <span id="sensV"></span></div>
+  <div class="chips" id="invChips" style="margin-top:10px"><button data-i="0">上下：ふつう</button><button data-i="1">上下：反転</button></div>
+  <div class="chips" id="musChips"><button data-m="1">音楽あり</button><button data-m="0">音楽なし</button></div>
+  <div class="chips" id="qChips"><button data-q="low">画質：軽い</button><button data-q="mid">画質：ふつう</button><button data-q="high">画質：きれい</button></div>
+  <div class="help">
+    <b>パソコン</b>：<span class="kbd">W A S D</span> 移動 ／ マウス 視点（画面をクリックで固定）／ <span class="kbd">左クリック</span> うつ ／ <span class="kbd">Shift</span>・<span class="kbd">右クリック</span> もぐる ／ <span class="kbd">Space</span> ジャンプ ／ <span class="kbd">E</span> サブ ／ <span class="kbd">Q</span> スペシャル ／ <span class="kbd">Esc</span> 一時停止<br>
+    <b>スマホ</b>：左側をなぞって移動、右側をなぞって視点。「うつ」は押したまま指を動かすとねらいも動きます。「もぐる」は押している間だけ。<br>
+    <b>ルール</b>：自分の色の上でもぐると速く泳げて、ペンキがたまります。相手の色の上は動きがおそく、少しずつダメージ。ぬるとスペシャルがたまり、満タンで使えます。水に落ちるとやられます。
+  </div>
+</div></div>
+
+<div id="pause" class="screen hidden" style="justify-content:center;background:rgba(13,11,18,.8)">
+  <div class="logo" style="font-size:40px;margin-bottom:22px">一時停止</div>
+  <div class="col">
+    <button class="btn main" id="pResume">つづける</button>
+    <button class="btn" id="pWeapon">ブキをかえる<small>試しうちのときだけ</small></button>
+    <button class="btn" id="pSet">設定・操作</button>
+    <button class="btn" id="pQuit">タイトルへもどる</button>
+  </div>
+</div>
+
+<div id="result" class="screen hidden"><div class="res" id="resBox"></div></div>
+<div id="load">ステージを準備しています…</div>
+</div>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+<script type="module">
