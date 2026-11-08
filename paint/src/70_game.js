@@ -97,7 +97,7 @@ function startMatch(mode, stage) {
   actors.forEach(a => { const k = actors.filter(o => o.team === a.team).indexOf(a); if (a.dummy) respawn(a); else placeAtSpawn(a, k); });
   G.camYaw = G.me.yaw; G.camPitch = -.12;
   G.state = mode === 'practice' ? 'play' : 'count'; G.countT = mode === 'practice' ? 0 : 3.2;
-  hideScreens(); $('hud').classList.remove('hidden'); $('touch').classList.toggle('off', !IN.touchOn);
+  hideScreens(); lobbyHide(); $('hud').classList.remove('hidden'); $('touch').classList.toggle('off', !IN.touchOn);
   $('wpName').innerHTML = `<b>${G.me.w.name}</b><br>サブ：${SUBS[G.me.w.sub].name}`; $('spName').textContent = SPECIALS[G.me.w.sp].name;
   $('zoneBar').classList.toggle('hidden', mode !== 'zone'); zoneMarks(mode === 'zone');
   rulesInit(mode); $('ruleBar').classList.toggle('hidden', !(mode === 'flag' || mode === 'ball')); $('ruleBar').innerHTML = ''; RS.hud = '';

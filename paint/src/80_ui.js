@@ -1,6 +1,6 @@
 
 // ================= 画面（タイトル・ブキ選び・設定・一時停止） =================
-const SCREENS = ['title', 'armory', 'settings', 'pause', 'result'];
+const SCREENS = ['title', 'armory', 'settings', 'pause', 'result', 'dress'];
 function hideScreens() { for (const s of SCREENS) $(s).classList.add('hidden'); }
 function toTitle() {
   G.state = 'title'; G.paused = false; AU.musicOn(false);
@@ -58,6 +58,17 @@ $('musChips').onclick = e => { const b = e.target.closest('button'); if (!b) ret
 $('qChips').onclick = e => { const b = e.target.closest('button'); if (!b) return; SET.quality = b.dataset.q; saveSet(); applyQuality(); openSettings(setFrom); };
 $('sens').oninput = () => { SET.sens = +$('sens').value; $('sensV').textContent = SET.sens.toFixed(1); saveSet(); };
 $('goBattle').onclick = () => { AU.init(); AU.ui(); startMatch(RULES[SET.rule] ? SET.rule : 'turf'); };
+// きせかえ（頭のかざりと色）。右に立っている自分のペンキっ子がすぐ変わる
+function openDress() { hideScreens(); $('dress').classList.remove('hidden'); drawDress(); }
+function drawDress() {
+  const acc = SET.acc || 'none', col = SET.accCol ?? 0xffffff;
+  $('accChips').innerHTML = ACC.map(([id, n]) => `<button data-a="${id}" class="${acc === id ? 'on' : ''}">${n}</button>`).join('');
+  $('colChips').innerHTML = ACC_COL.map(c => `<button data-c="${c}" class="${col === c ? 'on' : ''}" style="background:#${c.toString(16).padStart(6, '0')}" aria-label="色"></button>`).join('');
+}
+$('accChips').onclick = e => { const b = e.target.closest('button'); if (!b) return; AU.ui(); SET.acc = b.dataset.a; saveSet(); drawDress(); };
+$('colChips').onclick = e => { const b = e.target.closest('button'); if (!b) return; AU.ui(); SET.accCol = +b.dataset.c; saveSet(); drawDress(); };
+$('dOk').onclick = () => { AU.ui(); toTitle(); };
+$('goDress').onclick = () => { AU.init(); AU.ui(); openDress(); };
 $('asChips').onclick = e => { const b = e.target.closest('button'); if (!b) return; SET.assist = b.dataset.a === '1'; saveSet(); openSettings(setFrom); };
 $('goPractice').onclick = () => { AU.init(); AU.ui(); startMatch('practice'); };
 $('goWeapon').onclick = () => { AU.init(); AU.ui(); openArmory('title'); };

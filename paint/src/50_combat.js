@@ -89,6 +89,7 @@ function explode(x, y, z, r, dmax, dmin, team, owner, pr) {
   for (let k = 0, n = Math.round(4 + R * 2); k < n; k++) { const ang = k / n * TAU + Math.random() * .6, d = R * rand(.95, 1.35); paintBy(owner, x + Math.cos(ang) * d, y + .3, z + Math.sin(ang) * d, R * rand(.12, .22), team); }
   paintWallsNear(x, y + .3, z, R * .9, team);
   burst(x, y + .3, z, team, 24, 1.2);
+  if (R >= 2) ringFx(x, Math.max(hAt(x, z), y - 1.2), z, team, R * 1.25, .35);
   const near = G.me ? Math.hypot(G.me.x - x, G.me.z - z) : 99;
   if (near < 45) AU.boom(r > 3 ? 1.5 : 1, clamp(1 - near / 45, .1, 1));
   if (near < r * 2.5) G.shake = Math.max(G.shake, .25 * (1 - near / (r * 2.5)));
@@ -375,7 +376,7 @@ function weaponTick(a, dt, fire, dodge, mx, mz) {
       const brush = cls === 'brush';
       if (press && s.cd <= 0 && !s.rolling) {
         if (useInk(a, w.ink)) {
-          s.cd = 1 / w.frate; s.flickT = brush ? .1 : .32; const d = aim();
+          s.cd = 1 / w.frate; s.flickT = brush ? .1 : .32; s.swing = { t: 0, dur: brush ? .2 : .36, kind: 'down' }; const d = aim();
           const vert = w.vflick || (w.airFlick && air), n = w.flick, base = Math.atan2(d.x, d.z), up = clamp(Math.asin(d.y), -.3, .5);
           const fr = w.frange * (w.airFlick && air ? 1.6 : 1);
           for (let k = 0; k < n; k++) {
@@ -444,7 +445,7 @@ function weaponTick(a, dt, fire, dodge, mx, mz) {
                 size: w.small ? .17 : .26, hitR: w.small ? .35 : .45, trail: .7, trailR: w.small ? .4 : .5, life: 3, swirl: !!w.swirl, roll: !!w.roll });
             }
           }
-          s.busy = .4; sfx(a, 'slosher');
+          s.busy = .4; s.swing = { t: 0, dur: .32, kind: 'up' }; sfx(a, 'slosher');
         }
       }
       break;
@@ -508,6 +509,7 @@ function weaponTick(a, dt, fire, dodge, mx, mz) {
       }
       if (fire) { s.blade = (s.blade || 0) + dt; s.busy = .25; }
       const slash = charged => {
+        s.swing = { t: 0, dur: charged ? .3 : .2, kind: charged ? 'down' : 'side' };
         const d = aim(), base = Math.atan2(d.x, d.z), pit = clamp(Math.asin(d.y), -.3, .3);
         if (charged) {
           if (!useInk(a, w.ink * 2)) return;

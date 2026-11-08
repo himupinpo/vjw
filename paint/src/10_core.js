@@ -15,7 +15,7 @@ const store = {
   get(k, d) { try { const v = localStorage.getItem(SK + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem(SK + k, JSON.stringify(v)); } catch (e) { /* 保存できない環境 */ } }
 };
-const SET = Object.assign({ weapon: 'basic', diff: 1, sens: 1, invY: false, music: true, quality: 'mid', stage: 'random', rule: 'turf', assist: true }, store.get('set', {}));
+const SET = Object.assign({ weapon: 'basic', diff: 1, sens: 1, invY: false, music: true, quality: 'mid', stage: 'random', rule: 'turf', assist: true, acc: 'none', accCol: 0xffffff }, store.get('set', {}));
 const saveSet = () => store.set('set', SET);
 const REC = Object.assign({ games: 0, wins: 0, kills: 0, paint: 0, best: 0 }, store.get('rec', {}));
 const saveRec = () => store.set('rec', REC);
