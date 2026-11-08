@@ -72,7 +72,7 @@ function lobbyTick(dt) {
 // タイトルの後ろ：ステージの上をゆっくり回り、ときどきペンキが飛ぶ（床と壁）
 let titleSplat = 0;
 function titleTick(dt) {
-  clock += dt;
+  clock += dt; PU.uTime.value = clock;
   const r = 46, a = clock * .07;
   camera.position.set(Math.sin(a) * r, 26, Math.cos(a) * r); camera.lookAt(0, 0, 0);
   if (camera.fov !== 60) { camera.fov = 60; camera.updateProjectionMatrix(); }
@@ -85,7 +85,7 @@ function titleTick(dt) {
     if ((PCNT[1] + PCNT[2]) / PTOTAL > .55) clearPaint();
   }
   sun.position.set(30, 60, 20); sun.target.position.set(0, 0, 0); sun.target.updateMatrixWorld();
-  lobbyTick(dt);
+  lobbyTick(dt); decoTick(dt);
   updFx(dt); uploadPaint();
 }
 let last = performance.now(), hold = false;

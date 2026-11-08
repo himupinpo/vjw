@@ -148,31 +148,37 @@ const paintTex = new T.DataTexture(PTEX, GW, GD, T.RGFormat, T.UnsignedByteType)
 paintTex.magFilter = T.LinearFilter; paintTex.minFilter = T.LinearFilter; paintTex.generateMipmaps = false; paintTex.needsUpdate = true;
 function makeWallTex() { const t = new T.DataTexture(WTEX, AW, AH, T.RGFormat, T.UnsignedByteType); t.magFilter = T.LinearFilter; t.minFilter = T.LinearFilter; t.generateMipmaps = false; t.needsUpdate = true; return t; }
 let wallTex = null;
+// 床にかいた模様（線・道・目印）と、かべぎわの影（ステージを読むたびに作り直す）
+const GM_W = 256, GM_H = 400;
+const gmapCanvas = document.createElement('canvas'); gmapCanvas.width = GM_W; gmapCanvas.height = GM_H;
+const gmapTex = new T.CanvasTexture(gmapCanvas); gmapTex.flipY = false; gmapTex.colorSpace = T.SRGBColorSpace; gmapTex.generateMipmaps = false; gmapTex.minFilter = T.LinearFilter;
+const AOD = new Uint8Array(GM_W * GM_H).fill(255);
+const aoTex = new T.DataTexture(AOD, GM_W, GM_H, T.RedFormat, T.UnsignedByteType); aoTex.magFilter = aoTex.minFilter = T.LinearFilter; aoTex.needsUpdate = true;
 const PU = { uPaint: { value: paintTex }, uPO: { value: new T.Vector2(X0, Z0) }, uPS: { value: new T.Vector2(MAPW, MAPD) },
   uWall: { value: null }, uWS: { value: new T.Vector2(AW, AH) }, uCS: { value: CS },
-  uColA: { value: new T.Color('#ff2d87') }, uColB: { value: new T.Color('#1fd1ff') }, uTime: { value: 0 } };
+  uColA: { value: new T.Color('#ff2d87') }, uColB: { value: new T.Color('#1fd1ff') }, uTime: { value: 0 },
+  uGMap: { value: gmapTex }, uAO: { value: aoTex }, uStyle: { value: 0 } };
 wallTex = makeWallTex(); PU.uWall.value = wallTex;
 function paintMaterial(opts) {
   const m = new T.MeshStandardMaterial(Object.assign({ vertexColors: true, roughness: .82, metalness: .02 }, opts));
   m.onBeforeCompile = sh => {
     Object.assign(sh.uniforms, PU);
-    sh.vertexShader = 'attribute vec4 aFace; varying vec4 vFace; varying vec3 vWP; varying vec3 vWN;\n' + sh.vertexShader.replace('#include <worldpos_vertex>',
-      '#include <worldpos_vertex>\n vWP = (modelMatrix * vec4(transformed, 1.0)).xyz; vWN = normalize(mat3(modelMatrix) * objectNormal); vFace = aFace;');
-    sh.fragmentShader = `varying vec4 vFace; varying vec3 vWP; varying vec3 vWN;
-uniform sampler2D uPaint; uniform sampler2D uWall; uniform vec2 uPO; uniform vec2 uPS; uniform vec2 uWS; uniform float uCS; uniform vec3 uColA; uniform vec3 uColB; uniform float uTime;
-float h21(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
-float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
-  return mix(mix(h21(i), h21(i + vec2(1, 0)), f.x), mix(h21(i + vec2(0, 1)), h21(i + vec2(1, 1)), f.x), f.y); }
-` + sh.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
-  float pCov = 0.0; vec2 pNC = vec2(0.0);
+    sh.vertexShader = 'attribute vec4 aFace; attribute vec2 aMat; varying vec4 vFace; varying vec3 vWP; varying vec3 vWN; varying vec2 vMat;\n' + sh.vertexShader.replace('#include <worldpos_vertex>',
+      '#include <worldpos_vertex>\n vWP = (modelMatrix * vec4(transformed, 1.0)).xyz; vWN = normalize(mat3(modelMatrix) * objectNormal); vFace = aFace; vMat = aMat;');
+    sh.fragmentShader = SURF_GLSL + sh.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
+  float pCov = 0.0; vec2 pNC = vec2(0.0); float pRough = 0.82, pMetal = 0.02;
   {
-    float up = smoothstep(0.55, 0.8, vWN.y);
+    float riser = step(99.5, vMat.x), mid = vMat.x - riser * 100.0;
+    float up = max(smoothstep(0.55, 0.8, vWN.y), riser);
     vec2 pv = vec2(0.0); vec2 nc = vWP.xz;
+    diffuseColor.rgb = surf(diffuseColor.rgb, mid, vMat.y, vWP, vWN, step(0.5, up) * (1.0 - riser), pRough, pMetal);
     if (up > 0.5) {
-      vec2 g = abs(fract(vWP.xz / 2.0) - 0.5); diffuseColor.rgb *= 1.0 - 0.18 * step(0.482, max(g.x, g.y));
-      pv = texture2D(uPaint, (vWP.xz - uPO) / uPS).rg;
+      vec2 guv = (vWP.xz - uPO) / uPS;
+      if (mid < 0.5 && riser < 0.5) { vec4 gm = texture2D(uGMap, guv); diffuseColor.rgb = mix(diffuseColor.rgb, gm.rgb, gm.a); }
+      if (riser < 0.5) diffuseColor.rgb *= texture2D(uAO, guv).r;
+      pv = texture2D(uPaint, guv).rg;
     } else {
-      float s = step(0.5, fract((abs(vWN.x) > 0.5 ? vWP.z : vWP.x) * 1.6)); diffuseColor.rgb *= 0.86 + 0.14 * s; diffuseColor.rgb *= 0.75 + 0.25 * smoothstep(-1.0, 2.0, vWP.y);
+      diffuseColor.rgb *= 0.78 + 0.22 * smoothstep(-1.0, 1.6, vWP.y);
       if (vFace.x >= 0.0 && abs(vWN.y) < 0.3) {
         float hc = abs(vWN.x) > 0.5 ? vWP.z : vWP.x;
         pv = texture2D(uWall, vec2(vFace.x + (hc - vFace.z) / uCS, vFace.y + (vWP.y - vFace.w) / uCS) / uWS).rg;
@@ -188,7 +194,8 @@ float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
     diffuseColor.rgb = mix(diffuseColor.rgb, pc * (0.9 + 0.2 * vn(nc * 4.0)), pCov);
     diffuseColor.rgb *= 1.0 - rim * 0.25;
     pNC = nc;
-  }`).replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n  roughnessFactor = mix(roughnessFactor, 0.16, pCov);')
+  }`).replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n  roughnessFactor = mix(pRough, 0.16, pCov);')
+      .replace('#include <metalnessmap_fragment>', '#include <metalnessmap_fragment>\n  metalnessFactor = mix(pMetal, 0.02, pCov);')
       // ぬったペンキに厚み：ふちが盛り上がり、表面に小さなでこぼこ（画面上の微分で法線をずらす）
       .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
   {
@@ -202,6 +209,138 @@ float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
   };
   return m;
 }
+// 素材ごとの見た目（床の板・れんが・コンテナの波板・窓など）。色は頂点の色をもとに、模様だけ足す
+const MATI = { ground: 0, cont: 1, conc: 2, wood: 3, bench: 3, hedge: 4, metal: 5, grate: 6, brick: 7, house: 8, stone: 9, bark: 10, plant: 11, glass: 12, spawn: 13, crate: 14, lawn: 15, machine: 16, conv: 17, ac: 18, slide: 19, stall: 20 };
+const matId = k => MATI[k] ?? 0;
+const SURF_GLSL = `varying vec4 vFace; varying vec3 vWP; varying vec3 vWN; varying vec2 vMat;
+uniform sampler2D uPaint; uniform sampler2D uWall; uniform sampler2D uGMap; uniform sampler2D uAO;
+uniform vec2 uPO; uniform vec2 uPS; uniform vec2 uWS; uniform float uCS; uniform vec3 uColA; uniform vec3 uColB; uniform float uTime; uniform float uStyle;
+float h21(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
+float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(h21(i), h21(i + vec2(1, 0)), f.x), mix(h21(i + vec2(0, 1)), h21(i + vec2(1, 1)), f.x), f.y); }
+float fbm(vec2 p){ return vn(p) * 0.55 + vn(p * 2.13 + 3.1) * 0.3 + vn(p * 4.7 + 7.7) * 0.15; }
+float sl(float v, float s, float w){ float d = (0.5 - abs(fract(v / s) - 0.5)) * s; return 1.0 - smoothstep(w * 0.5, w, d); }
+float sq(vec2 p, vec2 s, float w){ return max(sl(p.x, s.x, w), sl(p.y, s.y, w)); }
+vec3 hazard(vec2 uv){ return mix(vec3(0.95, 0.74, 0.08), vec3(0.09), step(0.5, fract((uv.x + uv.y) * 1.4))); }
+vec3 woodP(vec3 c, float k, float along){
+  float row = floor(k / 0.28);
+  c *= 0.8 + 0.24 * h21(vec2(row, 3.3));
+  c *= 0.86 + 0.18 * vn(vec2(along * 1.4 + row * 9.1, k * 22.0));
+  c *= 1.0 - 0.45 * sl(k, 0.28, 0.035);
+  c *= 1.0 - 0.32 * sl(along + row * 0.37, 1.7, 0.03);
+  return c;
+}
+vec3 bricks(vec3 c, vec2 uv, vec2 s, vec3 mortar){
+  float row = floor(uv.y / s.y); vec2 q = vec2(uv.x + mod(row, 2.0) * s.x * 0.5, uv.y);
+  c *= 0.84 + 0.22 * h21(floor(q / s) + 1.7);
+  return mix(c, mortar, sq(q, s, 0.025));
+}
+vec3 panels(vec3 c, vec2 uv){
+  vec2 s = vec2(1.0, 0.8), f = fract(uv / s) * s, e = min(f, s - f);
+  c *= 0.92 + 0.1 * h21(floor(uv / s));
+  c *= 1.0 - 0.35 * sq(uv, s, 0.035);
+  c *= 1.0 + 0.3 * step(length(e - vec2(0.09)), 0.024);
+  return c;
+}
+vec3 surf(vec3 c, float id, float topY, vec3 wp, vec3 wn, float upf, inout float rough, inout float metal){
+  bool up = upf > 0.5, sx = abs(wn.x) > 0.5;
+  vec2 uv = up ? wp.xz : vec2(sx ? wp.z : wp.x, wp.y);
+  float n = fbm(uv * 1.7);
+  if (id < 0.5) {
+    if (up) {
+      if (uStyle < 0.5) { c *= 0.92 + 0.14 * h21(floor(uv / 3.0)); c *= 1.0 - 0.28 * sq(uv, vec2(3.0), 0.06); c *= 0.9 + 0.12 * n; c *= 1.0 - 0.2 * smoothstep(0.62, 0.76, fbm(uv * 0.35 + 4.0)); }
+      else if (uStyle < 1.5) { c *= 0.93 + 0.1 * h21(floor(uv / 0.6)); c = mix(c, vec3(0.8, 0.79, 0.76), 0.75 * sq(uv, vec2(0.6), 0.04)); c *= 0.95 + 0.06 * n; }
+      else if (uStyle < 2.5) {
+        vec2 s = vec2(0.5, 0.36); float row = floor(uv.y / s.y); vec2 q = vec2(uv.x + mod(row, 2.0) * 0.25, uv.y);
+        vec2 f = (fract(q / s) - 0.5) * s; float e = max(abs(f.x) / (s.x * 0.5), abs(f.y) / (s.y * 0.5));
+        c *= 0.84 + 0.22 * h21(floor(q / s) + 3.7); c *= 1.0 - 0.5 * smoothstep(0.7, 0.96, e); c *= 0.92 + 0.08 * n;
+      }
+      else if (uStyle < 3.5) { c *= 0.8 + 0.34 * fbm(uv * 0.45); c *= 0.9 + 0.14 * vn(uv * 9.0); }
+      else { c *= 0.9 + 0.12 * h21(floor(uv / 4.0)); c *= 1.0 - 0.3 * sq(uv, vec2(4.0), 0.05); c *= 0.88 + 0.12 * n; c *= 1.0 - 0.28 * smoothstep(0.6, 0.72, fbm(uv * 0.5 + 9.0)); }
+    } else { c = mix(c, vec3(0.45, 0.44, 0.43), 0.65); c = bricks(c, uv, vec2(1.2, 0.5), vec3(0.3)); c *= 0.85 + 0.15 * n; }
+  } else if (id < 1.5) {
+    if (up) c *= 0.9 + 0.1 * sin(wp.x * 20.0);
+    else { c *= 0.8 + 0.2 * (0.5 + 0.5 * sin(uv.x * 22.44)); c *= 1.0 - 0.32 * max(step(topY - 0.14, wp.y), step(wp.y, 0.12)); }
+    c *= 0.88 + 0.14 * n; c *= 1.0 - 0.22 * smoothstep(0.6, 0.85, fbm(uv * 1.3 + 5.0)); rough = 0.5; metal = 0.3;
+  } else if (id < 2.5) {
+    c *= 0.88 + 0.14 * n;
+    if (!up && wp.y > topY - 0.3) c = hazard(uv);
+    if (up) c *= 1.0 - 0.2 * sq(uv, vec2(2.0), 0.04);
+  } else if (id < 3.5) {
+    c = up ? woodP(c, wp.z, wp.x) : woodP(c, wp.y, uv.x); rough = 0.75;
+  } else if (id < 4.5) {
+    c *= 0.6 + 0.7 * fbm(uv * 6.0); c *= 0.85 + 0.22 * vn(uv * 23.0);
+    c = mix(c, vec3(1.0, 0.86, 0.93), step(0.985, h21(floor(uv * 9.0))) * 0.85); rough = 0.95;
+  } else if (id < 5.5) {
+    c = panels(c, uv); rough = 0.45; metal = 0.45;
+  } else if (id < 6.5) {
+    if (up) { vec2 q = fract(wp.xz * 2.5) - 0.5; float d = step(0.0, q.x * q.y) > 0.5 ? abs(q.x + q.y) : abs(q.x - q.y); c *= 0.82 + 0.28 * step(d, 0.07); }
+    else { float tr = max(sl(uv.x - uv.y, 1.2, 0.07), sl(uv.x + uv.y, 1.2, 0.07)); c *= 0.62 + 0.42 * tr; c *= 1.0 - 0.3 * step(topY - 0.12, wp.y); }
+    rough = 0.4; metal = 0.6;
+  } else if (id < 7.5) {
+    if (!up) c = bricks(c, uv, vec2(0.32, 0.14), vec3(0.82, 0.78, 0.72)); else { c *= 0.9 + 0.1 * n; c *= 1.0 - 0.2 * sq(uv, vec2(0.5), 0.03); }
+  } else if (id < 8.5) {
+    if (!up) {
+      c *= 0.93 + 0.08 * n;
+      float cx = fract(uv.x / 2.2), ht = min(topY - 0.35, 2.1);
+      float outer = step(0.25, cx) * step(cx, 0.75) * step(0.95, wp.y) * step(wp.y, ht);
+      float inner = step(0.3, cx) * step(cx, 0.7) * step(1.0, wp.y) * step(wp.y, ht - 0.05);
+      inner *= 1.0 - step(abs(cx - 0.5), 0.012);
+      vec3 glass = vec3(0.22, 0.34, 0.48) + 0.16 * vn(uv * 3.0);
+      c = mix(c, vec3(0.96), clamp(outer - inner, 0.0, 1.0)); c = mix(c, glass, inner);
+      rough = mix(0.8, 0.12, inner);
+      c *= 1.0 - 0.18 * step(wp.y, 0.25);
+    } else { c *= 0.9 + 0.1 * n; c *= 1.0 - 0.25 * sl(wp.z, 0.35, 0.04); }
+  } else if (id < 9.5) {
+    vec2 s = up ? vec2(0.9, 0.9) : vec2(0.9, 0.45); float row = floor(uv.y / s.y); vec2 q = vec2(uv.x + mod(row, 2.0) * s.x * 0.5, uv.y);
+    c *= 0.84 + 0.22 * h21(floor(q / s)); c *= 1.0 - 0.42 * sq(q, s, 0.045); c *= 0.9 + 0.12 * n;
+  } else if (id < 10.5) {
+    c *= 0.68 + 0.5 * vn(vec2(uv.x * 9.0, uv.y * 1.1)); c *= 0.85 + 0.2 * n; rough = 0.95;
+  } else if (id < 11.5) {
+    if (up) { c = vec3(0.3, 0.2, 0.12) * (0.75 + 0.45 * fbm(uv * 5.0)); c = mix(c, vec3(0.32, 0.6, 0.24), step(0.9, h21(floor(uv * 14.0))) * 0.85); rough = 0.95; }
+    else c = woodP(c, wp.y, uv.x);
+  } else if (id < 12.5) {
+    if (!up) {
+      float fr = max(sl(uv.x, 1.0, 0.06), sl(wp.y - 0.1, 1.2, 0.06));
+      vec3 gl = vec3(0.5, 0.72, 0.84) * (0.85 + 0.2 * vn(uv * 2.0 + uTime * 0.05));
+      c = mix(gl, vec3(0.95), fr); if (wp.y < 0.3) c = vec3(0.88); rough = mix(0.06, 0.5, fr); metal = 0.1;
+    } else { c *= 0.92 + 0.1 * n; c *= 1.0 - 0.25 * sq(uv, vec2(1.0), 0.04); }
+  } else if (id < 13.5) {
+    vec3 tc = wp.z > 0.0 ? uColA : uColB;
+    if (!up) { c = panels(c, uv); if (wp.y > topY - 0.22) c = tc; }
+    else { vec2 q = fract(wp.xz * 3.0) - 0.5; c *= 1.0 - 0.18 * step(length(q), 0.12); c *= 1.0 - 0.25 * sq(uv, vec2(2.0), 0.04); }
+    rough = 0.45; metal = 0.35;
+  } else if (id < 14.5) {
+    vec2 s = vec2(0.8), f = fract(uv / s) * s - s * 0.5;
+    float fr = max(sq(uv, s, 0.11), max(step(abs(f.x - f.y), 0.06), step(abs(f.x + f.y), 0.06)) * (1.0 - float(up)));
+    c = woodP(c, up ? wp.z : wp.y, up ? wp.x : uv.x); c = mix(c, c * 0.72, fr); rough = 0.8;
+  } else if (id < 15.5) {
+    if (up) { c *= 0.8 + 0.34 * fbm(uv * 0.6); c *= 0.9 + 0.14 * vn(uv * 9.0); c = mix(c, vec3(1.0, 0.95, 0.6), step(0.988, h21(floor(uv * 8.0))) * 0.8); rough = 0.95; }
+    else { c = mix(c, vec3(0.5, 0.47, 0.42), 0.7); vec2 s = vec2(0.9, 0.45); float row = floor(uv.y / s.y); vec2 q = vec2(uv.x + mod(row, 2.0) * 0.45, uv.y); c *= 0.84 + 0.22 * h21(floor(q / s)); c *= 1.0 - 0.42 * sq(q, s, 0.045); }
+  } else if (id < 16.5) {
+    c = panels(c, uv); rough = 0.45; metal = 0.45;
+    if (!up) {
+      float vent = step(0.62, h21(floor(uv / vec2(1.0, 0.8)) + 5.0)) * sl(uv.y, 0.12, 0.035) * step(0.2, fract(uv.x)) * step(fract(uv.x), 0.8);
+      c *= 1.0 - 0.5 * vent;
+      if (wp.y < 0.32) c = hazard(uv);
+    }
+  } else if (id < 17.5) {
+    if (up) { float dir = wp.x > 0.0 ? -1.0 : 1.0; float v = fract((wp.x * dir - uTime * 0.9) * 1.1 + abs(wp.z) * 0.7); c = mix(vec3(0.1, 0.1, 0.11), vec3(0.9, 0.72, 0.12), step(0.72, v) * step(abs(wp.z), 0.8)); rough = 0.85; }
+    else { c = panels(c, uv); c *= 1.0 - 0.4 * step(topY - 0.18, wp.y); rough = 0.45; metal = 0.5; }
+  } else if (id < 18.5) {
+    c = panels(c, uv);
+    if (!up && wp.y > 0.5 && wp.y < topY - 0.3) c *= 0.8 + 0.3 * step(0.5, fract(wp.y * 7.0));
+    rough = 0.5; metal = 0.3;
+  } else if (id < 19.5) {
+    c *= 0.96 + 0.06 * n; rough = 0.2;
+  } else {
+    if (!up) { vec3 wd = vec3(0.72, 0.56, 0.38); wd = woodP(wd, uv.x * 0.35 + 7.0, wp.y); c = wp.y > topY - 0.45 ? c * (0.9 + 0.1 * n) : wd; }
+    else c = woodP(vec3(0.7, 0.55, 0.38), wp.z, wp.x);
+    rough = 0.7;
+  }
+  return c;
+}
+`;
 const terrainMat = paintMaterial({ side: T.DoubleSide });
 const world = new T.Group();
 let terrainMesh = null, decor = null;
@@ -224,9 +363,10 @@ function groundPieces() {
 }
 function buildTerrain() {
   if (terrainMesh) { world.remove(terrainMesh); terrainMesh.geometry.dispose(); }
-  const P = [], N = [], C = [], F = [], col = new T.Color(), NOF = [-1, -1, 0, 0];
+  const P = [], N = [], C = [], F = [], MA = [], col = new T.Color(), NOF = [-1, -1, 0, 0];
+  let mid = 0, top = 0;   // 素材の番号と、その箱のてっぺんの高さ（模様のために頂点へ入れる）
   const nrm = (a, b, c) => { const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2]; let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx; const l = Math.hypot(nx, ny, nz) || 1; return [nx / l, ny / l, nz / l]; };
-  const tri = (a, b, c, n, fc) => { for (const v of [a, b, c]) { P.push(v[0], v[1], v[2]); N.push(n[0], n[1], n[2]); C.push(col.r, col.g, col.b); F.push(fc[0], fc[1], fc[2], fc[3]); } };
+  const tri = (a, b, c, n, fc) => { for (const v of [a, b, c]) { P.push(v[0], v[1], v[2]); N.push(n[0], n[1], n[2]); C.push(col.r, col.g, col.b); F.push(fc[0], fc[1], fc[2], fc[3]); MA.push(mid, top); } };
   const quad = (a, b, c, d, fc) => { const n = nrm(a, b, c); if (!(Math.abs(n[0]) + Math.abs(n[1]) + Math.abs(n[2]))) return; tri(a, b, c, n, fc); tri(a, c, d, n, fc); };
   const fa = f => f ? [f.ax, f.ay, f.a0, f.y0] : NOF;
   const boxGeo = (x0, z0, x1, z1, h, lo, faces) => {
@@ -236,12 +376,43 @@ function buildTerrain() {
     quad([x1, lo, z0], [x0, lo, z0], [x0, h, z0], [x1, h, z0], fa(faces && faces.zm));
     quad([x0, lo, z1], [x1, lo, z1], [x1, h, z1], [x0, h, z1], fa(faces && faces.zp));
   };
-  col.setHex(STAGE.groundCol);
-  for (const r of groundPieces()) boxGeo(r[0], r[1], r[2], r[3], 0, -2, null);
-  for (const b of BOXES) { col.setHex(b[5]); boxGeo(b[0], b[1], b[2], b[3], b[4], -1, b.faces); }
+  // 地面（橋の上は板）
+  const bridges = STAGE.bridges || [];
+  for (const r of groundPieces()) {
+    const br = bridges.some(b => r[0] >= b[0] - .01 && r[2] <= b[2] + .01 && r[1] >= b[1] - .01 && r[3] <= b[3] + .01);
+    col.setHex(br ? 0x9a7650 : STAGE.groundCol); mid = br ? MATI.wood : 0; top = 0;
+    boxGeo(r[0], r[1], r[2], r[3], 0, -2, null);
+  }
+  for (const b of BOXES) { col.setHex(b[5]); mid = matId(b[6]); top = b[4]; boxGeo(b[0], b[1], b[2], b[3], b[4], -1, b.faces); }
   for (const r of RAMPS) {
-    col.setHex(r[7]);
+    col.setHex(r[7]); mid = matId(r[8]); top = Math.max(r[4], r[5]);
     const [x0, z0, x1, z1] = r, y = (x, z) => rampH(r, x, z), lo = -1;
+    if (r[9]) {
+      // 階段：見た目だけ段にする（当たりはなめらかな坂のまま）。段の立ち上がりにも床のペンキを写す
+      const ax = r[6], n = Math.max(2, Math.round(Math.abs(r[5] - r[4]) / .24));
+      const at = u => ax === 'x' ? lerp(x0, x1, u) : lerp(z0, z1, u);
+      const hs = []; for (let i = 0; i < n; i++) hs.push(lerp(r[4], r[5], (i + .5) / n));
+      for (let i = 0; i < n; i++) {
+        const a = at(i / n), b = at((i + 1) / n), h = hs[i];
+        if (ax === 'x') quad([a, h, z0], [a, h, z1], [b, h, z1], [b, h, z0], NOF); else quad([x0, h, a], [x0, h, b], [x1, h, b], [x1, h, a], NOF);
+        // 横の板（段の形）
+        if (ax === 'x') { quad([a, lo, z0], [b, lo, z0], [b, h, z0], [a, h, z0], NOF); quad([b, lo, z1], [a, lo, z1], [a, h, z1], [b, h, z1], NOF); }
+        else { quad([x0, lo, a], [x0, lo, b], [x0, h, b], [x0, h, a], NOF); quad([x1, lo, b], [x1, lo, a], [x1, h, a], [x1, h, b], NOF); }
+        // 立ち上がり（ひとつ前の段との間）
+        const prev = i === 0 ? r[4] : hs[i - 1];
+        if (Math.abs(prev - h) > .01) {
+          const m0 = mid; mid = m0 + 100;
+          const yl = Math.min(prev, h), yh = Math.max(prev, h);
+          if (ax === 'x') quad([a, yl, z0], [a, yl, z1], [a, yh, z1], [a, yh, z0], NOF); else quad([x0, yl, a], [x1, yl, a], [x1, yh, a], [x0, yh, a], NOF);
+          mid = m0;
+        }
+      }
+      // 低いほうの端（地面まで）と高いほうの端
+      const e0 = at(0), e1 = at(1), hLo = Math.min(r[4], hs[0]), hHi = Math.max(r[5], hs[n - 1]);
+      if (ax === 'x') { quad([e0, lo, z0], [e0, lo, z1], [e0, hLo, z1], [e0, hLo, z0], NOF); quad([e1, lo, z1], [e1, lo, z0], [e1, hHi, z0], [e1, hHi, z1], NOF); }
+      else { quad([x1, lo, e0], [x0, lo, e0], [x0, hLo, e0], [x1, hLo, e0], NOF); quad([x0, lo, e1], [x1, lo, e1], [x1, hHi, e1], [x0, hHi, e1], NOF); }
+      continue;
+    }
     quad([x0, y(x0, z0), z0], [x0, y(x0, z1), z1], [x1, y(x1, z1), z1], [x1, y(x1, z0), z0], NOF);
     quad([x0, lo, z0], [x0, lo, z1], [x0, y(x0, z1), z1], [x0, y(x0, z0), z0], NOF);
     quad([x1, lo, z1], [x1, lo, z0], [x1, y(x1, z0), z0], [x1, y(x1, z1), z1], NOF);
@@ -250,99 +421,12 @@ function buildTerrain() {
   }
   const g = new T.BufferGeometry();
   g.setAttribute('position', new T.Float32BufferAttribute(P, 3)); g.setAttribute('normal', new T.Float32BufferAttribute(N, 3));
-  g.setAttribute('color', new T.Float32BufferAttribute(C, 3)); g.setAttribute('aFace', new T.Float32BufferAttribute(F, 4));
+  g.setAttribute('color', new T.Float32BufferAttribute(C, 3)); g.setAttribute('aFace', new T.Float32BufferAttribute(F, 4)); g.setAttribute('aMat', new T.Float32BufferAttribute(MA, 2));
   g.computeBoundingSphere();
   terrainMesh = new T.Mesh(g, terrainMat); terrainMesh.receiveShadow = true; terrainMesh.castShadow = true;
   world.add(terrainMesh);
 }
 
-// ---------- まわりのかざり（ステージごと） ----------
-const spawnRings = [];
-let skyMesh = null;
-function buildDecor() {
-  if (decor) { world.remove(decor); decor.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material && o.material.dispose) o.material.dispose(); }); }
-  decor = new T.Group(); world.add(decor); spawnRings.length = 0;
-  const s = STAGE, th = s.theme;
-  // 空
-  { const g = new T.SphereGeometry(600, 24, 12), c = [], top = new T.Color(s.sky[0]), mid = new T.Color(s.sky[1]), low = new T.Color(s.sky[2]);
-    const p = g.attributes.position; for (let i = 0; i < p.count; i++) { const y = p.getY(i) / 600, cc = y > .2 ? mid.clone().lerp(top, (y - .2) / .8) : low.clone().lerp(mid, clamp((y + .1) / .3, 0, 1)); c.push(cc.r, cc.g, cc.b); }
-    g.setAttribute('color', new T.Float32BufferAttribute(c, 3));
-    skyMesh = new T.Mesh(g, new T.MeshBasicMaterial({ vertexColors: true, side: T.BackSide, fog: false, depthWrite: false })); decor.add(skyMesh); }
-  if (typeof scene !== 'undefined') { scene.background = new T.Color(s.fog); scene.fog = new T.Fog(s.fog, th === 'roof' ? 120 : 90, th === 'roof' ? 420 : 300); sun.color.set(s.sun); }
-  const M = (c, o) => new T.MeshStandardMaterial(Object.assign({ color: c, roughness: .7 }, o));
-  const box = (w, h, d, mat, x, y, z) => { const m = new T.Mesh(new T.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); decor.add(m); return m; };
-  if (th !== 'roof') {
-    const seaCol = { harbor: 0x1d6fa8, market: 0x2a86b8, park: 0x3a8a8a, factory: 0x34484c }[th] || 0x1d6fa8;
-    const sea = new T.Mesh(new T.PlaneGeometry(900, 900), new T.MeshStandardMaterial({ color: seaCol, roughness: .15, metalness: .1, transparent: true, opacity: .92 }));
-    sea.rotation.x = -Math.PI / 2; sea.position.y = -1.3; decor.add(sea);
-  }
-  if (th === 'park') {
-    // 木の幹の上に葉っぱ（さくらと緑）。まわりにも木と丘
-    const leafG = M(0x4f9a3f, { roughness: .9 }), leafP = M(0xf2a8c8, { roughness: .9 }), trunk = M(0x6a4a2a), q = mulberry(5);
-    BOXES.forEach((b, i) => { if (b[2] - b[0] <= 1.1 && b[3] - b[1] <= 1.1 && b[4] >= 2.9) { const cx = (b[0] + b[2]) / 2, cz = (b[1] + b[3]) / 2, mat = i % 2 ? leafP : leafG; for (let k = 0; k < 4; k++) { const m = new T.Mesh(new T.SphereGeometry(1.1 + q() * .5, 12, 8), mat); m.position.set(cx + (q() - .5) * 1.4, b[4] + .7 + q() * .8, cz + (q() - .5) * 1.4); m.castShadow = true; decor.add(m); } } });
-    for (let i = 0; i < 60; i++) {
-      const a = q() * TAU, r = 48 + q() * 60, x = Math.cos(a) * r * .75, z = Math.sin(a) * r * 1.1, h = 4 + q() * 4;
-      box(.6, h, .6, trunk, x, h / 2 - 1.3, z);
-      const m = new T.Mesh(new T.SphereGeometry(2 + q() * 1.6, 10, 8), q() < .4 ? leafP : leafG); m.position.set(x, h - 1.3 + 1.2, z); decor.add(m);
-    }
-    for (const [x, z, r] of [[-180, -200, 80], [150, -240, 100], [-160, 220, 90], [200, 180, 70]]) { const hill = new T.Mesh(new T.ConeGeometry(r, r * .5, 20), M(0x5f9a4a, { roughness: .95 })); hill.position.set(x, r * .25 - 1.3, z); decor.add(hill); }
-  }
-  if (th === 'factory') {
-    // えんとつ・大きな建物のかべ・パイプ
-    const wallM = M(0x8a8478), dark = M(0x4a4e56), stripe = M(0xe0b030), q = mulberry(9);
-    for (const sx of [-1, 1]) {
-      box(6, 26, 120, wallM, sx * 46, 13 - 1.3, 0);
-      for (let k = 0; k < 4; k++) { const pipe = new T.Mesh(new T.CylinderGeometry(.6, .6, 110, 12), dark); pipe.rotation.x = Math.PI / 2; pipe.position.set(sx * 40, 3 + k * 1.6, 0); decor.add(pipe); }
-    }
-    for (const [x, z] of [[-60, -70], [-40, -90], [55, 70], [70, -40], [-70, 50]]) {
-      const ch = new T.Mesh(new T.CylinderGeometry(3, 4, 46, 14), M(0xb0a8a0)); ch.position.set(x, 22, z); decor.add(ch);
-      const band = new T.Mesh(new T.CylinderGeometry(3.1, 3.1, 3, 14), M(0xc84a3a)); band.position.set(x, 40, z); decor.add(band);
-      for (let k = 0; k < 4; k++) { const sm = new T.Mesh(new T.SphereGeometry(4 + k * 1.5, 10, 8), new T.MeshStandardMaterial({ color: 0xd8d8d8, transparent: true, opacity: .35 - k * .06, roughness: 1, depthWrite: false })); sm.position.set(x + k * 3, 48 + k * 5, z + k); decor.add(sm); }
-    }
-    for (let i = 0; i < 24; i++) { const x = (q() < .5 ? -1 : 1) * (32 + q() * 6), z = -50 + q() * 100; box(1.2, .2, 1.2, stripe, x, -1.2, z); }
-  }
-  if (th === 'harbor') {
-    const deco = M(0xd8b040, { roughness: .6 }), deco2 = M(0xe8e4dc);
-    for (const [x, z, sd] of [[-58, -10, 1], [60, 18, -1], [-52, 40, 1], [54, -38, -1]]) {
-      const g = new T.Group(); g.position.set(x, -1.3, z); decor.add(g);
-      for (const [lx, lz] of [[-3, -3], [3, -3], [-3, 3], [3, 3]]) { const m = new T.Mesh(new T.BoxGeometry(1.2, 22, 1.2), deco); m.position.set(lx, 11, lz); g.add(m); }
-      const top = new T.Mesh(new T.BoxGeometry(30, 2, 2.4), deco); top.position.set(sd * 8, 22, 0); g.add(top);
-      const cab = new T.Mesh(new T.BoxGeometry(4, 3, 4), deco2); cab.position.set(0, 20, 0); g.add(cab);
-    }
-    const lh = new T.Group(); lh.position.set(0, -1.3, -95); decor.add(lh);
-    const body = new T.Mesh(new T.CylinderGeometry(2.4, 3.4, 22, 16), deco2); body.position.y = 11; lh.add(body);
-    const band = new T.Mesh(new T.CylinderGeometry(2.6, 2.7, 3, 16), M(0xd83a3a)); band.position.y = 15; lh.add(band);
-  }
-  if (th === 'roof') {
-    // ずっと下の町。ビルの高さはばらばら（屋上より高いビルも遠くに）
-    const ground = new T.Mesh(new T.PlaneGeometry(1400, 1400), M(0x3a3f4a)); ground.rotation.x = -Math.PI / 2; ground.position.y = -70; decor.add(ground);
-    const q = mulberry(7), cols = [0x8a8f9a, 0xb0a898, 0x6a7080, 0xc8c0b0, 0x5a6a7a, 0x9a8070];
-    for (let i = 0; i < 70; i++) {
-      const a = q() * TAU, r = 70 + q() * 260, w = 14 + q() * 22, d = 14 + q() * 22, top = -50 + q() * (r > 150 ? 110 : 55);
-      const m = box(w, top + 70, d, M(cols[i % cols.length]), Math.cos(a) * r, (top - 70) / 2, Math.sin(a) * r * 1.2);
-      m.rotation.y = q() * 1.5;
-    }
-    // 屋上のふちの低い段（見た目だけ）
-    const rim = M(0x7a746c);
-    box(s.ground[2] * 2 + 1, .5, .5, rim, 0, -.1, s.ground[3] + .25); box(s.ground[2] * 2 + 1, .5, .5, rim, 0, -.1, s.ground[1] - .25);
-    box(.5, .5, s.ground[3] * 2 + 1, rim, s.ground[2] + .25, -.1, 0); box(.5, .5, s.ground[3] * 2 + 1, rim, s.ground[0] - .25, -.1, 0);
-  }
-  if (th === 'market') {
-    const q = mulberry(11), wall = [0xf0e6d6, 0xe8d0b0, 0xd8e0e8, 0xf4dcc8], roofc = [0xc84a3a, 0x3a6ac8, 0x4a8a5a, 0xa0603a];
-    for (let i = 0; i < 46; i++) {
-      const sx = q() < .5 ? -1 : 1, x = sx * (38 + q() * 40), z = -60 + q() * 120, w = 6 + q() * 6, h = 4 + q() * 7, d = 6 + q() * 6;
-      box(w, h, d, M(wall[i % 4]), x, h / 2 - 1.3, z);
-      const rf = new T.Mesh(new T.ConeGeometry(Math.max(w, d) * .75, 3, 4), M(roofc[i % 4])); rf.position.set(x, h - 1.3 + 1.5, z); rf.rotation.y = Math.PI / 4; decor.add(rf);
-    }
-    for (const [x, z, r] of [[-160, -220, 90], [120, -260, 110], [0, -320, 120], [-200, 200, 100]]) { const hill = new T.Mesh(new T.ConeGeometry(r, r * .6, 20), M(0x6a9a5a, { roughness: .95 })); hill.position.set(x, r * .3 - 1.3, z); decor.add(hill); }
-  }
-  // スタート台の光る輪
-  for (const t of [1, 2]) {
-    const sp = SPAWN[t], ring = new T.Mesh(new T.RingGeometry(2.2, 2.7, 40), new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .8, side: T.DoubleSide }));
-    ring.rotation.x = -Math.PI / 2; ring.position.set(sp.x, hAt(sp.x, sp.z) + .03, sp.z); ring.userData.team = t; decor.add(ring); spawnRings.push(ring);
-  }
-  setTeamColors(G.pal[0], G.pal[1]);
-}
 function mulberry(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 function setTeamColors(a, b) {
   PU.uColA.value.set(a); PU.uColB.value.set(b);
@@ -364,7 +448,7 @@ function loadStage(id) {
   SPAWN = { 1: { x: 0, z: s.spawnZ, yaw: Math.PI }, 2: { x: 0, z: -s.spawnZ, yaw: 0 } };
   SPAWN_ZONE = { 1: s.spawnRect, 2: mirrorRect(s.spawnRect) };
   ZONE = s.zone;
-  buildHeight(); buildFaces(); clearPaint(); buildTerrain(); buildDecor(); buildNav(); miniInit(); zoneMarks(false);
+  buildHeight(); buildFaces(); clearPaint(); buildTerrain(); buildGroundMaps(); buildDecor(); buildNav(); miniInit(); zoneMarks(false);
 }
 
 // ---------- ゾーンの枠（ゾーン争奪のとき） ----------

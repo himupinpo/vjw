@@ -228,6 +228,7 @@ function update(dt) {
     G.endT -= dt; if (G.endT <= 0 && $('result').classList.contains('hidden')) showResult();
   }
   for (const a of actors) syncModel(a, dt, G.me);
+  decoTick(dt);
   updFx(dt); updTracers(dt); drawProj(); uploadPaint();
   updateCamera(dt); updateHud(dt);
   AU.music();
