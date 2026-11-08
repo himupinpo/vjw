@@ -85,6 +85,8 @@ function explode(x, y, z, r, dmax, dmin, team, owner, pr) {
   for (const d of devices) if (d.team !== team && d.hp && Math.hypot(d.x - x, d.z - z) < r + .5) d.hp -= dmax;
   const R = pr ?? r;
   paintBy(owner, x, y + .3, z, R, team);
+  // 破裂のふちに飛びちるしずく
+  for (let k = 0, n = Math.round(4 + R * 2); k < n; k++) { const ang = k / n * TAU + Math.random() * .6, d = R * rand(.95, 1.35); paintBy(owner, x + Math.cos(ang) * d, y + .3, z + Math.sin(ang) * d, R * rand(.12, .22), team); }
   paintWallsNear(x, y + .3, z, R * .9, team);
   burst(x, y + .3, z, team, 24, 1.2);
   const near = G.me ? Math.hypot(G.me.x - x, G.me.z - z) : 99;
@@ -100,6 +102,14 @@ function landPaint(p, ox, oy, oz, gh) {
     paintBy(p.owner, ox, hAt(ox, oz) + .2, oz, p.pr * .45, p.team);
   } else {
     paintBy(p.owner, p.x, gh + .2, p.z, p.pr, p.team);
+    // とびちり：着地点のまわりに小さなしずく（進む向きに多め）
+    if (p.pr >= .5) {
+      const sp = Math.hypot(p.vx, p.vz) || 1, ux = p.vx / sp, uz = p.vz / sp, n = p.pr > 1.2 ? 4 : Math.random() < .7 ? 2 : 1;
+      for (let k = 0; k < n; k++) {
+        const fwd = rand(.2, 1.1) * p.pr * 1.4, side = rand(-.9, .9) * p.pr;
+        paintBy(p.owner, p.x + ux * fwd - uz * side, gh + .2, p.z + uz * fwd + ux * side, p.pr * rand(.22, .38), p.team);
+      }
+    }
     if (p.swirl) for (let k = 0; k < 10; k++) { const a = k / 10 * TAU; paintBy(p.owner, p.x + Math.cos(a) * 2.1, gh + .2, p.z + Math.sin(a) * 2.1, .6, p.team); }
   }
   if (p.size > .1 && Math.random() < .5) burst(wall ? ox : p.x, (wall ? oy : gh) + .05, wall ? oz : p.z, p.team, 3, .35);
@@ -138,7 +148,9 @@ function stepProj(dt) {
     if (blocked(p, ox, oz)) { burst(p.x, p.y, p.z, p.team, 3, .4); proj.splice(i, 1); continue; }
     const hit = findHit(p, ox, oy, oz);
     if (hit) {
-      hurt(hit, p.dmg, p.owner, p.kind); burst(p.x, p.y, p.z, p.team, 4, .5);
+      // まっすぐ飛ぶ距離をこえて落ちていく弾は、ダメージが下がる（最低5割）
+      const fall = p.fall ? clamp(1 - Math.max(0, p.t - p.straight) * 1.6, .5, 1) : 1;
+      hurt(hit, p.dmg * fall, p.owner, p.kind); burst(p.x, p.y, p.z, p.team, 4, .5);
       if (p.knock) { const l = Math.hypot(p.vx, p.vz) || 1; hit.vx += p.vx / l * p.knock * 6; hit.vz += p.vz / l * p.knock * 6; }
       if (p.kind === 'blast') { explode(p.x, p.y, p.z, p.er, p.sdmg, p.sdmg * .5, p.team, p.owner, p.pr); proj.splice(i, 1); continue; }
       if (p.kind === 'dart') { markAround(p.x, p.z, p.team); }
@@ -151,7 +163,7 @@ function stepProj(dt) {
     if (p.y <= gh && p.kind !== 'rollblob') {
       const wall = gh > oy + .1;
       if (p.bounce > 0) {
-        p.bounce--; p.straight = 0;
+        p.bounce--; p.straight = 0; p.fall = false; p.dmg *= .75;
         if (wall) { const cx = hAt(ox, p.z) > oy + .1, cz = hAt(p.x, oz) > oy + .1; p.x = ox; p.y = oy; p.z = oz; if (cx || !cz) p.vx *= -.6; if (cz || !cx) p.vz *= -.6; paintWall(p.owner, ox, oy, oz, ox + p.vx * -dt * 2, oy, oz + p.vz * -dt * 2, p.pr * .6, p.team); }
         else { p.y = gh + .02; p.vy = Math.abs(p.vy) * .45 + 1.5; p.vx *= .7; p.vz *= .7; paintBy(p.owner, p.x, gh + .2, p.z, p.pr * .6, p.team); }
         continue;
@@ -295,6 +307,7 @@ function blockAlong(from, dir, end, team) {
 // ================= ブキごとの動き =================
 // fire：押している、dodge：二丁拳銃のスライドの合図、mx/mz：動いている向き
 function weaponTick(a, dt, fire, dodge, mx, mz) {
+  if (fire && !ruleCanFire(a)) fire = false;   // ボールを持っている間は撃てない
   const w = a.w, s = a.ws, press = fire && !s.prev, release = !fire && s.prev;
   s.prev = fire; s.cd = Math.max(0, (s.cd || 0) - dt); s.busy = 0; s.open = false;
   if (s.broken > 0) s.broken -= dt;
@@ -314,7 +327,7 @@ function weaponTick(a, dt, fire, dodge, mx, mz) {
     const f = side === 1 ? from : muzzle(a, -1), v = w.v || 30;
     for (let c = 0; c < (w.cone || 1); c++) {
       const d = jitter(dir, (w.spread || 3) * spreadMul);
-      shoot(Object.assign({ x: f.x, y: f.y, z: f.z, vx: d.x * v, vy: d.y * v, vz: d.z * v, straight: w.range / v, team: a.team, owner: a, dmg: w.dmg * (air && w.air ? 1.25 : 1), pr: w.pr, trail: w.trail || 1.1, trailR: w.pr * .5, life: 2.5, bounce: w.bounce || 0, knock: w.knock || 0 }, extra));
+      shoot(Object.assign({ x: f.x, y: f.y, z: f.z, vx: d.x * v, vy: d.y * v, vz: d.z * v, straight: w.range / v, team: a.team, owner: a, dmg: w.dmg * (air && w.air ? 1.25 : 1), pr: w.pr, trail: w.trail || 1.1, trailR: w.pr * .5, life: 2.5, bounce: w.bounce || 0, knock: w.knock || 0, fall: true }, extra));
     }
   };
   switch (cls) {
@@ -366,13 +379,13 @@ function weaponTick(a, dt, fire, dodge, mx, mz) {
           const vert = w.vflick || (w.airFlick && air), n = w.flick, base = Math.atan2(d.x, d.z), up = clamp(Math.asin(d.y), -.3, .5);
           const fr = w.frange * (w.airFlick && air ? 1.6 : 1);
           for (let k = 0; k < n; k++) {
-            let yaw = base, pit = up + .12, v = fr * 1.2, straight = .06;
+            let yaw = base, pit = up + .15, v = fr * 1.6, straight = .08, g = 18;
             // たて振り：遠くまで一直線（まっすぐ飛ぶ時間を長めに）／床をはう波：低く出して順に着地
-            if (vert) { pit = up + .05 + k * .012; v = fr * (.55 + .5 * k / n) * 1.25; straight = .22; yaw += (Math.random() - .5) * .05; }
-            else if (w.wave) { pit = up + .03; v = fr * (.35 + .65 * k / Math.max(1, n - 1)) * 1.3; straight = .14; yaw += (Math.random() - .5) * w.fspread * Math.PI / 180; }
-            else { yaw += (k / Math.max(1, n - 1) - .5) * w.fspread * Math.PI / 180 + (Math.random() - .5) * .04; v *= rand(.75, 1.05); }
+            if (vert) { pit = up + .05 + k * .012; v = fr * (.55 + .5 * k / n) * 1.25; straight = .22; g = 26; yaw += (Math.random() - .5) * .05; }
+            else if (w.wave) { pit = up + .03; v = fr * (.35 + .65 * k / Math.max(1, n - 1)) * 1.3; straight = .14; g = 26; yaw += (Math.random() - .5) * w.fspread * Math.PI / 180; }
+            else { yaw += (k / Math.max(1, n - 1) - .5) * w.fspread * Math.PI / 180 + (Math.random() - .5) * .04; v *= rand(.8, 1.05); }   // 横振り：だいたい射程の7〜9割まで届く
             const dd = dirOf(yaw, pit);
-            shoot({ x: from.x, y: from.y, z: from.z, vx: dd.x * v, vy: dd.y * v, vz: dd.z * v, straight, g: 26, team: a.team, owner: a, dmg: w.fdmg / (brush ? 1.5 : 3.1), pr: brush ? .5 : .75, size: brush ? .1 : .16, hitR: w.wave ? .4 : .3, trail: 1.3, trailR: .32, life: 1.6 });
+            shoot({ x: from.x, y: from.y, z: from.z, vx: dd.x * v, vy: dd.y * v, vz: dd.z * v, straight, g, team: a.team, owner: a, dmg: w.fdmg / (brush ? 1.5 : 3.1), pr: brush ? .5 : .75, size: brush ? .1 : .16, hitR: w.wave ? .4 : .3, trail: 1.3, trailR: .32, life: 1.6 });
           }
           sfx(a, cls);
         }
@@ -460,7 +473,7 @@ function weaponTick(a, dt, fire, dodge, mx, mz) {
         if (s.cd <= 0) {
           if (useInk(a, w.ink)) {
             s.cd = 1 / w.rate; const d = aim(), v = w.v;
-            for (let k = 0; k < w.pellets; k++) { const dd = jitter(d, w.cone, w.cone * .5); shoot({ x: from.x, y: from.y, z: from.z, vx: dd.x * v, vy: dd.y * v, vz: dd.z * v, straight: w.range / v, team: a.team, owner: a, dmg: w.dmg, pr: w.pr, trail: 1.4, trailR: .3, life: 1.5 }); }
+            for (let k = 0; k < w.pellets; k++) { const dd = jitter(d, w.cone, w.cone * .5); shoot({ x: from.x, y: from.y, z: from.z, vx: dd.x * v, vy: dd.y * v, vz: dd.z * v, straight: w.range / v, team: a.team, owner: a, dmg: w.dmg, pr: w.pr, trail: 1.4, trailR: .3, life: 1.5, fall: true }); }
             sfx(a, 'blaster');
           } else s.cd = .2;
         }
@@ -526,7 +539,7 @@ function weaponTick(a, dt, fire, dodge, mx, mz) {
           s.acc -= 1; const d = aim(), b = Math.atan2(d.x, d.z), p0 = Math.asin(clamp(d.y, -1, 1));
           for (const o of streams) {
             const dd = jitter(dirOf(b + o, p0), w.spread * spreadMul, w.mist ? w.spread * .6 : w.spread * .4), v = w.mist ? 15 : 26;
-            shoot({ x: from.x, y: from.y, z: from.z, vx: dd.x * v, vy: dd.y * v, vz: dd.z * v, straight: range / v * .85, g: 24, team: a.team, owner: a, dmg: w.dmg, pr: w.pr, size: w.mist ? .08 : .1, hitR: .25, life: 2 });
+            shoot({ x: from.x, y: from.y, z: from.z, vx: dd.x * v, vy: dd.y * v, vz: dd.z * v, straight: range / v * .85, g: 24, team: a.team, owner: a, dmg: w.dmg, pr: w.pr, size: w.mist ? .08 : .1, hitR: .25, life: 2, fall: true });
           }
         }
         s.snd = (s.snd || 0) - dt; if (s.snd <= 0) { s.snd = .12; sfx(a, 'hose'); }
@@ -535,15 +548,24 @@ function weaponTick(a, dt, fire, dodge, mx, mz) {
     }
   }
 }
+// 撃った音・反動・銃口のしぶき
+const KICK = { gun: .3, blaster: .9, charger: 1, roller: .55, brush: .3, slosher: .7, stringer: .6, blade: .6, hose: .12 };
+const CAMKICK = { gun: .004, blaster: .035, charger: .04, roller: .012, brush: .004, slosher: .022, stringer: .018, blade: .012, hose: .001 };
 function sfx(a, kind) {
   const d = G.me ? Math.hypot(G.me.x - a.x, G.me.z - a.z) : 0, g = a === G.me ? 1 : clamp(1 - d / 40, 0, 1) * .6;
   if (g > .02) AU.shot(kind, g);
   if (G.me && a.team !== G.me.team) reveal(a, a.cloakT > 0 ? .6 : 1.2);
+  a.kick = Math.min(1, (a.kick || 0) + (KICK[kind] || .3));
+  if (a === G.me) G.kick = Math.min(.08, (G.kick || 0) + (CAMKICK[kind] || 0));
+  if (d < 28 && !(a.cloakT > 0 && G.me && a.team !== G.me.team)) {
+    const m = muzzle(a), [fx, fz] = fwdOf(a.aimYaw), n = (KICK[kind] || .3) > .5 ? 4 : 2;
+    for (let k = 0; k < n; k++) particle(m.x + fx * .2, m.y, m.z + fz * .2, fx * rand(2, 4.5) + rand(-.8, .8), rand(.4, 2), fz * rand(2, 4.5) + rand(-.8, .8), a.team, rand(.035, .07), rand(.12, .26));
+  }
 }
 
 // ================= サブ =================
 function throwSub(a) {
-  if (a.dead || a.dive || a.sj) return false;
+  if (a.dead || a.dive || a.sj || !ruleCanFire(a)) return false;
   const sd = SUBS[a.w.sub]; if (!useInk(a, sd.ink)) return false;
   const from = muzzle(a), d = aimFrom(a, from), k = a.w.sub;
   const yaw = Math.atan2(d.x, d.z), pit = clamp(Math.asin(d.y) + .38, -.2, 1.1), v = k === 'slide' ? 13 : 12.5;

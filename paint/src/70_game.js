@@ -66,7 +66,7 @@ function clearMatch() {
   for (const [, m] of sjMarks) scene.remove(m); sjMarks.clear();
   for (const t of tracers) scene.remove(t.m); tracers.length = 0;
   for (const f of fx) f.life = 0;
-  clearPaint(); closeJumpUI(); $('splats').innerHTML = '';
+  clearPaint(); closeJumpUI(); $('splats').innerHTML = ''; rulesClear();
 }
 function pickBotWeapons(n, avoid) {
   const out = [], used = new Set([avoid]);
@@ -100,8 +100,10 @@ function startMatch(mode, stage) {
   hideScreens(); $('hud').classList.remove('hidden'); $('touch').classList.toggle('off', !IN.touchOn);
   $('wpName').innerHTML = `<b>${G.me.w.name}</b><br>サブ：${SUBS[G.me.w.sub].name}`; $('spName').textContent = SPECIALS[G.me.w.sp].name;
   $('zoneBar').classList.toggle('hidden', mode !== 'zone'); zoneMarks(mode === 'zone');
+  rulesInit(mode); $('ruleBar').classList.toggle('hidden', !(mode === 'flag' || mode === 'ball')); $('ruleBar').innerHTML = ''; RS.hud = '';
   buildTeamIcons(); miniInit();
-  const ruleName = mode === 'zone' ? 'ゾーン争奪' : 'ぬりあいバトル';
+  G.camY = undefined; G.kick = 0;
+  const ruleName = RULES[mode] ? RULES[mode].name : 'ぬりあいバトル';
   if (mode !== 'practice') { showMsg('READY?', ruleName + '・' + STAGE.name, 1.8); AU.ready(); } else showMsg('試しうち', 'まとを撃ってブキをためそう', 2);
   AU.musicOn(mode !== 'practice' && SET.music);
 }
@@ -140,6 +142,7 @@ function playerControl(a, dt) {
   const [ax, ay] = moveAxes(), fx = Math.sin(G.camYaw), fz = Math.cos(G.camYaw);
   const mx = fx * ay - fz * ax, mz = fz * ay + fx * ax;
   const fire = firing() && !G.paused, dive = diving(), jump = takeEdge('jumpE'), sub = takeEdge('subE'), sp = takeEdge('spE');
+  if (fire && IN.touchOn && SET.assist && !a.dead && !a.sj) aimAssist(a, dt);
   if (takeEdge('sjE')) { if ($('jumpUI').classList.contains('hidden')) openJumpUI(); else closeJumpUI(); }
   let dodge = false;
   if (a.w.cls === 'dual' && fire && dive) { if (!G.dodgeHeld) dodge = true; G.dodgeHeld = true; } else G.dodgeHeld = false;
@@ -156,6 +159,21 @@ function playerControl(a, dt) {
   if (sub) throwSub(a);
   if (sp) useSpecial(a);
   return { mx, mz, dive: dive && !(a.w.cls === 'dual' && fire), jump, fire, dodge };
+}
+
+// スマホのねらい補助：撃っている間だけ、照準から6°以内の見えている相手へ少しだけ向きを寄せる
+function aimAssist(a, dt) {
+  const w = a.w, range = (w.cls === 'blade' ? Math.max(w.range, w.crange * .8) : (w.range || w.frange || 8)) * 1.1;
+  const cx = camera.position.x, cz = camera.position.z;
+  let best = null, bang = 6 * Math.PI / 180;
+  for (const t of actors) {
+    if (t.dead || t.team === a.team) continue;
+    if ((t.swim || t.cloakT > 0) && !t.revealed && !(t.markT > 0)) continue;
+    const d = Math.hypot(t.x - a.x, t.z - a.z); if (d > range || d < .8) continue;
+    const ang = Math.abs(angD(Math.atan2(t.x - cx, t.z - cz) - G.camYaw));
+    if (ang < bang && lineOfSight(a.x, a.y + 1.1, a.z, t.x, t.y + .8, t.z)) { bang = ang; best = t; }
+  }
+  if (best) G.camYaw += angD(Math.atan2(best.x - cx, best.z - cz) - G.camYaw) * Math.min(1, dt * 6);
 }
 
 // ---------- ゾーン争奪 ----------
@@ -199,7 +217,7 @@ function update(dt) {
       weaponTick(a, dt, playing && !!ctl.fire && !a.climb, !!ctl.dodge, ctl.mx, ctl.mz);
       stepSpecial(a, dt);
     }
-    if (playing) { stepProj(dt); stepDevices(dt); if (G.mode === 'zone') zoneTick(dt); }
+    if (playing) { stepProj(dt); stepDevices(dt); if (G.mode === 'zone') zoneTick(dt); if (G.mode === 'flag' || G.mode === 'ball') rulesTick(dt); }
     if (G.mode !== 'practice' && playing && G.state === 'play') {
       G.time -= dt;
       const sec = Math.ceil(G.time);
@@ -231,9 +249,16 @@ function updateCamera(dt) {
   const a = G.me; if (!a) return;
   let yaw = G.camYaw, pit = G.camPitch;
   if (a.dead && G.state !== 'end') { yaw += clock * .3 % TAU; pit = -.45; }
+  // 反動：撃った直後だけ少し上を向く（すぐもどる）
+  G.kick = (G.kick || 0) * Math.exp(-dt * 10); pit = clamp(pit + G.kick, -1.2, 1);
   const fx = Math.sin(yaw), fz = Math.cos(yaw), rx = -fz, rz = fx, cp = Math.cos(pit), sp = Math.sin(pit);
-  const low = a.dive ? .7 : 1.55, dist = a.dead ? 7 : a.sj ? 8 : a.dive ? 4.6 : 4.2, side = a.dead || a.sj ? 0 : .7;
-  _piv.set(a.x + rx * side, a.y + low, a.z + rz * side);
+  const low = a.dive ? .7 : 1.55, dist0 = a.dead ? 7 : a.sj ? 8 : a.dive ? 4.6 : 4.2, side = a.dead || a.sj ? 0 : .7;
+  // 段差・ジャンプ・もぐるときの上下は、なめらかに追う
+  const ty = a.y + low;
+  if (G.camY === undefined || a.sj || a.dead || Math.abs(G.camY - ty) > 2.5) G.camY = ty; else G.camY += (ty - G.camY) * (1 - Math.exp(-dt * 14));
+  G.camD = G.camD === undefined ? dist0 : G.camD + (dist0 - G.camD) * (1 - Math.exp(-dt * 8));
+  const dist = G.camD;
+  _piv.set(a.x + rx * side, G.camY, a.z + rz * side);
   const bx = -fx * cp, by = -sp, bz = -fz * cp;
   const hit = rayGround(_piv.x, _piv.y, _piv.z, bx, by, bz, dist, .15);
   const dd = Math.max(.6, Math.min(dist, hit - .25));
@@ -263,8 +288,10 @@ function updateHud(dt) {
     $('zMid').style.background = G.zOwner ? teamColor(G.zOwner) : '#4a4757';
     $('zBarA').style.width = (G.zShare[1] * 100).toFixed(0) + '%'; $('zBarB').style.width = (G.zShare[2] * 100).toFixed(0) + '%';
   }
+  if (G.mode === 'flag' || G.mode === 'ball') rulesHud();
   const ink = $('ink'); ink.firstChild.style.height = a.ink + '%'; ink.classList.toggle('low', a.ink < 20 || G.inkWarn > 0);
-  if (G.inkWarn > 0) { G.inkWarn -= dt; $('inkMsg').textContent = 'ペンキが足りない！'; } else $('inkMsg').textContent = a.climb ? 'かべをのぼっている' : '';
+  if (G.inkWarn > 0) { G.inkWarn -= dt; $('inkMsg').textContent = 'ペンキが足りない！'; }
+  else $('inkMsg').textContent = a.climb ? 'かべをのぼっている' : carrierOf(a) ? (G.mode === 'ball' ? 'ボールを運んでいる（撃てない・もぐれない）' : '旗を運んでいる（もぐれない）') : '';
   $('spArc').setAttribute('stroke-dasharray', (a.sp * 195).toFixed(1) + ' 195'); $('spArc').setAttribute('stroke', a.sp >= 1 ? '#fff' : teamColor(a.team));
   $('spBox').classList.toggle('full', a.sp >= 1); $('bSp').classList.toggle('ready', a.sp >= 1);
   const ch = a.w.cls === 'sniper' ? a.ws.ch : a.w.cls === 'bow' ? a.ws.bow : a.w.cls === 'gatling' ? (a.ws.fireT > 0 ? a.ws.fireT / a.w.dur : a.ws.spin) : a.w.cls === 'blade' ? Math.min(1, (a.ws.blade || 0) / a.w.charge) : a.w.pump ? clamp((a.ws.held || 0) / 1.5, 0, 1) : 0;
@@ -275,8 +302,10 @@ function updateHud(dt) {
   G.hurtFlash = Math.max(0, G.hurtFlash - dt * 1.5);
   const v = $('vig'); v.style.setProperty('--hurt', teamColor(3 - a.team)); v.style.opacity = clamp(G.hurtFlash + (1 - a.hp / HP_MAX) * .7, 0, .9);
   if (msgT > 0) { msgT -= dt; if (msgT <= 0) $('msg').style.opacity = 0; }
-  if (a.dead && G.state === 'play' && msgT <= 0) { $('msg').innerHTML = `<small>${G.killedBy ? G.killedBy + ' にやられた' : ''}<br>復活まで ${Math.ceil(a.respawnT)}</small>`; $('msg').style.opacity = 1; }
-  if (a.sj && msgT <= 0) { $('msg').innerHTML = '<small>スーパージャンプ！</small>'; $('msg').style.opacity = 1; }
+  // やられている間・スーパージャンプ中だけ出す知らせ（終わったら消す）
+  const sticky = msgT > 0 ? '' : a.dead && G.state === 'play' ? `<small>${G.killedBy ? G.killedBy + ' にやられた' : ''}<br>復活まで ${Math.ceil(a.respawnT)}</small>` : a.sj ? '<small>スーパージャンプ！</small>' : '';
+  if (sticky) { if (G.sticky !== sticky) { $('msg').innerHTML = sticky; G.sticky = sticky; } $('msg').style.opacity = 1; }
+  else if (G.sticky) { G.sticky = ''; if (msgT <= 0) $('msg').style.opacity = 0; }
   for (const o of actors) if (o.icon) { o.icon.classList.toggle('dead', o.dead); o.icon.classList.toggle('spOn', o.sp >= 1 && !o.dead); }
   $('sjBtn').classList.toggle('hidden', G.mode === 'practice' || a.dead);
   G.miniT -= dt; if (G.miniT <= 0) { G.miniT = .35; miniDraw(actors, a); }
@@ -284,11 +313,12 @@ function updateHud(dt) {
 
 // ---------- 結果 ----------
 function showResult() {
-  const pa = PCNT[1] / PTOTAL * 100, pb = PCNT[2] / PTOTAL * 100, me = G.me, zone = G.mode === 'zone';
-  const win = zone ? (G.zc[1] !== G.zc[2] ? G.zc[1] < G.zc[2] : pa > pb) : pa > pb;
+  const pa = PCNT[1] / PTOTAL * 100, pb = PCNT[2] / PTOTAL * 100, me = G.me, zone = G.mode === 'zone', rr = rulesResult();
+  const win = rr ? (rr.win ? rr.win === 1 : pa > pb) : zone ? (G.zc[1] !== G.zc[2] ? G.zc[1] < G.zc[2] : pa > pb) : pa > pb;
   REC.games++; if (win) REC.wins++; REC.kills += me.kills; REC.paint += Math.round(me.painted); REC.best = Math.max(REC.best, Math.round(me.painted)); saveRec();
   const rows = actors.slice().sort((p, q) => q.painted - p.painted).map(o => `<tr class="${o === me ? 'me' : ''}"><td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${teamColor(o.team)}"></span> ${o.name}</td><td>${o.w.name}</td><td class="n">${Math.round(o.painted)}㎡</td><td class="n">${o.kills}</td><td class="n">${o.deaths}</td></tr>`).join('');
-  const zLine = zone ? `<div class="zres"><b style="color:${G.pal[0]}">${Math.ceil(G.zc[1])}</b> カウント <b style="color:${G.pal[1]}">${Math.ceil(G.zc[2])}</b><small>先に0にしたチーム（時間切れなら少ないチーム）の勝ち</small></div>` : '';
+  const zLine = rr ? `<div class="zres">${rr.line}${rr.win ? '' : '<small>同点なので、ぬった広さで決めた</small>'}</div>`
+    : zone ? `<div class="zres"><b style="color:${G.pal[0]}">${Math.ceil(G.zc[1])}</b> カウント <b style="color:${G.pal[1]}">${Math.ceil(G.zc[2])}</b><small>先に0にしたチーム（時間切れなら少ないチーム）の勝ち</small></div>` : '';
   $('resBox').innerHTML = `<div class="big" id="resBig" style="opacity:0">${win ? 'WIN!' : 'LOSE…'}</div>${zLine}
     <div class="meter"><div class="a" id="mA" style="flex-grow:1"></div><div class="n" id="mN" style="flex-grow:1"></div><div class="b" id="mB" style="flex-grow:1"></div></div>
     <div style="display:flex;justify-content:space-between;font-weight:900;font-size:14px"><span>あなたのチーム</span><span>${STAGE.name}</span><span>相手チーム</span></div>

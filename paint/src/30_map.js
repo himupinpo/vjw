@@ -1,9 +1,9 @@
 
 // ================= ステージの形（2.5Dの高さの表）・床と壁のぬり =================
-// ・床の高さを 0.25m ごとの表で持つ（当たり判定・移動・ぬり・CPUの道さがしが全部この表）
+// ・床の高さを 0.2m ごとの表で持つ（当たり判定・移動・ぬり・CPUの道さがしが全部この表）
 // ・箱の横の面（壁）にもぬれる。壁のぬりは面ごとの小さな表を1枚の画像（アトラス）にまとめて持つ
 // ・チームA（自分）は手前 z>0、チームBは奥 z<0。点対称
-const CS = 0.25, X0 = -32, Z0 = -50, GW = 256, GD = 400, MAPW = GW * CS, MAPD = GD * CS;
+const CS = 0.2, X0 = -32, Z0 = -50, GW = 320, GD = 500, MAPW = GW * CS, MAPD = GD * CS;
 const HG = new Float32Array(GW * GD).fill(-10);   // 床の高さ（-10 は水・空）
 const BX = new Int16Array(GW * GD).fill(-1);      // そのます目でいちばん上の箱（なければ -1）
 const PT = new Uint8Array(GW * GD);               // 床のぬり：0 なし／1 チームA／2 チームB
@@ -164,7 +164,7 @@ float h21(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); 
 float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
   return mix(mix(h21(i), h21(i + vec2(1, 0)), f.x), mix(h21(i + vec2(0, 1)), h21(i + vec2(1, 1)), f.x), f.y); }
 ` + sh.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
-  float pCov = 0.0;
+  float pCov = 0.0; vec2 pNC = vec2(0.0);
   {
     float up = smoothstep(0.55, 0.8, vWN.y);
     vec2 pv = vec2(0.0); vec2 nc = vWP.xz;
@@ -187,7 +187,18 @@ float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
     float rim = smoothstep(0.0, 0.25, pCov) - smoothstep(0.25, 0.6, pCov);
     diffuseColor.rgb = mix(diffuseColor.rgb, pc * (0.9 + 0.2 * vn(nc * 4.0)), pCov);
     diffuseColor.rgb *= 1.0 - rim * 0.25;
-  }`).replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n  roughnessFactor = mix(roughnessFactor, 0.16, pCov);');
+    pNC = nc;
+  }`).replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\n  roughnessFactor = mix(roughnessFactor, 0.16, pCov);')
+      // ぬったペンキに厚み：ふちが盛り上がり、表面に小さなでこぼこ（画面上の微分で法線をずらす）
+      .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+  {
+    float pH = pCov * 0.05 + pCov * (vn(pNC * 9.0) - 0.5) * 0.012;
+    vec2 dH = vec2(dFdx(pH), dFdy(pH));
+    vec3 sX = dFdx(-vViewPosition), sY = dFdy(-vViewPosition);
+    vec3 r1 = cross(sY, normal), r2 = cross(normal, sX);
+    float det = dot(sX, r1) * faceDirection;
+    if (abs(det) > 1e-9) normal = normalize(abs(det) * normal - sign(det) * (dH.x * r1 + dH.y * r2));
+  }`);
   };
   return m;
 }
@@ -260,9 +271,35 @@ function buildDecor() {
   if (typeof scene !== 'undefined') { scene.background = new T.Color(s.fog); scene.fog = new T.Fog(s.fog, th === 'roof' ? 120 : 90, th === 'roof' ? 420 : 300); sun.color.set(s.sun); }
   const M = (c, o) => new T.MeshStandardMaterial(Object.assign({ color: c, roughness: .7 }, o));
   const box = (w, h, d, mat, x, y, z) => { const m = new T.Mesh(new T.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); decor.add(m); return m; };
-  if (th === 'harbor' || th === 'market') {
-    const sea = new T.Mesh(new T.PlaneGeometry(900, 900), new T.MeshStandardMaterial({ color: th === 'market' ? 0x2a86b8 : 0x1d6fa8, roughness: .15, metalness: .1, transparent: true, opacity: .92 }));
+  if (th !== 'roof') {
+    const seaCol = { harbor: 0x1d6fa8, market: 0x2a86b8, park: 0x3a8a8a, factory: 0x34484c }[th] || 0x1d6fa8;
+    const sea = new T.Mesh(new T.PlaneGeometry(900, 900), new T.MeshStandardMaterial({ color: seaCol, roughness: .15, metalness: .1, transparent: true, opacity: .92 }));
     sea.rotation.x = -Math.PI / 2; sea.position.y = -1.3; decor.add(sea);
+  }
+  if (th === 'park') {
+    // 木の幹の上に葉っぱ（さくらと緑）。まわりにも木と丘
+    const leafG = M(0x4f9a3f, { roughness: .9 }), leafP = M(0xf2a8c8, { roughness: .9 }), trunk = M(0x6a4a2a), q = mulberry(5);
+    BOXES.forEach((b, i) => { if (b[2] - b[0] <= 1.1 && b[3] - b[1] <= 1.1 && b[4] >= 2.9) { const cx = (b[0] + b[2]) / 2, cz = (b[1] + b[3]) / 2, mat = i % 2 ? leafP : leafG; for (let k = 0; k < 4; k++) { const m = new T.Mesh(new T.SphereGeometry(1.1 + q() * .5, 12, 8), mat); m.position.set(cx + (q() - .5) * 1.4, b[4] + .7 + q() * .8, cz + (q() - .5) * 1.4); m.castShadow = true; decor.add(m); } } });
+    for (let i = 0; i < 60; i++) {
+      const a = q() * TAU, r = 48 + q() * 60, x = Math.cos(a) * r * .75, z = Math.sin(a) * r * 1.1, h = 4 + q() * 4;
+      box(.6, h, .6, trunk, x, h / 2 - 1.3, z);
+      const m = new T.Mesh(new T.SphereGeometry(2 + q() * 1.6, 10, 8), q() < .4 ? leafP : leafG); m.position.set(x, h - 1.3 + 1.2, z); decor.add(m);
+    }
+    for (const [x, z, r] of [[-180, -200, 80], [150, -240, 100], [-160, 220, 90], [200, 180, 70]]) { const hill = new T.Mesh(new T.ConeGeometry(r, r * .5, 20), M(0x5f9a4a, { roughness: .95 })); hill.position.set(x, r * .25 - 1.3, z); decor.add(hill); }
+  }
+  if (th === 'factory') {
+    // えんとつ・大きな建物のかべ・パイプ
+    const wallM = M(0x8a8478), dark = M(0x4a4e56), stripe = M(0xe0b030), q = mulberry(9);
+    for (const sx of [-1, 1]) {
+      box(6, 26, 120, wallM, sx * 46, 13 - 1.3, 0);
+      for (let k = 0; k < 4; k++) { const pipe = new T.Mesh(new T.CylinderGeometry(.6, .6, 110, 12), dark); pipe.rotation.x = Math.PI / 2; pipe.position.set(sx * 40, 3 + k * 1.6, 0); decor.add(pipe); }
+    }
+    for (const [x, z] of [[-60, -70], [-40, -90], [55, 70], [70, -40], [-70, 50]]) {
+      const ch = new T.Mesh(new T.CylinderGeometry(3, 4, 46, 14), M(0xb0a8a0)); ch.position.set(x, 22, z); decor.add(ch);
+      const band = new T.Mesh(new T.CylinderGeometry(3.1, 3.1, 3, 14), M(0xc84a3a)); band.position.set(x, 40, z); decor.add(band);
+      for (let k = 0; k < 4; k++) { const sm = new T.Mesh(new T.SphereGeometry(4 + k * 1.5, 10, 8), new T.MeshStandardMaterial({ color: 0xd8d8d8, transparent: true, opacity: .35 - k * .06, roughness: 1, depthWrite: false })); sm.position.set(x + k * 3, 48 + k * 5, z + k); decor.add(sm); }
+    }
+    for (let i = 0; i < 24; i++) { const x = (q() < .5 ? -1 : 1) * (32 + q() * 6), z = -50 + q() * 100; box(1.2, .2, 1.2, stripe, x, -1.2, z); }
   }
   if (th === 'harbor') {
     const deco = M(0xd8b040, { roughness: .6 }), deco2 = M(0xe8e4dc);
@@ -377,6 +414,7 @@ function miniDraw(actors, me) {
   MINI.g.putImageData(MINI.img, 0, 0);
   const mx = x => (x - X0) / MAPW * w, my = z => (z - Z0) / MAPD * h;
   if (G.mode === 'zone' && ZONE) { MINI.g.strokeStyle = G.zOwner ? teamColor(G.zOwner) : '#fff'; MINI.g.lineWidth = 2; MINI.g.setLineDash([3, 2]); MINI.g.strokeRect(mx(ZONE[0]), my(ZONE[1]), mx(ZONE[2]) - mx(ZONE[0]), my(ZONE[3]) - my(ZONE[1])); MINI.g.setLineDash([]); }
+  if (G.mode === 'flag' || G.mode === 'ball') rulesMini(MINI.g, mx, my);
   for (const a of actors) {
     if (a.dead || a.dummy) continue;
     const enemy = a.team !== me.team;

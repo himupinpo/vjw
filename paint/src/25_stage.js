@@ -5,6 +5,7 @@
 const C_CONT = [0xc8503c, 0x3c7cc8, 0xd8a030, 0x4aa86a, 0x8a5ac8, 0xd86a9a];
 const STAGES = {
   minato: {
+    flagZ: 34, ball: [3, 0],
     name: 'みなと倉庫', theme: 'harbor', ground: [-30, -48, 30, 48], spawnZ: 44.5, spawnRect: [-7, 41, 7, 48], zone: [-7, -5, 7, 5],
     half: {
       boxes: [
@@ -20,6 +21,7 @@ const STAGES = {
     sky: [0x3d8fe0, 0x9fd8ff, 0xe8f6ff], fog: 0x8fcff6, sun: 0xfff2dc, groundCol: 0x77757d
   },
   roof: {
+    flagZ: 31, ball: [4, 0],
     name: '屋上ガーデン', theme: 'roof', ground: [-26, -44, 26, 44], spawnZ: 41, spawnRect: [-6, 38, 6, 44], zone: [-8, -6, 8, 6],
     half: {
       boxes: [
@@ -35,6 +37,7 @@ const STAGES = {
     sky: [0x3a3a8a, 0xf0a070, 0xffe0b0], fog: 0xe8a888, sun: 0xffc890, groundCol: 0x8c8580
   },
   market: {
+    flagZ: 33, ball: [12, 0],
     name: '坂の市場', theme: 'market', ground: [-30, -46, 30, 46], spawnZ: 43, spawnRect: [-6, 40, 6, 46], zone: [-9, -6, 9, 6],
     water: [[-30, -2.5, -15, 2.5], [-9, -2.5, -3, 2.5], [3, -2.5, 9, 2.5], [15, -2.5, 30, 2.5]],
     half: {
@@ -48,6 +51,37 @@ const STAGES = {
     },
     center: { boxes: [[-1.2, -1.2, 1.2, 1.2, 1.2, 0xd0c8b8]], ramps: [] },
     sky: [0x4a9ae8, 0xbfe4ff, 0xfff4e0], fog: 0xcfe6f4, sun: 0xfff0d0, groundCol: 0x9a8c7a
+  },
+  park: {
+    flagZ: 33, ball: [0, 0],
+    name: 'さくら公園', theme: 'park', ground: [-28, -46, 28, 46], spawnZ: 43, spawnRect: [-6, 40, 6, 46], zone: [-6, -6, 6, 6],
+    water: [[-24, -8, -14, 8], [14, -8, 24, 8]],
+    half: {
+      boxes: [
+        [-6, 40, 6, 46, 1.4, 0x9a8f86],
+        [-18, 30, -17, 31, 3.0, 0x7a5a3a], [16, 26, 17, 27, 3.0, 0x7a5a3a], [-10, 22, -9, 23, 3.0, 0x7a5a3a], [22, 16, 23, 17, 3.0, 0x7a5a3a], [-23, 18, -22, 19, 3.0, 0x7a5a3a], [8, 32, 9, 33, 3.0, 0x7a5a3a],
+        [-14, 34, -10, 36, 1.0, 0x4a8a3a], [12, 34, 16, 36, 1.0, 0x4a8a3a], [-4, 26, 4, 27.5, 1.0, 0x4a8a3a], [-26, 24, -22, 26, 1.0, 0x4a8a3a], [20, 22, 24, 24, 1.0, 0x4a8a3a],
+        [8, 18, 12, 22, 2.4, 0xd85a4a], [-20, 12, -16, 13, .6, 0xa07850], [14, 10, 18, 11, .6, 0xa07850], [-10, 10, -6, 14, 1.6, 0x8a8a8a]
+      ],
+      ramps: [[-3, 36, 3, 40, 0, 1.4, 'z', 0x9a8f86], [8, 14, 12, 18, 0, 2.4, 'z', 0xd85a4a]]
+    },
+    center: { boxes: [[-6, -6, 6, 6, 2.0, 0x6aa04a]], ramps: [[-3, 6, 3, 10, 2.0, 0, 'z', 0x6aa04a], [-3, -10, 3, -6, 0, 2.0, 'z', 0x6aa04a], [6, -3, 10, 3, 2.0, 0, 'x', 0x6aa04a], [-10, -3, -6, 3, 0, 2.0, 'x', 0x6aa04a]] },
+    sky: [0x3a8ae0, 0xa8dcff, 0xf0fff0], fog: 0xb8e0f0, sun: 0xfff6e0, groundCol: 0x86a866
+  },
+  factory: {
+    flagZ: 35, ball: [5, 0],
+    name: '工場ライン', theme: 'factory', ground: [-26, -48, 26, 48], spawnZ: 45, spawnRect: [-6, 42, 6, 48], zone: [-9, -7, 9, 7],
+    water: [[-4, 26, 4, 30], [-4, -30, 4, -26]],
+    half: {
+      boxes: [
+        [-6, 42, 6, 48, 1.4, 0x8d8f99],
+        [-20, 30, -12, 36, 3.0, 0x6a7a8a], [10, 26, 18, 32, 3.0, 0x8a6a5a], [-8, 20, -2, 24, 1.2, 0xc8a040], [4, 14, 8, 18, 2.0, 0x5a8aaa], [-24, 8, -18, 14, 2.4, 0x7a7a7a], [18, 6, 24, 12, 1.0, 0xaaaaaa],
+        [-26, 16, -22, 36, 2.4, 0x9a9aa0], [22, 16, 26, 30, 2.4, 0x9a9aa0], [12, 38, 15, 40, 1.0, 0xb08850]
+      ],
+      ramps: [[-3, 38, 3, 42, 0, 1.4, 'z', 0x8d8f99], [-26, 12, -22, 16, 0, 2.4, 'z', 0x9a9aa0], [22, 30, 26, 34, 2.4, 0, 'z', 0x9a9aa0]]
+    },
+    center: { boxes: [[-3, -3, 3, 3, 2.6, 0x5a6a7a], [-12, -1, -8, 1, 1.0, 0x9a9a9a], [8, -1, 12, 1, 1.0, 0x9a9a9a]], ramps: [] },
+    sky: [0x5a6a80, 0xa8b4c4, 0xdcdcd8], fog: 0xb4bcc8, sun: 0xf0ece0, groundCol: 0x6c6e72
   }
 };
 const STAGE_IDS = Object.keys(STAGES);

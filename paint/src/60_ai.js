@@ -41,7 +41,7 @@ function findPath(sx, sz, tx, tz, team) {
     for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) {
       if (!di && !dj) continue; const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= NW || jj >= ND) continue;
       const n = jj * NW + ii; if (closed[n] || !navOk(n, team)) continue;
-      const up = NH[n] - NH[k]; if (up > .45) continue;
+      const up = NH[n] - NH[k]; if (up > .65) continue;   // 急な坂も登る（0.4〜0.65 の段はジャンプ）
       if (di && dj && (!navOk(j * NW + ii, team) || !navOk(jj * NW + i, team))) continue;
       const c = g[k] + (di && dj ? 1.414 : 1) + (up < -1.5 ? 1.5 : 0);
       if (c < g[n]) { g[n] = c; from[n] = k; push(n, c + hh(n)); }
@@ -92,7 +92,7 @@ function botThink(a, dt) {
       if (mates.length) { startSuperJump(a, mates[Math.min(mates.length - 1, Math.floor(Math.random() * 2))]); return ctl; }
     }
   }
-  ai.t -= dt; ai.subT -= dt; ai.st -= dt;
+  ai.t -= dt; ai.subT -= dt; ai.st -= dt; if (ai.ignoreT > 0) ai.ignoreT -= dt;
   const engage = (w.cls === 'blade' ? Math.max(w.range, w.crange * .6) : (w.range || w.frange || 6)) * (w.cls === 'roller' || w.cls === 'brush' ? 1.6 : 1.15);
   if (ai.t <= 0) {
     ai.t = .25;
@@ -106,13 +106,24 @@ function botThink(a, dt) {
       if (!lineOfSight(a.x, a.y + 1.1, a.z, o.x, o.y + .8, o.z)) continue;
       if (d < bd) { bd = d; best = o; }
     }
+    if (ai.ignoreT > 0) best = null;   // 動けなくなった直後は、相手より道を優先
     if (best !== ai.target) { ai.target = best; ai.seeT = 0; }
-    if (!ai.goal || !ai.path || ai.pi >= ai.path.length || Math.random() < .02) {
-      ai.goal = pickGoal(a); ai.path = ai.goal ? findPath(a.x, a.z, ai.goal[0], ai.goal[1], a.team) : null; ai.pi = 0;
+    // 旗とり・ボール運び：ルールで決まる行き先を、1秒ごとに引き直す（動く目標を追う）
+    const rg = (G.mode === 'flag' || G.mode === 'ball') ? rulesBotGoal(a) : null;
+    ai.rt = (ai.rt || 0) - .25;
+    if (rg) {
+      if (!ai.rg || ai.rt <= 0 || !ai.path || ai.pi >= ai.path.length) {
+        ai.rg = true; ai.rt = carrierOf(a) ? 1.5 : 1; ai.goal = rg; ai.path = findPath(a.x, a.z, rg[0], rg[1], a.team); ai.pi = 0;
+      }
+    } else {
+      if (ai.rg) { ai.rg = false; ai.path = null; }
+      if (!ai.goal || !ai.path || ai.pi >= ai.path.length || Math.random() < .02) {
+        ai.goal = pickGoal(a); ai.path = ai.goal ? findPath(a.x, a.z, ai.goal[0], ai.goal[1], a.team) : null; ai.pi = 0;
+      }
     }
     if (Math.hypot(a.x - ai.lx, a.z - ai.lz) < .15) ai.stuckT += .25; else ai.stuckT = 0;
     ai.lx = a.x; ai.lz = a.z;
-    if (ai.stuckT > 1.2) { ai.stuckT = 0; ai.path = null; ai.jumpReq = true; }
+    if (ai.stuckT > 1.2) { ai.stuckT = 0; ai.path = null; ai.jumpReq = true; ai.ignoreT = 1.5; }
   }
   const t = ai.target;
   let mx = 0, mz = 0;
@@ -144,6 +155,11 @@ function botThink(a, dt) {
     if (!navOk(navOf(nx, nz), a.team) || hAround(nx, nz) > a.y + STEP) { fx = -fx; fz = -fz; ai.strafe *= -1; }
     mx = fx; mz = fz;
     if (melee) { mx = dx / d; mz = dz / d; }
+    if (carrierOf(a)) { mx = mz = 0; follow(); }   // 運んでいる間は、撃ちあうより目的地へ
+    else if (ai.rg && roleOf(a) === 0 && !melee && d > 3) {   // 攻め役：撃ちながら目的地へ進む
+      const sx = mx, sz = mz; mx = mz = 0; follow();
+      if (!mx && !mz) { mx = sx; mz = sz; } else { mx += sx * .35; mz += sz * .35; }
+    }
     const inRange = d < engage, ready = ai.seeT > P.react && facing && inRange;
     switch (w.cls) {
       case 'sniper': ctl.fire = ready || (a.ws.ch > 0 && a.ws.ch < 1); if (a.ws.ch >= 1 && ready) ctl.fire = false; if (d < 6 && a.ws.ch > .35) ctl.fire = false; break;

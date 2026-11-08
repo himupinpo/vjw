@@ -175,6 +175,26 @@ function wStats(w) {
   return { atk: clamp(dps, .1, 1), range: clamp(range, .1, 1), paint: clamp(paint, .1, 1), move: clamp((w.spd - .8) / .32, .1, 1) };
 }
 
+// 役わり（届く距離）と、たおすのに何発いるか（体力100）
+function wInfo(w) {
+  const c = w.cls, r = c === 'blade' ? w.crange * .8 : (w.range || w.frange || 6);
+  const role = r < 9 ? '近距離' : r < 15 ? '中距離' : '長距離';
+  const n = d => d >= 99.5 ? '一撃' : Math.ceil(100 / d) + '発';
+  let stk;
+  switch (c) {
+    case 'cannon': stk = '直撃なら' + n(w.dmg); break;
+    case 'sniper': stk = 'ためきれば' + n(w.dmg); break;
+    case 'roller': stk = 'ころがし' + n(w.rollDmg || 140) + '・ふり（近く）' + n(w.fdmg * .97); break;
+    case 'brush': stk = 'ふり（近く）' + Math.ceil(100 / (w.fdmg / 1.5 * 2)) + '回'; break;
+    case 'parasol': stk = '近くで全弾' + n(w.pellets * w.dmg); break;
+    case 'bow': stk = 'ためきって' + n(w.dmg * 1.15); break;
+    case 'blade': stk = '横振り' + n(w.dmg) + '・ため' + n(w.cdmg); break;
+    case 'hose': stk = Math.ceil(100 / w.dmg) + '粒（約' + (100 / w.dmg / w.rate).toFixed(1) + '秒）'; break;
+    default: stk = n(w.dmg);
+  }
+  return { role, stk };
+}
+
 // ブキの種類のアイコン（SVG）
 function classIcon(cls, col = '#fff') {
   const s = {

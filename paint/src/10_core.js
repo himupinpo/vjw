@@ -15,7 +15,7 @@ const store = {
   get(k, d) { try { const v = localStorage.getItem(SK + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem(SK + k, JSON.stringify(v)); } catch (e) { /* 保存できない環境 */ } }
 };
-const SET = Object.assign({ weapon: 'basic', diff: 1, sens: 1, invY: false, music: true, quality: 'mid', stage: 'random' }, store.get('set', {}));
+const SET = Object.assign({ weapon: 'basic', diff: 1, sens: 1, invY: false, music: true, quality: 'mid', stage: 'random', rule: 'turf', assist: true }, store.get('set', {}));
 const saveSet = () => store.set('set', SET);
 const REC = Object.assign({ games: 0, wins: 0, kills: 0, paint: 0, best: 0 }, store.get('rec', {}));
 const saveRec = () => store.set('rec', REC);
@@ -178,6 +178,9 @@ const AU = (() => {
       noise(.07, 'bandpass', 2200 + Math.random() * 600, 900, 2, .32 * g); tone(520 + Math.random() * 80, .06, .08 * g, 'square', 0, 240);
     },
     splat(g = 1) { noise(.12, 'lowpass', 1200, 300, 1, .25 * g); },
+    step(swim) { if (swim) noise(.11, 'bandpass', 520 + Math.random() * 200, 300, 2.5, .13); else noise(.035, 'highpass', 2600 + Math.random() * 600, 1800, 1, .05); },
+    land() { noise(.09, 'lowpass', 700, 180, 1, .2); tone(140, .08, .08, 'sine', 0, 70); },
+    pick() { tone(880, .08, .16, 'triangle'); tone(1320, .14, .16, 'triangle', .07); },
     boom(big = 1, g = 1) { noise(.5 * big, 'lowpass', 1400, 120, 1, .7 * g); tone(90, .4 * big, .5 * g, 'sine', 0, 40); },
     sj() { tone(300, .7, .2, 'sawtooth', 0, 1200); noise(.8, 'bandpass', 500, 2500, 1.5, .25); },
     dive() { noise(.25, 'bandpass', 500, 1200, 3, .3); tone(300, .15, .1, 'sine', 0, 600); },

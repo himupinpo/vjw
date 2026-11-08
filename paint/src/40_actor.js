@@ -151,7 +151,7 @@ function sjTarget(a) {
   if (s.ty < -5) { const sp = SPAWN[a.team]; s.tx = sp.x; s.tz = sp.z; s.ty = hAt(sp.x, sp.z); }
 }
 function startSuperJump(a, tgt) {
-  if (a.dead || a.sj || a.spOn) return false;
+  if (a.dead || a.sj || a.spOn || carrierOf(a)) return false;
   a.sj = { t: 0, tgt, fx: a.x, fy: a.y, fz: a.z, tx: 0, ty: 0, tz: 0 };
   sjTarget(a); a.ws = {}; a.dive = a.swim = false; a.climb = null;
   let m = sjMarks.get(a);
@@ -193,7 +193,7 @@ function stepMove(a, dt, ctl) {
   if (a.climb) { climbStep(a, dt, ctl); timers(a, dt); return; }
   const gt = groundTeam(a), enemyInk = gt && gt !== a.team && !(a.dashT > 0), ownInk = gt === a.team;
   const busy = a.ws.busy || 0;
-  a.dive = !!ctl.dive && !a.spOn && !(a.ws.rolling) && !(a.ws.ch > .05 && a.w.cls === 'sniper' && !a.w.keep);
+  a.dive = !!ctl.dive && !a.spOn && !(a.ws.rolling) && !(a.ws.ch > .05 && a.w.cls === 'sniper' && !a.w.keep) && !ruleNoDive(a);
   a.swim = a.dive && ownInk;
   let spd = SPEED.walk * a.w.spd;
   if (a.dive) spd = a.swim ? SPEED.swim : SPEED.blob;
@@ -204,6 +204,7 @@ function stepMove(a, dt, ctl) {
   if (a.dashT > 0) spd *= 1.6;
   if (a.fogT > 0) spd *= .55;
   if (a.cloakT > 0) spd *= 1.12;
+  spd *= ruleSpeedMul(a);
   if (a.slideT > 0) { a.slideT -= dt; }
   let mx = ctl.mx || 0, mz = ctl.mz || 0;
   const acc = a.onGround ? (a.swim ? 14 : 22) : 6;
@@ -233,7 +234,7 @@ function stepMove(a, dt, ctl) {
   const floor = hAround(a.x, a.z, .25);
   a.y += a.vy * dt;
   if (a.y <= floor) {
-    if (!a.onGround && a.vy < -4 && a === G.me) AU.splat(.5);
+    if (!a.onGround && a.vy < -4) { a.landT = .16; if (a === G.me) AU.land(); }
     a.y = floor; a.vy = 0; a.onGround = true;
   } else if (a.y > floor + .05) a.onGround = false;
   if (a.onGround && floor < -5) a.onGround = false;
@@ -250,13 +251,17 @@ function stepMove(a, dt, ctl) {
   a.inkT += dt; a.hurtT += dt;
   if (a.fogT <= 0) {
     if (a.swim) a.ink = Math.min(INK_MAX, a.ink + 42 * dt);
-    else if (a.inkT > .6) a.ink = Math.min(INK_MAX, a.ink + (a.dive ? 9 : 7) * dt);
+    else if (a.inkT > .6) a.ink = Math.min(INK_MAX, a.ink + (a.dive ? 11 : 9) * dt);
   }
   if (a.dashT > 0) { a.ink = INK_MAX; a.dashAcc = (a.dashAcc || 0) + dt; if (a.dashAcc > .08 && a.onGround) { a.dashAcc = 0; paintBy(a, a.x, a.y + .2, a.z, 1.0, a.team); } }
   if (enemyInk && !a.swim && a.onGround) { if (a.hp > 40) { a.hp -= 4 * dt; a.hurtT = Math.min(a.hurtT, 0); } }
   else if (a.hurtT > 1.2 && a.hp < HP_MAX) a.hp = Math.min(HP_MAX, a.hp + 32 * dt);
   timers(a, dt);
-  if (a === G.me) { if (a.swim && !a.wasSwim) AU.dive(); a.wasSwim = a.swim; }
+  if (a === G.me) {
+    if (a.swim && !a.wasSwim) AU.dive(); a.wasSwim = a.swim;
+    // 足音・泳ぐ音
+    if (a.onGround && a.moveSpd > 1.2) { a.stepT = (a.stepT || 0) - dt * a.moveSpd / (a.swim ? 6.5 : 4.6); if (a.stepT <= 0) { a.stepT = .36; AU.step(a.swim); } }
+  }
 }
 function timers(a, dt) {
   if (a.inv > 0) a.inv -= dt;
@@ -334,16 +339,24 @@ function syncModel(a, dt, viewer) {
     const s = a.swim ? 1 : .8;
     m.puddle.scale.set(s, 1, s * (1 + Math.min(.6, a.moveSpd * .06)));
     m.puddle.children[1].visible = m.puddle.children[2].visible = !a.swim || a.moveSpd < 1;
+    // 泳いだあとのしぶき（見えているときだけ）
+    if (a.swim && !a.climb && a.moveSpd > 3 && !hidden && G.state !== 'title') {
+      a.wakeT = (a.wakeT || 0) - dt;
+      if (a.wakeT <= 0) { a.wakeT = .05; particle(a.x - a.vx * .05 + rand(-.2, .2), a.y + .06, a.z - a.vz * .05 + rand(-.2, .2), -a.vx * .12 + rand(-.7, .7), rand(1.4, 2.6), -a.vz * .12 + rand(-.7, .7), a.team, rand(.05, .1), rand(.25, .4)); }
+    }
   } else {
     a.bob += dt * (a.onGround ? a.moveSpd * 2.2 : 0);
     let sq = a.onGround ? 1 + Math.sin(a.bob * 2) * .05 * Math.min(1, a.moveSpd / 4) : 1 + clamp(a.vy * .03, -.12, .12);
+    if (a.landT > 0) { a.landT -= dt; sq *= 1 - a.landT * 1.5; }   // 着地でむにゅっ
     if (a.sj && a.sj.t < SJ_CH) sq = .75 + Math.sin(a.sj.t * 30) * .05;
     m.body.scale.set(1 / Math.sqrt(sq), sq, 1 / Math.sqrt(sq));
     m.body.rotation.y = a.sj && a.sj.t >= SJ_CH ? a.sj.t * 14 : 0;
     m.body.children.forEach(c => { if (c.userData.foot) c.position.z = .03 + Math.sin(a.bob * 2 + (c.userData.foot > 0 ? 0 : Math.PI)) * .12 * Math.min(1, a.moveSpd / 3); });
     m.head.rotation.x = -a.aimPitch * .4;
-    m.wp.rotation.x = -a.aimPitch * .8;
-    if (a.wp2) a.wp2.rotation.x = -a.aimPitch * .8;
+    // 撃った反動：ブキが少し後ろへ下がって、はね上がる
+    const kick = a.kick || 0; a.kick = Math.max(0, kick - dt * 7);
+    m.wp.rotation.x = -a.aimPitch * .8 - kick * .45; m.wp.position.z = .2 - kick * .14;
+    if (a.wp2) { a.wp2.rotation.x = -a.aimPitch * .8 - kick * .45; a.wp2.position.z = .2 - kick * .14; }
     const can = m.wp.userData.canopy; if (can) can.scale.setScalar(a.ws.open && !(a.ws.broken > 0) ? 1.35 : a.ws.broken > 0 ? .01 : 1);
   }
   m.inkIn.scale.y = Math.max(.02, a.ink / INK_MAX); m.inkIn.position.y = .66 - (1 - a.ink / INK_MAX) * .18;

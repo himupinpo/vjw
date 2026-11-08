@@ -158,6 +158,15 @@ table.st td.n { text-align: right; font-variant-numeric: tabular-nums; }
 .zres small { display: block; font-family: var(--f); font-size: 11px; font-weight: 700; opacity: .75; }
 .tabs button small { margin-left: 4px; font-size: 10px; opacity: .65; }
 .chips.stage button.on { background: #fff; color: #15121d; border-color: #fff; }
+.chips.rule button { font-size: 13.5px; padding: 8px 12px; }
+#title .chips button:not(.on) { background: rgba(13,11,18,.6); }
+.chips.rule button.on { background: #ffe14d; color: #15121d; border-color: #ffe14d; }
+.role { display: inline-block; font-size: 11px; font-weight: 900; padding: 1px 8px; border-radius: 99px; background: rgba(255,255,255,.16); vertical-align: 2px; }
+/* 旗とり・ボール運びの点数 */
+#ruleBar { position: absolute; top: calc(52px + var(--sat)); left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; font-family: var(--d); text-shadow: 0 2px 0 rgba(0,0,0,.4); }
+#ruleBar b { min-width: 44px; padding: 2px 8px; border-radius: 10px; text-align: center; font-size: 20px; font-weight: 400; }
+#ruleBar .rb { display: flex; flex-direction: column; align-items: center; font-size: 13px; padding: 2px 10px; border-radius: 10px; background: rgba(0,0,0,.45); }
+#ruleBar .rb small { font-family: var(--f); font-weight: 800; font-size: 10.5px; opacity: .9; white-space: nowrap; }
 #load { position: absolute; inset: 0; display: grid; place-items: center; background: #0d0b12; font-weight: 800; z-index: 50; }
 .help { font-size: 12.5px; line-height: 1.75; opacity: .9; }
 .help b { color: #fff; }
@@ -167,6 +176,8 @@ table.st td.n { text-align: right; font-variant-numeric: tabular-nums; }
   #tA { right: calc(50% + 62px); } #tB { left: calc(50% + 62px); }
   #timer { font-size: 24px; }
   .detail { grid-template-columns: 1fr; }
+  #ruleBar b { min-width: 36px; font-size: 16px; }
+  #ruleBar .rb small { white-space: normal; max-width: 150px; text-align: center; }
 }
 </style>
 </head>
@@ -179,6 +190,7 @@ table.st td.n { text-align: right; font-variant-numeric: tabular-nums; }
   <div id="timer">3:00</div>
   <div class="teamRow" id="tA"></div><div class="teamRow" id="tB"></div>
   <div id="zoneBar" class="hidden"><b id="zA">100</b><div id="zMid"><i id="zBarA"></i><i id="zBarB"></i><span>ゾーン</span></div><b id="zB">100</b></div>
+  <div id="ruleBar" class="hidden"></div>
   <canvas id="mini" width="128" height="192"></canvas>
   <div id="wpName"></div>
   <svg id="charge" viewBox="0 0 64 64" class="hidden"><circle cx="32" cy="32" r="27" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="5"/><circle id="chargeArc" cx="32" cy="32" r="27" fill="none" stroke="#fff" stroke-width="5" stroke-dasharray="0 170" transform="rotate(-90 32 32)" stroke-linecap="round"/></svg>
@@ -206,9 +218,9 @@ table.st td.n { text-align: right; font-variant-numeric: tabular-nums; }
   <div class="logo">ペイント<span>リーグ</span></div>
   <div class="tag">4対4のぬりあいバトル。自分の色のペンキにもぐると、すばやく泳いでペンキを補給できる。<br>自分の色にぬった壁は、もぐったまま進むとのぼれる。</div>
   <div class="col">
-    <button class="btn main" id="goBattle">ぬりあいバトル<small>4対4・3分・ぬった広さで勝負</small></button>
-    <button class="btn sub2" id="goZone" style="background:#ffe14d">ゾーン争奪<small>まんなかのゾーンを6割ぬると確保。カウントを先に0に</small></button>
-    <div class="chips stage" id="stageChips" style="justify-content:center;margin:2px 0"></div>
+    <div class="chips rule" id="ruleChips" style="justify-content:center;margin:0"></div>
+    <div class="chips stage" id="stageChips" style="justify-content:center;margin:0 0 2px"></div>
+    <button class="btn main" id="goBattle">バトル開始<small id="ruleDesc">4対4・3分</small></button>
     <button class="btn" id="goWeapon"><div class="wcard" id="wcard"></div></button>
     <button class="btn sub2" id="goPractice">試しうち<small>まとを相手にブキをためす</small></button>
     <button class="btn" id="goSet">設定・操作</button>
@@ -232,10 +244,13 @@ table.st td.n { text-align: right; font-variant-numeric: tabular-nums; }
   <div class="chips" id="invChips" style="margin-top:10px"><button data-i="0">上下：ふつう</button><button data-i="1">上下：反転</button></div>
   <div class="chips" id="musChips"><button data-m="1">音楽あり</button><button data-m="0">音楽なし</button></div>
   <div class="chips" id="qChips"><button data-q="low">画質：軽い</button><button data-q="mid">画質：ふつう</button><button data-q="high">画質：きれい</button></div>
+  <div class="chips" id="asChips"><button data-a="1">ねらい補助：あり</button><button data-a="0">ねらい補助：なし</button></div>
   <div class="help">
     <b>パソコン</b>：<span class="kbd">W A S D</span> 移動 ／ マウス 視点（画面をクリックで固定）／ <span class="kbd">左クリック</span> うつ ／ <span class="kbd">Shift</span>・<span class="kbd">右クリック</span> もぐる ／ <span class="kbd">Space</span> ジャンプ ／ <span class="kbd">E</span> サブ ／ <span class="kbd">Q</span> スペシャル ／ <span class="kbd">R</span> スーパージャンプ ／ <span class="kbd">Esc</span> 一時停止<br>
     <b>スマホ</b>：左側をなぞって移動、右側をなぞって視点。「うつ」は押したまま指を動かすとねらいも動きます。「もぐる」は押している間だけ。<br>
-    <b>ルール</b>：自分の色の上でもぐると速く泳げて、ペンキがたまります。自分の色の壁にもぐったまま進むと、壁をのぼれます。ミニマップ（または「ジャンプ先」）から味方の所へスーパージャンプできます。相手の色の上は動きがおそく、少しずつダメージ。ぬるとスペシャルがたまり、満タンで使えます。水に落ちるとやられます。
+    <b>ルール</b>：自分の色の上でもぐると速く泳げて、ペンキがたまります。自分の色の壁にもぐったまま進むと、壁をのぼれます。ミニマップ（または「ジャンプ先」）から味方の所へスーパージャンプできます。相手の色の上は動きがおそく、少しずつダメージ。ぬるとスペシャルがたまり、満タンで使えます。水に落ちるとやられます。弾は遠くまで飛ぶほど（落ちはじめると）ダメージが下がります。<br>
+    <b>ルール</b>：<b>ぬりあいバトル</b> ぬった広さで勝負。<b>ゾーン争奪</b> まんなかのゾーンを6割ぬると確保、確保している間カウントが減る。<b>旗とり</b> 相手の旗にふれるとうばえる。自分の旗が陣地にある時に持ち帰ると1点、3点先取（運んでいる人はもぐれず少し遅い）。<b>ボール運び</b> まんなかのボールを相手のゴールまで運ぶ。運んでいる人は撃てず、もぐれない。時間切れなら、遠くまで運んだチームの勝ち。<br>
+    <b>ねらい補助</b>：スマホで「うつ」を押している間だけ、照準のすぐ近く（6°以内）の相手へ少しだけ向きが寄ります。
   </div>
 </div></div>
 
