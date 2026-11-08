@@ -32,6 +32,7 @@ function onResize() {
   r.style.width = w + 'px'; r.style.height = h + 'px'; r.style.transform = ROT.on ? 'rotate(90deg) translateY(-100%)' : 'none';
   renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
   document.body.classList.toggle('narrow', w < 560);
+  if (typeof applyBtnLayout === 'function') try { applyBtnLayout(); } catch (e) { /* 起動中 */ }
 }
 addEventListener('resize', onResize);
 
@@ -98,7 +99,7 @@ function startMatch(mode, stage) {
   G.camYaw = G.me.yaw; G.camPitch = -.12;
   G.state = mode === 'practice' ? 'play' : 'count'; G.countT = mode === 'practice' ? 0 : 3.2;
   hideScreens(); lobbyHide(); $('hud').classList.remove('hidden'); $('touch').classList.toggle('off', !IN.touchOn);
-  $('wpName').innerHTML = `<b>${G.me.w.name}</b><br>サブ：${SUBS[G.me.w.sub].name}`; $('spName').textContent = SPECIALS[G.me.w.sp].name;
+  wpNameHud(G.me.w); applyBtnLayout();
   $('zoneBar').classList.toggle('hidden', mode !== 'zone'); zoneMarks(mode === 'zone');
   rulesInit(mode); $('ruleBar').classList.toggle('hidden', !(mode === 'flag' || mode === 'ball')); $('ruleBar').innerHTML = ''; RS.hud = '';
   buildTeamIcons(); miniInit();
@@ -110,8 +111,13 @@ function startMatch(mode, stage) {
 function setPlayerWeapon(w) {
   const a = G.me; if (!a) return;
   scene.remove(a.model.root); a.w = w; a.ws = {}; buildModel(a);
-  $('wpName').innerHTML = `<b>${w.name}</b><br>サブ：${SUBS[w.sub].name}`; $('spName').textContent = SPECIALS[w.sp].name;
+  wpNameHud(w);
   buildTeamIcons();
+}
+// 画面左下のブキ名（パソコンではキーも出す）
+function wpNameHud(w) {
+  const k = !IN.touchOn;
+  $('wpName').innerHTML = `<b>${w.name}</b><small> ${CLASSES[w.cls].name}</small><br>サブ：${SUBS[w.sub].name}${k ? '（E）' : ''}`; $('spName').textContent = SPECIALS[w.sp].name + (k ? '（Q）' : '');
 }
 function buildTeamIcons() {
   for (const t of [1, 2]) {
@@ -292,7 +298,8 @@ function updateHud(dt) {
   if (G.mode === 'flag' || G.mode === 'ball') rulesHud();
   const ink = $('ink'); ink.firstChild.style.height = a.ink + '%'; ink.classList.toggle('low', a.ink < 20 || G.inkWarn > 0);
   if (G.inkWarn > 0) { G.inkWarn -= dt; $('inkMsg').textContent = 'ペンキが足りない！'; }
-  else $('inkMsg').textContent = a.climb ? 'かべをのぼっている' : carrierOf(a) ? (G.mode === 'ball' ? 'ボールを運んでいる（撃てない・もぐれない）' : '旗を運んでいる（もぐれない）') : '';
+  else $('inkMsg').textContent = a.ws.kept ? `ためキープ ${Math.max(0, keepTime(a.w) - (a.ws.keepT || 0)).toFixed(1)}秒` : a.climb ? 'かべをのぼっている' : carrierOf(a) ? (G.mode === 'ball' ? 'ボールを運んでいる（撃てない・もぐれない）' : '旗を運んでいる（もぐれない）') : '';
+  $('charge').classList.toggle('keep', !!a.ws.kept);
   $('spArc').setAttribute('stroke-dasharray', (a.sp * 195).toFixed(1) + ' 195'); $('spArc').setAttribute('stroke', a.sp >= 1 ? '#fff' : teamColor(a.team));
   $('spBox').classList.toggle('full', a.sp >= 1); $('bSp').classList.toggle('ready', a.sp >= 1);
   const ch = a.w.cls === 'sniper' ? a.ws.ch : a.w.cls === 'bow' ? a.ws.bow : a.w.cls === 'gatling' ? (a.ws.fireT > 0 ? a.ws.fireT / a.w.dur : a.ws.spin) : a.w.cls === 'blade' ? Math.min(1, (a.ws.blade || 0) / a.w.charge) : a.w.pump ? clamp((a.ws.held || 0) / 1.5, 0, 1) : 0;

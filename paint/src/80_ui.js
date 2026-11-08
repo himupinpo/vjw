@@ -1,6 +1,6 @@
 
 // ================= 画面（タイトル・ブキ選び・設定・一時停止） =================
-const SCREENS = ['title', 'armory', 'settings', 'pause', 'result', 'dress'];
+const SCREENS = ['title', 'armory', 'settings', 'pause', 'result', 'dress', 'btnEdit'];
 function hideScreens() { for (const s of SCREENS) $(s).classList.add('hidden'); }
 function toTitle() {
   G.state = 'title'; G.paused = false; AU.musicOn(false);
@@ -12,7 +12,7 @@ function toTitle() {
 }
 function drawWeaponCard() {
   const w = WBY[SET.weapon];
-  $('wcard').innerHTML = `${classIcon(w.cls, G.pal[0])}<div><div class="t">${w.name}</div><div class="s">${CLASSES[w.cls].name}・サブ：${SUBS[w.sub].name}<br>スペシャル：${SPECIALS[w.sp].name}　<u>ブキをかえる（全${WEAPONS.length}種）</u></div></div>`;
+  $('wcard').innerHTML = `<img alt="" src="${weaponThumb(w)}"><div><div class="t">${w.name}<small>${CLASSES[w.cls].name}</small></div><div class="s">サブ：${SUBS[w.sub].name}／SP：${SPECIALS[w.sp].name}<br><u>ブキをかえる（全${WEAPONS.length}種）</u></div></div>`;
 }
 function drawTitleChips() {
   if (!RULES[SET.rule]) SET.rule = 'turf';
@@ -24,27 +24,7 @@ function drawTitleChips() {
   st.innerHTML = [['random', 'ランダム'], ...STAGE_IDS.map(id => [id, STAGES[id].name])].map(([id, n]) => `<button data-s="${id}" class="${SET.stage === id ? 'on' : ''}">${n}</button>`).join('');
   st.querySelectorAll('button').forEach(b => b.onclick = () => { AU.ui(); SET.stage = b.dataset.s; saveSet(); drawTitleChips(); if (SET.stage !== 'random' && SET.stage !== STAGE_ID) { loadStage(SET.stage); } });
 }
-let armCls = null, armSel = null, armFrom = 'title';
-function openArmory(from) {
-  armFrom = from; armSel = SET.weapon; armCls = WBY[armSel].cls;
-  hideScreens(); $('armory').classList.remove('hidden'); drawArmory();
-}
-function drawArmory() {
-  $('clsTabs').innerHTML = CLASS_ORDER.map(c => `<button data-c="${c}" class="${c === armCls ? 'on' : ''}">${CLASSES[c].name}<small>${WEAPONS.filter(w => w.cls === c).length}</small></button>`).join('');
-  $('wgrid').innerHTML = WEAPONS.filter(w => w.cls === armCls).map(w => `<button class="witem ${w.id === armSel ? 'on' : ''}" data-w="${w.id}">${classIcon(w.cls, w.id === armSel ? G.pal[0] : '#fff')}<div><b>${w.name}</b><span>${wInfo(w).role}・${SUBS[w.sub].name}／${SPECIALS[w.sp].name}</span></div></button>`).join('');
-  const w = WBY[armSel], st = wStats(w), inf = wInfo(w), bar = (n, v) => `<div>${n}<i><u style="width:${Math.round(v * 100)}%"></u></i></div>`;
-  $('wdetail').innerHTML = `<div><b style="font-size:17px">${w.name}</b> <span class="role">${inf.role}</span><p>${CLASSES[w.cls].desc}</p><p>${w.desc}</p><p><b>たおすのに</b>：${inf.stk}</p></div>
-    <div><div class="bars">${bar('射程', st.range)}${bar('攻撃', st.atk)}${bar('ぬり', st.paint)}${bar('動き', st.move)}</div>
-    <p><b>サブ：${SUBS[w.sub].name}</b> ${SUBS[w.sub].desc}（ペンキ ${SUBS[w.sub].ink}%）</p><p><b>スペシャル：${SPECIALS[w.sp].name}</b> ${SPECIALS[w.sp].desc}</p></div>`;
-  $('clsTabs').querySelectorAll('button').forEach(b => b.onclick = () => { AU.ui(); armCls = b.dataset.c; armSel = WEAPONS.find(w => w.cls === armCls).id; drawArmory(); });
-  $('wgrid').querySelectorAll('button').forEach(b => b.onclick = () => { AU.ui(); armSel = b.dataset.w; drawArmory(); });
-}
-$('wOk').onclick = () => {
-  AU.ui(); SET.weapon = armSel; saveSet();
-  if (armFrom === 'pause' && G.me) { setPlayerWeapon(WBY[armSel]); hideScreens(); togglePause(false); }
-  else toTitle();
-};
-document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => { AU.ui(); const id = b.dataset.close; $(id).classList.add('hidden'); if (id === 'jumpUI') return; if ((id === 'armory' && armFrom === 'pause') || (id === 'settings' && setFrom === 'pause')) $('pause').classList.remove('hidden'); else if (G.state === 'title') toTitle(); });
+document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => { AU.ui(); const id = b.dataset.close; if (id === 'armory') { closeArmory(); return; } $(id).classList.add('hidden'); if (id === 'jumpUI') return; if (id === 'settings' && setFrom === 'pause') $('pause').classList.remove('hidden'); else if (G.state === 'title') toTitle(); });
 let setFrom = 'title';
 function openSettings(from) {
   setFrom = from; hideScreens(); $('settings').classList.remove('hidden');
@@ -86,3 +66,61 @@ $('pResume').onclick = () => { AU.ui(); togglePause(false); };
 $('pWeapon').onclick = () => { if (G.mode !== 'practice') return; AU.ui(); openArmory('pause'); };
 $('pSet').onclick = () => { AU.ui(); openSettings('pause'); };
 $('pQuit').onclick = () => { AU.ui(); clearMatch(); toTitle(); };
+
+// ================= スマホのボタンの配置（位置と大きさを変える） =================
+const BTN_IDS = ['bFire', 'bDive', 'bJump', 'bSub', 'bSp'];
+const BTN_DEF = { bFire: [26, 40, 92], bDive: [132, 20, 70], bJump: [122, 100, 62], bSub: [40, 146, 56], bSp: [104, 170, 56] };   // 右からの距離・下からの距離・大きさ(px)
+const BTN_NAME = { bFire: 'うつ', bDive: 'もぐる', bJump: 'ジャンプ', bSub: 'サブ', bSp: 'SP' };
+function btnPos(id) {   // ボタンの中心（画面の割合）と大きさ(px)
+  const L = SET.btn && SET.btn[id], d = BTN_DEF[id];
+  if (L) return { x: L.x, y: L.y, s: d[2] * L.k };
+  return { x: 1 - (d[0] + d[2] / 2) / VW(), y: 1 - (d[1] + d[2] / 2) / VH(), s: d[2] };
+}
+function applyBtnLayout() {
+  for (const id of BTN_IDS) {
+    const el = $(id); if (!el) continue;
+    if (!(SET.btn && SET.btn[id])) { for (const k of ['left', 'top', 'right', 'bottom', 'width', 'height', 'fontSize']) el.style[k] = ''; continue; }
+    const p = btnPos(id);
+    Object.assign(el.style, { left: (p.x * VW() - p.s / 2) + 'px', top: (p.y * VH() - p.s / 2) + 'px', right: 'auto', bottom: 'auto', width: p.s + 'px', height: p.s + 'px', fontSize: Math.round(12.5 * clamp(p.s / 64, .8, 1.5)) + 'px' });
+  }
+  const k = SET.stickK || 1, st = $('stick'), kn = st.querySelector('i');
+  Object.assign(st.style, { width: 120 * k + 'px', height: 120 * k + 'px', margin: (-60 * k) + 'px 0 0 ' + (-60 * k) + 'px' });
+  Object.assign(kn.style, { width: 52 * k + 'px', height: 52 * k + 'px', margin: (-26 * k) + 'px 0 0 ' + (-26 * k) + 'px' });
+}
+let beSel = 'bFire', beDrag = null, beTmp = null, beFrom = 'title';
+function openBtnEdit() {
+  beFrom = setFrom; beTmp = { stickK: SET.stickK || 1 };
+  for (const id of BTN_IDS) { const p = btnPos(id); beTmp[id] = { x: p.x, y: p.y, k: p.s / BTN_DEF[id][2] }; }
+  hideScreens(); $('btnEdit').classList.remove('hidden'); drawBtnEdit();
+}
+function drawBtnEdit() {
+  const area = $('beArea'); area.innerHTML = '';
+  const k = beTmp.stickK, st = document.createElement('div'); st.className = 'beStick';
+  Object.assign(st.style, { width: 120 * k + 'px', height: 120 * k + 'px', left: (VW() * .18 - 60 * k) + 'px', top: (VH() * .62 - 60 * k) + 'px' }); st.innerHTML = '<i></i><span>移動スティック</span>'; area.append(st);
+  for (const id of BTN_IDS) {
+    const t = beTmp[id], s = BTN_DEF[id][2] * t.k, el = document.createElement('div');
+    el.className = 'tb beb' + (id === beSel ? ' sel' : ''); el.textContent = BTN_NAME[id]; el.dataset.id = id;
+    Object.assign(el.style, { left: (t.x * VW() - s / 2) + 'px', top: (t.y * VH() - s / 2) + 'px', width: s + 'px', height: s + 'px', fontSize: Math.round(12.5 * clamp(s / 64, .8, 1.5)) + 'px' });
+    el.addEventListener('pointerdown', e => {
+      e.preventDefault(); beSel = id; const p = toStage(e.clientX, e.clientY); beDrag = { id, dx: p.x - t.x * VW(), dy: p.y - t.y * VH() };
+      try { el.setPointerCapture(e.pointerId); } catch (er) { /* */ }
+      $('beSize').value = t.k; area.querySelectorAll('.beb').forEach(b => b.classList.toggle('sel', b.dataset.id === id));
+    });
+    el.addEventListener('pointermove', e => {
+      if (!beDrag || beDrag.id !== id) return;
+      const p = toStage(e.clientX, e.clientY); t.x = clamp((p.x - beDrag.dx) / VW(), .03, .97); t.y = clamp((p.y - beDrag.dy) / VH(), .08, .97);
+      el.style.left = (t.x * VW() - s / 2) + 'px'; el.style.top = (t.y * VH() - s / 2) + 'px';
+    });
+    const end = () => { beDrag = null; }; el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+    area.append(el);
+  }
+  $('beSize').value = beTmp[beSel].k; $('beStick').value = k;
+}
+$('beSize').oninput = () => { beTmp[beSel].k = +$('beSize').value; drawBtnEdit(); };
+$('beStick').oninput = () => { beTmp.stickK = +$('beStick').value; drawBtnEdit(); };
+$('beReset').onclick = () => { AU.ui(); SET.btn = null; SET.stickK = 1; saveSet(); applyBtnLayout(); openBtnEdit(); };
+$('beDone').onclick = () => {
+  AU.ui(); SET.btn = {}; for (const id of BTN_IDS) SET.btn[id] = beTmp[id]; SET.stickK = beTmp.stickK; saveSet(); applyBtnLayout();
+  $('btnEdit').classList.add('hidden'); openSettings(beFrom);
+};
+$('btnLayout').onclick = () => { AU.init(); AU.ui(); openBtnEdit(); };

@@ -315,11 +315,12 @@ function weaponTick(a, dt, fire, dodge, mx, mz) {
   if (a.dead || a.sj) return;
   const stop = a.dive || (a.spOn && (a.spOn.kind === 'beam' || a.spOn.kind === 'slam'));
   if (stop) {
-    // ためたまま、もぐって少し待てるブキ
-    if (w.keep && a.dive && ((w.cls === 'sniper' && s.ch >= 1) || (w.cls === 'gatling' && s.spin > .3))) { s.keepT = (s.keepT || 0) + dt; if (s.keepT < (w.cls === 'gatling' ? 2 : 1.5)) return; }
-    s.ch = 0; s.spin = 0; s.rolling = false; s.fireT = 0; s.bow = 0; s.blade = 0; s.held = 0; s.keepT = 0; return;
+    // ためキープ：ためている途中で「うつ」を押したままもぐると、少しの間ためたままにできる（スナイパー・ガトリング・ボウ）
+    const held = w.cls === 'sniper' ? s.ch > .05 : w.cls === 'gatling' ? s.spin > .05 && !(s.fireT > 0) : w.cls === 'bow' ? s.bow > .05 : false;
+    if (held && a.dive && fire) { s.keepT = (s.keepT || 0) + dt; if (s.keepT < keepTime(w)) { s.kept = true; return; } }
+    s.ch = 0; s.spin = 0; s.rolling = false; s.fireT = 0; s.bow = 0; s.blade = 0; s.held = 0; s.keepT = 0; s.kept = false; return;
   }
-  s.keepT = 0;
+  s.keepT = 0; s.kept = false;
   const from = muzzle(a), aim = () => aimFrom(a, from), cls = w.cls;
   const air = !a.onGround;
   const spreadMul = (air ? (w.air ? .1 : 1.8) : 1) * (s.focus > 0 ? .45 : 1);
@@ -553,6 +554,8 @@ function weaponTick(a, dt, fire, dodge, mx, mz) {
 // 撃った音・反動・銃口のしぶき
 const KICK = { gun: .3, blaster: .9, charger: 1, roller: .55, brush: .3, slosher: .7, stringer: .6, blade: .6, hose: .12 };
 const CAMKICK = { gun: .004, blaster: .035, charger: .04, roller: .012, brush: .004, slosher: .022, stringer: .018, blade: .012, hose: .001 };
+// ためキープできる時間（キープが得意なブキは長い）
+const keepTime = w => (w.cls === 'gatling' ? 1.5 : 1.0) * (w.keep ? 2.2 : 1);
 function sfx(a, kind) {
   const d = G.me ? Math.hypot(G.me.x - a.x, G.me.z - a.z) : 0, g = a === G.me ? 1 : clamp(1 - d / 40, 0, 1) * .6;
   if (g > .02) AU.shot(kind, g);

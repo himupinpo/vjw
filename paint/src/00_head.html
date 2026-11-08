@@ -98,6 +98,8 @@ body.hub #pauseB { right: calc(10px + var(--sar)); }
 .btn small { display: block; font-family: var(--f); font-size: 11px; font-weight: 700; opacity: .8; }
 .wcard { display: flex; gap: 12px; align-items: center; text-align: left; }
 .wcard svg { width: 54px; height: 54px; flex: none; }
+.wcard img { width: 84px; height: 56px; object-fit: contain; flex: none; filter: drop-shadow(0 3px 3px rgba(0,0,0,.5)); }
+.wcard .t small { font-size: 11px; font-weight: 800; opacity: .7; margin-left: 6px; }
 .wcard .t { font-size: 16px; font-weight: 900; }
 .wcard .s { font-size: 11.5px; opacity: .78; font-weight: 700; line-height: 1.45; }
 .panel { width: min(760px, 100%); background: rgba(31,28,43,.96); border: 1px solid var(--line); border-radius: 20px; padding: 14px; }
@@ -165,6 +167,73 @@ table.st td.n { text-align: right; font-variant-numeric: tabular-nums; }
 @media (min-aspect-ratio: 6/5) { #dress { align-items: flex-start; padding-left: calc(4vw + var(--sal)); } }
 .chips.sw button { width: 36px; height: 36px; padding: 0; border-radius: 50%; border: 3px solid rgba(255,255,255,.3); }
 .chips.sw button.on { border-color: #fff; box-shadow: 0 0 0 3px rgba(255,255,255,.35); }
+/* ---------- ボタンの配置 ---------- */
+#btnEdit { position: absolute; inset: 0; z-index: 30; background: rgba(10,8,16,.6); touch-action: none; }
+.beBar { position: absolute; left: 50%; top: calc(8px + var(--sat)); transform: translateX(-50%); display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px 12px; width: min(760px, 96%); padding: 8px 12px; border-radius: 16px; background: rgba(31,28,43,.95); border: 1px solid var(--line); z-index: 2; }
+.beBar b { font-family: var(--d); font-weight: 400; font-size: 18px; }
+.beBar label { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 800; }
+.beBar input { width: 120px; }
+.beBar .btn { min-height: 40px; font-size: 14px; padding: 4px 12px; }
+.beBar .btn.main { font-size: 16px; min-height: 40px; }
+.beHint { position: absolute; left: 50%; bottom: calc(10px + var(--sab)); transform: translateX(-50%); font-size: 12px; font-weight: 800; opacity: .8; white-space: nowrap; }
+#beArea { position: absolute; inset: 0; }
+#beArea .beb { cursor: grab; }
+#beArea .beb.sel { border-color: #ffe14d; box-shadow: 0 0 0 3px rgba(255,225,77,.45); }
+.beStick { position: absolute; border-radius: 50%; border: 3px dashed rgba(255,255,255,.45); display: grid; place-items: center; font-size: 11px; font-weight: 800; }
+.beStick i { position: absolute; left: 50%; top: 50%; width: 43%; height: 43%; transform: translate(-50%, -50%); border-radius: 50%; background: rgba(255,255,255,.4); }
+.beStick span { position: absolute; bottom: -20px; white-space: nowrap; }
+#charge.keep { animation: kp .25s infinite alternate; }
+@keyframes kp { to { transform: scale(1.14); } }
+/* ---------- ブキ選び ---------- */
+#armory { padding: calc(8px + var(--sat)) calc(10px + var(--sar)) calc(8px + var(--sab)) calc(10px + var(--sal)); background: transparent; justify-content: flex-start; align-items: stretch; overflow: hidden; }
+.armTop { display: flex; align-items: center; gap: 10px; flex: none; }
+.armTitle { font-family: var(--d); font-size: 26px; line-height: 1; white-space: nowrap; }
+.armTitle small { font-family: var(--f); font-size: 11px; font-weight: 800; opacity: .6; margin-left: 6px; }
+.armTabs { flex: 1; display: flex; gap: 6px; overflow-x: auto; padding: 4px 2px 6px; scrollbar-width: thin; }
+.armTabs button { flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px; width: 56px; padding: 5px 2px 4px; border-radius: 14px; border: 2px solid rgba(255,255,255,.14); background: rgba(255,255,255,.05); font-size: 10.5px; font-weight: 900; position: relative; }
+.armTabs button svg { width: 26px; height: 26px; }
+.armTabs button span { font-size: 9.5px; white-space: nowrap; overflow: hidden; max-width: 54px; }
+.armTabs button.on { background: var(--tc, #ff2d87); border-color: #fff; color: #15121d; }
+.armTabs button.has::after { content: ""; position: absolute; top: 4px; right: 6px; width: 7px; height: 7px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 2px var(--tc, #ff2d87); }
+.armMain { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr minmax(260px, 40%); gap: 10px; margin-top: 4px; }
+.armGrid { overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 8px; align-content: start; padding: 2px 4px 10px 2px; touch-action: pan-y; }
+.wc { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 6px 8px; border-radius: 16px; border: 2.5px solid rgba(255,255,255,.12);
+  background: radial-gradient(120% 90% at 50% 20%, color-mix(in srgb, var(--wc) 30%, #2c2840), #1d1a2a); text-align: center; }
+.wc img { width: 100%; aspect-ratio: 3 / 2; object-fit: contain; filter: drop-shadow(0 4px 4px rgba(0,0,0,.5)); }
+.wc b { font-size: 14px; line-height: 1.15; }
+.wc .rl { font-size: 10px; font-weight: 800; opacity: .7; }
+.wc .ic { display: flex; gap: 5px; margin-top: 2px; }
+.wc .ic i { width: 22px; height: 22px; border-radius: 7px; background: rgba(0,0,0,.4); display: grid; place-items: center; color: #fff; }
+.wc .ic i.sp { color: #ffe14d; }
+.wc .ic svg { width: 16px; height: 16px; }
+.wc.on { border-color: #fff; box-shadow: 0 0 0 3px var(--tc, #ff2d87), 0 6px 16px rgba(0,0,0,.4); }
+.wc em { position: absolute; top: 6px; left: 6px; font-style: normal; font-size: 10px; font-weight: 900; padding: 2px 7px; border-radius: 99px; background: var(--tc, #ff2d87); color: #fff; }
+.armSide { display: flex; flex-direction: column; gap: 8px; min-height: 0; overflow-y: auto; }
+.armPrev { flex: none; height: 46%; min-height: 150px; border-radius: 18px; border: 2px solid rgba(255,255,255,.14); position: relative; touch-action: none; cursor: grab; }
+.armPrev span { position: absolute; right: 10px; bottom: 8px; font-size: 10px; font-weight: 800; opacity: .55; }
+.armInfo { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); border-radius: 16px; padding: 10px 12px; }
+.armInfo .wn { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.armInfo .wn b { font-family: var(--d); font-weight: 400; font-size: 24px; line-height: 1.1; }
+.armInfo .wn span { font-size: 11px; font-weight: 900; padding: 2px 8px; border-radius: 99px; background: rgba(255,255,255,.14); }
+.armInfo .wn .rlb { background: var(--tc, #ff2d87); }
+.armInfo .wd { margin: 6px 0; font-size: 12.5px; line-height: 1.5; opacity: .9; }
+.stats .sb { display: grid; grid-template-columns: 34px 1fr; align-items: center; gap: 8px; font-size: 11.5px; font-weight: 900; margin: 4px 0; }
+.stats i { height: 10px; border-radius: 5px; background: rgba(255,255,255,.12); position: relative; overflow: hidden; }
+.stats u { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 5px; background: linear-gradient(90deg, var(--tc, #ff2d87), #fff); }
+.armInfo .stk { margin: 6px 0 8px; font-size: 12px; font-weight: 800; }
+.ss { display: flex; gap: 10px; align-items: center; margin-top: 6px; }
+.ss i { flex: none; width: 34px; height: 34px; border-radius: 10px; background: rgba(0,0,0,.4); display: grid; place-items: center; }
+.ss i svg { width: 24px; height: 24px; }
+.ss.sp i { color: #ffe14d; }
+.ss b { font-size: 13.5px; } .ss small { display: block; font-size: 11px; opacity: .78; line-height: 1.4; }
+#wOk { flex: none; }
+@media (max-aspect-ratio: 1/1), (max-width: 620px) {
+  #armory { overflow-y: auto; touch-action: pan-y; }
+  .armMain { display: flex; flex-direction: column-reverse; flex: none; min-height: auto; }
+  .armSide { overflow: visible; }
+  .armPrev { height: 190px; }
+  .armGrid { overflow: visible; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); }
+}
 .chips.rule button.on { background: #ffe14d; color: #15121d; border-color: #ffe14d; }
 .role { display: inline-block; font-size: 11px; font-weight: 900; padding: 1px 8px; border-radius: 99px; background: rgba(255,255,255,.16); vertical-align: 2px; }
 /* 旗とり・ボール運びの点数 */
@@ -229,18 +298,26 @@ table.st td.n { text-align: right; font-variant-numeric: tabular-nums; }
     <button class="btn" id="goWeapon"><div class="wcard" id="wcard"></div></button>
     <button class="btn" id="goDress">きせかえ<small>頭のかざりと、その色をえらぶ</small></button>
     <button class="btn sub2" id="goPractice">試しうち<small>まとを相手にブキをためす</small></button>
-    <button class="btn" id="goSet">設定・操作</button>
+    <button class="btn" id="goSet">設定</button>
   </div>
   <div class="tag" id="recLine" style="font-size:12px;opacity:.7;margin-top:14px"></div>
 </div>
 
-<div id="armory" class="screen hidden"><div class="panel">
-  <h2>ブキをえらぶ<button class="x" data-close="armory">×</button></h2>
-  <div class="tabs" id="clsTabs"></div>
-  <div class="wgrid" id="wgrid"></div>
-  <div class="detail" id="wdetail"></div>
-  <div style="margin-top:12px;display:flex;justify-content:flex-end"><button class="btn main" id="wOk" style="min-width:200px">これにする</button></div>
-</div></div>
+<div id="armory" class="screen hidden">
+  <div class="armTop">
+    <div class="armTitle">ブキ<small id="armCount"></small></div>
+    <div class="armTabs" id="clsTabs"></div>
+    <button class="x" data-close="armory">×</button>
+  </div>
+  <div class="armMain">
+    <div class="armGrid" id="wgrid"></div>
+    <div class="armSide">
+      <div class="armPrev" id="armPrev"><span>ドラッグで回す</span></div>
+      <div class="armInfo" id="wdetail"></div>
+      <button class="btn main" id="wOk">これでいく</button>
+    </div>
+  </div>
+</div>
 
 <div id="dress" class="screen hidden"><div class="panel narrow">
   <h2>きせかえ<button class="x" data-close="dress">×</button></h2>
@@ -253,7 +330,7 @@ table.st td.n { text-align: right; font-variant-numeric: tabular-nums; }
 </div></div>
 
 <div id="settings" class="screen hidden"><div class="panel">
-  <h2>設定・操作<button class="x" data-close="settings">×</button></h2>
+  <h2>設定<button class="x" data-close="settings">×</button></h2>
   <div class="row2">相手の強さ</div>
   <div class="chips" id="diffChips"><button data-d="0">やさしい</button><button data-d="1">ふつう</button><button data-d="2">つよい</button></div>
   <div class="row2">視点の速さ <input type="range" id="sens" min="0.4" max="2.2" step="0.1"> <span id="sensV"></span></div>
@@ -261,11 +338,10 @@ table.st td.n { text-align: right; font-variant-numeric: tabular-nums; }
   <div class="chips" id="musChips"><button data-m="1">音楽あり</button><button data-m="0">音楽なし</button></div>
   <div class="chips" id="qChips"><button data-q="low">画質：軽い</button><button data-q="mid">画質：ふつう</button><button data-q="high">画質：きれい</button></div>
   <div class="chips" id="asChips"><button data-a="1">ねらい補助：あり</button><button data-a="0">ねらい補助：なし</button></div>
+  <button class="btn" id="btnLayout" style="width:100%;margin:2px 0 10px">ボタンの配置を変える<small>スマホの操作ボタンの位置と大きさ</small></button>
   <div class="help">
-    <b>パソコン</b>：<span class="kbd">W A S D</span> 移動 ／ マウス 視点（画面をクリックで固定）／ <span class="kbd">左クリック</span> うつ ／ <span class="kbd">Shift</span>・<span class="kbd">右クリック</span> もぐる ／ <span class="kbd">Space</span> ジャンプ ／ <span class="kbd">E</span> サブ ／ <span class="kbd">Q</span> スペシャル ／ <span class="kbd">R</span> スーパージャンプ ／ <span class="kbd">Esc</span> 一時停止<br>
-    <b>スマホ</b>：左側をなぞって移動、右側をなぞって視点。「うつ」は押したまま指を動かすとねらいも動きます。「もぐる」は押している間だけ。<br>
-    <b>ルール</b>：自分の色の上でもぐると速く泳げて、ペンキがたまります。自分の色の壁にもぐったまま進むと、壁をのぼれます。ミニマップ（または「ジャンプ先」）から味方の所へスーパージャンプできます。相手の色の上は動きがおそく、少しずつダメージ。ぬるとスペシャルがたまり、満タンで使えます。水に落ちるとやられます。弾は遠くまで飛ぶほど（落ちはじめると）ダメージが下がります。<br>
-    <b>ルール</b>：<b>ぬりあいバトル</b> ぬった広さで勝負。<b>ゾーン争奪</b> まんなかのゾーンを6割ぬると確保、確保している間カウントが減る。<b>旗とり</b> 相手の旗にふれるとうばえる。自分の旗が陣地にある時に持ち帰ると1点、3点先取（運んでいる人はもぐれず少し遅い）。<b>ボール運び</b> まんなかのボールを相手のゴールまで運ぶ。運んでいる人は撃てず、もぐれない。時間切れなら、遠くまで運んだチームの勝ち。<br>
+    <b>ルール</b>：<b>ぬりあいバトル</b> ぬった広さで勝負。<b>ゾーン争奪</b> まんなかのゾーンを6割ぬると確保、確保している間カウントが減る。<b>旗とり</b> 相手の旗を自分の旗の所へ持ち帰ると1点、3点先取。<b>ボール運び</b> まんなかのボールを相手のゴールまで運ぶ（運んでいる人は撃てない）。<br>
+    <b>ためキープ</b>：スナイパー・ガトリング・ボウは、ためている途中で「うつ」を押したままもぐると、少しの間ためたままにできます。<b>くるりターン</b>：自分の色を泳いでいるとき、進む向きと逆へたおしてジャンプすると、くるっと回って飛び出します（出だしは受けるダメージが半分）。<br>
     <b>ねらい補助</b>：スマホで「うつ」を押している間だけ、照準のすぐ近く（6°以内）の相手へ少しだけ向きが寄ります。
   </div>
 </div></div>
@@ -281,6 +357,17 @@ table.st td.n { text-align: right; font-variant-numeric: tabular-nums; }
 </div>
 
 <div id="result" class="screen hidden"><div class="res" id="resBox"></div></div>
+<div id="btnEdit" class="hidden">
+  <div class="beBar">
+    <b>ボタンの配置</b>
+    <label>えらんだボタンの大きさ<input type="range" id="beSize" min="0.6" max="1.7" step="0.05"></label>
+    <label>移動スティック<input type="range" id="beStick" min="0.7" max="1.5" step="0.05"></label>
+    <button class="btn" id="beReset">もとにもどす</button>
+    <button class="btn main" id="beDone">完了</button>
+  </div>
+  <div class="beHint">ボタンをドラッグして動かせます</div>
+  <div id="beArea"></div>
+</div>
 <div id="load">ステージを準備しています…</div>
 </div>
 <script type="importmap">

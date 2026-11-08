@@ -93,7 +93,7 @@ function loop(now) {
   requestAnimationFrame(loop);
   const dt = Math.min(.05, (now - last) / 1000); last = now;
   if (!hold) { if (G.state === 'title') titleTick(dt); else update(dt); }
-  renderer.render(scene, camera);
+  renderFrame(dt);
 }
 async function boot() {
   if (HUB.embedded) {
@@ -114,10 +114,10 @@ async function boot() {
 window.__P = {
   G, SET, actors, proj, devices, WEAPONS, WBY, SUBS, SPECIALS, STAGES, PCNT, get PTOTAL() { return PTOTAL; }, get STAGE_ID() { return STAGE_ID; }, get ZONE() { return ZONE; }, FACES,
   startMatch, toTitle, setPlayerWeapon, useSpecial, throwSub, startSuperJump, loadStage, hAt, paintAtCell, findPath, navOf, NOK, clearPaint, paintFace, wallTeamAt, crossFace, BOXES: () => BOXES,
-  RS, RULES, carrierOf, flagHome, goalOf, wInfo, shoot, LOBBY, ACC,
+  RS, RULES, carrierOf, flagHome, goalOf, wInfo, shoot, LOBBY, ACC, weaponThumb, weaponMesh, openArmory, ARMP, equipWeapon, paintCircle, hurt,
   wallPainted() { let n = 0; for (let i = 0; i < WP.length; i++) if (WP[i]) n++; return n; },
   hold(v) { hold = !!v; },
-  step(sec, dt = 1 / 60, draw = true) { for (let t = 0; t < sec; t += dt) { if (G.state === 'title') titleTick(dt); else update(dt); } if (draw) renderer.render(scene, camera); },
+  step(sec, dt = 1 / 60, draw = true) { for (let t = 0; t < sec; t += dt) { if (G.state === 'title') titleTick(dt); else update(dt); } if (draw) renderFrame(1 / 60); },
   input: IN, renderer, camera, scene, syncModel
 };
 boot();

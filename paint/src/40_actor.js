@@ -25,7 +25,7 @@ function rimify(m) {
 }
 const teamMat = {};
 function tmat(team) {
-  if (!teamMat[team]) teamMat[team] = { jelly: rimify(new T.MeshStandardMaterial({ color: 0xffffff, roughness: .25, metalness: .05 })), glow: new T.MeshBasicMaterial({ color: 0xffffff }) };
+  if (!teamMat[team]) teamMat[team] = { jelly: rimify(new T.MeshStandardMaterial({ color: 0xffffff, roughness: .25, metalness: .05 })), jellyDS: rimify(new T.MeshStandardMaterial({ color: 0xffffff, roughness: .3, metalness: .05, side: T.DoubleSide })), glow: new T.MeshBasicMaterial({ color: 0xffffff }) };
   return teamMat[team];
 }
 // かざり（頭につける。CPU はランダム、自分はタイトルで選ぶ）
@@ -52,47 +52,7 @@ function accessoryMesh(kind, col) {
   }
   return g;
 }
-function refreshTeamMats() { for (const t of [1, 2]) { const c = G.pal[t - 1]; tmat(t).jelly.color.set(c); tmat(t).glow.color.set(c); } }
-function weaponMesh(w, team) {
-  const g = new T.Group(), J = tmat(team).jelly, D = MAT.dark, Mt = MAT.metal, cls = w.cls, model = w.model || cls;
-  const add = (geo, mat, x, y, z, rx = 0, ry = 0, rz = 0) => { const m = new T.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.set(rx, ry, rz); m.castShadow = true; g.add(m); return m; };
-  const B = (x, y, z) => new T.BoxGeometry(x, y, z), C = (r1, r2, h, s = 10) => new T.CylinderGeometry(r1, r2, h, s);
-  switch (model) {
-    case 'can': add(C(.09, .09, .28), J, 0, 0, .1); add(C(.04, .05, .06), MAT.white, 0, .17, .1); add(B(.05, .05, .08), D, 0, .19, .17); break;
-    case 'airbrush': add(C(.025, .04, .42), Mt, 0, 0, .25, Math.PI / 2); add(C(.06, .06, .12), J, 0, .08, .05); break;
-    case 'ext': add(C(.1, .1, .4), MAT.red, 0, -.02, 0); add(C(.03, .03, .3), D, 0, .1, .2, Math.PI / 2.5); break;
-    case 'mop': add(C(.025, .025, 1.2), MAT.wood, 0, .1, .45, Math.PI / 2.6); g.userData.head = add(C(.24, .2, .18, 12), J, 0, -.45, 1.0); break;
-    case 'deck': add(C(.025, .025, 1.1), MAT.wood, 0, .1, .45, Math.PI / 2.6); g.userData.head = add(B(.5, .1, .16), J, 0, -.45, 1.0); break;
-    case 'broom': add(C(.025, .025, 1.15), MAT.wood, 0, .1, .45, Math.PI / 2.6); g.userData.head = add(new T.ConeGeometry(.22, .4, 10), J, 0, -.4, 1.0, Math.PI, 0, 0); break;
-    case 'fude': add(C(.03, .03, .8), MAT.wood, 0, .05, .4, Math.PI / 2.4); g.userData.head = add(new T.ConeGeometry(.08, .3, 10), J, 0, -.3, .8, Math.PI, 0, 0); break;
-    case 'lance': add(C(.03, .03, 1.2), Mt, 0, 0, .45, Math.PI / 2); add(C(.08, .08, .3), J, 0, -.02, 0, Math.PI / 2); break;
-    case 'watering': add(C(.16, .18, .26, 12), J, 0, 0, .15); add(C(.025, .04, .38), J, 0, .08, .42, Math.PI / 3); break;
-    case 'ladle': add(C(.02, .02, .6), MAT.wood, 0, .05, .3, Math.PI / 2.3); add(new T.SphereGeometry(.12, 10, 6, 0, TAU, Math.PI / 2, Math.PI / 2), J, 0, -.04, .6); break;
-    case 'reel': add(new T.TorusGeometry(.2, .06, 8, 18), J, 0, 0, 0, 0, Math.PI / 2); for (let k = 0; k < 3; k++) add(C(.03, .03, .5), Mt, 0, -.05 + k * .05, .4, Math.PI / 2); break;
-    case 'fire': add(C(.06, .09, .5), MAT.red, 0, 0, .25, Math.PI / 2); add(new T.TorusGeometry(.16, .05, 8, 16), D, -.1, -.15, -.15, 0, Math.PI / 2); break;
-    case 'hera': add(B(.3, .02, .22), Mt, 0, 0, .45); add(C(.03, .03, .3), MAT.wood, 0, 0, .15, Math.PI / 2); break;
-    case 'gun': case 'dual': case 'jumper': add(B(.12, .14, .5), D, 0, 0, .15); add(C(.04, .04, .22), Mt, 0, .02, .48, Math.PI / 2); add(B(.1, .2, .1), J, 0, -.12, 0); add(C(.06, .06, .16), J, 0, .12, .05, Math.PI / 2); break;
-    case 'cannon': add(C(.12, .14, .5), D, 0, 0, .15, Math.PI / 2); add(C(.15, .12, .14), J, 0, 0, .44, Math.PI / 2); add(B(.1, .2, .1), D, 0, -.15, 0); break;
-    case 'roller': case 'brush': {
-      const wd = cls === 'roller' ? Math.min(1.2, .5 + (w.width || 2) * .2) : .38;
-      add(C(.025, .025, 1.1), Mt, 0, .1, .45, Math.PI / 2.6);
-      g.userData.head = add(cls === 'roller' ? C(.17, .17, wd, 14) : B(wd, .12, .22), J, 0, -.45, 1.0, 0, 0, cls === 'roller' ? Math.PI / 2 : 0);
-      break; }
-    case 'sniper': add(B(.1, .12, 1.0), D, 0, 0, .3); add(C(.05, .05, .3), J, 0, .1, .1, Math.PI / 2); add(C(.03, .03, .2), Mt, 0, .1, .35, Math.PI / 2); break;
-    case 'bucket': add(C(.2, .15, .32, 12), J, 0, 0, .25); add(new T.TorusGeometry(.2, .015, 6, 16, Math.PI), Mt, 0, .1, .25); break;
-    case 'gatling': {
-      add(B(.22, .22, .4), D, 0, 0, .1); add(C(.08, .08, .2), J, 0, .17, 0);
-      const bar = new T.Group(); bar.position.set(0, 0, .5); g.add(bar); g.userData.spin = bar;   // 回る銃身
-      for (let k = 0; k < 4; k++) { const m = new T.Mesh(C(.035, .035, .55), Mt); m.position.set(Math.cos(k * 1.57) * .06, Math.sin(k * 1.57) * .06, 0); m.rotation.x = Math.PI / 2; m.castShadow = true; bar.add(m); }
-      break; }
-    case 'parasol': { const can = add(new T.SphereGeometry(.62, 16, 8, 0, TAU, 0, Math.PI / 2.4), J, 0, 0, .55, -Math.PI / 2); g.userData.canopy = can; add(C(.025, .025, .6), Mt, 0, 0, .25, Math.PI / 2); break; }
-    case 'bow': add(new T.TorusGeometry(.42, .03, 6, 20, Math.PI), J, 0, 0, .3, 0, Math.PI / 2, Math.PI / 2); add(C(.006, .006, .84), MAT.white, 0, 0, .3); break;
-    case 'blade': add(B(.06, .1, .9), MAT.white, 0, 0, .55); add(B(.08, .1, .25), J, 0, 0, .05); break;
-    case 'hose': add(C(.035, .05, .35), Mt, 0, 0, .3, Math.PI / 2); add(B(.08, .14, .12), J, 0, -.05, .1); add(new T.TorusGeometry(.18, .04, 8, 18), J, -.32, -.25, -.1, 0, Math.PI / 2); break;
-    default: add(B(.12, .14, .5), D, 0, 0, .15);
-  }
-  return g;
-}
+function refreshTeamMats() { for (const t of [1, 2]) { const c = G.pal[t - 1]; tmat(t).jelly.color.set(c); tmat(t).jellyDS.color.set(c); tmat(t).glow.color.set(c); } }
 // 両手で持つブキ（左手もブキにそえる）
 const TWO_HAND = new Set(['roller', 'brush', 'sniper', 'gatling', 'bucket', 'parasol', 'bow', 'hose', 'cannon', 'blade']);
 // 当たった相手のペンキがつく場所（体と顔のまわり）。[x, y, z, 中心y]
@@ -259,7 +219,8 @@ function stepMove(a, dt, ctl) {
   if (a.climb) { climbStep(a, dt, ctl); timers(a, dt); return; }
   const gt = groundTeam(a), enemyInk = gt && gt !== a.team && !(a.dashT > 0), ownInk = gt === a.team;
   const busy = a.ws.busy || 0;
-  a.dive = !!ctl.dive && !a.spOn && !(a.ws.rolling) && !(a.ws.ch > .05 && a.w.cls === 'sniper' && !a.w.keep) && !ruleNoDive(a);
+  const vx0 = a.vx, vz0 = a.vz;
+  a.dive = !!ctl.dive && !a.spOn && !(a.ws.rolling) && !ruleNoDive(a) && !(a.rollT > 0);
   a.swim = a.dive && ownInk;
   let spd = SPEED.walk * a.w.spd;
   if (a.dive) spd = a.swim ? SPEED.swim : SPEED.blob;
@@ -278,7 +239,16 @@ function stepMove(a, dt, ctl) {
     a.vx += (mx * spd - a.vx) * Math.min(1, acc * dt);
     a.vz += (mz * spd - a.vz) * Math.min(1, acc * dt);
   }
-  if (ctl.jump && a.onGround) { a.vy = a.swim ? SWIM_JUMP_V : JUMP_V; a.onGround = false; }
+  if (ctl.jump && a.onGround) {
+    const ml = Math.hypot(mx, mz), vl = Math.hypot(vx0, vz0);
+    if (a.swim && vl > 5 && ml > .5 && (mx * vx0 + mz * vz0) / (ml * vl) < -.3 && !(a.rollCd > 0)) {
+      // くるりターン：泳いでいる向きと逆へたおしてジャンプすると、くるっと回って飛び出す（出だしは少しかたい）
+      a.vy = 7.6; a.onGround = false; a.vx = mx / ml * 8.5; a.vz = mz / ml * 8.5; a.slideT = .3;
+      a.rollT = .5; a.rollArmor = .32; a.rollCd = .8; a.rollDir = (vx0 * mz - vz0 * mx) > 0 ? 1 : -1; a.dive = a.swim = false;
+      burst(a.x, a.y + .3, a.z, a.team, 12, .9); ringFx(a.x, a.y, a.z, a.team, 1.6, .3);
+      if (a === G.me) AU.roll();
+    } else { a.vy = a.swim ? SWIM_JUMP_V : JUMP_V; a.onGround = false; }
+  }
   a.vy -= GRAV * dt;
   // 横の移動：段差が高すぎる所へは入れない（x と z を別々に）
   const zone = SPAWN_ZONE[3 - a.team];
@@ -336,6 +306,7 @@ function timers(a, dt) {
   if (a.fogT > 0) a.fogT -= dt;
   if (a.cloakT > 0) a.cloakT -= dt;
   if (a.markT > 0) a.markT -= dt;
+  if (a.rollT > 0) a.rollT -= dt; if (a.rollArmor > 0) a.rollArmor -= dt; if (a.rollCd > 0) a.rollCd -= dt;
   if (a.revealT > 0) { a.revealT -= dt; if (a.revealT <= 0) a.revealed = false; }
 }
 
@@ -345,6 +316,7 @@ function hurt(a, dmg, src, kind) {
   if (src && src.team === a.team) return false;
   if (a.sj && a.sj.t > SJ_CH) return false;
   if (inBarrier(a)) return false;
+  if (a.rollArmor > 0) dmg *= .5;   // くるりターンの出だし
   if (a.armor > 0) { const used = Math.min(a.armor, dmg); a.armor -= used; dmg -= used; burst(a.x, a.y + 1, a.z, a.team, 6, .5); if (dmg <= 0) return true; }
   a.hp -= dmg; a.hurtT = 0; a.lastHitBy = src; a.hitN = (a.hitN || 0) + 1; a.flashT = .16;
   if (a.cloakT > 0) { a.revealed = true; a.revealT = .8; }
@@ -400,8 +372,8 @@ function syncModel(a, dt, viewer) {
   m.tag.visible = !a.dive && !!viewer && a.team === viewer.team && a !== viewer;
   m.mark.visible = !!enemyView && a.markT > 0;
   if (m.mark.visible) { m.mark.material.color.set(teamColor(viewer.team)); m.mark.position.y = 2.25 + Math.sin(clock * 5) * .1; }
-  m.aura.visible = a.armor > 0 || a.dashT > 0;
-  if (m.aura.visible) { m.aura.material.color.set(a.dashT > 0 ? '#ffffff' : teamColor(a.team)); m.aura.material.opacity = .12 + .08 * Math.sin(clock * 8); }
+  m.aura.visible = a.armor > 0 || a.dashT > 0 || a.rollArmor > 0;
+  if (m.aura.visible) { m.aura.material.color.set(a.dashT > 0 || a.rollArmor > 0 ? '#ffffff' : teamColor(a.team)); m.aura.material.opacity = .12 + .08 * Math.sin(clock * 8); }
   if (a.climb) {
     // かべに張りついた水たまり
     m.puddle.rotation.set(-Math.PI / 2, 0, 0); m.puddle.position.set(0, .5, .25);
@@ -428,7 +400,7 @@ function syncModel(a, dt, viewer) {
     sq *= 1 + Math.sin(clock * 2.4 + a.seed) * .012;                     // 息をする
     let wob = 0; if (a.flashT > 0) { a.flashT -= dt; wob = Math.sin(clock * 45) * a.flashT * .9; }   // 撃たれてぷるぷる
     m.body.scale.set((1 + wob) / Math.sqrt(sq), sq, (1 - wob) / Math.sqrt(sq));
-    m.body.rotation.y = a.sj && a.sj.t >= SJ_CH ? a.sj.t * 14 : 0;
+    m.body.rotation.y = a.sj && a.sj.t >= SJ_CH ? a.sj.t * 14 : a.rollT > 0 ? (1 - a.rollT / .5) * TAU * (a.rollDir || 1) : 0;
     m.body.rotation.x = k * .14;                                          // 走ると前かがみ
     m.body.position.y = Math.abs(Math.sin(ph)) * .045 * k;                // 走ると上下にはずむ
     for (const f of m.feet) { const p = ph + (f.userData.foot > 0 ? 0 : Math.PI); f.position.z = .03 + Math.sin(p) * .12 * k; f.position.y = air ? .14 : .08 + Math.max(0, Math.cos(p)) * .07 * k; }

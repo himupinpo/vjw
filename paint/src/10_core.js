@@ -106,7 +106,7 @@ document.addEventListener('pointerlockchange', () => { if (!document.pointerLock
   });
   layer.addEventListener('pointermove', e => {
     if (IN.stick && IN.stick.id === e.pointerId) {
-      const p = toStage(e.clientX, e.clientY), R = 52;
+      const p = toStage(e.clientX, e.clientY), R = 52 * (SET.stickK || 1);
       let dx = p.x - IN.stick.x, dy = p.y - IN.stick.y; const l = Math.hypot(dx, dy);
       if (l > R) { dx *= R / l; dy *= R / l; }
       IN.stickX = dx / R; IN.stickY = -dy / R;
@@ -181,6 +181,7 @@ const AU = (() => {
     step(swim) { if (swim) noise(.11, 'bandpass', 520 + Math.random() * 200, 300, 2.5, .13); else noise(.035, 'highpass', 2600 + Math.random() * 600, 1800, 1, .05); },
     land() { noise(.09, 'lowpass', 700, 180, 1, .2); tone(140, .08, .08, 'sine', 0, 70); },
     pick() { tone(880, .08, .16, 'triangle'); tone(1320, .14, .16, 'triangle', .07); },
+    roll() { noise(.26, 'bandpass', 700, 2600, 2, .32); tone(480, .2, .12, 'sine', 0, 980); },
     boom(big = 1, g = 1) { noise(.5 * big, 'lowpass', 1400, 120, 1, .7 * g); tone(90, .4 * big, .5 * g, 'sine', 0, 40); },
     sj() { tone(300, .7, .2, 'sawtooth', 0, 1200); noise(.8, 'bandpass', 500, 2500, 1.5, .25); },
     dive() { noise(.25, 'bandpass', 500, 1200, 3, .3); tone(300, .15, .1, 'sine', 0, 600); },

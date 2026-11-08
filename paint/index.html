@@ -98,6 +98,8 @@ body.hub #pauseB { right: calc(10px + var(--sar)); }
 .btn small { display: block; font-family: var(--f); font-size: 11px; font-weight: 700; opacity: .8; }
 .wcard { display: flex; gap: 12px; align-items: center; text-align: left; }
 .wcard svg { width: 54px; height: 54px; flex: none; }
+.wcard img { width: 84px; height: 56px; object-fit: contain; flex: none; filter: drop-shadow(0 3px 3px rgba(0,0,0,.5)); }
+.wcard .t small { font-size: 11px; font-weight: 800; opacity: .7; margin-left: 6px; }
 .wcard .t { font-size: 16px; font-weight: 900; }
 .wcard .s { font-size: 11.5px; opacity: .78; font-weight: 700; line-height: 1.45; }
 .panel { width: min(760px, 100%); background: rgba(31,28,43,.96); border: 1px solid var(--line); border-radius: 20px; padding: 14px; }
@@ -165,6 +167,73 @@ table.st td.n { text-align: right; font-variant-numeric: tabular-nums; }
 @media (min-aspect-ratio: 6/5) { #dress { align-items: flex-start; padding-left: calc(4vw + var(--sal)); } }
 .chips.sw button { width: 36px; height: 36px; padding: 0; border-radius: 50%; border: 3px solid rgba(255,255,255,.3); }
 .chips.sw button.on { border-color: #fff; box-shadow: 0 0 0 3px rgba(255,255,255,.35); }
+/* ---------- ボタンの配置 ---------- */
+#btnEdit { position: absolute; inset: 0; z-index: 30; background: rgba(10,8,16,.6); touch-action: none; }
+.beBar { position: absolute; left: 50%; top: calc(8px + var(--sat)); transform: translateX(-50%); display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px 12px; width: min(760px, 96%); padding: 8px 12px; border-radius: 16px; background: rgba(31,28,43,.95); border: 1px solid var(--line); z-index: 2; }
+.beBar b { font-family: var(--d); font-weight: 400; font-size: 18px; }
+.beBar label { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 800; }
+.beBar input { width: 120px; }
+.beBar .btn { min-height: 40px; font-size: 14px; padding: 4px 12px; }
+.beBar .btn.main { font-size: 16px; min-height: 40px; }
+.beHint { position: absolute; left: 50%; bottom: calc(10px + var(--sab)); transform: translateX(-50%); font-size: 12px; font-weight: 800; opacity: .8; white-space: nowrap; }
+#beArea { position: absolute; inset: 0; }
+#beArea .beb { cursor: grab; }
+#beArea .beb.sel { border-color: #ffe14d; box-shadow: 0 0 0 3px rgba(255,225,77,.45); }
+.beStick { position: absolute; border-radius: 50%; border: 3px dashed rgba(255,255,255,.45); display: grid; place-items: center; font-size: 11px; font-weight: 800; }
+.beStick i { position: absolute; left: 50%; top: 50%; width: 43%; height: 43%; transform: translate(-50%, -50%); border-radius: 50%; background: rgba(255,255,255,.4); }
+.beStick span { position: absolute; bottom: -20px; white-space: nowrap; }
+#charge.keep { animation: kp .25s infinite alternate; }
+@keyframes kp { to { transform: scale(1.14); } }
+/* ---------- ブキ選び ---------- */
+#armory { padding: calc(8px + var(--sat)) calc(10px + var(--sar)) calc(8px + var(--sab)) calc(10px + var(--sal)); background: transparent; justify-content: flex-start; align-items: stretch; overflow: hidden; }
+.armTop { display: flex; align-items: center; gap: 10px; flex: none; }
+.armTitle { font-family: var(--d); font-size: 26px; line-height: 1; white-space: nowrap; }
+.armTitle small { font-family: var(--f); font-size: 11px; font-weight: 800; opacity: .6; margin-left: 6px; }
+.armTabs { flex: 1; display: flex; gap: 6px; overflow-x: auto; padding: 4px 2px 6px; scrollbar-width: thin; }
+.armTabs button { flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px; width: 56px; padding: 5px 2px 4px; border-radius: 14px; border: 2px solid rgba(255,255,255,.14); background: rgba(255,255,255,.05); font-size: 10.5px; font-weight: 900; position: relative; }
+.armTabs button svg { width: 26px; height: 26px; }
+.armTabs button span { font-size: 9.5px; white-space: nowrap; overflow: hidden; max-width: 54px; }
+.armTabs button.on { background: var(--tc, #ff2d87); border-color: #fff; color: #15121d; }
+.armTabs button.has::after { content: ""; position: absolute; top: 4px; right: 6px; width: 7px; height: 7px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 2px var(--tc, #ff2d87); }
+.armMain { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr minmax(260px, 40%); gap: 10px; margin-top: 4px; }
+.armGrid { overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 8px; align-content: start; padding: 2px 4px 10px 2px; touch-action: pan-y; }
+.wc { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 6px 8px; border-radius: 16px; border: 2.5px solid rgba(255,255,255,.12);
+  background: radial-gradient(120% 90% at 50% 20%, color-mix(in srgb, var(--wc) 30%, #2c2840), #1d1a2a); text-align: center; }
+.wc img { width: 100%; aspect-ratio: 3 / 2; object-fit: contain; filter: drop-shadow(0 4px 4px rgba(0,0,0,.5)); }
+.wc b { font-size: 14px; line-height: 1.15; }
+.wc .rl { font-size: 10px; font-weight: 800; opacity: .7; }
+.wc .ic { display: flex; gap: 5px; margin-top: 2px; }
+.wc .ic i { width: 22px; height: 22px; border-radius: 7px; background: rgba(0,0,0,.4); display: grid; place-items: center; color: #fff; }
+.wc .ic i.sp { color: #ffe14d; }
+.wc .ic svg { width: 16px; height: 16px; }
+.wc.on { border-color: #fff; box-shadow: 0 0 0 3px var(--tc, #ff2d87), 0 6px 16px rgba(0,0,0,.4); }
+.wc em { position: absolute; top: 6px; left: 6px; font-style: normal; font-size: 10px; font-weight: 900; padding: 2px 7px; border-radius: 99px; background: var(--tc, #ff2d87); color: #fff; }
+.armSide { display: flex; flex-direction: column; gap: 8px; min-height: 0; overflow-y: auto; }
+.armPrev { flex: none; height: 46%; min-height: 150px; border-radius: 18px; border: 2px solid rgba(255,255,255,.14); position: relative; touch-action: none; cursor: grab; }
+.armPrev span { position: absolute; right: 10px; bottom: 8px; font-size: 10px; font-weight: 800; opacity: .55; }
+.armInfo { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); border-radius: 16px; padding: 10px 12px; }
+.armInfo .wn { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.armInfo .wn b { font-family: var(--d); font-weight: 400; font-size: 24px; line-height: 1.1; }
+.armInfo .wn span { font-size: 11px; font-weight: 900; padding: 2px 8px; border-radius: 99px; background: rgba(255,255,255,.14); }
+.armInfo .wn .rlb { background: var(--tc, #ff2d87); }
+.armInfo .wd { margin: 6px 0; font-size: 12.5px; line-height: 1.5; opacity: .9; }
+.stats .sb { display: grid; grid-template-columns: 34px 1fr; align-items: center; gap: 8px; font-size: 11.5px; font-weight: 900; margin: 4px 0; }
+.stats i { height: 10px; border-radius: 5px; background: rgba(255,255,255,.12); position: relative; overflow: hidden; }
+.stats u { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 5px; background: linear-gradient(90deg, var(--tc, #ff2d87), #fff); }
+.armInfo .stk { margin: 6px 0 8px; font-size: 12px; font-weight: 800; }
+.ss { display: flex; gap: 10px; align-items: center; margin-top: 6px; }
+.ss i { flex: none; width: 34px; height: 34px; border-radius: 10px; background: rgba(0,0,0,.4); display: grid; place-items: center; }
+.ss i svg { width: 24px; height: 24px; }
+.ss.sp i { color: #ffe14d; }
+.ss b { font-size: 13.5px; } .ss small { display: block; font-size: 11px; opacity: .78; line-height: 1.4; }
+#wOk { flex: none; }
+@media (max-aspect-ratio: 1/1), (max-width: 620px) {
+  #armory { overflow-y: auto; touch-action: pan-y; }
+  .armMain { display: flex; flex-direction: column-reverse; flex: none; min-height: auto; }
+  .armSide { overflow: visible; }
+  .armPrev { height: 190px; }
+  .armGrid { overflow: visible; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); }
+}
 .chips.rule button.on { background: #ffe14d; color: #15121d; border-color: #ffe14d; }
 .role { display: inline-block; font-size: 11px; font-weight: 900; padding: 1px 8px; border-radius: 99px; background: rgba(255,255,255,.16); vertical-align: 2px; }
 /* 旗とり・ボール運びの点数 */
@@ -229,18 +298,26 @@ table.st td.n { text-align: right; font-variant-numeric: tabular-nums; }
     <button class="btn" id="goWeapon"><div class="wcard" id="wcard"></div></button>
     <button class="btn" id="goDress">きせかえ<small>頭のかざりと、その色をえらぶ</small></button>
     <button class="btn sub2" id="goPractice">試しうち<small>まとを相手にブキをためす</small></button>
-    <button class="btn" id="goSet">設定・操作</button>
+    <button class="btn" id="goSet">設定</button>
   </div>
   <div class="tag" id="recLine" style="font-size:12px;opacity:.7;margin-top:14px"></div>
 </div>
 
-<div id="armory" class="screen hidden"><div class="panel">
-  <h2>ブキをえらぶ<button class="x" data-close="armory">×</button></h2>
-  <div class="tabs" id="clsTabs"></div>
-  <div class="wgrid" id="wgrid"></div>
-  <div class="detail" id="wdetail"></div>
-  <div style="margin-top:12px;display:flex;justify-content:flex-end"><button class="btn main" id="wOk" style="min-width:200px">これにする</button></div>
-</div></div>
+<div id="armory" class="screen hidden">
+  <div class="armTop">
+    <div class="armTitle">ブキ<small id="armCount"></small></div>
+    <div class="armTabs" id="clsTabs"></div>
+    <button class="x" data-close="armory">×</button>
+  </div>
+  <div class="armMain">
+    <div class="armGrid" id="wgrid"></div>
+    <div class="armSide">
+      <div class="armPrev" id="armPrev"><span>ドラッグで回す</span></div>
+      <div class="armInfo" id="wdetail"></div>
+      <button class="btn main" id="wOk">これでいく</button>
+    </div>
+  </div>
+</div>
 
 <div id="dress" class="screen hidden"><div class="panel narrow">
   <h2>きせかえ<button class="x" data-close="dress">×</button></h2>
@@ -253,7 +330,7 @@ table.st td.n { text-align: right; font-variant-numeric: tabular-nums; }
 </div></div>
 
 <div id="settings" class="screen hidden"><div class="panel">
-  <h2>設定・操作<button class="x" data-close="settings">×</button></h2>
+  <h2>設定<button class="x" data-close="settings">×</button></h2>
   <div class="row2">相手の強さ</div>
   <div class="chips" id="diffChips"><button data-d="0">やさしい</button><button data-d="1">ふつう</button><button data-d="2">つよい</button></div>
   <div class="row2">視点の速さ <input type="range" id="sens" min="0.4" max="2.2" step="0.1"> <span id="sensV"></span></div>
@@ -261,11 +338,10 @@ table.st td.n { text-align: right; font-variant-numeric: tabular-nums; }
   <div class="chips" id="musChips"><button data-m="1">音楽あり</button><button data-m="0">音楽なし</button></div>
   <div class="chips" id="qChips"><button data-q="low">画質：軽い</button><button data-q="mid">画質：ふつう</button><button data-q="high">画質：きれい</button></div>
   <div class="chips" id="asChips"><button data-a="1">ねらい補助：あり</button><button data-a="0">ねらい補助：なし</button></div>
+  <button class="btn" id="btnLayout" style="width:100%;margin:2px 0 10px">ボタンの配置を変える<small>スマホの操作ボタンの位置と大きさ</small></button>
   <div class="help">
-    <b>パソコン</b>：<span class="kbd">W A S D</span> 移動 ／ マウス 視点（画面をクリックで固定）／ <span class="kbd">左クリック</span> うつ ／ <span class="kbd">Shift</span>・<span class="kbd">右クリック</span> もぐる ／ <span class="kbd">Space</span> ジャンプ ／ <span class="kbd">E</span> サブ ／ <span class="kbd">Q</span> スペシャル ／ <span class="kbd">R</span> スーパージャンプ ／ <span class="kbd">Esc</span> 一時停止<br>
-    <b>スマホ</b>：左側をなぞって移動、右側をなぞって視点。「うつ」は押したまま指を動かすとねらいも動きます。「もぐる」は押している間だけ。<br>
-    <b>ルール</b>：自分の色の上でもぐると速く泳げて、ペンキがたまります。自分の色の壁にもぐったまま進むと、壁をのぼれます。ミニマップ（または「ジャンプ先」）から味方の所へスーパージャンプできます。相手の色の上は動きがおそく、少しずつダメージ。ぬるとスペシャルがたまり、満タンで使えます。水に落ちるとやられます。弾は遠くまで飛ぶほど（落ちはじめると）ダメージが下がります。<br>
-    <b>ルール</b>：<b>ぬりあいバトル</b> ぬった広さで勝負。<b>ゾーン争奪</b> まんなかのゾーンを6割ぬると確保、確保している間カウントが減る。<b>旗とり</b> 相手の旗にふれるとうばえる。自分の旗が陣地にある時に持ち帰ると1点、3点先取（運んでいる人はもぐれず少し遅い）。<b>ボール運び</b> まんなかのボールを相手のゴールまで運ぶ。運んでいる人は撃てず、もぐれない。時間切れなら、遠くまで運んだチームの勝ち。<br>
+    <b>ルール</b>：<b>ぬりあいバトル</b> ぬった広さで勝負。<b>ゾーン争奪</b> まんなかのゾーンを6割ぬると確保、確保している間カウントが減る。<b>旗とり</b> 相手の旗を自分の旗の所へ持ち帰ると1点、3点先取。<b>ボール運び</b> まんなかのボールを相手のゴールまで運ぶ（運んでいる人は撃てない）。<br>
+    <b>ためキープ</b>：スナイパー・ガトリング・ボウは、ためている途中で「うつ」を押したままもぐると、少しの間ためたままにできます。<b>くるりターン</b>：自分の色を泳いでいるとき、進む向きと逆へたおしてジャンプすると、くるっと回って飛び出します（出だしは受けるダメージが半分）。<br>
     <b>ねらい補助</b>：スマホで「うつ」を押している間だけ、照準のすぐ近く（6°以内）の相手へ少しだけ向きが寄ります。
   </div>
 </div></div>
@@ -281,6 +357,17 @@ table.st td.n { text-align: right; font-variant-numeric: tabular-nums; }
 </div>
 
 <div id="result" class="screen hidden"><div class="res" id="resBox"></div></div>
+<div id="btnEdit" class="hidden">
+  <div class="beBar">
+    <b>ボタンの配置</b>
+    <label>えらんだボタンの大きさ<input type="range" id="beSize" min="0.6" max="1.7" step="0.05"></label>
+    <label>移動スティック<input type="range" id="beStick" min="0.7" max="1.5" step="0.05"></label>
+    <button class="btn" id="beReset">もとにもどす</button>
+    <button class="btn main" id="beDone">完了</button>
+  </div>
+  <div class="beHint">ボタンをドラッグして動かせます</div>
+  <div id="beArea"></div>
+</div>
 <div id="load">ステージを準備しています…</div>
 </div>
 <script type="importmap">
@@ -398,7 +485,7 @@ document.addEventListener('pointerlockchange', () => { if (!document.pointerLock
   });
   layer.addEventListener('pointermove', e => {
     if (IN.stick && IN.stick.id === e.pointerId) {
-      const p = toStage(e.clientX, e.clientY), R = 52;
+      const p = toStage(e.clientX, e.clientY), R = 52 * (SET.stickK || 1);
       let dx = p.x - IN.stick.x, dy = p.y - IN.stick.y; const l = Math.hypot(dx, dy);
       if (l > R) { dx *= R / l; dy *= R / l; }
       IN.stickX = dx / R; IN.stickY = -dy / R;
@@ -473,6 +560,7 @@ const AU = (() => {
     step(swim) { if (swim) noise(.11, 'bandpass', 520 + Math.random() * 200, 300, 2.5, .13); else noise(.035, 'highpass', 2600 + Math.random() * 600, 1800, 1, .05); },
     land() { noise(.09, 'lowpass', 700, 180, 1, .2); tone(140, .08, .08, 'sine', 0, 70); },
     pick() { tone(880, .08, .16, 'triangle'); tone(1320, .14, .16, 'triangle', .07); },
+    roll() { noise(.26, 'bandpass', 700, 2600, 2, .32); tone(480, .2, .12, 'sine', 0, 980); },
     boom(big = 1, g = 1) { noise(.5 * big, 'lowpass', 1400, 120, 1, .7 * g); tone(90, .4 * big, .5 * g, 'sine', 0, 40); },
     sj() { tone(300, .7, .2, 'sawtooth', 0, 1200); noise(.8, 'bandpass', 500, 2500, 1.5, .25); },
     dive() { noise(.25, 'bandpass', 500, 1200, 3, .3); tone(300, .15, .1, 'sine', 0, 600); },
@@ -547,108 +635,108 @@ const SPECIALS = {
 const W = (id, name, cls, sub, sp, p) => Object.assign({ id, name, cls, sub, sp, spd: 1 }, p);
 const WEAPONS = [
   // ---- ガン（14） ----
-  W('mist', '霧ふきスプレー', 'gun', 'fountain', 'rain', { rate: 14, dmg: 20, range: 7, spread: 13, ink: .55, pr: .85, v: 24, spd: 1.08, model: 'can', desc: '射程は短いが、広く速くぬれる。' }),
-  W('short', 'ショートガン', 'gun', 'bomb', 'slam', { rate: 12, dmg: 26, range: 9, spread: 10, ink: .6, pr: .62, v: 26, spd: 1.06, desc: '連射が速く、近くの相手に強い。' }),
-  W('basic', 'ベーシックガン', 'gun', 'bomb', 'beam', { rate: 8, dmg: 35, range: 13, spread: 6, ink: .9, pr: .7, v: 30, desc: '何でもこなせる標準のガン。' }),
-  W('pro', 'プロガン', 'gun', 'mine', 'missile', { rate: 7.5, dmg: 35, range: 14.5, spread: 2.5, ink: 1.0, pr: .62, v: 32, desc: 'ぶれが小さく、ねらった所にまっすぐ飛ぶ。' }),
-  W('rapid', 'ラピッドガン', 'gun', 'slide', 'armor', { rate: 10, dmg: 30, range: 11, spread: 8, ink: .75, pr: .65, v: 28, desc: '速い連射で押しこむ。' }),
-  W('heavy', 'ヘビーガン', 'gun', 'sticky', 'barrier', { rate: 5, dmg: 52, range: 15, spread: 4, ink: 1.6, pr: .82, v: 30, spd: .95, desc: '重い一発。2発で相手をたおせる。' }),
-  W('long', 'ロングガン', 'gun', 'shield', 'airdrop', { rate: 4.2, dmg: 40, range: 21, spread: 2, ink: 1.9, pr: .75, v: 36, spd: .94, desc: '遠くまで届くが、連射はおそい。' }),
-  W('burst', 'バーストガン', 'gun', 'dart', 'rain', { rate: 3, burst: 3, dmg: 33, range: 15, spread: 2.5, ink: 2.6, pr: .7, v: 34, desc: '3発ずつまとめて撃つ。' }),
-  W('duo', '2連ガン', 'gun', 'balloon', 'turret', { rate: 3.6, burst: 2, dmg: 38, range: 17, spread: 2, ink: 2.2, pr: .7, v: 35, desc: '2発ずつ撃つ、射程の長い連発。' }),
-  W('motor', 'モーターガン', 'gun', 'popper', 'dash', { rate: 13, ramp: .9, dmg: 29, range: 13, spread: 7, ink: .8, pr: .66, v: 30, desc: '撃ち続けるほど連射が速くなる。' }),
-  W('airbrush', 'エアブラシ', 'gun', 'boomer', 'cloak', { rate: 18, dmg: 13, range: 16, spread: 1.5, ink: .35, pr: .42, v: 40, trail: .5, model: 'airbrush', desc: '細い線を遠くまで。ペンキがとても長持ち。' }),
-  W('squirt', '水鉄砲', 'gun', 'spring', 'fireworks', { rate: 6, dmg: 30, range: 12, spread: 5, ink: .55, pr: .7, v: 28, bounce: 1, desc: '弾が一度はねてから広がる。' }),
-  W('ext', '消火器', 'gun', 'fog', 'ring', { rate: 16, cone: 2, dmg: 11, range: 6, spread: 26, ink: .5, pr: .7, v: 18, knock: .6, model: 'ext', desc: '近くを霧のようにぬりつぶし、相手を少し押し返す。' }),
-  W('jumper', 'ジャンプガン', 'gun', 'windup', 'tornado', { rate: 7, dmg: 34, range: 13, spread: 7, ink: .9, pr: .66, v: 31, air: true, desc: 'ジャンプ中はぶれがなくなり、ダメージも上がる。' }),
+  W('mist', 'ハチドリ', 'gun', 'fountain', 'rain', { look: [0x2fbf71, 0xb04aff], rate: 14, dmg: 20, range: 7, spread: 13, ink: .55, pr: .85, v: 24, spd: 1.08, model: 'can', desc: '射程は短いが、広く速くぬれる。' }),
+  W('short', 'スズメ', 'gun', 'bomb', 'slam', { look: [0x9a6a44, 0xf2e2c4], rate: 12, dmg: 26, range: 9, spread: 10, ink: .6, pr: .62, v: 26, spd: 1.06, desc: '連射が速く、近くの相手に強い。' }),
+  W('basic', 'ツバメ', 'gun', 'bomb', 'beam', { look: [0x24335a, 0xf4f4f4], rate: 8, dmg: 35, range: 13, spread: 6, ink: .9, pr: .7, v: 30, desc: '何でもこなせる標準のガン。' }),
+  W('pro', 'ハヤブサ', 'gun', 'mine', 'missile', { look: [0x6a7280, 0xffc93a], rate: 7.5, dmg: 35, range: 14.5, spread: 2.5, ink: 1.0, pr: .62, v: 32, desc: 'ぶれが小さく、ねらった所にまっすぐ飛ぶ。' }),
+  W('rapid', 'ムクドリ', 'gun', 'slide', 'armor', { look: [0x2e2a33, 0xff8a3a], rate: 10, dmg: 30, range: 11, spread: 8, ink: .75, pr: .65, v: 28, desc: '速い連射で押しこむ。' }),
+  W('heavy', 'オオワシ', 'gun', 'sticky', 'barrier', { look: [0x6b4a2e, 0xf6f2e8], rate: 5, dmg: 52, range: 15, spread: 4, ink: 1.6, pr: .82, v: 30, spd: .95, desc: '重い一発。2発で相手をたおせる。' }),
+  W('long', 'コンドル', 'gun', 'shield', 'airdrop', { look: [0x1e1e24, 0xe8e8e8], rate: 4.2, dmg: 40, range: 21, spread: 2, ink: 1.9, pr: .75, v: 36, spd: .94, desc: '遠くまで届くが、連射はおそい。' }),
+  W('burst', 'キツツキ', 'gun', 'dart', 'rain', { look: [0x222226, 0xe8303a], rate: 3, burst: 3, dmg: 33, range: 15, spread: 2.5, ink: 2.6, pr: .7, v: 34, desc: '3発ずつまとめて撃つ。' }),
+  W('duo', 'フクロウ', 'gun', 'balloon', 'turret', { look: [0x8a6a4a, 0xffd23f], rate: 3.6, burst: 2, dmg: 38, range: 17, spread: 2, ink: 2.2, pr: .7, v: 35, desc: '2発ずつ撃つ、射程の長い連発。' }),
+  W('motor', 'ヒバリ', 'gun', 'popper', 'dash', { look: [0xc8a878, 0x8a4a2a], rate: 13, ramp: .9, dmg: 29, range: 13, spread: 7, ink: .8, pr: .66, v: 30, desc: '撃ち続けるほど連射が速くなる。' }),
+  W('airbrush', 'シラサギ', 'gun', 'boomer', 'cloak', { look: [0xf2f2ee, 0xf0b020], rate: 18, dmg: 13, range: 16, spread: 1.5, ink: .35, pr: .42, v: 40, trail: .5, model: 'airbrush', desc: '細い線を遠くまで。ペンキがとても長持ち。' }),
+  W('squirt', 'カワセミ', 'gun', 'spring', 'fireworks', { look: [0x1fa0c8, 0xff8a3a], rate: 6, dmg: 30, range: 12, spread: 5, ink: .55, pr: .7, v: 28, bounce: 1, desc: '弾が一度はねてから広がる。' }),
+  W('ext', 'ペリカン', 'gun', 'fog', 'ring', { look: [0xd83a32, 0xffb43a], rate: 16, cone: 2, dmg: 11, range: 6, spread: 26, ink: .5, pr: .7, v: 18, knock: .6, model: 'ext', desc: '近くを霧のようにぬりつぶし、相手を少し押し返す。' }),
+  W('jumper', 'カモメ', 'gun', 'windup', 'tornado', { look: [0xdfe4ea, 0xffc12e], rate: 7, dmg: 34, range: 13, spread: 7, ink: .9, pr: .66, v: 31, air: true, desc: 'ジャンプ中はぶれがなくなり、ダメージも上がる。' }),
   // ---- キャノン（8） ----
-  W('cannon', 'ボンバーキャノン', 'cannon', 'shield', 'slam', { rate: 1.1, dmg: 125, sdmg: 70, er: 2.3, range: 11, ink: 9, pr: 1.6, v: 20, spd: .95, desc: '直撃で一撃。破裂でまわりもまきこむ。' }),
-  W('minic', 'ミニキャノン', 'cannon', 'mine', 'armor', { rate: 1.7, dmg: 100, sdmg: 50, er: 1.8, range: 9, ink: 7, pr: 1.3, v: 21, desc: '小さくて速いキャノン。' }),
-  W('longc', 'ロングキャノン', 'cannon', 'sticky', 'missile', { rate: .8, dmg: 125, sdmg: 60, er: 2.5, range: 15, ink: 11, pr: 1.6, v: 22, spd: .92, desc: '遠くで破裂する長いキャノン。' }),
-  W('rapidc', 'ラピッドキャノン', 'cannon', 'slide', 'rain', { rate: 1.6, dmg: 85, sdmg: 45, er: 2.0, range: 13, ink: 8, pr: 1.3, v: 24, desc: '破裂はひかえめだが、テンポよく撃てる。' }),
-  W('pompom', 'ポンポン砲', 'cannon', 'balloon', 'tower', { rate: 1.2, dmg: 100, sdmg: 70, er: 2.2, range: 12, ink: 9, pr: 1.6, v: 15, pom: true, desc: '山なりの弾が一度はねてから破裂する。' }),
-  W('mega', 'メガキャノン', 'cannon', 'fog', 'barrier', { rate: .55, dmg: 150, sdmg: 100, er: 3.3, range: 10, ink: 16, pr: 2.4, v: 16, spd: .86, desc: '大きな弾と大きな破裂。とても重い。' }),
-  W('tri', 'トリプル砲', 'cannon', 'dart', 'fireworks', { rate: .9, dmg: 80, sdmg: 45, er: 1.7, range: 11, ink: 12, pr: 1.2, v: 21, triple: true, desc: '3発を横に広げて撃つ。' }),
-  W('cluster', 'クラスター砲', 'cannon', 'popper', 'airdrop', { rate: .9, dmg: 90, sdmg: 40, er: 1.5, range: 14, ink: 12, pr: 1.0, v: 22, cluster: 4, desc: '飛んだ先で4つの小さな爆弾に分かれる。' }),
+  W('cannon', 'メロン', 'cannon', 'shield', 'slam', { look: [0x3a4a3a, 0x8ad06a], rate: 1.1, dmg: 125, sdmg: 70, er: 2.3, range: 11, ink: 9, pr: 1.6, v: 20, spd: .95, desc: '直撃で一撃。破裂でまわりもまきこむ。' }),
+  W('minic', 'ミカン', 'cannon', 'mine', 'armor', { look: [0x4a4a52, 0xff9a2a], rate: 1.7, dmg: 100, sdmg: 50, er: 1.8, range: 9, ink: 7, pr: 1.3, v: 21, desc: '小さくて速いキャノン。' }),
+  W('longc', 'ヘチマ', 'cannon', 'sticky', 'missile', { look: [0x3a5a2a, 0xa8d46a], rate: .8, dmg: 125, sdmg: 60, er: 2.5, range: 15, ink: 11, pr: 1.6, v: 22, spd: .92, desc: '遠くで破裂する長いキャノン。' }),
+  W('rapidc', 'サクランボ', 'cannon', 'slide', 'rain', { look: [0x3a3a44, 0xe0263a], rate: 1.6, dmg: 85, sdmg: 45, er: 2.0, range: 13, ink: 8, pr: 1.3, v: 24, desc: '破裂はひかえめだが、テンポよく撃てる。' }),
+  W('pompom', 'ココナッツ', 'cannon', 'balloon', 'tower', { look: [0x5a4030, 0xf4ecd8], rate: 1.2, dmg: 100, sdmg: 70, er: 2.2, range: 12, ink: 9, pr: 1.6, v: 15, pom: true, desc: '山なりの弾が一度はねてから破裂する。' }),
+  W('mega', 'カボチャ', 'cannon', 'fog', 'barrier', { look: [0x3a3040, 0xff8a1a], rate: .55, dmg: 150, sdmg: 100, er: 3.3, range: 10, ink: 16, pr: 2.4, v: 16, spd: .86, desc: '大きな弾と大きな破裂。とても重い。' }),
+  W('tri', 'サンショクダンゴ', 'cannon', 'dart', 'fireworks', { look: [0x8a6040, 0xffb0c8], rate: .9, dmg: 80, sdmg: 45, er: 1.7, range: 11, ink: 12, pr: 1.2, v: 21, triple: true, desc: '3発を横に広げて撃つ。' }),
+  W('cluster', 'ザクロ', 'cannon', 'popper', 'airdrop', { look: [0x3a2a30, 0xc8203a], rate: .9, dmg: 90, sdmg: 40, er: 1.5, range: 14, ink: 12, pr: 1.0, v: 22, cluster: 4, desc: '飛んだ先で4つの小さな爆弾に分かれる。' }),
   // ---- ローラー（8） ----
-  W('roller', 'ペイントローラー', 'roller', 'sticky', 'barrier', { width: 2.2, rollSpd: 1.05, rollInk: 3.2, flick: 8, fdmg: 120, frange: 9, fspread: 34, frate: 1.4, ink: 9, desc: '道を太くぬり、近づいた相手をおしつぶす。' }),
-  W('wide', 'ワイドローラー', 'roller', 'shield', 'slam', { width: 3.2, rollSpd: .9, rollInk: 4, flick: 10, fdmg: 110, frange: 8, fspread: 50, frate: 1.1, ink: 11, spd: .92, desc: 'とても太い道をぬれる大型ローラー。' }),
-  W('mini', 'ミニローラー', 'roller', 'bomb', 'armor', { width: 1.6, rollSpd: 1.25, rollInk: 2.4, flick: 6, fdmg: 100, frange: 7, fspread: 28, frate: 2, ink: 6, spd: 1.08, desc: '軽くて速い。すばやく走ってぬる。' }),
-  W('vert', 'たて振りローラー', 'roller', 'slide', 'missile', { width: 2, rollSpd: 1, rollInk: 3.4, flick: 7, fdmg: 125, frange: 14, fspread: 6, vflick: true, frate: 1.2, ink: 10, desc: 'たてに振ると、遠くまでまっすぐ届く。' }),
-  W('weight', 'おもりローラー', 'roller', 'mine', 'ring', { width: 2.8, rollSpd: .8, rollInk: 3.6, flick: 9, fdmg: 150, frange: 8, fspread: 40, frate: .9, ink: 12, spd: .88, rollDmg: 200, desc: '重くておそいが、振りもころがしも強力。' }),
-  W('turbo', 'ターボローラー', 'roller', 'spring', 'dash', { width: 1.9, rollSpd: 1.0, turbo: true, rollInk: 3, flick: 7, fdmg: 110, frange: 8, fspread: 32, frate: 1.5, ink: 8, desc: 'ころがし続けると、どんどん速くなる。' }),
-  W('hopper', 'とびはねローラー', 'roller', 'balloon', 'tornado', { width: 2, rollSpd: 1, rollInk: 3.2, flick: 8, fdmg: 115, frange: 9, fspread: 30, frate: 1.4, ink: 9, airFlick: true, desc: 'ジャンプ中に振ると、たて振りで遠くへ届く。' }),
-  W('sponge', 'ふわふわローラー', 'roller', 'fountain', 'tower', { width: 2.4, rollSpd: 1.1, rollInk: 1.8, flick: 8, fdmg: 80, frange: 8, fspread: 38, frate: 1.8, ink: 5, rollDmg: 80, desc: 'ペンキが長持ちする軽いローラー。力は弱め。' }),
+  W('roller', 'アルマジロ', 'roller', 'sticky', 'barrier', { look: [0x8a7a68, 0xc8b8a0], width: 2.2, rollSpd: 1.05, rollInk: 3.2, flick: 8, fdmg: 120, frange: 9, fspread: 34, frate: 1.4, ink: 9, desc: '道を太くぬり、近づいた相手をおしつぶす。' }),
+  W('wide', 'カバ', 'roller', 'shield', 'slam', { look: [0x7a6a8a, 0xf0a0b0], width: 3.2, rollSpd: .9, rollInk: 4, flick: 10, fdmg: 110, frange: 8, fspread: 50, frate: 1.1, ink: 11, spd: .92, desc: 'とても太い道をぬれる大型ローラー。' }),
+  W('mini', 'ダンゴムシ', 'roller', 'bomb', 'armor', { look: [0x4a4a54, 0x8a8a96], width: 1.6, rollSpd: 1.25, rollInk: 2.4, flick: 6, fdmg: 100, frange: 7, fspread: 28, frate: 2, ink: 6, spd: 1.08, desc: '軽くて速い。すばやく走ってぬる。' }),
+  W('vert', 'キリン', 'roller', 'slide', 'missile', { look: [0xf2c040, 0x8a5a2a], width: 2, rollSpd: 1, rollInk: 3.4, flick: 7, fdmg: 125, frange: 14, fspread: 6, vflick: true, frate: 1.2, ink: 10, desc: 'たてに振ると、遠くまでまっすぐ届く。' }),
+  W('weight', 'サイ', 'roller', 'mine', 'ring', { look: [0x8a8e96, 0xe8e4dc], width: 2.8, rollSpd: .8, rollInk: 3.6, flick: 9, fdmg: 150, frange: 8, fspread: 40, frate: .9, ink: 12, spd: .88, rollDmg: 200, desc: '重くておそいが、振りもころがしも強力。' }),
+  W('turbo', 'チーター', 'roller', 'spring', 'dash', { look: [0xf0b040, 0x222222], width: 1.9, rollSpd: 1.0, turbo: true, rollInk: 3, flick: 7, fdmg: 110, frange: 8, fspread: 32, frate: 1.5, ink: 8, desc: 'ころがし続けると、どんどん速くなる。' }),
+  W('hopper', 'カンガルー', 'roller', 'balloon', 'tornado', { look: [0xb07848, 0xf2dcc0], width: 2, rollSpd: 1, rollInk: 3.2, flick: 8, fdmg: 115, frange: 9, fspread: 30, frate: 1.4, ink: 9, airFlick: true, desc: 'ジャンプ中に振ると、たて振りで遠くへ届く。' }),
+  W('sponge', 'ヒツジ', 'roller', 'fountain', 'tower', { look: [0xf4f2ea, 0x3a3a3a], width: 2.4, rollSpd: 1.1, rollInk: 1.8, flick: 8, fdmg: 80, frange: 8, fspread: 38, frate: 1.8, ink: 5, rollDmg: 80, desc: 'ペンキが長持ちする軽いローラー。力は弱め。' }),
   // ---- ハケ・モップ（7） ----
-  W('brush', 'ハケ', 'brush', 'mine', 'slam', { width: 1.25, rollSpd: 1.55, rollInk: 1.6, flick: 4, fdmg: 34, frange: 5.5, fspread: 30, frate: 5, ink: 2.2, spd: 1.08, desc: '走りながらぬれる。小刻みに振って近くの相手に。' }),
-  W('bigbrush', 'ビッグハケ', 'brush', 'fountain', 'beam', { width: 1.8, rollSpd: 1.35, rollInk: 2.2, flick: 5, fdmg: 40, frange: 6.5, fspread: 34, frate: 3.4, ink: 3, desc: '少し太いハケ。ふり幅も広い。' }),
-  W('mop', 'モップ', 'brush', 'slide', 'ring', { width: 2.2, rollSpd: 1.2, rollInk: 2.4, flick: 7, fdmg: 45, frange: 7, fspread: 8, frate: 2.2, ink: 4, wave: true, model: 'mop', desc: '振ると床をはうペンキの波。広くぬれる。' }),
-  W('deck', 'デッキブラシ', 'brush', 'dart', 'dash', { width: 1.4, rollSpd: 1.45, rollInk: 1.8, flick: 4, fdmg: 30, frange: 5.5, fspread: 26, frate: 6.5, ink: 2, model: 'deck', desc: 'とても速く振れる。近くの相手を連打で。' }),
-  W('broom', 'ほうき', 'brush', 'popper', 'fireworks', { width: 1.6, rollSpd: 1.3, rollInk: 2, flick: 9, fdmg: 26, frange: 8, fspread: 44, frate: 2.6, ink: 3.5, model: 'broom', desc: 'たくさんの小さなしぶきを広くはき出す。' }),
-  W('fude', '書道ふで', 'brush', 'boomer', 'cloak', { width: .9, rollSpd: 1.4, rollInk: 1, flick: 3, fdmg: 60, frange: 10, fspread: 4, frate: 2.5, ink: 3, vflick: true, model: 'fude', desc: '細くて長い線。たてに振ると遠くまで。' }),
-  W('tawashi', 'たわしハケ', 'brush', 'windup', 'turret', { width: .9, rollSpd: 1.75, rollInk: 1.3, flick: 3, fdmg: 28, frange: 4.5, fspread: 30, frate: 7, ink: 1.6, spd: 1.12, desc: 'いちばん速く走れる、小さなハケ。' }),
+  W('brush', 'イタチ', 'brush', 'mine', 'slam', { look: [0x9a6a3a, 0xf2e6d0], width: 1.25, rollSpd: 1.55, rollInk: 1.6, flick: 4, fdmg: 34, frange: 5.5, fspread: 30, frate: 5, ink: 2.2, spd: 1.08, desc: '走りながらぬれる。小刻みに振って近くの相手に。' }),
+  W('bigbrush', 'ヤギ', 'brush', 'fountain', 'beam', { look: [0xece6da, 0x8a6a4a], width: 1.8, rollSpd: 1.35, rollInk: 2.2, flick: 5, fdmg: 40, frange: 6.5, fspread: 34, frate: 3.4, ink: 3, desc: '少し太いハケ。ふり幅も広い。' }),
+  W('mop', 'ウマ', 'brush', 'slide', 'ring', { look: [0x7a4a2a, 0xe8d8b8], width: 2.2, rollSpd: 1.2, rollInk: 2.4, flick: 7, fdmg: 45, frange: 7, fspread: 8, frate: 2.2, ink: 4, wave: true, model: 'mop', desc: '振ると床をはうペンキの波。広くぬれる。' }),
+  W('deck', 'イノシシ', 'brush', 'dart', 'dash', { look: [0x5a4232, 0x2a2420], width: 1.4, rollSpd: 1.45, rollInk: 1.8, flick: 4, fdmg: 30, frange: 5.5, fspread: 26, frate: 6.5, ink: 2, model: 'deck', desc: 'とても速く振れる。近くの相手を連打で。' }),
+  W('broom', 'タヌキ', 'brush', 'popper', 'fireworks', { look: [0x8a6a4a, 0x2a2420], width: 1.6, rollSpd: 1.3, rollInk: 2, flick: 9, fdmg: 26, frange: 8, fspread: 44, frate: 2.6, ink: 3.5, model: 'broom', desc: 'たくさんの小さなしぶきを広くはき出す。' }),
+  W('fude', 'リス', 'brush', 'boomer', 'cloak', { look: [0x5aa04a, 0xc87a3a], width: .9, rollSpd: 1.4, rollInk: 1, flick: 3, fdmg: 60, frange: 10, fspread: 4, frate: 2.5, ink: 3, vflick: true, model: 'fude', desc: '細くて長い線。たてに振ると遠くまで。' }),
+  W('tawashi', 'ハリネズミ', 'brush', 'windup', 'turret', { look: [0x8a6a4a, 0xd8c8b0], width: .9, rollSpd: 1.75, rollInk: 1.3, flick: 3, fdmg: 28, frange: 4.5, fspread: 30, frate: 7, ink: 1.6, spd: 1.12, desc: 'いちばん速く走れる、小さなハケ。' }),
   // ---- スナイパー（8） ----
-  W('sniper', 'スナイパー', 'sniper', 'mine', 'beam', { charge: 1.0, dmg: 160, mindmg: 40, range: 30, ink: 18, pr: .55, spd: .92, desc: 'ためきると遠くの相手を一撃。' }),
-  W('scope', 'スコープスナイパー', 'sniper', 'sticky', 'missile', { charge: 1.1, dmg: 160, mindmg: 40, range: 34, ink: 18, pr: .5, scope: true, spd: .9, desc: 'ためている間は遠くがよく見える。' }),
-  W('quick', 'クイックスナイパー', 'sniper', 'bomb', 'armor', { charge: .5, dmg: 85, mindmg: 30, range: 22, ink: 8, pr: .5, desc: 'すぐたまるが、2発でたおす。' }),
-  W('ranger', 'ロングレンジャー', 'sniper', 'shield', 'rain', { charge: 1.6, dmg: 180, mindmg: 40, range: 42, ink: 24, pr: .6, spd: .85, desc: 'ステージの奥まで届く。ためるのはおそい。' }),
-  W('lance', '高圧ランス', 'sniper', 'dart', 'turret', { charge: 1.2, dmg: 150, mindmg: 40, range: 32, ink: 20, pr: .5, pierce: true, spd: .9, model: 'lance', desc: '水流が相手も盾もつらぬいて、後ろまで届く。' }),
-  W('keep', 'キープスナイパー', 'sniper', 'spring', 'cloak', { charge: 1.0, dmg: 160, mindmg: 40, range: 28, ink: 18, pr: .55, keep: true, spd: .92, desc: 'ためきったまま、もぐって少し待てる。' }),
-  W('semi', 'セミオートスナイパー', 'sniper', 'balloon', 'dash', { charge: .35, dmg: 70, mindmg: 35, range: 24, ink: 7, pr: .45, spd: 1.0, desc: 'すぐたまる。クリックの速さで撃てる。' }),
-  W('widesn', 'ワイドスナイパー', 'sniper', 'fog', 'tower', { charge: 1.0, dmg: 120, mindmg: 35, range: 26, ink: 18, pr: 1.0, wide: true, spd: .92, desc: '太い線でぬれるが、一撃にはならない。' }),
+  W('sniper', 'シリウス', 'sniper', 'mine', 'beam', { look: [0xe8eef6, 0x3a7ad8], charge: 1.0, dmg: 160, mindmg: 40, range: 30, ink: 18, pr: .55, spd: .92, desc: 'ためきると遠くの相手を一撃。' }),
+  W('scope', 'ポラリス', 'sniper', 'sticky', 'missile', { look: [0x23305a, 0xffcf3a], charge: 1.1, dmg: 160, mindmg: 40, range: 34, ink: 18, pr: .5, scope: true, spd: .9, desc: 'ためている間は遠くがよく見える。' }),
+  W('quick', 'コメット', 'sniper', 'bomb', 'armor', { look: [0x3a3a48, 0xff8a2a], charge: .5, dmg: 85, mindmg: 30, range: 22, ink: 8, pr: .5, desc: 'すぐたまるが、2発でたおす。' }),
+  W('ranger', 'アンドロメダ', 'sniper', 'shield', 'rain', { look: [0x4a3a6a, 0xd8b8ff], charge: 1.6, dmg: 180, mindmg: 40, range: 42, ink: 24, pr: .6, spd: .85, desc: 'ステージの奥まで届く。ためるのはおそい。' }),
+  W('lance', 'メテオ', 'sniper', 'dart', 'turret', { look: [0x3a2a2a, 0xff5a2a], charge: 1.2, dmg: 150, mindmg: 40, range: 32, ink: 20, pr: .5, pierce: true, spd: .9, model: 'lance', desc: '水流が相手も盾もつらぬいて、後ろまで届く。' }),
+  W('keep', 'ルナ', 'sniper', 'spring', 'cloak', { look: [0xc8ccd6, 0xfff2b0], charge: 1.0, dmg: 160, mindmg: 40, range: 28, ink: 18, pr: .55, keep: true, spd: .92, desc: 'ためきったまま、もぐって少し待てる。' }),
+  W('semi', 'パルサー', 'sniper', 'balloon', 'dash', { look: [0x2a2a3a, 0x3affd8], charge: .35, dmg: 70, mindmg: 35, range: 24, ink: 7, pr: .45, spd: 1.0, desc: 'すぐたまる。クリックの速さで撃てる。' }),
+  W('widesn', 'オーロラ', 'sniper', 'fog', 'tower', { look: [0x1e3a4a, 0x5affb0], charge: 1.0, dmg: 120, mindmg: 35, range: 26, ink: 18, pr: 1.0, wide: true, spd: .92, desc: '太い線でぬれるが、一撃にはならない。' }),
   // ---- バケツ（8） ----
-  W('bucket', 'バケツ', 'bucket', 'bomb', 'barrier', { rate: 1.3, dmg: 70, range: 11, ink: 7, pr: 1.15, desc: '大きなペンキのかたまりを山なりに投げる。' }),
-  W('triple', 'トリプルバケツ', 'bucket', 'fountain', 'beam', { rate: 1.0, dmg: 55, range: 10, ink: 8, pr: 1.0, triple: true, desc: '3つに分かれて広くかかる。' }),
-  W('longb', 'ロングバケツ', 'bucket', 'mine', 'slam', { rate: .9, dmg: 76, range: 15, ink: 9, pr: 1.2, high: true, desc: '高い山なりで遠くの段の上にも。' }),
-  W('watering', 'じょうろ', 'bucket', 'spring', 'rain', { rate: 1.8, dmg: 32, range: 9, ink: 6, pr: .75, fan: 7, model: 'watering', desc: '細かいしぶきを扇のようにまく。' }),
-  W('ladle', 'ひしゃく', 'bucket', 'dart', 'dash', { rate: 2.6, dmg: 45, range: 8, ink: 4, pr: .85, small: true, model: 'ladle', desc: '小さくすくって、すばやく何度もかける。' }),
-  W('dokan', 'ドカンバケツ', 'bucket', 'sticky', 'airdrop', { rate: .8, dmg: 60, sdmg: 60, er: 2.2, range: 10, ink: 10, pr: 1.4, explode: true, desc: '落ちた所で破裂するペンキ。' }),
-  W('swirl', 'うずまきバケツ', 'bucket', 'popper', 'tornado', { rate: 1.0, dmg: 62, range: 11, ink: 8, pr: 1.0, swirl: true, desc: '落ちた所に輪のようにペンキが広がる。' }),
-  W('rollb', 'ころがりバケツ', 'bucket', 'slide', 'ring', { rate: 1.1, dmg: 60, range: 9, ink: 8, pr: 1.0, roll: true, desc: '落ちたペンキが前へころがって道をぬる。' }),
+  W('bucket', 'ユウダチ', 'bucket', 'bomb', 'barrier', { look: [0x9aa0aa, 0x3a6ac8], rate: 1.3, dmg: 70, range: 11, ink: 7, pr: 1.15, desc: '大きなペンキのかたまりを山なりに投げる。' }),
+  W('triple', 'アラレ', 'bucket', 'fountain', 'beam', { look: [0xd8e4ee, 0x6a8aa8], rate: 1.0, dmg: 55, range: 10, ink: 8, pr: 1.0, triple: true, desc: '3つに分かれて広くかかる。' }),
+  W('longb', 'ニジ', 'bucket', 'mine', 'slam', { look: [0xf4f4f4, 0xff5a5a], rate: .9, dmg: 76, range: 15, ink: 9, pr: 1.2, high: true, desc: '高い山なりで遠くの段の上にも。' }),
+  W('watering', 'コサメ', 'bucket', 'spring', 'rain', { look: [0x6aa8d8, 0xffffff], rate: 1.8, dmg: 32, range: 9, ink: 6, pr: .75, fan: 7, model: 'watering', desc: '細かいしぶきを扇のようにまく。' }),
+  W('ladle', 'ツユ', 'bucket', 'dart', 'dash', { look: [0x8a6a44, 0x9ad8f0], rate: 2.6, dmg: 45, range: 8, ink: 4, pr: .85, small: true, model: 'ladle', desc: '小さくすくって、すばやく何度もかける。' }),
+  W('dokan', 'カミナリ', 'bucket', 'sticky', 'airdrop', { look: [0xffd23a, 0x2a2a30], rate: .8, dmg: 60, sdmg: 60, er: 2.2, range: 10, ink: 10, pr: 1.4, explode: true, desc: '落ちた所で破裂するペンキ。' }),
+  W('swirl', 'ウズシオ', 'bucket', 'popper', 'tornado', { look: [0x2a6ab0, 0xd8f0ff], rate: 1.0, dmg: 62, range: 11, ink: 8, pr: 1.0, swirl: true, desc: '落ちた所に輪のようにペンキが広がる。' }),
+  W('rollb', 'ナダレ', 'bucket', 'slide', 'ring', { look: [0xe8eef4, 0x8ab0d0], rate: 1.1, dmg: 60, range: 9, ink: 8, pr: 1.0, roll: true, desc: '落ちたペンキが前へころがって道をぬる。' }),
   // ---- ガトリング（7） ----
-  W('gatling', 'ガトリング', 'gatling', 'slide', 'missile', { spin: 1.0, dur: 2.2, rate: 14, dmg: 30, range: 17, spread: 4, ink: 18, pr: .65, v: 34, spd: .92, desc: 'ためて撃つ弾の雨。射程が長い。' }),
-  W('minig', 'ミニガトリング', 'gatling', 'bomb', 'armor', { spin: .5, dur: 1.6, rate: 15, dmg: 28, range: 13, spread: 5, ink: 14, pr: .62, v: 32, desc: 'すぐ回る小型。動きやすい。' }),
-  W('heavyg', 'ヘビーガトリング', 'gatling', 'shield', 'barrier', { spin: 1.8, dur: 3.2, rate: 15, dmg: 32, range: 21, spread: 3.5, ink: 24, pr: .7, v: 36, spd: .85, desc: 'ためは長いが、長く遠くまで撃ち続ける。' }),
-  W('reel', 'ホースリール', 'gatling', 'fog', 'tower', { spin: 1.1, dur: 2.4, rate: 13, dmg: 30, range: 17, spread: 4.5, ink: 18, pr: .66, v: 33, spd: .92, keep: true, model: 'reel', desc: 'ためたまま、もぐって少し待てる。' }),
-  W('trig', '3連ガトリング', 'gatling', 'balloon', 'fireworks', { spin: 1.2, dur: 2.0, rate: 10, dmg: 26, range: 14, spread: 3, ink: 22, pr: .6, v: 32, spd: .9, triple: true, desc: '3本の弾をいっしょに広げて撃つ。' }),
-  W('snipeg', 'スナイプガトリング', 'gatling', 'dart', 'turret', { spin: 2.0, dur: 2.4, rate: 10, dmg: 38, range: 26, spread: 1.2, ink: 22, pr: .6, v: 42, spd: .85, desc: 'とても遠くまで、まっすぐ撃てる。' }),
-  W('bounceg', 'バウンドガトリング', 'gatling', 'popper', 'dash', { spin: 1.0, dur: 2.0, rate: 14, dmg: 28, range: 15, spread: 5, ink: 18, pr: .64, v: 32, bounce: 1, desc: '弾が一度はねる。物かげの近くにもかかる。' }),
+  W('gatling', 'ハヤテ', 'gatling', 'slide', 'missile', { look: [0x3a4250, 0x9ad8f0], spin: 1.0, dur: 2.2, rate: 14, dmg: 30, range: 17, spread: 4, ink: 18, pr: .65, v: 34, spd: .92, desc: 'ためて撃つ弾の雨。射程が長い。' }),
+  W('minig', 'ソヨカゼ', 'gatling', 'bomb', 'armor', { look: [0x8ad0a0, 0xffffff], spin: .5, dur: 1.6, rate: 15, dmg: 28, range: 13, spread: 5, ink: 14, pr: .62, v: 32, desc: 'すぐ回る小型。動きやすい。' }),
+  W('heavyg', 'タイフーン', 'gatling', 'shield', 'barrier', { look: [0x2a2e38, 0xff4a4a], spin: 1.8, dur: 3.2, rate: 15, dmg: 32, range: 21, spread: 3.5, ink: 24, pr: .7, v: 36, spd: .85, desc: 'ためは長いが、長く遠くまで撃ち続ける。' }),
+  W('reel', 'コガラシ', 'gatling', 'fog', 'tower', { look: [0x8a5a3a, 0xf2a03a], spin: 1.1, dur: 2.4, rate: 13, dmg: 30, range: 17, spread: 4.5, ink: 18, pr: .66, v: 33, spd: .92, keep: true, model: 'reel', desc: 'ためたまま、もぐって少し待てる。' }),
+  W('trig', 'ツムジ', 'gatling', 'balloon', 'fireworks', { look: [0x4a4a6a, 0xb0f0ff], spin: 1.2, dur: 2.0, rate: 10, dmg: 26, range: 14, spread: 3, ink: 22, pr: .6, v: 32, spd: .9, triple: true, desc: '3本の弾をいっしょに広げて撃つ。' }),
+  W('snipeg', 'キタカゼ', 'gatling', 'dart', 'turret', { look: [0xe8eef6, 0x3a5ad8], spin: 2.0, dur: 2.4, rate: 10, dmg: 38, range: 26, spread: 1.2, ink: 22, pr: .6, v: 42, spd: .85, desc: 'とても遠くまで、まっすぐ撃てる。' }),
+  W('bounceg', 'コダマ', 'gatling', 'popper', 'dash', { look: [0x5a8a4a, 0xe8f0c8], spin: 1.0, dur: 2.0, rate: 14, dmg: 28, range: 15, spread: 5, ink: 18, pr: .64, v: 32, bounce: 1, desc: '弾が一度はねる。物かげの近くにもかかる。' }),
   // ---- 二丁拳銃（7） ----
-  W('dual', 'ツインピストル', 'dual', 'sticky', 'beam', { rate: 9, dmg: 30, range: 12, spread: 6, ink: .85, pr: .62, v: 30, rolls: 1, desc: '撃ちながら「もぐる」で1回すべれる。' }),
-  W('dualm', 'ツインマシン', 'dual', 'mine', 'rain', { rate: 13, dmg: 24, range: 9, spread: 8, ink: .7, pr: .58, v: 28, rolls: 2, spd: 1.06, desc: '速い連射。2回まですべれる。' }),
-  W('dualh', 'ツインヘビー', 'dual', 'fountain', 'missile', { rate: 6, dmg: 45, range: 15, spread: 4, ink: 1.4, pr: .7, v: 32, rolls: 1, spd: .96, desc: '重い弾で遠くまで。' }),
-  W('duals', 'ツインショート', 'dual', 'balloon', 'cloak', { rate: 11, dmg: 26, range: 8, spread: 9, ink: .65, pr: .58, v: 27, rolls: 4, rollLen: .7, spd: 1.08, desc: '短いすべりを4回まで。動き回って戦う。' }),
-  W('duall', 'ツインロング', 'dual', 'shield', 'airdrop', { rate: 5.5, dmg: 38, range: 18, spread: 3, ink: 1.3, pr: .65, v: 35, rolls: 1, rollLen: 1.5, desc: '射程が長く、すべる距離も長い。' }),
-  W('dualsp', 'ツインスプレー', 'dual', 'fog', 'tower', { rate: 12, cone: 2, dmg: 20, range: 9, spread: 14, ink: .6, pr: .8, v: 25, rolls: 2, desc: '広がる霧の弾。ぬりが強い。' }),
-  W('dualb', 'ツインバースト', 'dual', 'windup', 'ring', { rate: 4, burst: 2, dmg: 36, range: 14, spread: 3, ink: 1.6, pr: .66, v: 33, rolls: 1, desc: '1回に2発ずつ撃つ。' }),
+  W('dual', 'マラカス', 'dual', 'sticky', 'beam', { look: [0xe84a3a, 0xffd23a], rate: 9, dmg: 30, range: 12, spread: 6, ink: .85, pr: .62, v: 30, rolls: 1, desc: '撃ちながら「もぐる」で1回すべれる。' }),
+  W('dualm', 'カスタネット', 'dual', 'mine', 'rain', { look: [0x2a4ad0, 0xe83a3a], rate: 13, dmg: 24, range: 9, spread: 8, ink: .7, pr: .58, v: 28, rolls: 2, spd: 1.06, desc: '速い連射。2回まですべれる。' }),
+  W('dualh', 'シンバル', 'dual', 'fountain', 'missile', { look: [0x4a4a52, 0xf0c040], rate: 6, dmg: 45, range: 15, spread: 4, ink: 1.4, pr: .7, v: 32, rolls: 1, spd: .96, desc: '重い弾で遠くまで。' }),
+  W('duals', 'ボンゴ', 'dual', 'balloon', 'cloak', { look: [0xa0603a, 0xf2e6d0], rate: 11, dmg: 26, range: 8, spread: 9, ink: .65, pr: .58, v: 27, rolls: 4, rollLen: .7, spd: 1.08, desc: '短いすべりを4回まで。動き回って戦う。' }),
+  W('duall', 'ティンパニ', 'dual', 'shield', 'airdrop', { look: [0x3a2a24, 0xd8a040], rate: 5.5, dmg: 38, range: 18, spread: 3, ink: 1.3, pr: .65, v: 35, rolls: 1, rollLen: 1.5, desc: '射程が長く、すべる距離も長い。' }),
+  W('dualsp', 'タンバリン', 'dual', 'fog', 'tower', { look: [0xd8b070, 0xc0c4cc], rate: 12, cone: 2, dmg: 20, range: 9, spread: 14, ink: .6, pr: .8, v: 25, rolls: 2, desc: '広がる霧の弾。ぬりが強い。' }),
+  W('dualb', 'ヒョウシギ', 'dual', 'windup', 'ring', { look: [0xb08048, 0x3a2a20], rate: 4, burst: 2, dmg: 36, range: 14, spread: 3, ink: 1.6, pr: .66, v: 33, rolls: 1, desc: '1回に2発ずつ撃つ。' }),
   // ---- パラソル（6） ----
-  W('parasol', 'パラソルガン', 'parasol', 'slide', 'barrier', { rate: 1.3, pellets: 8, dmg: 18, range: 10, cone: 16, ink: 6, pr: .6, shield: 400, v: 26, desc: '散弾とカサ。正面からの弾をふせぐ。' }),
-  W('bigpara', 'ビッグパラソル', 'parasol', 'mine', 'armor', { rate: .9, pellets: 10, dmg: 16, range: 9, cone: 18, ink: 8, pr: .62, shield: 900, v: 25, spd: .9, desc: '大きくてかたいカサ。' }),
-  W('minipara', 'ミニパラソル', 'parasol', 'bomb', 'rain', { rate: 2, pellets: 6, dmg: 15, range: 9, cone: 14, ink: 4.5, pr: .55, shield: 220, v: 27, spd: 1.04, desc: '小さく軽い。撃つテンポが速い。' }),
-  W('longpara', '日がさ', 'parasol', 'dart', 'missile', { rate: 1.1, pellets: 7, dmg: 20, range: 13, cone: 9, ink: 6.5, pr: .6, shield: 350, v: 30, desc: '散弾がまとまって遠くまで届く。' }),
-  W('spikepara', 'トゲトゲパラソル', 'parasol', 'popper', 'slam', { rate: 1.2, pellets: 8, dmg: 17, range: 9.5, cone: 17, ink: 6, pr: .6, shield: 450, v: 26, spiky: true, desc: '開いたカサにふれた相手にもダメージ。' }),
-  W('doublepara', '二重がさ', 'parasol', 'spring', 'turret', { rate: 1.2, pellets: 8, dmg: 17, range: 10, cone: 16, ink: 6, pr: .6, shield: 300, v: 26, regen: true, desc: 'カサがすぐ元にもどる。こわれてもすぐ直る。' }),
+  W('parasol', 'アジサイ', 'parasol', 'slide', 'barrier', { look: [0x4a4a5a, 0x8a7ae8], rate: 1.3, pellets: 8, dmg: 18, range: 10, cone: 16, ink: 6, pr: .6, shield: 400, v: 26, desc: '散弾とカサ。正面からの弾をふせぐ。' }),
+  W('bigpara', 'ヒマワリ', 'parasol', 'mine', 'armor', { look: [0x4a3a2a, 0xffd23a], rate: .9, pellets: 10, dmg: 16, range: 9, cone: 18, ink: 8, pr: .62, shield: 900, v: 25, spd: .9, desc: '大きくてかたいカサ。' }),
+  W('minipara', 'タンポポ', 'parasol', 'bomb', 'rain', { look: [0x5a8a3a, 0xffe14a], rate: 2, pellets: 6, dmg: 15, range: 9, cone: 14, ink: 4.5, pr: .55, shield: 220, v: 27, spd: 1.04, desc: '小さく軽い。撃つテンポが速い。' }),
+  W('longpara', 'ユリ', 'parasol', 'dart', 'missile', { look: [0x4a6a3a, 0xf8f6f0], rate: 1.1, pellets: 7, dmg: 20, range: 13, cone: 9, ink: 6.5, pr: .6, shield: 350, v: 30, desc: '散弾がまとまって遠くまで届く。' }),
+  W('spikepara', 'アザミ', 'parasol', 'popper', 'slam', { look: [0x3a4a3a, 0xb04ad0], rate: 1.2, pellets: 8, dmg: 17, range: 9.5, cone: 17, ink: 6, pr: .6, shield: 450, v: 26, spiky: true, desc: '開いたカサにふれた相手にもダメージ。' }),
+  W('doublepara', 'ヤエザクラ', 'parasol', 'spring', 'turret', { look: [0x5a3a3a, 0xffa8c8], rate: 1.2, pellets: 8, dmg: 17, range: 10, cone: 16, ink: 6, pr: .6, shield: 300, v: 26, regen: true, desc: 'カサがすぐ元にもどる。こわれてもすぐ直る。' }),
   // ---- ボウ（6） ----
-  W('bow', 'ペイントボウ', 'bow', 'sticky', 'missile', { charge: .9, dmg: 50, range: 19, ink: 7, pr: .6, v: 40, arrows: 3, desc: 'ためて3本の矢。ためきると矢が少しおくれて破裂。' }),
-  W('longbow', 'ロングボウ', 'bow', 'shield', 'slam', { charge: 1.3, dmg: 62, range: 26, ink: 9, pr: .65, v: 46, arrows: 3, spd: .94, desc: '遠くまで届く強い弓。' }),
-  W('fivebow', '5本ボウ', 'bow', 'boomer', 'fireworks', { charge: 1.0, dmg: 40, range: 16, ink: 9, pr: .55, v: 38, arrows: 5, desc: '5本の矢を広くばらまく。' }),
-  W('tatebow', 'たてボウ', 'bow', 'mine', 'airdrop', { charge: .9, dmg: 48, range: 20, ink: 7, pr: .6, v: 40, arrows: 3, vertical: true, desc: '矢をたてに並べて放つ。まっすぐな線をぬれる。' }),
-  W('bakubow', 'バクハツボウ', 'bow', 'fog', 'tower', { charge: 1.4, dmg: 45, range: 18, ink: 10, pr: .6, v: 38, arrows: 3, boom: true, desc: '半分ためれば、どの矢も破裂する。' }),
-  W('quickbow', '速射ボウ', 'bow', 'balloon', 'dash', { charge: .45, dmg: 34, range: 14, ink: 4, pr: .5, v: 36, arrows: 2, desc: 'すぐためられる2本の矢。' }),
+  W('bow', 'カジキ', 'bow', 'sticky', 'missile', { look: [0x1e4a8a, 0xd8e4f0], charge: .9, dmg: 50, range: 19, ink: 7, pr: .6, v: 40, arrows: 3, desc: 'ためて3本の矢。ためきると矢が少しおくれて破裂。' }),
+  W('longbow', 'イッカク', 'bow', 'shield', 'slam', { look: [0xd8dde4, 0x5a7a9a], charge: 1.3, dmg: 62, range: 26, ink: 9, pr: .65, v: 46, arrows: 3, spd: .94, desc: '遠くまで届く強い弓。' }),
+  W('fivebow', 'ハリセンボン', 'bow', 'boomer', 'fireworks', { look: [0xd8c890, 0x6a5a3a], charge: 1.0, dmg: 40, range: 16, ink: 9, pr: .55, v: 38, arrows: 5, desc: '5本の矢を広くばらまく。' }),
+  W('tatebow', 'タチウオ', 'bow', 'mine', 'airdrop', { look: [0xc8ccd8, 0x8aa0c0], charge: .9, dmg: 48, range: 20, ink: 7, pr: .6, v: 40, arrows: 3, vertical: true, desc: '矢をたてに並べて放つ。まっすぐな線をぬれる。' }),
+  W('bakubow', 'フグ', 'bow', 'fog', 'tower', { look: [0xf0d870, 0x4a4a3a], charge: 1.4, dmg: 45, range: 18, ink: 10, pr: .6, v: 38, arrows: 3, boom: true, desc: '半分ためれば、どの矢も破裂する。' }),
+  W('quickbow', 'トビウオ', 'bow', 'balloon', 'dash', { look: [0x3a6ab8, 0xa8e0ff], charge: .45, dmg: 34, range: 14, ink: 4, pr: .5, v: 36, arrows: 2, desc: 'すぐためられる2本の矢。' }),
   // ---- ブレード（6） ----
-  W('blade', 'ペイントブレード', 'blade', 'bomb', 'beam', { rate: 2.6, dmg: 50, range: 4.5, cdmg: 110, crange: 12, charge: .7, ink: 3, pr: .7, spd: 1.05, desc: '横振りで近くを切り、ためると遠くへ飛ぶ刃。' }),
-  W('heavyb', 'ヘビーブレード', 'blade', 'sticky', 'barrier', { rate: 1.6, dmg: 70, range: 5, cdmg: 150, crange: 14, charge: 1.0, ink: 5, pr: .85, spd: .96, desc: '重い刃。ためた一撃は一発でたおせる。' }),
-  W('hera', 'ヘラ', 'blade', 'windup', 'cloak', { rate: 3.4, dmg: 36, range: 3.8, cdmg: 90, crange: 6, charge: .5, ink: 2, pr: .6, spd: 1.1, lunge: true, model: 'hera', desc: 'ためると前へ一気につっこんで切る。' }),
-  W('twinb', 'ツインブレード', 'blade', 'dart', 'ring', { rate: 2.2, dmg: 34, range: 4.5, cdmg: 90, crange: 11, charge: .7, ink: 3.2, pr: .65, spd: 1.05, twin: true, desc: '1回で2度切る。' }),
-  W('longblade', 'ロングブレード', 'blade', 'shield', 'turret', { rate: 1.8, dmg: 55, range: 5, cdmg: 120, crange: 18, charge: 1.0, ink: 4, pr: .75, spd: .98, desc: 'ためた刃がとても遠くまで飛ぶ。' }),
-  W('boomblade', 'ブーメランブレード', 'blade', 'spring', 'tornado', { rate: 2.0, dmg: 48, range: 4.5, cdmg: 100, crange: 11, charge: .8, ink: 3.5, pr: .75, spd: 1.0, ret: true, desc: 'ためた刃が手もとにもどってくる。' }),
+  W('blade', 'ミカヅキ', 'blade', 'bomb', 'beam', { look: [0x2a2a36, 0xfff2b0], rate: 2.6, dmg: 50, range: 4.5, cdmg: 110, crange: 12, charge: .7, ink: 3, pr: .7, spd: 1.05, desc: '横振りで近くを切り、ためると遠くへ飛ぶ刃。' }),
+  W('heavyb', 'オオナタ', 'blade', 'sticky', 'barrier', { look: [0x4a3a2a, 0xc8ccd4], rate: 1.6, dmg: 70, range: 5, cdmg: 150, crange: 14, charge: 1.0, ink: 5, pr: .85, spd: .96, desc: '重い刃。ためた一撃は一発でたおせる。' }),
+  W('hera', 'イナズマ', 'blade', 'windup', 'cloak', { look: [0x2a2a30, 0xffe03a], rate: 3.4, dmg: 36, range: 3.8, cdmg: 90, crange: 6, charge: .5, ink: 2, pr: .6, spd: 1.1, lunge: true, model: 'hera', desc: 'ためると前へ一気につっこんで切る。' }),
+  W('twinb', 'ニトウ', 'blade', 'dart', 'ring', { look: [0x3a2a3a, 0xe8e8f0], rate: 2.2, dmg: 34, range: 4.5, cdmg: 90, crange: 11, charge: .7, ink: 3.2, pr: .65, spd: 1.05, twin: true, desc: '1回で2度切る。' }),
+  W('longblade', 'ナガレボシ', 'blade', 'shield', 'turret', { look: [0x23284a, 0xb8d8ff], rate: 1.8, dmg: 55, range: 5, cdmg: 120, crange: 18, charge: 1.0, ink: 4, pr: .75, spd: .98, desc: 'ためた刃がとても遠くまで飛ぶ。' }),
+  W('boomblade', 'トンボガエリ', 'blade', 'spring', 'tornado', { look: [0x3a5a3a, 0x8ae8a0], rate: 2.0, dmg: 48, range: 4.5, cdmg: 100, crange: 11, charge: .8, ink: 3.5, pr: .75, spd: 1.0, ret: true, desc: 'ためた刃が手もとにもどってくる。' }),
   // ---- ホース（6）：このゲームだけの種類 ----
-  W('garden', 'ガーデンホース', 'hose', 'fountain', 'rain', { rate: 22, dmg: 9, range: 12, inkS: 9, pr: .55, spread: 1.5, spd: .98, desc: 'ちょうどよい水流。ねらった線をぬれる。' }),
-  W('firehose', '消防ホース', 'hose', 'shield', 'airdrop', { rate: 26, dmg: 11, range: 18, inkS: 14, pr: .6, spread: 1, spd: .86, slow: true, model: 'fire', desc: '太く長い水流。撃っている間は動きがおそい。' }),
-  W('shower', 'シャワーホース', 'hose', 'popper', 'fireworks', { rate: 30, dmg: 6, range: 9, inkS: 10, pr: .6, spread: 2, shower: 3, desc: '3本の水流でまとめてぬる。' }),
-  W('pump', 'ポンプホース', 'hose', 'spring', 'dash', { rate: 22, dmg: 10, range: 20, inkS: 10, pr: .55, spread: 1.2, pump: true, desc: '出し続けるほど水圧が上がって遠くまで届く。' }),
-  W('misthose', 'ミストホース', 'hose', 'fog', 'cloak', { rate: 34, dmg: 5, range: 6.5, inkS: 8, pr: .7, spread: 30, mist: true, spd: 1.05, desc: '近くをふんわりぬりつぶす霧。' }),
-  W('jet', '高圧ホース', 'hose', 'dart', 'turret', { rate: 20, dmg: 14, range: 15, inkS: 12, pr: .45, spread: .5, spd: .94, desc: '細く強い水流。当たると痛い。' })
+  W('garden', 'セセラギ', 'hose', 'fountain', 'rain', { look: [0x3a9a4a, 0xffd23a], rate: 22, dmg: 9, range: 12, inkS: 9, pr: .55, spread: 1.5, spd: .98, desc: 'ちょうどよい水流。ねらった線をぬれる。' }),
+  W('firehose', 'オオタキ', 'hose', 'shield', 'airdrop', { look: [0xd83a32, 0xd8b040], rate: 26, dmg: 11, range: 18, inkS: 14, pr: .6, spread: 1, spd: .86, slow: true, model: 'fire', desc: '太く長い水流。撃っている間は動きがおそい。' }),
+  W('shower', 'ミツマタ', 'hose', 'popper', 'fireworks', { look: [0x3a8ac8, 0xe8e8e8], rate: 30, dmg: 6, range: 9, inkS: 10, pr: .6, spread: 2, shower: 3, desc: '3本の水流でまとめてぬる。' }),
+  W('pump', 'テッポウミズ', 'hose', 'spring', 'dash', { look: [0x5a5e6a, 0x3ac8e8], rate: 22, dmg: 10, range: 20, inkS: 10, pr: .55, spread: 1.2, pump: true, desc: '出し続けるほど水圧が上がって遠くまで届く。' }),
+  W('misthose', 'ヤマギリ', 'hose', 'fog', 'cloak', { look: [0x8aa0a8, 0xf0f4f8], rate: 34, dmg: 5, range: 6.5, inkS: 8, pr: .7, spread: 30, mist: true, spd: 1.05, desc: '近くをふんわりぬりつぶす霧。' }),
+  W('jet', 'ハヤセ', 'hose', 'dart', 'turret', { look: [0x2a3a5a, 0x4ae0ff], rate: 20, dmg: 14, range: 15, inkS: 12, pr: .45, spread: .5, spd: .94, desc: '細く強い水流。当たると痛い。' })
 ];
 const WBY = Object.fromEntries(WEAPONS.map(w => [w.id, w]));
 if (!WBY[SET.weapon]) SET.weapon = 'basic';
@@ -1858,6 +1946,249 @@ function factoryScenery(q, M) {
 }
 function decoTick(dt) { for (const f of decoAnim) f(dt, clock); }
 
+// ================= ブキの形（91本それぞれのデザイン。ペンキの部分はチームの色） =================
+// 前が +z、上が +y、にぎる所が原点。色は look: [本体の色, 差し色]
+const WMC = {};
+const wmat = (c, o) => { const k = c + (o ? JSON.stringify(o) : ''); return WMC[k] || (WMC[k] = new T.MeshStandardMaterial(Object.assign({ color: c, roughness: .42, metalness: .12 }, o))); };
+function weaponMesh(w, team) {
+  const g = new T.Group(), J = tmat(team).jelly, L = w.look || [0x444a55, 0xdddddd];
+  const C = wmat(L[0]), A = wmat(L[1]), D = MAT.dark, Mt = MAT.metal, Wd = MAT.wood, Gl = MAT.glass, PI = Math.PI, H = PI / 2;
+  const mk = (par, geo, mat, x, y, z, rx = 0, ry = 0, rz = 0, sx = 1, sy = 1, sz = 1) => { const m = new T.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.set(rx, ry, rz); m.scale.set(sx, sy, sz); m.castShadow = true; par.add(m); return m; };
+  const add = (...a) => mk(g, ...a);
+  const Bx = (x, y, z) => new T.BoxGeometry(x, y, z), Cy = (r1, r2, h, s = 12) => new T.CylinderGeometry(r1, r2, h, s), Sp = (r, a = 12, b = 9) => new T.SphereGeometry(r, a, b);
+  const Co = (r, h, s = 10) => new T.ConeGeometry(r, h, s), To = (R, r, arc = TAU, s = 20) => new T.TorusGeometry(R, r, 8, s, arc);
+  const tube = (r, len, z0, x = 0, y = 0, mat = D) => add(Cy(r, r * 1.08, len), mat, x, y, z0 + len / 2, H);
+  const grip = (mat = C, z = -.02) => add(Bx(.1, .2, .1), mat, 0, -.13, z);
+  const gun = (len, mat = C) => add(Bx(.12, .14, len), mat, 0, 0, len / 2 - .1);
+  const tank = (r, len, z, y = .12, mat = J) => add(Cy(r, r, len), mat, 0, y, z, H);
+  // ローラー・ハケの柄と頭（頭はグループにまとめて、転がると回る）
+  // 2点を結ぶ柄（手もとから、前の下にある頭まで）
+  const stick = (mat = Mt, to = [0, -.3, .95], r = .025, from = [0, .06, 0]) => {
+    const dy = to[1] - from[1], dz = to[2] - from[2], len = Math.hypot(dy, dz);
+    return add(Cy(r, r, len, 8), mat, 0, (from[1] + to[1]) / 2, (from[2] + to[2]) / 2, Math.atan2(dz, dy));
+  };
+  const handle = (len, mat = Mt) => stick(mat, [0, -.27, .95]);
+  const headG = () => { const h = new T.Group(); h.position.set(0, -.45, 1.0); g.add(h); g.userData.head = h; return h; };
+  const drum = (h, wd, r = .17) => { mk(h, Cy(r, r, wd, 16), J, 0, 0, 0, 0, 0, H); for (const s of [-1, 1]) mk(h, Cy(r + .012, r + .012, .05, 16), C, s * wd / 2, 0, 0, 0, 0, H); };
+  const yoke = (wd) => { add(Bx(wd + .1, .035, .035), Mt, 0, -.25, .95); for (const s of [-1, 1]) add(Bx(.03, .22, .03), Mt, s * (wd / 2 + .05), -.35, .98); };
+  switch (w.id) {
+    // ---------- ガン：鳥 ----------
+    case 'mist':
+      add(Cy(.09, .09, .3), J, 0, .02, .08); add(Cy(.095, .095, .04), C, 0, .17, .08); add(Cy(.095, .095, .04), C, 0, -.13, .08);
+      add(Cy(.04, .05, .06), A, 0, .21, .08); add(Bx(.05, .04, .1), D, 0, .23, .15);
+      for (const s of [-1, 1]) add(Bx(.02, .14, .24), A, s * .11, .07, .02, .3, 0, s * .5);
+      break;
+    case 'short':
+      add(Bx(.13, .15, .3), C, 0, 0, .08); tube(.05, .16, .22); add(Sp(.085), J, 0, .13, .04); add(Bx(.11, .07, .2), A, 0, -.05, .1); grip();
+      add(Co(.05, .14, 8), C, 0, .04, -.12, -H);
+      break;
+    case 'basic':
+      gun(.5); add(Bx(.125, .05, .42), A, 0, -.055, .16); add(Cy(.04, .04, .22), Mt, 0, .02, .48, H); tank(.06, .18, .06); grip();
+      for (const s of [-1, 1]) add(Bx(.02, .03, .22), C, s * .05, .04, -.16, 0, s * .4, 0);
+      break;
+    case 'pro':
+      add(Bx(.1, .12, .58), C, 0, 0, .18); add(Cy(.03, .03, .3), Mt, 0, .02, .6, H); add(Cy(.035, .035, .22), A, 0, .12, .16, H); add(Cy(.045, .045, .03), D, 0, .12, .28, H);
+      tank(.05, .16, -.02, .08); grip(D, 0); add(Bx(.102, .02, .5), A, 0, .055, .2);
+      break;
+    case 'rapid':
+      gun(.46); tube(.055, .26, .36, 0, .02, A); for (let i = 0; i < 3; i++) add(To(.057, .012, TAU, 10), D, 0, .02, .42 + i * .07);
+      add(Bx(.08, .18, .12), J, 0, -.16, .2); grip();
+      break;
+    case 'heavy':
+      add(Bx(.16, .18, .52), C, 0, 0, .14); tube(.062, .26, .38); add(Bx(.17, .06, .22), A, 0, .1, .28); tank(.08, .22, .02, .15); add(Bx(.12, .22, .12), C, 0, -.15, -.02);
+      break;
+    case 'long':
+      add(Bx(.1, .12, .66), C, 0, 0, .2); add(Cy(.035, .035, .36), Mt, 0, .02, .7, H); add(Bx(.08, .1, .24), A, 0, -.02, -.22); tank(.055, .24, .1, .1); grip(C, .04); add(Bx(.04, .05, .06), A, 0, .09, .5);
+      break;
+    case 'burst':
+      add(Bx(.12, .15, .44), C, 0, 0, .12); for (let i = 0; i < 3; i++) { const a = i / 3 * TAU + H; add(Cy(.025, .025, .28), Mt, Math.cos(a) * .04, .02 + Math.sin(a) * .04, .46, H); }
+      add(Bx(.13, .08, .12), A, 0, .1, .3); tank(.06, .16, .02, .11); grip();
+      break;
+    case 'duo':
+      add(Bx(.16, .14, .48), C, 0, 0, .14); for (const s of [-1, 1]) { add(Cy(.03, .03, .3), Mt, s * .045, .02, .5, H); add(Sp(.056), J, s * .056, .13, .02); add(Sp(.026), A, s * .056, .14, .07); }
+      grip();
+      break;
+    case 'motor':
+      gun(.48); add(Cy(.04, .04, .22), Mt, 0, .02, .48, H); add(Cy(.08, .08, .12), A, .11, .02, .1, 0, 0, H);
+      for (let i = 0; i < 4; i++) add(Bx(.012, .15, .035), D, .18, .02, .1, i * PI / 4); tank(.055, .16, .02); grip();
+      break;
+    case 'airbrush':
+      add(Cy(.03, .05, .36), C, 0, 0, .2, H); add(Cy(.008, .012, .3), Mt, 0, 0, .52, H); add(Cy(.06, .06, .12), J, 0, .09, .05); add(Bx(.05, .16, .06), A, 0, -.1, .02); add(Co(.028, .08, 8), A, 0, 0, .7, H);
+      break;
+    case 'squirt':
+      add(Bx(.12, .13, .4), C, 0, 0, .12); add(Cy(.035, .04, .18), A, 0, .02, .4, H); add(Cy(.085, .085, .22), Gl, 0, .14, .06, H); tank(.068, .2, .06, .14); grip(A);
+      break;
+    case 'ext':
+      add(Cy(.1, .1, .42), C, 0, -.02, 0); add(Cy(.07, .1, .06), D, 0, .21, 0); add(Cy(.025, .025, .3), D, 0, .12, .18, PI / 2.5); add(Co(.09, .2, 10), A, 0, .2, .34, -H); add(Bx(.04, .06, .14), J, 0, .26, .02);
+      break;
+    case 'jumper':
+      gun(.46); add(Cy(.04, .04, .22), Mt, 0, .02, .48, H); for (let i = 0; i < 4; i++) add(To(.045, .012, TAU, 10), A, 0, .02, -.14 - i * .035);
+      for (const s of [-1, 1]) add(Bx(.22, .02, .12), C, s * .15, .06, .14, 0, 0, s * .25); tank(.055, .16, .04); grip();
+      break;
+    // ---------- キャノン：くだもの ----------
+    case 'cannon':
+      tube(.11, .5, 0); add(Cy(.13, .12, .12), J, 0, 0, .5, H); add(Sp(.2, 14, 10), A, 0, .06, -.12); for (let i = 0; i < 4; i++) add(To(.202, .008, TAU, 24), C, 0, .06, -.12, 0, i * PI / 4, 0); add(Bx(.1, .2, .1), D, 0, -.18, .1);
+      break;
+    case 'minic':
+      tube(.08, .32, 0); add(Cy(.1, .09, .08), J, 0, 0, .33, H); add(Sp(.15), A, 0, .04, -.06, 0, 0, 0, 1, .9, 1); add(Bx(.08, .02, .13), wmat(0x3a8a3a), 0, .18, -.06, 0, .5, 0); add(Bx(.1, .18, .1), D, 0, -.15, .06);
+      break;
+    case 'longc':
+      add(Cy(.1, .13, .8), A, 0, 0, .3, H); for (let i = 0; i < 5; i++) add(To(.116, .012, TAU, 16), C, 0, 0, .0 + i * .15); add(Cy(.12, .11, .1), J, 0, 0, .72, H); add(Bx(.1, .2, .1), D, 0, -.18, .05);
+      break;
+    case 'rapidc':
+      tube(.09, .42, 0); add(Cy(.11, .1, .08), J, 0, 0, .43, H);
+      for (const s of [-1, 1]) { add(Sp(.11), A, s * .11, .04, -.08); add(Cy(.01, .01, .2), wmat(0x3a7a2a), s * .055, .2, -.08, 0, 0, s * -.55); }
+      add(Bx(.1, .2, .1), D, 0, -.16, .08);
+      break;
+    case 'pompom':
+      add(Cy(.12, .14, .4), D, 0, .1, .16, H - .5); add(Cy(.15, .13, .08), J, 0, .2, .34, H - .5); add(Sp(.18), C, 0, .02, -.12); add(Cy(.12, .12, .02), A, 0, .19, -.12); add(Bx(.1, .2, .1), D, 0, -.18, .04);
+      break;
+    case 'mega':
+      tube(.15, .5, 0); add(Cy(.18, .16, .12), J, 0, 0, .5, H);
+      for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; add(Sp(.14), A, Math.cos(a) * .09, .06, -.18 + Math.sin(a) * .09, 0, 0, 0, 1, .85, 1); }
+      add(Cy(.02, .03, .1), wmat(0x4a7a2a), 0, .2, -.18); add(Bx(.12, .22, .12), D, 0, -.2, .1);
+      break;
+    case 'tri':
+      for (const s of [-1, 0, 1]) { tube(.05, .42, 0, s * .12); add(Cy(.06, .055, .05), J, s * .12, 0, .43, H); }
+      add(Cy(.012, .012, .62), Wd, 0, .17, .04, H); for (let i = 0; i < 3; i++) add(Sp(.07), wmat([0xffb0c8, 0xf8f4ec, 0x8ad06a][i]), 0, .17, -.12 + i * .15);
+      add(Bx(.32, .08, .16), C, 0, -.06, .02); add(Bx(.1, .18, .1), D, 0, -.16, .06);
+      break;
+    case 'cluster':
+      tube(.1, .44, 0); add(Cy(.12, .11, .08), J, 0, 0, .46, H); add(Sp(.17), A, 0, .05, -.12);
+      for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; add(Co(.025, .07, 6), A, Math.cos(a) * .06, .23, -.12 + Math.sin(a) * .06); }
+      add(Bx(.1, .2, .1), D, 0, -.17, .06);
+      break;
+    // ---------- ローラー：動物 ----------
+    case 'roller': { handle(); const h = headG(), wd = .94; drum(h, wd); for (let i = -2; i <= 2; i++) mk(h, To(.178, .018, TAU, 18), A, i * .16, 0, 0, 0, H, 0); yoke(wd); break; }
+    case 'wide': { handle(1.15, C); const h = headG(), wd = 1.2; drum(h, wd, .19); yoke(wd); for (const s of [-1, 1]) add(Sp(.05), A, s * .2, -.2, .95); break; }
+    case 'mini': { handle(1.05); const h = headG(), wd = .7; for (let i = 0; i < 5; i++) mk(h, Cy(.15, .15, wd / 5 - .01, 14), i % 2 ? C : J, (i - 2) * wd / 5, 0, 0, 0, 0, H); yoke(wd); break; }
+    case 'vert': {
+      stick(C, [0, -.27, .95], .028); const h = headG(), wd = .9; drum(h, wd);
+      for (let i = 0; i < 7; i++) { const a = i * 1.7, x = (i / 6 - .5) * wd * .8; mk(h, Sp(.045, 8, 6), A, x, Math.cos(a) * .17, Math.sin(a) * .17, 0, 0, 0, 1, 1, .4); }
+      yoke(wd); break; }
+    case 'weight': { handle(1.15, C); const h = headG(), wd = 1.1; drum(h, wd, .2); for (const s of [-1, 1]) mk(h, Cy(.23, .23, .09, 16), C, s * wd / 2, 0, 0, 0, 0, H); yoke(wd); add(Co(.05, .2, 8), A, 0, -.15, 1.02, PI / 3); break; }
+    case 'turbo': {
+      handle(1.15, C); stick(A, [0, -.12, .4], .03); const h = headG(), wd = .88; drum(h, wd);
+      for (const s of [-1, 1]) for (let i = 0; i < 5; i++) { const a = i / 5 * TAU; mk(h, Sp(.025, 6, 4), A, s * (wd / 2 + .04), Math.cos(a) * .1, Math.sin(a) * .1); }
+      yoke(wd); break; }
+    case 'hopper': { handle(); for (let i = 0; i < 5; i++) add(To(.045, .012, TAU, 10), A, 0, .0 - i * .055, .3 + i * .1, Math.atan2(.89, -.33)); const h = headG(), wd = .9; drum(h, wd); yoke(wd); break; }
+    case 'sponge': { handle(1.1, A); const h = headG(), wd = .96; drum(h, wd, .18); for (const s of [-1, 1]) for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; mk(h, Sp(.07, 8, 6), C, s * (wd / 2 + .02), Math.cos(a) * .12, Math.sin(a) * .12); } yoke(wd); break; }
+    // ---------- ハケ・モップ：毛の動物 ----------
+    case 'brush': { stick(Wd, [0, -.36, .96], .03); const h = headG(); mk(h, Bx(.4, .06, .2), Mt, 0, .1, -.05); mk(h, Bx(.38, .12, .2), C, 0, 0, 0); mk(h, Bx(.38, .06, .2), J, 0, -.09, .02); break; }
+    case 'bigbrush': { stick(D, [0, -.35, .96], .035); const h = headG(); mk(h, Bx(.56, .06, .24), Mt, 0, .1, -.05); mk(h, Bx(.54, .14, .24), C, 0, 0, 0); mk(h, Bx(.54, .07, .24), J, 0, -.1, .02); break; }
+    case 'mop': { stick(A, [0, -.38, .98]); const h = headG(); mk(h, Cy(.16, .16, .08, 12), C, 0, .06, 0); for (let i = 0; i < 10; i++) { const a = i / 10 * TAU; mk(h, Cy(.025, .02, .26, 5), J, Math.cos(a) * .14, -.08, Math.sin(a) * .14, Math.sin(a) * .25, 0, -Math.cos(a) * .25); } break; }
+    case 'deck': { stick(Wd, [0, -.4, .98]); const h = headG(); mk(h, Bx(.54, .08, .18), C, 0, .04, 0); for (let i = 0; i < 9; i++) mk(h, Bx(.035, .1, .14), A, (i - 4) * .06, -.05, 0); mk(h, Bx(.54, .03, .18), J, 0, .1, 0); break; }
+    case 'broom': { stick(Wd, [0, -.3, .97]); const h = headG(); mk(h, Co(.24, .44, 12), J, 0, -.02, 0, PI); for (let i = 0; i < 3; i++) mk(h, To(.08 + i * .045, .02, TAU, 14), i % 2 ? A : C, 0, .14 - i * .1, 0, H); break; }
+    case 'fude': { stick(C, [0, -.2, .74], .03); for (let i = 0; i < 3; i++) add(To(.034, .01, TAU, 10), A, 0, .02 - i * .07, .18 + i * .19, Math.atan2(.74, -.26)); const h = headG(); h.position.set(0, -.32, .8); mk(h, Co(.085, .32, 10), J, 0, 0, 0, PI); break; }
+    case 'tawashi': { stick(Wd, [0, -.26, .78]); const h = headG(); h.position.set(0, -.36, .86); mk(h, Sp(.15, 10, 8), J, 0, 0, 0); for (let i = 0; i < 14; i++) { const a = i * 2.4, b = Math.acos(1 - 2 * (i + .5) / 14), v = new T.Vector3(Math.sin(b) * Math.cos(a), Math.cos(b), Math.sin(b) * Math.sin(a)); const m = mk(h, Co(.03, .1, 6), C, v.x * .15, v.y * .15, v.z * .15); m.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), v); } break; }
+    // ---------- スナイパー：星 ----------
+    case 'sniper': add(Bx(.1, .12, 1.0), C, 0, 0, .3); tube(.03, .25, .8, 0, .02, A); tank(.05, .3, .1, .1); add(new T.OctahedronGeometry(.06), A, 0, .17, .3); add(Bx(.09, .17, .09), D, 0, -.13, 0); break;
+    case 'scope': add(Bx(.1, .12, 1.0), C, 0, 0, .3); tube(.03, .22, .8, 0, .02, Mt); add(Cy(.045, .045, .5), A, 0, .14, .32, H); add(Cy(.06, .06, .04), A, 0, .14, .6, H); tank(.05, .26, .02, .1); add(Bx(.09, .17, .09), D, 0, -.13, 0); break;
+    case 'quick': add(Bx(.1, .12, .72), C, 0, 0, .2); tube(.03, .2, .56, 0, .02, Mt); tank(.05, .22, .1, .1); for (let i = 0; i < 3; i++) add(Bx(.015, .12, .14), A, 0, 0, -.2, i * 2.1); add(Bx(.09, .17, .09), D, 0, -.13, 0); break;
+    case 'ranger': add(Bx(.1, .12, 1.0), C, 0, 0, .3); tube(.034, .55, .8, 0, .02, C); for (let i = 0; i < 4; i++) add(To(.04, .01, TAU, 10), A, 0, .02, .86 + i * .12); tank(.055, .3, .1, .1); add(Bx(.09, .17, .09), D, 0, -.13, 0); break;
+    case 'lance': add(Cy(.03, .03, 1.2), Mt, 0, 0, .45, H); add(Cy(.08, .08, .3), J, 0, -.02, 0, H); add(Co(.06, .26, 10), A, 0, 0, 1.15, H); add(To(.07, .015, TAU, 12), C, 0, 0, .9); add(Bx(.09, .17, .09), C, 0, -.13, -.1); break;
+    case 'keep': add(Bx(.1, .12, .95), C, 0, 0, .28); tube(.03, .22, .76, 0, .02, Mt); tank(.05, .28, .08, .1); add(To(.1, .02, PI * 1.2, 16), A, 0, .2, .3, 0, H, 0); add(Bx(.09, .17, .09), D, 0, -.13, 0); break;
+    case 'semi': {
+      add(Bx(.1, .12, .8), C, 0, 0, .24); tube(.03, .22, .64, 0, .02, Mt); tank(.05, .22, .06, .1);
+      const glow = wmat(L[1], { emissive: L[1], emissiveIntensity: .9 }); for (let i = 0; i < 3; i++) add(To(.05, .012, TAU, 12), glow, 0, .02, .66 + i * .07);
+      add(Bx(.09, .17, .09), D, 0, -.13, 0); break; }
+    case 'widesn': add(Bx(.16, .12, .95), C, 0, 0, .28); add(Bx(.3, .06, .14), A, 0, .02, .8); tank(.05, .26, .06, .1); add(Bx(.09, .17, .09), D, 0, -.13, 0); break;
+    // ---------- バケツ：天気 ----------
+    case 'bucket': add(Cy(.2, .15, .32, 14), C, 0, 0, .25); add(Cy(.18, .18, .02, 14), J, 0, .13, .25); add(To(.2, .015, PI, 16), Mt, 0, .1, .25); break;
+    case 'triple': for (let i = 0; i < 3; i++) { const a = i / 3 * TAU; add(Cy(.11, .08, .26, 12), C, Math.cos(a) * .1, 0, .25 + Math.sin(a) * .1); add(Cy(.1, .1, .02, 12), J, Math.cos(a) * .1, .11, .25 + Math.sin(a) * .1); } add(To(.22, .014, PI, 16), Mt, 0, .1, .25); break;
+    case 'longb': { add(Cy(.17, .14, .44, 14), C, 0, .05, .25); const rb = [0xff5a5a, 0xff9a3a, 0xffe14a, 0x5ad06a, 0x3aa0ff, 0x7a5aff]; rb.forEach((c, i) => add(Cy(.172 - i * .005, .172 - i * .005, .03, 14), wmat(c), 0, .22 - i * .06, .25)); add(Cy(.15, .15, .02, 14), J, 0, .26, .25); add(To(.17, .015, PI, 16), Mt, 0, .22, .25); break; }
+    case 'watering': add(Cy(.16, .18, .26, 12), C, 0, 0, .15); add(Cy(.025, .04, .38), C, 0, .08, .42, PI / 3); add(Cy(.06, .04, .05), A, 0, .2, .58, PI / 3); add(Cy(.13, .13, .02, 12), J, 0, .13, .15); add(To(.12, .02, PI, 12), A, 0, .18, .05, 0, H, 0); break;
+    case 'ladle': add(Cy(.02, .02, .62), C, 0, .05, .3, PI / 2.3); add(new T.SphereGeometry(.13, 12, 6, 0, TAU, H, H), A, 0, -.04, .6); add(Cy(.11, .11, .02, 12), J, 0, -.05, .6); break;
+    case 'dokan': { add(Cy(.2, .15, .32, 14), C, 0, 0, .25); add(Cy(.18, .18, .02, 14), J, 0, .13, .25); [[.03, .06, -.3], [-.02, -.02, .5], [.03, -.1, -.3]].forEach(([x, y, r]) => add(Bx(.04, .12, .03), A, x, y, .43, 0, 0, r)); add(To(.2, .015, PI, 16), Mt, 0, .1, .25); break; }
+    case 'swirl': add(Cy(.2, .15, .32, 14), C, 0, 0, .25); add(Cy(.18, .18, .02, 14), J, 0, .13, .25); for (let i = 0; i < 3; i++) add(To(.19 - i * .015, .014, TAU * .7, 16), A, 0, -.08 + i * .08, .25, H + .12, i * 1.3, 0); add(To(.2, .015, PI, 16), Mt, 0, .1, .25); break;
+    case 'rollb': add(Cy(.2, .15, .32, 14), C, 0, 0, .25); add(Cy(.18, .18, .02, 14), J, 0, .13, .25); add(Sp(.09), A, .1, .2, .3); add(Sp(.06), A, -.08, .18, .2); for (const s of [-1, 1]) add(Cy(.05, .05, .04, 10), D, s * .17, -.14, .25, 0, 0, H); break;
+    // ---------- ガトリング：風（銃身はグループごと回る） ----------
+    default: break;
+  }
+  // ガトリング
+  if (w.cls === 'gatling') {
+    const spin = new T.Group(); g.add(spin); g.userData.spin = spin;
+    const bar = (n, r, len, R = .06, z = .5, mat = Mt) => { spin.position.set(0, 0, z); for (let k = 0; k < n; k++) { const a = k / n * TAU; mk(spin, Cy(r, r, len), mat, Math.cos(a) * R, Math.sin(a) * R, 0, H); } };
+    switch (w.id) {
+      case 'gatling': add(Bx(.22, .22, .4), C, 0, 0, .1); add(Bx(.23, .05, .3), A, 0, .08, .1); tank(.08, .2, 0, .17, J); bar(4, .035, .55); break;
+      case 'minig': add(Bx(.18, .18, .3), C, 0, 0, .08); tank(.065, .16, 0, .14, J); bar(3, .03, .38, .05, .38); break;
+      case 'heavyg': add(Cy(.18, .18, .46, 16), C, 0, 0, .08, H); add(To(.18, .02, TAU, 20), A, 0, 0, .2); tank(.1, .26, -.04, .22, J); bar(6, .03, .7, .09, .62); break;
+      case 'reel': add(To(.2, .06, TAU, 18), J, 0, 0, 0, 0, H, 0); add(Cy(.06, .06, .14, 10), A, 0, 0, 0, 0, 0, H); add(Bx(.12, .1, .3), C, 0, -.02, .25); bar(3, .03, .5, .05, .58); break;
+      case 'trig': add(Bx(.3, .2, .36), C, 0, 0, .08); add(To(.16, .015, TAU * .75, 16), A, 0, .12, .1, H, 0, 0); tank(.07, .2, -.02, .16, J); bar(3, .033, .5, .09, .5); break;
+      case 'snipeg': add(Bx(.2, .2, .44), C, 0, 0, .12); add(Cy(.035, .035, .3), A, 0, .16, .12, H); tank(.07, .2, -.02, .12, J); bar(4, .025, .85, .05, .76); break;
+      case 'bounceg': add(Sp(.17), C, 0, 0, .06); for (let i = 0; i < 3; i++) add(To(.07, .015, TAU, 10), A, 0, .17 + i * .04, .06, H); tank(.06, .16, -.04, .12, J); bar(4, .033, .5, .06, .48); break;
+    }
+    add(Bx(.1, .18, .1), D, 0, -.18, -.04);
+  }
+  // 二丁拳銃：楽器（片手ぶん）
+  if (w.cls === 'dual') {
+    switch (w.id) {
+      case 'dual': add(Sp(.11), C, 0, .04, .12); for (let i = 0; i < 3; i++) add(To(.111, .012, TAU, 14), A, 0, .04, .12, 0, i * 1.05, 0); add(Cy(.03, .035, .24), A, 0, -.02, -.06, H); tube(.03, .14, .2, 0, .04, Mt); add(Sp(.04), J, 0, .15, .1); break;
+      case 'dualm': for (const s of [-1, 1]) add(new T.SphereGeometry(.11, 12, 6, 0, TAU, 0, H), C, 0, .03, .12, s > 0 ? 0 : PI, 0, 0, 1, .55, 1); add(To(.11, .012, TAU, 16), A, 0, .03, .12, H); tube(.028, .16, .2, 0, .03, Mt); add(Bx(.08, .16, .08), C, 0, -.1, .02); add(Sp(.035), J, 0, .1, .06); break;
+      case 'dualh': add(Bx(.12, .14, .4), D, 0, 0, .12); add(Cy(.2, .2, .015, 20), A, .09, .05, .12, 0, 0, H); add(Sp(.03), A, .1, .05, .12); tube(.04, .18, .3, 0, .02, Mt); tank(.055, .14, .02, .11); grip(D); break;
+      case 'duals': add(Cy(.1, .09, .16, 14), C, 0, .02, .1, H); add(Cy(.102, .102, .015, 14), A, 0, .02, .19, H); for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; add(Cy(.008, .008, .16), Mt, Math.cos(a) * .1, .02 + Math.sin(a) * .1, .1, H); } tube(.028, .14, .2, 0, .02, Mt); grip(C, .04); add(Sp(.035), J, 0, .14, .06); break;
+      case 'duall': add(new T.SphereGeometry(.14, 14, 8, 0, TAU, H, H), A, 0, .1, .06); add(Cy(.142, .142, .015, 14), C, 0, .1, .06); tube(.03, .34, .1, 0, .02, Mt); grip(C, .02); add(Sp(.04), J, 0, .14, .14); break;
+      case 'dualsp': add(To(.12, .025, TAU, 20), C, 0, .04, .12); for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; add(Cy(.03, .03, .01, 10), A, Math.cos(a) * .12, .04 + Math.sin(a) * .12, .12, H); } add(Co(.06, .14, 10), Mt, 0, .04, .3, H); add(Bx(.08, .16, .08), C, 0, -.1, .06); add(Sp(.04), J, 0, .04, .12); break;
+      case 'dualb': for (const y of [0, .1]) { add(Bx(.1, .08, .36), C, 0, y, .12); tube(.025, .14, .3, 0, y, Mt); } add(Bx(.11, .02, .36), A, 0, .05, .12); grip(C); add(Sp(.035), J, 0, .17, .02); break;
+    }
+  }
+  // パラソル：花（カサはチームの色、花びらは花の色）
+  if (w.cls === 'parasol') {
+    const can = new T.Group(); can.position.set(0, 0, .55); g.add(can); g.userData.canopy = can;
+    const R = w.id === 'minipara' ? .5 : w.id === 'bigpara' ? .72 : .62;
+    const JD = tmat(team).jellyDS;
+    if (w.id === 'longpara') mk(can, new T.ConeGeometry(R, .55, 18, 1, true), JD, 0, 0, .05, -H); else mk(can, new T.SphereGeometry(R, 16, 8, 0, TAU, 0, PI / 2.4), JD, 0, 0, 0, -H);
+    const rim = (n, mat, r = R * .97, z = -.02, sc = .1) => { for (let i = 0; i < n; i++) { const a = i / n * TAU; mk(can, Sp(sc, 8, 6), mat, Math.cos(a) * r, Math.sin(a) * r, z, 0, 0, 0, 1, 1, .5); } };
+    switch (w.id) {
+      case 'parasol': for (let i = 0; i < 9; i++) { const a = i * 2.4, r = Math.sqrt(i / 9) * R * .55; mk(can, Sp(.07, 8, 6), A, Math.cos(a) * r, Math.sin(a) * r, .4 - r * .5); } break;
+      case 'bigpara': rim(14, A, R * .98, -.04, .12); mk(can, Cy(.18, .18, .05, 16), C, 0, 0, .44, H); break;
+      case 'minipara': mk(can, Sp(.16, 10, 8), A, 0, 0, .36); rim(8, A, R * .95, -.03, .07); break;
+      case 'longpara': rim(6, A, R * .95, -.2, .14); break;
+      case 'spikepara': for (let i = 0; i < 12; i++) { const a = i / 12 * TAU, m = mk(can, Co(.04, .16, 6), C, Math.cos(a) * R, Math.sin(a) * R, -.05); m.rotation.set(0, 0, a - H); } mk(can, Sp(.1, 8, 6), A, 0, 0, .44); break;
+      case 'doublepara': mk(can, new T.SphereGeometry(R * .7, 14, 6, 0, TAU, 0, PI / 2.4), wmat(L[1], { side: T.DoubleSide }), 0, 0, .18, -H); rim(10, A, R * .96, -.03, .09); break;
+    }
+    add(Cy(.025, .025, .6), Mt, 0, 0, .25, H); grip(C, -.02);
+  }
+  // ボウ：海の生きもの
+  if (w.cls === 'bow') {
+    const tall = w.id === 'tatebow' ? 1.3 : 1;
+    add(To(.42, .032, PI, 22), C, 0, 0, .3, 0, H, H, 1, tall, 1); add(Cy(.006, .006, .84 * tall), MAT.white, 0, 0, .3); add(Bx(.06, .2, .08), A, 0, 0, .3);
+    switch (w.id) {
+      case 'bow': add(Co(.03, .3, 8), A, 0, 0, .55, H); break;
+      case 'longbow': add(Co(.025, .5, 8), A, 0, 0, .68, H); for (let i = 0; i < 4; i++) add(To(.022 - i * .004, .006, TAU, 8), C, 0, 0, .5 + i * .09); break;
+      case 'fivebow': add(Sp(.08), A, 0, 0, .34); for (let i = 0; i < 10; i++) { const a = i / 10 * TAU; const m = add(Co(.015, .07, 5), C, 0, Math.cos(a) * .09, .34 + Math.sin(a) * .09); m.rotation.x = -a + H; } break;
+      case 'tatebow': add(Bx(.02, .9, .03), A, 0, 0, .43); break;
+      case 'bakubow': add(Sp(.09), J, 0, 0, .36); for (let i = 0; i < 8; i++) { const a = i / 8 * TAU, m = add(Co(.015, .06, 5), A, 0, Math.cos(a) * .09, .36 + Math.sin(a) * .09); m.rotation.x = -a + H; } break;
+      case 'quickbow': for (const s of [-1, 1]) add(Bx(.01, .22, .26), A, s * .02, s * .3, .24, 0, 0, 0); break;
+    }
+  }
+  // ブレード
+  if (w.cls === 'blade') {
+    add(Bx(.08, .1, .26), C, 0, 0, .04); add(Bx(.2, .04, .05), J, 0, 0, .18);
+    switch (w.id) {
+      case 'blade': add(To(.5, .035, PI * .55, 18), A, 0, 0, .2, 0, -H, -H, 1, 1, .6); break;
+      case 'heavyb': add(Bx(.08, .26, .8), A, 0, .06, .6); add(Bx(.09, .04, .8), Mt, 0, -.06, .6); break;
+      case 'hera': for (let i = 0; i < 3; i++) add(Bx(.04, .1, .32), A, 0, (i % 2 ? .05 : -.05), .3 + i * .26, (i % 2 ? .35 : -.35), 0, 0); break;
+      case 'twinb': for (const s of [-1, 1]) add(Bx(.04, .08, .8), A, s * .05, 0, .6); break;
+      case 'longblade': add(Bx(.05, .09, 1.15), A, 0, 0, .78); add(new T.OctahedronGeometry(.08), wmat(0xffffff, { emissive: 0xb8d8ff, emissiveIntensity: .8 }), 0, 0, 1.4); break;
+      case 'boomblade': add(Bx(.05, .1, .5), A, 0, .12, .4, -.5, 0, 0); add(Bx(.05, .1, .5), A, 0, .12, .78, .5, 0, 0); break;
+    }
+  }
+  // ホース：水の流れ
+  if (w.cls === 'hose') {
+    switch (w.id) {
+      case 'garden': add(To(.18, .05, TAU, 18), C, -.3, -.22, -.1, 0, H, 0); add(Cy(.035, .05, .32), A, 0, 0, .3, H); add(Bx(.08, .14, .12), C, 0, -.05, .1); add(Sp(.05), J, 0, .06, .1); break;
+      case 'firehose': add(Cy(.06, .09, .5), C, 0, 0, .25, H); add(Cy(.05, .07, .14), A, 0, 0, .56, H); add(To(.16, .05, TAU, 16), D, -.1, -.15, -.15, 0, H, 0); add(Bx(.06, .06, .1), J, 0, .08, .1); break;
+      case 'shower': add(Bx(.1, .14, .2), C, 0, -.02, .1); for (const s of [-1, 0, 1]) add(Cy(.025, .04, .3), A, s * .06, .02, .36, H, s * .25, 0); add(Sp(.05), J, 0, .08, .08); break;
+      case 'pump': add(Cy(.07, .07, .34), C, 0, 0, .1, H); add(Cy(.06, .06, .02, 14), wmat(0xffffff), .075, .05, .05, 0, 0, H); add(Bx(.005, .04, .005), D, .087, .06, .05); add(Cy(.03, .04, .3), A, 0, 0, .42, H); add(Sp(.05), J, 0, .08, .1); break;
+      case 'misthose': add(Cy(.04, .05, .3), C, 0, 0, .2, H); add(Co(.1, .16, 12), A, 0, 0, .43, -H); add(Bx(.08, .14, .12), C, 0, -.05, .05); add(Sp(.05), J, 0, .07, .05); break;
+      case 'jet': add(Cy(.035, .05, .3), C, 0, 0, .15, H); add(Cy(.012, .02, .4), A, 0, 0, .5, H); add(Bx(.08, .14, .12), C, 0, -.05, .05); add(Sp(.05), J, 0, .07, .05); break;
+    }
+  }
+  if (!g.children.length) { add(Bx(.12, .14, .5), C, 0, 0, .15); grip(); }
+  return g;
+}
+
 // ================= 選手（オリジナルの「ペンキっ子」）・動き・体力・ペンキ =================
 const HP_MAX = 100, INK_MAX = 100;
 const SPEED = { walk: 5.4, swim: 9.6, blob: 3.2, enemy: 2.4, climb: 7 };
@@ -1884,7 +2215,7 @@ function rimify(m) {
 }
 const teamMat = {};
 function tmat(team) {
-  if (!teamMat[team]) teamMat[team] = { jelly: rimify(new T.MeshStandardMaterial({ color: 0xffffff, roughness: .25, metalness: .05 })), glow: new T.MeshBasicMaterial({ color: 0xffffff }) };
+  if (!teamMat[team]) teamMat[team] = { jelly: rimify(new T.MeshStandardMaterial({ color: 0xffffff, roughness: .25, metalness: .05 })), jellyDS: rimify(new T.MeshStandardMaterial({ color: 0xffffff, roughness: .3, metalness: .05, side: T.DoubleSide })), glow: new T.MeshBasicMaterial({ color: 0xffffff }) };
   return teamMat[team];
 }
 // かざり（頭につける。CPU はランダム、自分はタイトルで選ぶ）
@@ -1911,47 +2242,7 @@ function accessoryMesh(kind, col) {
   }
   return g;
 }
-function refreshTeamMats() { for (const t of [1, 2]) { const c = G.pal[t - 1]; tmat(t).jelly.color.set(c); tmat(t).glow.color.set(c); } }
-function weaponMesh(w, team) {
-  const g = new T.Group(), J = tmat(team).jelly, D = MAT.dark, Mt = MAT.metal, cls = w.cls, model = w.model || cls;
-  const add = (geo, mat, x, y, z, rx = 0, ry = 0, rz = 0) => { const m = new T.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.set(rx, ry, rz); m.castShadow = true; g.add(m); return m; };
-  const B = (x, y, z) => new T.BoxGeometry(x, y, z), C = (r1, r2, h, s = 10) => new T.CylinderGeometry(r1, r2, h, s);
-  switch (model) {
-    case 'can': add(C(.09, .09, .28), J, 0, 0, .1); add(C(.04, .05, .06), MAT.white, 0, .17, .1); add(B(.05, .05, .08), D, 0, .19, .17); break;
-    case 'airbrush': add(C(.025, .04, .42), Mt, 0, 0, .25, Math.PI / 2); add(C(.06, .06, .12), J, 0, .08, .05); break;
-    case 'ext': add(C(.1, .1, .4), MAT.red, 0, -.02, 0); add(C(.03, .03, .3), D, 0, .1, .2, Math.PI / 2.5); break;
-    case 'mop': add(C(.025, .025, 1.2), MAT.wood, 0, .1, .45, Math.PI / 2.6); g.userData.head = add(C(.24, .2, .18, 12), J, 0, -.45, 1.0); break;
-    case 'deck': add(C(.025, .025, 1.1), MAT.wood, 0, .1, .45, Math.PI / 2.6); g.userData.head = add(B(.5, .1, .16), J, 0, -.45, 1.0); break;
-    case 'broom': add(C(.025, .025, 1.15), MAT.wood, 0, .1, .45, Math.PI / 2.6); g.userData.head = add(new T.ConeGeometry(.22, .4, 10), J, 0, -.4, 1.0, Math.PI, 0, 0); break;
-    case 'fude': add(C(.03, .03, .8), MAT.wood, 0, .05, .4, Math.PI / 2.4); g.userData.head = add(new T.ConeGeometry(.08, .3, 10), J, 0, -.3, .8, Math.PI, 0, 0); break;
-    case 'lance': add(C(.03, .03, 1.2), Mt, 0, 0, .45, Math.PI / 2); add(C(.08, .08, .3), J, 0, -.02, 0, Math.PI / 2); break;
-    case 'watering': add(C(.16, .18, .26, 12), J, 0, 0, .15); add(C(.025, .04, .38), J, 0, .08, .42, Math.PI / 3); break;
-    case 'ladle': add(C(.02, .02, .6), MAT.wood, 0, .05, .3, Math.PI / 2.3); add(new T.SphereGeometry(.12, 10, 6, 0, TAU, Math.PI / 2, Math.PI / 2), J, 0, -.04, .6); break;
-    case 'reel': add(new T.TorusGeometry(.2, .06, 8, 18), J, 0, 0, 0, 0, Math.PI / 2); for (let k = 0; k < 3; k++) add(C(.03, .03, .5), Mt, 0, -.05 + k * .05, .4, Math.PI / 2); break;
-    case 'fire': add(C(.06, .09, .5), MAT.red, 0, 0, .25, Math.PI / 2); add(new T.TorusGeometry(.16, .05, 8, 16), D, -.1, -.15, -.15, 0, Math.PI / 2); break;
-    case 'hera': add(B(.3, .02, .22), Mt, 0, 0, .45); add(C(.03, .03, .3), MAT.wood, 0, 0, .15, Math.PI / 2); break;
-    case 'gun': case 'dual': case 'jumper': add(B(.12, .14, .5), D, 0, 0, .15); add(C(.04, .04, .22), Mt, 0, .02, .48, Math.PI / 2); add(B(.1, .2, .1), J, 0, -.12, 0); add(C(.06, .06, .16), J, 0, .12, .05, Math.PI / 2); break;
-    case 'cannon': add(C(.12, .14, .5), D, 0, 0, .15, Math.PI / 2); add(C(.15, .12, .14), J, 0, 0, .44, Math.PI / 2); add(B(.1, .2, .1), D, 0, -.15, 0); break;
-    case 'roller': case 'brush': {
-      const wd = cls === 'roller' ? Math.min(1.2, .5 + (w.width || 2) * .2) : .38;
-      add(C(.025, .025, 1.1), Mt, 0, .1, .45, Math.PI / 2.6);
-      g.userData.head = add(cls === 'roller' ? C(.17, .17, wd, 14) : B(wd, .12, .22), J, 0, -.45, 1.0, 0, 0, cls === 'roller' ? Math.PI / 2 : 0);
-      break; }
-    case 'sniper': add(B(.1, .12, 1.0), D, 0, 0, .3); add(C(.05, .05, .3), J, 0, .1, .1, Math.PI / 2); add(C(.03, .03, .2), Mt, 0, .1, .35, Math.PI / 2); break;
-    case 'bucket': add(C(.2, .15, .32, 12), J, 0, 0, .25); add(new T.TorusGeometry(.2, .015, 6, 16, Math.PI), Mt, 0, .1, .25); break;
-    case 'gatling': {
-      add(B(.22, .22, .4), D, 0, 0, .1); add(C(.08, .08, .2), J, 0, .17, 0);
-      const bar = new T.Group(); bar.position.set(0, 0, .5); g.add(bar); g.userData.spin = bar;   // 回る銃身
-      for (let k = 0; k < 4; k++) { const m = new T.Mesh(C(.035, .035, .55), Mt); m.position.set(Math.cos(k * 1.57) * .06, Math.sin(k * 1.57) * .06, 0); m.rotation.x = Math.PI / 2; m.castShadow = true; bar.add(m); }
-      break; }
-    case 'parasol': { const can = add(new T.SphereGeometry(.62, 16, 8, 0, TAU, 0, Math.PI / 2.4), J, 0, 0, .55, -Math.PI / 2); g.userData.canopy = can; add(C(.025, .025, .6), Mt, 0, 0, .25, Math.PI / 2); break; }
-    case 'bow': add(new T.TorusGeometry(.42, .03, 6, 20, Math.PI), J, 0, 0, .3, 0, Math.PI / 2, Math.PI / 2); add(C(.006, .006, .84), MAT.white, 0, 0, .3); break;
-    case 'blade': add(B(.06, .1, .9), MAT.white, 0, 0, .55); add(B(.08, .1, .25), J, 0, 0, .05); break;
-    case 'hose': add(C(.035, .05, .35), Mt, 0, 0, .3, Math.PI / 2); add(B(.08, .14, .12), J, 0, -.05, .1); add(new T.TorusGeometry(.18, .04, 8, 18), J, -.32, -.25, -.1, 0, Math.PI / 2); break;
-    default: add(B(.12, .14, .5), D, 0, 0, .15);
-  }
-  return g;
-}
+function refreshTeamMats() { for (const t of [1, 2]) { const c = G.pal[t - 1]; tmat(t).jelly.color.set(c); tmat(t).jellyDS.color.set(c); tmat(t).glow.color.set(c); } }
 // 両手で持つブキ（左手もブキにそえる）
 const TWO_HAND = new Set(['roller', 'brush', 'sniper', 'gatling', 'bucket', 'parasol', 'bow', 'hose', 'cannon', 'blade']);
 // 当たった相手のペンキがつく場所（体と顔のまわり）。[x, y, z, 中心y]
@@ -2118,7 +2409,8 @@ function stepMove(a, dt, ctl) {
   if (a.climb) { climbStep(a, dt, ctl); timers(a, dt); return; }
   const gt = groundTeam(a), enemyInk = gt && gt !== a.team && !(a.dashT > 0), ownInk = gt === a.team;
   const busy = a.ws.busy || 0;
-  a.dive = !!ctl.dive && !a.spOn && !(a.ws.rolling) && !(a.ws.ch > .05 && a.w.cls === 'sniper' && !a.w.keep) && !ruleNoDive(a);
+  const vx0 = a.vx, vz0 = a.vz;
+  a.dive = !!ctl.dive && !a.spOn && !(a.ws.rolling) && !ruleNoDive(a) && !(a.rollT > 0);
   a.swim = a.dive && ownInk;
   let spd = SPEED.walk * a.w.spd;
   if (a.dive) spd = a.swim ? SPEED.swim : SPEED.blob;
@@ -2137,7 +2429,16 @@ function stepMove(a, dt, ctl) {
     a.vx += (mx * spd - a.vx) * Math.min(1, acc * dt);
     a.vz += (mz * spd - a.vz) * Math.min(1, acc * dt);
   }
-  if (ctl.jump && a.onGround) { a.vy = a.swim ? SWIM_JUMP_V : JUMP_V; a.onGround = false; }
+  if (ctl.jump && a.onGround) {
+    const ml = Math.hypot(mx, mz), vl = Math.hypot(vx0, vz0);
+    if (a.swim && vl > 5 && ml > .5 && (mx * vx0 + mz * vz0) / (ml * vl) < -.3 && !(a.rollCd > 0)) {
+      // くるりターン：泳いでいる向きと逆へたおしてジャンプすると、くるっと回って飛び出す（出だしは少しかたい）
+      a.vy = 7.6; a.onGround = false; a.vx = mx / ml * 8.5; a.vz = mz / ml * 8.5; a.slideT = .3;
+      a.rollT = .5; a.rollArmor = .32; a.rollCd = .8; a.rollDir = (vx0 * mz - vz0 * mx) > 0 ? 1 : -1; a.dive = a.swim = false;
+      burst(a.x, a.y + .3, a.z, a.team, 12, .9); ringFx(a.x, a.y, a.z, a.team, 1.6, .3);
+      if (a === G.me) AU.roll();
+    } else { a.vy = a.swim ? SWIM_JUMP_V : JUMP_V; a.onGround = false; }
+  }
   a.vy -= GRAV * dt;
   // 横の移動：段差が高すぎる所へは入れない（x と z を別々に）
   const zone = SPAWN_ZONE[3 - a.team];
@@ -2195,6 +2496,7 @@ function timers(a, dt) {
   if (a.fogT > 0) a.fogT -= dt;
   if (a.cloakT > 0) a.cloakT -= dt;
   if (a.markT > 0) a.markT -= dt;
+  if (a.rollT > 0) a.rollT -= dt; if (a.rollArmor > 0) a.rollArmor -= dt; if (a.rollCd > 0) a.rollCd -= dt;
   if (a.revealT > 0) { a.revealT -= dt; if (a.revealT <= 0) a.revealed = false; }
 }
 
@@ -2204,6 +2506,7 @@ function hurt(a, dmg, src, kind) {
   if (src && src.team === a.team) return false;
   if (a.sj && a.sj.t > SJ_CH) return false;
   if (inBarrier(a)) return false;
+  if (a.rollArmor > 0) dmg *= .5;   // くるりターンの出だし
   if (a.armor > 0) { const used = Math.min(a.armor, dmg); a.armor -= used; dmg -= used; burst(a.x, a.y + 1, a.z, a.team, 6, .5); if (dmg <= 0) return true; }
   a.hp -= dmg; a.hurtT = 0; a.lastHitBy = src; a.hitN = (a.hitN || 0) + 1; a.flashT = .16;
   if (a.cloakT > 0) { a.revealed = true; a.revealT = .8; }
@@ -2259,8 +2562,8 @@ function syncModel(a, dt, viewer) {
   m.tag.visible = !a.dive && !!viewer && a.team === viewer.team && a !== viewer;
   m.mark.visible = !!enemyView && a.markT > 0;
   if (m.mark.visible) { m.mark.material.color.set(teamColor(viewer.team)); m.mark.position.y = 2.25 + Math.sin(clock * 5) * .1; }
-  m.aura.visible = a.armor > 0 || a.dashT > 0;
-  if (m.aura.visible) { m.aura.material.color.set(a.dashT > 0 ? '#ffffff' : teamColor(a.team)); m.aura.material.opacity = .12 + .08 * Math.sin(clock * 8); }
+  m.aura.visible = a.armor > 0 || a.dashT > 0 || a.rollArmor > 0;
+  if (m.aura.visible) { m.aura.material.color.set(a.dashT > 0 || a.rollArmor > 0 ? '#ffffff' : teamColor(a.team)); m.aura.material.opacity = .12 + .08 * Math.sin(clock * 8); }
   if (a.climb) {
     // かべに張りついた水たまり
     m.puddle.rotation.set(-Math.PI / 2, 0, 0); m.puddle.position.set(0, .5, .25);
@@ -2287,7 +2590,7 @@ function syncModel(a, dt, viewer) {
     sq *= 1 + Math.sin(clock * 2.4 + a.seed) * .012;                     // 息をする
     let wob = 0; if (a.flashT > 0) { a.flashT -= dt; wob = Math.sin(clock * 45) * a.flashT * .9; }   // 撃たれてぷるぷる
     m.body.scale.set((1 + wob) / Math.sqrt(sq), sq, (1 - wob) / Math.sqrt(sq));
-    m.body.rotation.y = a.sj && a.sj.t >= SJ_CH ? a.sj.t * 14 : 0;
+    m.body.rotation.y = a.sj && a.sj.t >= SJ_CH ? a.sj.t * 14 : a.rollT > 0 ? (1 - a.rollT / .5) * TAU * (a.rollDir || 1) : 0;
     m.body.rotation.x = k * .14;                                          // 走ると前かがみ
     m.body.position.y = Math.abs(Math.sin(ph)) * .045 * k;                // 走ると上下にはずむ
     for (const f of m.feet) { const p = ph + (f.userData.foot > 0 ? 0 : Math.PI); f.position.z = .03 + Math.sin(p) * .12 * k; f.position.y = air ? .14 : .08 + Math.max(0, Math.cos(p)) * .07 * k; }
@@ -2691,11 +2994,12 @@ function weaponTick(a, dt, fire, dodge, mx, mz) {
   if (a.dead || a.sj) return;
   const stop = a.dive || (a.spOn && (a.spOn.kind === 'beam' || a.spOn.kind === 'slam'));
   if (stop) {
-    // ためたまま、もぐって少し待てるブキ
-    if (w.keep && a.dive && ((w.cls === 'sniper' && s.ch >= 1) || (w.cls === 'gatling' && s.spin > .3))) { s.keepT = (s.keepT || 0) + dt; if (s.keepT < (w.cls === 'gatling' ? 2 : 1.5)) return; }
-    s.ch = 0; s.spin = 0; s.rolling = false; s.fireT = 0; s.bow = 0; s.blade = 0; s.held = 0; s.keepT = 0; return;
+    // ためキープ：ためている途中で「うつ」を押したままもぐると、少しの間ためたままにできる（スナイパー・ガトリング・ボウ）
+    const held = w.cls === 'sniper' ? s.ch > .05 : w.cls === 'gatling' ? s.spin > .05 && !(s.fireT > 0) : w.cls === 'bow' ? s.bow > .05 : false;
+    if (held && a.dive && fire) { s.keepT = (s.keepT || 0) + dt; if (s.keepT < keepTime(w)) { s.kept = true; return; } }
+    s.ch = 0; s.spin = 0; s.rolling = false; s.fireT = 0; s.bow = 0; s.blade = 0; s.held = 0; s.keepT = 0; s.kept = false; return;
   }
-  s.keepT = 0;
+  s.keepT = 0; s.kept = false;
   const from = muzzle(a), aim = () => aimFrom(a, from), cls = w.cls;
   const air = !a.onGround;
   const spreadMul = (air ? (w.air ? .1 : 1.8) : 1) * (s.focus > 0 ? .45 : 1);
@@ -2929,6 +3233,8 @@ function weaponTick(a, dt, fire, dodge, mx, mz) {
 // 撃った音・反動・銃口のしぶき
 const KICK = { gun: .3, blaster: .9, charger: 1, roller: .55, brush: .3, slosher: .7, stringer: .6, blade: .6, hose: .12 };
 const CAMKICK = { gun: .004, blaster: .035, charger: .04, roller: .012, brush: .004, slosher: .022, stringer: .018, blade: .012, hose: .001 };
+// ためキープできる時間（キープが得意なブキは長い）
+const keepTime = w => (w.cls === 'gatling' ? 1.5 : 1.0) * (w.keep ? 2.2 : 1);
 function sfx(a, kind) {
   const d = G.me ? Math.hypot(G.me.x - a.x, G.me.z - a.z) : 0, g = a === G.me ? 1 : clamp(1 - d / 40, 0, 1) * .6;
   if (g > .02) AU.shot(kind, g);
@@ -3401,6 +3707,7 @@ function onResize() {
   r.style.width = w + 'px'; r.style.height = h + 'px'; r.style.transform = ROT.on ? 'rotate(90deg) translateY(-100%)' : 'none';
   renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
   document.body.classList.toggle('narrow', w < 560);
+  if (typeof applyBtnLayout === 'function') try { applyBtnLayout(); } catch (e) { /* 起動中 */ }
 }
 addEventListener('resize', onResize);
 
@@ -3467,7 +3774,7 @@ function startMatch(mode, stage) {
   G.camYaw = G.me.yaw; G.camPitch = -.12;
   G.state = mode === 'practice' ? 'play' : 'count'; G.countT = mode === 'practice' ? 0 : 3.2;
   hideScreens(); lobbyHide(); $('hud').classList.remove('hidden'); $('touch').classList.toggle('off', !IN.touchOn);
-  $('wpName').innerHTML = `<b>${G.me.w.name}</b><br>サブ：${SUBS[G.me.w.sub].name}`; $('spName').textContent = SPECIALS[G.me.w.sp].name;
+  wpNameHud(G.me.w); applyBtnLayout();
   $('zoneBar').classList.toggle('hidden', mode !== 'zone'); zoneMarks(mode === 'zone');
   rulesInit(mode); $('ruleBar').classList.toggle('hidden', !(mode === 'flag' || mode === 'ball')); $('ruleBar').innerHTML = ''; RS.hud = '';
   buildTeamIcons(); miniInit();
@@ -3479,8 +3786,13 @@ function startMatch(mode, stage) {
 function setPlayerWeapon(w) {
   const a = G.me; if (!a) return;
   scene.remove(a.model.root); a.w = w; a.ws = {}; buildModel(a);
-  $('wpName').innerHTML = `<b>${w.name}</b><br>サブ：${SUBS[w.sub].name}`; $('spName').textContent = SPECIALS[w.sp].name;
+  wpNameHud(w);
   buildTeamIcons();
+}
+// 画面左下のブキ名（パソコンではキーも出す）
+function wpNameHud(w) {
+  const k = !IN.touchOn;
+  $('wpName').innerHTML = `<b>${w.name}</b><small> ${CLASSES[w.cls].name}</small><br>サブ：${SUBS[w.sub].name}${k ? '（E）' : ''}`; $('spName').textContent = SPECIALS[w.sp].name + (k ? '（Q）' : '');
 }
 function buildTeamIcons() {
   for (const t of [1, 2]) {
@@ -3661,7 +3973,8 @@ function updateHud(dt) {
   if (G.mode === 'flag' || G.mode === 'ball') rulesHud();
   const ink = $('ink'); ink.firstChild.style.height = a.ink + '%'; ink.classList.toggle('low', a.ink < 20 || G.inkWarn > 0);
   if (G.inkWarn > 0) { G.inkWarn -= dt; $('inkMsg').textContent = 'ペンキが足りない！'; }
-  else $('inkMsg').textContent = a.climb ? 'かべをのぼっている' : carrierOf(a) ? (G.mode === 'ball' ? 'ボールを運んでいる（撃てない・もぐれない）' : '旗を運んでいる（もぐれない）') : '';
+  else $('inkMsg').textContent = a.ws.kept ? `ためキープ ${Math.max(0, keepTime(a.w) - (a.ws.keepT || 0)).toFixed(1)}秒` : a.climb ? 'かべをのぼっている' : carrierOf(a) ? (G.mode === 'ball' ? 'ボールを運んでいる（撃てない・もぐれない）' : '旗を運んでいる（もぐれない）') : '';
+  $('charge').classList.toggle('keep', !!a.ws.kept);
   $('spArc').setAttribute('stroke-dasharray', (a.sp * 195).toFixed(1) + ' 195'); $('spArc').setAttribute('stroke', a.sp >= 1 ? '#fff' : teamColor(a.team));
   $('spBox').classList.toggle('full', a.sp >= 1); $('bSp').classList.toggle('ready', a.sp >= 1);
   const ch = a.w.cls === 'sniper' ? a.ws.ch : a.w.cls === 'bow' ? a.ws.bow : a.w.cls === 'gatling' ? (a.ws.fireT > 0 ? a.ws.fireT / a.w.dur : a.ws.spin) : a.w.cls === 'blade' ? Math.min(1, (a.ws.blade || 0) / a.w.charge) : a.w.pump ? clamp((a.ws.held || 0) / 1.5, 0, 1) : 0;
@@ -3879,7 +4192,7 @@ function rulesMini(g, mx, my) {
 }
 
 // ================= 画面（タイトル・ブキ選び・設定・一時停止） =================
-const SCREENS = ['title', 'armory', 'settings', 'pause', 'result', 'dress'];
+const SCREENS = ['title', 'armory', 'settings', 'pause', 'result', 'dress', 'btnEdit'];
 function hideScreens() { for (const s of SCREENS) $(s).classList.add('hidden'); }
 function toTitle() {
   G.state = 'title'; G.paused = false; AU.musicOn(false);
@@ -3891,7 +4204,7 @@ function toTitle() {
 }
 function drawWeaponCard() {
   const w = WBY[SET.weapon];
-  $('wcard').innerHTML = `${classIcon(w.cls, G.pal[0])}<div><div class="t">${w.name}</div><div class="s">${CLASSES[w.cls].name}・サブ：${SUBS[w.sub].name}<br>スペシャル：${SPECIALS[w.sp].name}　<u>ブキをかえる（全${WEAPONS.length}種）</u></div></div>`;
+  $('wcard').innerHTML = `<img alt="" src="${weaponThumb(w)}"><div><div class="t">${w.name}<small>${CLASSES[w.cls].name}</small></div><div class="s">サブ：${SUBS[w.sub].name}／SP：${SPECIALS[w.sp].name}<br><u>ブキをかえる（全${WEAPONS.length}種）</u></div></div>`;
 }
 function drawTitleChips() {
   if (!RULES[SET.rule]) SET.rule = 'turf';
@@ -3903,27 +4216,7 @@ function drawTitleChips() {
   st.innerHTML = [['random', 'ランダム'], ...STAGE_IDS.map(id => [id, STAGES[id].name])].map(([id, n]) => `<button data-s="${id}" class="${SET.stage === id ? 'on' : ''}">${n}</button>`).join('');
   st.querySelectorAll('button').forEach(b => b.onclick = () => { AU.ui(); SET.stage = b.dataset.s; saveSet(); drawTitleChips(); if (SET.stage !== 'random' && SET.stage !== STAGE_ID) { loadStage(SET.stage); } });
 }
-let armCls = null, armSel = null, armFrom = 'title';
-function openArmory(from) {
-  armFrom = from; armSel = SET.weapon; armCls = WBY[armSel].cls;
-  hideScreens(); $('armory').classList.remove('hidden'); drawArmory();
-}
-function drawArmory() {
-  $('clsTabs').innerHTML = CLASS_ORDER.map(c => `<button data-c="${c}" class="${c === armCls ? 'on' : ''}">${CLASSES[c].name}<small>${WEAPONS.filter(w => w.cls === c).length}</small></button>`).join('');
-  $('wgrid').innerHTML = WEAPONS.filter(w => w.cls === armCls).map(w => `<button class="witem ${w.id === armSel ? 'on' : ''}" data-w="${w.id}">${classIcon(w.cls, w.id === armSel ? G.pal[0] : '#fff')}<div><b>${w.name}</b><span>${wInfo(w).role}・${SUBS[w.sub].name}／${SPECIALS[w.sp].name}</span></div></button>`).join('');
-  const w = WBY[armSel], st = wStats(w), inf = wInfo(w), bar = (n, v) => `<div>${n}<i><u style="width:${Math.round(v * 100)}%"></u></i></div>`;
-  $('wdetail').innerHTML = `<div><b style="font-size:17px">${w.name}</b> <span class="role">${inf.role}</span><p>${CLASSES[w.cls].desc}</p><p>${w.desc}</p><p><b>たおすのに</b>：${inf.stk}</p></div>
-    <div><div class="bars">${bar('射程', st.range)}${bar('攻撃', st.atk)}${bar('ぬり', st.paint)}${bar('動き', st.move)}</div>
-    <p><b>サブ：${SUBS[w.sub].name}</b> ${SUBS[w.sub].desc}（ペンキ ${SUBS[w.sub].ink}%）</p><p><b>スペシャル：${SPECIALS[w.sp].name}</b> ${SPECIALS[w.sp].desc}</p></div>`;
-  $('clsTabs').querySelectorAll('button').forEach(b => b.onclick = () => { AU.ui(); armCls = b.dataset.c; armSel = WEAPONS.find(w => w.cls === armCls).id; drawArmory(); });
-  $('wgrid').querySelectorAll('button').forEach(b => b.onclick = () => { AU.ui(); armSel = b.dataset.w; drawArmory(); });
-}
-$('wOk').onclick = () => {
-  AU.ui(); SET.weapon = armSel; saveSet();
-  if (armFrom === 'pause' && G.me) { setPlayerWeapon(WBY[armSel]); hideScreens(); togglePause(false); }
-  else toTitle();
-};
-document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => { AU.ui(); const id = b.dataset.close; $(id).classList.add('hidden'); if (id === 'jumpUI') return; if ((id === 'armory' && armFrom === 'pause') || (id === 'settings' && setFrom === 'pause')) $('pause').classList.remove('hidden'); else if (G.state === 'title') toTitle(); });
+document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => { AU.ui(); const id = b.dataset.close; if (id === 'armory') { closeArmory(); return; } $(id).classList.add('hidden'); if (id === 'jumpUI') return; if (id === 'settings' && setFrom === 'pause') $('pause').classList.remove('hidden'); else if (G.state === 'title') toTitle(); });
 let setFrom = 'title';
 function openSettings(from) {
   setFrom = from; hideScreens(); $('settings').classList.remove('hidden');
@@ -3965,6 +4258,250 @@ $('pResume').onclick = () => { AU.ui(); togglePause(false); };
 $('pWeapon').onclick = () => { if (G.mode !== 'practice') return; AU.ui(); openArmory('pause'); };
 $('pSet').onclick = () => { AU.ui(); openSettings('pause'); };
 $('pQuit').onclick = () => { AU.ui(); clearMatch(); toTitle(); };
+
+// ================= スマホのボタンの配置（位置と大きさを変える） =================
+const BTN_IDS = ['bFire', 'bDive', 'bJump', 'bSub', 'bSp'];
+const BTN_DEF = { bFire: [26, 40, 92], bDive: [132, 20, 70], bJump: [122, 100, 62], bSub: [40, 146, 56], bSp: [104, 170, 56] };   // 右からの距離・下からの距離・大きさ(px)
+const BTN_NAME = { bFire: 'うつ', bDive: 'もぐる', bJump: 'ジャンプ', bSub: 'サブ', bSp: 'SP' };
+function btnPos(id) {   // ボタンの中心（画面の割合）と大きさ(px)
+  const L = SET.btn && SET.btn[id], d = BTN_DEF[id];
+  if (L) return { x: L.x, y: L.y, s: d[2] * L.k };
+  return { x: 1 - (d[0] + d[2] / 2) / VW(), y: 1 - (d[1] + d[2] / 2) / VH(), s: d[2] };
+}
+function applyBtnLayout() {
+  for (const id of BTN_IDS) {
+    const el = $(id); if (!el) continue;
+    if (!(SET.btn && SET.btn[id])) { for (const k of ['left', 'top', 'right', 'bottom', 'width', 'height', 'fontSize']) el.style[k] = ''; continue; }
+    const p = btnPos(id);
+    Object.assign(el.style, { left: (p.x * VW() - p.s / 2) + 'px', top: (p.y * VH() - p.s / 2) + 'px', right: 'auto', bottom: 'auto', width: p.s + 'px', height: p.s + 'px', fontSize: Math.round(12.5 * clamp(p.s / 64, .8, 1.5)) + 'px' });
+  }
+  const k = SET.stickK || 1, st = $('stick'), kn = st.querySelector('i');
+  Object.assign(st.style, { width: 120 * k + 'px', height: 120 * k + 'px', margin: (-60 * k) + 'px 0 0 ' + (-60 * k) + 'px' });
+  Object.assign(kn.style, { width: 52 * k + 'px', height: 52 * k + 'px', margin: (-26 * k) + 'px 0 0 ' + (-26 * k) + 'px' });
+}
+let beSel = 'bFire', beDrag = null, beTmp = null, beFrom = 'title';
+function openBtnEdit() {
+  beFrom = setFrom; beTmp = { stickK: SET.stickK || 1 };
+  for (const id of BTN_IDS) { const p = btnPos(id); beTmp[id] = { x: p.x, y: p.y, k: p.s / BTN_DEF[id][2] }; }
+  hideScreens(); $('btnEdit').classList.remove('hidden'); drawBtnEdit();
+}
+function drawBtnEdit() {
+  const area = $('beArea'); area.innerHTML = '';
+  const k = beTmp.stickK, st = document.createElement('div'); st.className = 'beStick';
+  Object.assign(st.style, { width: 120 * k + 'px', height: 120 * k + 'px', left: (VW() * .18 - 60 * k) + 'px', top: (VH() * .62 - 60 * k) + 'px' }); st.innerHTML = '<i></i><span>移動スティック</span>'; area.append(st);
+  for (const id of BTN_IDS) {
+    const t = beTmp[id], s = BTN_DEF[id][2] * t.k, el = document.createElement('div');
+    el.className = 'tb beb' + (id === beSel ? ' sel' : ''); el.textContent = BTN_NAME[id]; el.dataset.id = id;
+    Object.assign(el.style, { left: (t.x * VW() - s / 2) + 'px', top: (t.y * VH() - s / 2) + 'px', width: s + 'px', height: s + 'px', fontSize: Math.round(12.5 * clamp(s / 64, .8, 1.5)) + 'px' });
+    el.addEventListener('pointerdown', e => {
+      e.preventDefault(); beSel = id; const p = toStage(e.clientX, e.clientY); beDrag = { id, dx: p.x - t.x * VW(), dy: p.y - t.y * VH() };
+      try { el.setPointerCapture(e.pointerId); } catch (er) { /* */ }
+      $('beSize').value = t.k; area.querySelectorAll('.beb').forEach(b => b.classList.toggle('sel', b.dataset.id === id));
+    });
+    el.addEventListener('pointermove', e => {
+      if (!beDrag || beDrag.id !== id) return;
+      const p = toStage(e.clientX, e.clientY); t.x = clamp((p.x - beDrag.dx) / VW(), .03, .97); t.y = clamp((p.y - beDrag.dy) / VH(), .08, .97);
+      el.style.left = (t.x * VW() - s / 2) + 'px'; el.style.top = (t.y * VH() - s / 2) + 'px';
+    });
+    const end = () => { beDrag = null; }; el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+    area.append(el);
+  }
+  $('beSize').value = beTmp[beSel].k; $('beStick').value = k;
+}
+$('beSize').oninput = () => { beTmp[beSel].k = +$('beSize').value; drawBtnEdit(); };
+$('beStick').oninput = () => { beTmp.stickK = +$('beStick').value; drawBtnEdit(); };
+$('beReset').onclick = () => { AU.ui(); SET.btn = null; SET.stickK = 1; saveSet(); applyBtnLayout(); openBtnEdit(); };
+$('beDone').onclick = () => {
+  AU.ui(); SET.btn = {}; for (const id of BTN_IDS) SET.btn[id] = beTmp[id]; SET.stickK = beTmp.stickK; saveSet(); applyBtnLayout();
+  $('btnEdit').classList.add('hidden'); openSettings(beFrom);
+};
+$('btnLayout').onclick = () => { AU.init(); AU.ui(); openBtnEdit(); };
+
+// ================= ブキ選び（武器庫）：種類のタブ・カードの一覧・3Dの試着・性能 =================
+// ブキの写真（3Dの形を小さな画像にする。チームの色ごとに作って取っておく）
+const THUMB = { rt: null, scene: null, cam: null, cache: new Map(), cv: null };
+function weaponThumb(w) {
+  const key = w.id + G.pal[0];
+  if (THUMB.cache.has(key)) return THUMB.cache.get(key);
+  const W = 192, H = 128;
+  if (!THUMB.rt) {
+    THUMB.rt = new T.WebGLRenderTarget(W, H); THUMB.rt.texture.colorSpace = T.SRGBColorSpace;
+    THUMB.scene = new T.Scene();
+    THUMB.scene.add(new T.HemisphereLight(0xffffff, 0x6a6070, 1.6));
+    const dl = new T.DirectionalLight(0xffffff, 2.2); dl.position.set(2, 3, 4); THUMB.scene.add(dl);
+    THUMB.cam = new T.PerspectiveCamera(28, W / H, .05, 50);
+    THUMB.cv = document.createElement('canvas'); THUMB.cv.width = W; THUMB.cv.height = H;
+  }
+  const wrap = new T.Group(), m = weaponMesh(w, 1); wrap.add(m);
+  wrap.rotation.set(.22, Math.PI / 2 - .5, 0); THUMB.scene.add(wrap); wrap.updateMatrixWorld(true);
+  const box = new T.Box3().setFromObject(wrap), c = box.getCenter(new T.Vector3()), sz = box.getSize(new T.Vector3());
+  wrap.position.sub(c);
+  const fit = Math.max(sz.x / THUMB.cam.aspect, sz.y) / (2 * Math.tan(THUMB.cam.fov * Math.PI / 360)) * 1.18;
+  THUMB.cam.position.set(0, 0, fit + sz.z / 2); THUMB.cam.lookAt(0, 0, 0);
+  const prevT = renderer.getRenderTarget(), prevC = renderer.getClearColor(new T.Color()), prevA = renderer.getClearAlpha();
+  renderer.setRenderTarget(THUMB.rt); renderer.setClearColor(0x000000, 0); renderer.clear(); renderer.render(THUMB.scene, THUMB.cam);
+  const px = new Uint8Array(W * H * 4); renderer.readRenderTargetPixels(THUMB.rt, 0, 0, W, H, px);
+  renderer.setRenderTarget(prevT); renderer.setClearColor(prevC, prevA);
+  THUMB.scene.remove(wrap); wrap.traverse(o => { if (o.geometry) o.geometry.dispose(); });
+  const g = THUMB.cv.getContext('2d'), img = g.createImageData(W, H);
+  for (let y = 0; y < H; y++) img.data.set(px.subarray((H - 1 - y) * W * 4, (H - y) * W * 4), y * W * 4);   // 上下をもどす
+  g.putImageData(img, 0, 0);
+  const url = THUMB.cv.toDataURL('image/png'); THUMB.cache.set(key, url); return url;
+}
+
+// サブとスペシャルの小さな絵
+function subIcon(id) {
+  const p = {
+    bomb: '<circle cx="12" cy="14" r="7"/><rect x="11" y="3" width="3" height="5" rx="1"/>',
+    sticky: '<path d="M5 15a7 7 0 0 1 14 0v2H5z"/><circle cx="8" cy="20" r="2"/><circle cx="16" cy="20" r="2"/>',
+    slide: '<ellipse cx="11" cy="15" rx="8" ry="4"/><path d="M19 15h4" stroke="currentColor" stroke-width="2"/>',
+    balloon: '<ellipse cx="12" cy="10" rx="6" ry="7"/><path d="M12 17l-1 4h2z"/>',
+    popper: '<circle cx="7" cy="16" r="4"/><circle cx="16" cy="9" r="3.5"/><circle cx="17" cy="18" r="3"/>',
+    boomer: '<path d="M4 18 Q12 2 20 18 L16 18 Q12 9 8 18z"/>',
+    windup: '<circle cx="12" cy="15" r="6"/><rect x="11" y="4" width="2" height="6"/><rect x="7" y="3" width="10" height="3" rx="1.5"/>',
+    fountain: '<rect x="8" y="16" width="8" height="5" rx="1"/><path d="M12 15 Q6 6 3 12 M12 15 Q18 6 21 12" fill="none" stroke="currentColor" stroke-width="2"/>',
+    shield: '<path d="M5 4h14v8a7 7 0 0 1-14 0z"/>',
+    mine: '<ellipse cx="12" cy="16" rx="8" ry="3"/><rect x="10" y="10" width="4" height="4" rx="1"/>',
+    spring: '<path d="M6 18h12M7 15h10M6 12h12M7 9h10" stroke="currentColor" stroke-width="2.2"/><rect x="4" y="19" width="16" height="2.5" rx="1"/>',
+    dart: '<path d="M3 21 L15 9 L13 7 L21 3 L17 11 L15 9z"/>',
+    fog: '<circle cx="8" cy="14" r="5"/><circle cx="15" cy="12" r="6"/><circle cx="18" cy="17" r="4"/>'
+  }[id] || '<circle cx="12" cy="12" r="7"/>';
+  return `<svg viewBox="0 0 24 24" fill="currentColor">${p}</svg>`;
+}
+function spIcon(id) {
+  const p = {
+    beam: '<rect x="3" y="9" width="7" height="6" rx="2"/><path d="M10 10h11v4H10z"/>',
+    rain: '<ellipse cx="12" cy="8" rx="8" ry="4"/><path d="M7 14v5M12 14v6M17 14v5" stroke="currentColor" stroke-width="2"/>',
+    slam: '<path d="M8 3h8v6h3l-7 7-7-7h3z"/><rect x="3" y="19" width="18" height="2.5"/>',
+    barrier: '<path d="M3 19a9 9 0 0 1 18 0z" fill-opacity=".9"/>',
+    missile: '<path d="M12 2l3 6v9h-6V8z"/><path d="M9 14l-3 4h3zM15 14l3 4h-3z"/>',
+    armor: '<path d="M12 2l8 3v6c0 6-4 9-8 11-4-2-8-5-8-11V5z"/>',
+    tornado: '<path d="M3 5h18M5 9h14M7 13h10M9 17h6M11 21h2" stroke="currentColor" stroke-width="2.4"/>',
+    airdrop: '<circle cx="12" cy="9" r="6"/><path d="M5 20h14" stroke="currentColor" stroke-width="2"/><path d="M12 15v4" stroke="currentColor" stroke-width="2"/>',
+    tower: '<rect x="9" y="8" width="6" height="14" rx="1"/><circle cx="12" cy="6" r="4"/>',
+    dash: '<path d="M4 16h11l5-4-5-4H8z"/><path d="M2 10h4M2 13h3" stroke="currentColor" stroke-width="2"/>',
+    ring: '<circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="12" cy="12" r="2.5"/>',
+    turret: '<rect x="5" y="15" width="14" height="6" rx="2"/><circle cx="12" cy="12" r="4"/><rect x="14" y="10" width="8" height="3"/>',
+    fireworks: '<circle cx="12" cy="12" r="2.5"/><path d="M12 2v5M12 17v5M2 12h5M17 12h5M5 5l3.5 3.5M15.5 15.5L19 19M19 5l-3.5 3.5M8.5 15.5L5 19" stroke="currentColor" stroke-width="2"/>',
+    cloak: '<path d="M6 4h12l2 17H4z" fill-opacity=".55"/><circle cx="12" cy="9" r="3"/>'
+  }[id] || '<circle cx="12" cy="12" r="7"/>';
+  return `<svg viewBox="0 0 24 24" fill="currentColor">${p}</svg>`;
+}
+
+// ---------- 試着：自分のペンキっ子にブキを持たせて、くるくる回して見せる ----------
+const ARMP = { scene: null, cam: null, a: null, key: '', ped: null, rot: 0, drag: null, act: null, actT: 1.2 };
+function armPrevBuild() {
+  if (!ARMP.scene) {
+    ARMP.scene = new T.Scene();
+    ARMP.scene.add(new T.HemisphereLight(0xeaf2ff, 0x5a4a6a, 1.5));
+    const dl = new T.DirectionalLight(0xffffff, 2.4); dl.position.set(3, 5, 4); ARMP.scene.add(dl);
+    ARMP.cam = new T.PerspectiveCamera(30, 1, .1, 50);
+    const ped = new T.Group();
+    const base = new T.Mesh(new T.CylinderGeometry(.95, 1.05, .22, 40), new T.MeshStandardMaterial({ color: 0x2a2733, roughness: .5 })); base.position.y = -.11; ped.add(base);
+    const top = new T.Mesh(new T.CircleGeometry(.94, 40), new T.MeshStandardMaterial({ color: 0xffffff, roughness: .3 })); top.rotation.x = -Math.PI / 2; top.position.y = .002; ped.add(top);
+    ped.userData.top = top; ARMP.ped = ped; ARMP.scene.add(ped);
+    const el = $('armPrev');
+    el.addEventListener('pointerdown', e => { ARMP.drag = { x: toStage(e.clientX, e.clientY).x, r: ARMP.rot }; try { el.setPointerCapture(e.pointerId); } catch (er) { /* */ } });
+    el.addEventListener('pointermove', e => { if (ARMP.drag) ARMP.rot = ARMP.drag.r + (toStage(e.clientX, e.clientY).x - ARMP.drag.x) * .012; });
+    const end = () => { ARMP.drag = null; }; el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+  }
+  const key = [SET.weapon, SET.acc, SET.accCol, G.pal[0], G.pal[1]].join('|');
+  if (ARMP.a && ARMP.key === key) return;
+  if (ARMP.a) { scene.remove(ARMP.a.model.root); ARMP.scene.remove(ARMP.a.model.root); ARMP.a.model.root.traverse(o => { if (o.geometry) o.geometry.dispose(); }); }
+  const a = { name: '', team: 1, w: WBY[SET.weapon] || WBY.basic, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, yaw: 0, aimYaw: 0, aimPitch: 0, hp: HP_MAX, ink: INK_MAX, ws: {},
+    dive: false, swim: false, onGround: true, dead: false, inv: 0, moveSpd: 0, bob: 0, armor: 0, dashT: 0, cloakT: 0, markT: 0, revealed: false, climb: null, sj: null, acc: SET.acc || 'none', accCol: SET.accCol ?? 0xffffff };
+  buildModel(a); scene.remove(a.model.root); ARMP.scene.add(a.model.root);
+  ARMP.ped.userData.top.material.color.set(G.pal[0]);
+  ARMP.a = a; ARMP.key = key; ARMP.act = { kind: 'show', t: 0 }; ARMP.actT = 1.2;
+}
+// 画面の上の、試着の枠の位置（横画面に回していても、キャンバスの中の座標で）
+function elRect(el) {
+  const e = el.getBoundingClientRect(), r = $('rot').getBoundingClientRect();
+  if (!ROT.on) return { x: e.left - r.left, y: e.top - r.top, w: e.width, h: e.height };
+  return { x: e.top - r.top, y: r.right - e.right, w: e.height, h: e.width };
+}
+// 武器庫を開いている間は、ステージの代わりに暗い背景をかいて、試着の枠にだけキャラをかく
+const armOpen = () => !$('armory').classList.contains('hidden');
+function renderFrame(dt) {
+  if (armOpen()) { renderer.setClearColor(0x16121f, 1); renderer.clear(); armPrevRender(dt); }
+  else renderer.render(scene, camera);
+}
+function armPrevRender(dt) {
+  if (!armOpen()) return;
+  armPrevBuild();
+  const el = $('armPrev'), r = elRect(el), H0 = VH();
+  if (r.w < 20 || r.h < 20) return;
+  const a = ARMP.a, c = a.w.cls;
+  // ときどきブキを使って見せる
+  ARMP.actT -= dt;
+  if (ARMP.actT <= 0 && !ARMP.act) { ARMP.act = { kind: 'show', t: 0 }; ARMP.actT = 2.6; }
+  if (ARMP.act) {
+    const ac = ARMP.act; ac.t += dt;
+    const step = c === 'roller' || c === 'brush' || c === 'bucket' || c === 'blade' ? .5 : c === 'sniper' || c === 'bow' || c === 'cannon' ? .7 : .16;
+    if (ac.t > step * (ac.n || 0) && ac.t < 1.3) {
+      ac.n = (ac.n || 0) + 1;
+      if (c === 'roller' || c === 'brush') a.ws.swing = { t: 0, dur: c === 'brush' ? .2 : .36, kind: 'down' };
+      else if (c === 'bucket') a.ws.swing = { t: 0, dur: .32, kind: 'up' };
+      else if (c === 'blade') a.ws.swing = { t: 0, dur: .2, kind: 'side' };
+      else a.kick = Math.min(1, (a.kick || 0) + (c === 'cannon' || c === 'sniper' ? .9 : .3));
+      if (c === 'gatling') a.ws.spin = 1;
+      if (c === 'parasol') a.ws.open = true;
+    }
+    if (ac.t > 1.6) { ARMP.act = null; a.ws.spin = 0; a.ws.open = false; }
+  }
+  if (!ARMP.drag) ARMP.rot += dt * .45;
+  a.yaw = ARMP.rot; a.aimYaw = a.yaw; a.aimPitch = Math.sin(clock * .8) * .06; a.onGround = true;
+  syncModel(a, dt, null); a.model.root.visible = true;
+  ARMP.cam.aspect = r.w / r.h; ARMP.cam.updateProjectionMatrix();
+  const wide = c === 'roller' || c === 'brush' || c === 'sniper' || c === 'parasol';
+  ARMP.cam.position.set(0, 1.25, wide ? 4.6 : 4.0); ARMP.cam.lookAt(0, .78, 0);
+  const prevC = renderer.getClearColor(new T.Color()), prevA = renderer.getClearAlpha();
+  renderer.setScissorTest(true); renderer.setScissor(r.x, H0 - r.y - r.h, r.w, r.h); renderer.setViewport(r.x, H0 - r.y - r.h, r.w, r.h);
+  renderer.setClearColor(0x232033, 1); renderer.clear(true, true, false);
+  renderer.render(ARMP.scene, ARMP.cam);
+  renderer.setScissorTest(false); renderer.setViewport(0, 0, VW(), H0); renderer.setClearColor(prevC, prevA);
+}
+
+// ---------- 一覧と性能 ----------
+let armCls = null, armFrom = 'title';
+function openArmory(from) {
+  armFrom = from; armCls = WBY[SET.weapon].cls;
+  hideScreens(); $('armory').classList.remove('hidden'); drawArmory();
+}
+function equipWeapon(id) {
+  if (SET.weapon === id) return;
+  SET.weapon = id; saveSet();
+  if (armFrom === 'pause' && G.me) setPlayerWeapon(WBY[id]);
+  ARMP.act = { kind: 'show', t: 0 };
+}
+function drawArmory() {
+  const sel = WBY[SET.weapon], col = G.pal[0];
+  $('armCount').textContent = `全${WEAPONS.length}種`;
+  $('clsTabs').innerHTML = CLASS_ORDER.map(c => `<button data-c="${c}" class="${c === armCls ? 'on' : ''}${sel.cls === c ? ' has' : ''}">${classIcon(c, c === armCls ? '#15121d' : '#fff')}<span>${CLASSES[c].name}</span></button>`).join('');
+  $('wgrid').innerHTML = WEAPONS.filter(w => w.cls === armCls).map(w => {
+    const inf = wInfo(w), on = w.id === sel.id;
+    return `<button class="wc${on ? ' on' : ''}" data-w="${w.id}" style="--wc:#${w.look[1].toString(16).padStart(6, '0')}">
+      <img alt="" src="${weaponThumb(w)}"><b>${w.name}</b><span class="rl">${inf.role}</span>
+      <span class="ic"><i title="${SUBS[w.sub].name}">${subIcon(w.sub)}</i><i class="sp" title="${SPECIALS[w.sp].name}">${spIcon(w.sp)}</i></span>${on ? '<em>装備中</em>' : ''}</button>`;
+  }).join('');
+  const w = sel, st = wStats(w), inf = wInfo(w);
+  const bar = (n, v) => `<div class="sb"><span>${n}</span><i><u style="width:${Math.round(v * 100)}%"></u></i></div>`;
+  $('wdetail').innerHTML = `<div class="wn"><b>${w.name}</b><span>${CLASSES[w.cls].name}</span><span class="rlb">${inf.role}</span></div>
+    <p class="wd">${w.desc}</p>
+    <div class="stats">${bar('射程', st.range)}${bar('攻撃', st.atk)}${bar('ぬり', st.paint)}${bar('動き', st.move)}</div>
+    <p class="stk">たおすのに：<b>${inf.stk}</b></p>
+    <div class="ss"><i>${subIcon(w.sub)}</i><div><b>${SUBS[w.sub].name}</b><small>サブ・ペンキ${SUBS[w.sub].ink}%　${SUBS[w.sub].desc}</small></div></div>
+    <div class="ss sp"><i>${spIcon(w.sp)}</i><div><b>${SPECIALS[w.sp].name}</b><small>スペシャル　${SPECIALS[w.sp].desc}</small></div></div>`;
+  $('armory').style.setProperty('--tc', col);
+  $('clsTabs').querySelectorAll('button').forEach(b => b.onclick = () => { AU.ui(); armCls = b.dataset.c; drawArmory(); $('wgrid').scrollTop = 0; });
+  $('wgrid').querySelectorAll('button').forEach(b => b.onclick = () => { AU.ui(); equipWeapon(b.dataset.w); drawArmory(); });
+  const selEl = $('wgrid').querySelector('.wc.on'); if (selEl && selEl.scrollIntoView) selEl.scrollIntoView({ block: 'nearest' });
+}
+function closeArmory() {
+  if (armFrom === 'pause' && G.me) { hideScreens(); togglePause(false); }
+  else toTitle();
+}
+$('wOk').onclick = () => { AU.ui(); closeArmory(); };
 
 // ================= はじめる・まわす =================
 function applyHome(S) {
@@ -4060,7 +4597,7 @@ function loop(now) {
   requestAnimationFrame(loop);
   const dt = Math.min(.05, (now - last) / 1000); last = now;
   if (!hold) { if (G.state === 'title') titleTick(dt); else update(dt); }
-  renderer.render(scene, camera);
+  renderFrame(dt);
 }
 async function boot() {
   if (HUB.embedded) {
@@ -4081,10 +4618,10 @@ async function boot() {
 window.__P = {
   G, SET, actors, proj, devices, WEAPONS, WBY, SUBS, SPECIALS, STAGES, PCNT, get PTOTAL() { return PTOTAL; }, get STAGE_ID() { return STAGE_ID; }, get ZONE() { return ZONE; }, FACES,
   startMatch, toTitle, setPlayerWeapon, useSpecial, throwSub, startSuperJump, loadStage, hAt, paintAtCell, findPath, navOf, NOK, clearPaint, paintFace, wallTeamAt, crossFace, BOXES: () => BOXES,
-  RS, RULES, carrierOf, flagHome, goalOf, wInfo, shoot, LOBBY, ACC,
+  RS, RULES, carrierOf, flagHome, goalOf, wInfo, shoot, LOBBY, ACC, weaponThumb, weaponMesh, openArmory, ARMP, equipWeapon, paintCircle, hurt,
   wallPainted() { let n = 0; for (let i = 0; i < WP.length; i++) if (WP[i]) n++; return n; },
   hold(v) { hold = !!v; },
-  step(sec, dt = 1 / 60, draw = true) { for (let t = 0; t < sec; t += dt) { if (G.state === 'title') titleTick(dt); else update(dt); } if (draw) renderer.render(scene, camera); },
+  step(sec, dt = 1 / 60, draw = true) { for (let t = 0; t < sec; t += dt) { if (G.state === 'title') titleTick(dt); else update(dt); } if (draw) renderFrame(1 / 60); },
   input: IN, renderer, camera, scene, syncModel
 };
 boot();
