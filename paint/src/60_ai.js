@@ -73,14 +73,17 @@ function pickGoal(a) {
   }
   return best;
 }
-const AIP = [{ err: .16, react: .7, fireP: .55 }, { err: .08, react: .4, fireP: .8 }, { err: .035, react: .22, fireP: .95 }];
+// CPU の強さ（かんたん・ふつう・むずかしい）：err ねらいのぶれ（距離あたり）、react 見つけてから撃つまで（秒）、fireP 撃ちつづける割合
+const AIP = [{ err: .2, react: .84, fireP: .5 }, { err: .1, react: .48, fireP: .75 }, { err: .044, react: .27, fireP: .9 }];
 const SUB_THROW = new Set(['bomb', 'sticky', 'slide', 'balloon', 'popper', 'boomer', 'windup', 'dart', 'fog']);
 const SP_ATTACK = new Set(['beam', 'missile', 'airdrop', 'fireworks', 'rain', 'turret', 'tornado']);
 const SP_SUPPORT = new Set(['barrier', 'armor', 'cloak', 'dash']);
 const SP_PAINT = new Set(['tower', 'rain', 'tornado', 'fireworks', 'dash', 'ring']);
 function botThink(a, dt) {
   const ai = a.ai || (a.ai = { t: 0, path: null, pi: 0, goal: null, strafe: 1, st: 0, stuckT: 0, lx: a.x, lz: a.z, target: null, seeT: 0, refill: 0, subT: rand(4, 9), spawned: false });
-  const P = AIP[SET.diff] || AIP[1], w = a.w;
+  const P0 = AIP[SET.diff] || AIP[1], w = a.w;
+  // チャージャー（スナイパー）の CPU は、一撃で倒せるぶん、ねらいが少し雑で、見つけてから撃つまでがおそい
+  const P = w.cls === 'sniper' ? { err: P0.err * 1.6, react: P0.react * 1.6, fireP: P0.fireP } : P0;
   const ctl = { mx: 0, mz: 0, dive: false, jump: false, fire: false, dodge: false };
   if (a.dead || G.state !== 'play' || a.sj) return ctl;
   // 復活したら、前にいる味方の所へスーパージャンプすることも
@@ -141,7 +144,11 @@ function botThink(a, dt) {
     // 先読み：弾がとどくまでの時間だけ、相手の動く先をねらう（遅い弾ほど先を見る）
     const pv = { roller: Math.max(16, (w.frange || 8) * 2), brush: Math.max(16, (w.frange || 5) * 2), blade: d < 6 ? 30 : 24, bucket: w.high ? 9 : 17, hose: w.mist ? 18 : 32 }[w.cls] || w.v || 30;
     const lead = clamp(d / pv, 0, w.cls === 'sniper' ? .4 : .7);
-    const ex = t.x + t.vx * lead + (Math.random() - .5) * P.err * d, ez = t.z + t.vz * lead + (Math.random() - .5) * P.err * d, ey = t.y + (t.dive ? .2 : .8) + (Math.random() - .5) * P.err * d * .5;
+    // ねらいのぶれ：毎フレームばらばらではなく、ゆっくりずれていく（チャージャーの照準線もなめらかに動く）
+    ai.errT = (ai.errT || 0) - dt;
+    if (ai.errT <= 0 || !ai.eo) { ai.errT = rand(.35, .75); ai.eo1 = [Math.random() - .5, Math.random() - .5, Math.random() - .5]; if (!ai.eo) ai.eo = ai.eo1.slice(); }
+    for (let i = 0; i < 3; i++) ai.eo[i] += (ai.eo1[i] - ai.eo[i]) * Math.min(1, dt * 6);
+    const ex = t.x + t.vx * lead + ai.eo[0] * P.err * d, ez = t.z + t.vz * lead + ai.eo[1] * P.err * d, ey = t.y + (t.dive ? .2 : .8) + ai.eo[2] * P.err * d * .5;
     a.aimPt = new T.Vector3(ex, ey, ez);
     const from = muzzle(a), dv = a.aimPt.clone().sub(from);
     const wantYaw = Math.atan2(dv.x, dv.z), wantPit = Math.atan2(dv.y, Math.hypot(dv.x, dv.z));
@@ -221,7 +228,9 @@ function botThink(a, dt) {
     if (a.ink < 18) ai.refill = 2.2;
     if (ai.refill > 0) { ai.refill -= dt; if (groundTeam(a) === a.team) ctl.dive = true; }
     else {
-      const paintWpn = !(w.cls === 'sniper' && !w.wide && Math.random() < .7);
+      // チャージャーは、ぬるのは時々だけ（ぬるかどうかを1〜2.5秒ごとに決める。毎フレーム決めると小さな弾をばらまいてしまう）
+      ai.pwT = (ai.pwT || 0) - dt; if (ai.pwT <= 0) { ai.pwT = rand(1, 2.5); ai.pw = Math.random() >= .7; }
+      const paintWpn = !(w.cls === 'sniper' && !w.wide && !ai.pw);
       if (w.cls === 'roller' || w.cls === 'brush') ctl.fire = a.ink > 10;
       else if (paintWpn && !own && a.ink > 25) ctl.fire = w.cls === 'gatling' ? !(a.ws.spin >= .7) && !(a.ws.fireT > 0) : w.cls === 'bow' ? !(a.ws.bow >= .5) : w.cls === 'blade' ? !(a.ws.blade > .05) : w.cls === 'sniper' ? !(a.ws.ch >= .4) : true;
       if (!ctl.fire && groundTeam(a) === a.team && Math.hypot(mx, mz) > .5 && Math.random() < .9) ctl.dive = true;

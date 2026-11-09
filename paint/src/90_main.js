@@ -118,7 +118,7 @@ window.__P = {
   wallPainted() { let n = 0; for (let i = 0; i < WP.length; i++) if (WP[i]) n++; return n; },
   hold(v) { hold = !!v; },
   step(sec, dt = 1 / 60, draw = true) { for (let t = 0; t < sec; t += dt) { if (G.state === 'title') titleTick(dt); else update(dt); } if (draw) renderFrame(1 / 60); },
-  input: IN, renderer, camera, scene, syncModel
+  input: IN, renderer, camera, scene, syncModel, aimAssist
 };
 boot();
 </script>

@@ -166,11 +166,12 @@ function playerControl(a, dt) {
   return { mx, mz, dive: dive && !(a.w.cls === 'dual' && fire), jump, fire, dodge };
 }
 
-// スマホのねらい補助：撃っている間だけ、照準から6°以内の見えている相手へ少しだけ向きを寄せる
+// スマホのねらい補助：撃っている間だけ、照準から6°以内（チャージャーは2.5°）の見えている相手へ少しだけ向きを寄せる
 function aimAssist(a, dt) {
   const w = a.w, range = (w.cls === 'blade' ? Math.max(w.range, w.crange * .8) : (w.range || w.frange || 8)) * 1.1;
   const cx = camera.position.x, cz = camera.position.z;
-  let best = null, bang = 6 * Math.PI / 180;
+  const sn = w.cls === 'sniper';   // チャージャー（スナイパー）を持っているときだけ、補助は弱め（せまく、ゆっくり）
+  let best = null, bang = (sn ? 2.5 : 6) * Math.PI / 180 / (G.scopeZ || 1);
   for (const t of actors) {
     if (t.dead || t.team === a.team) continue;
     if ((t.swim || t.cloakT > 0) && !t.revealed && !(t.markT > 0)) continue;
@@ -178,7 +179,7 @@ function aimAssist(a, dt) {
     const ang = Math.abs(angD(Math.atan2(t.x - cx, t.z - cz) - G.camYaw));
     if (ang < bang && lineOfSight(a.x, a.y + 1.1, a.z, t.x, t.y + .8, t.z)) { bang = ang; best = t; }
   }
-  if (best) G.camYaw += angD(Math.atan2(best.x - cx, best.z - cz) - G.camYaw) * Math.min(1, dt * 6);
+  if (best) G.camYaw += angD(Math.atan2(best.x - cx, best.z - cz) - G.camYaw) * Math.min(1, dt * (sn ? 2.2 : 6));
 }
 
 // ---------- ゾーン争奪 ----------
@@ -296,6 +297,21 @@ function updateCamera(dt) {
     const m = muzzle(a), d = aimFrom(a, m), L = rayGround(m.x, m.y, m.z, d.x, d.y, d.z, a.w.range * (.5 + .5 * a.ws.ch), .2);
     laser.visible = true; laser.material.color.set(teamColor(a.team)); laser.scale.set(1, Math.max(.1, L), 1); laser.position.copy(m).addScaledVector(d, L / 2); laser.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), d);
   } else laser.visible = false;
+  // ほかのチャージャー（スナイパー）がためている間は、その照準線が見える（どこをねらっているか分かる）
+  let li = 0;
+  for (const o of actors) {
+    if (o === a || o.dead || o.dive || o.sj || o.w.cls !== 'sniper' || !(o.ws.ch > 0)) continue;
+    if (o.cloakT > 0 && o.team !== a.team && !o.revealed) continue;
+    const m = muzzle(o), d = aimFrom(o, m), L = rayGround(m.x, m.y, m.z, d.x, d.y, d.z, o.w.range * (.5 + .5 * o.ws.ch), .2), lz = botLaser(li++);
+    lz.visible = true; lz.material.color.set(teamColor(o.team)); lz.material.opacity = .3 + .45 * o.ws.ch;
+    lz.scale.set(1, Math.max(.1, L), 1); lz.position.copy(m).addScaledVector(d, L / 2); lz.quaternion.setFromUnitVectors(_upV, d);
+  }
+  for (let i = li; i < botLasers.length; i++) botLasers[i].visible = false;
+}
+const botLasers = [], _upV = new T.Vector3(0, 1, 0), _blGeo = new T.CylinderGeometry(.03, .03, 1, 6, 1, true);
+function botLaser(i) {
+  if (!botLasers[i]) { const m = new T.Mesh(_blGeo, new T.MeshBasicMaterial({ transparent: true, opacity: .5, depthWrite: false })); m.visible = false; m.frustumCulled = false; scene.add(m); botLasers[i] = m; }
+  return botLasers[i];
 }
 
 // ---------- 表示 ----------

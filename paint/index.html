@@ -3614,14 +3614,17 @@ function pickGoal(a) {
   }
   return best;
 }
-const AIP = [{ err: .16, react: .7, fireP: .55 }, { err: .08, react: .4, fireP: .8 }, { err: .035, react: .22, fireP: .95 }];
+// CPU の強さ（かんたん・ふつう・むずかしい）：err ねらいのぶれ（距離あたり）、react 見つけてから撃つまで（秒）、fireP 撃ちつづける割合
+const AIP = [{ err: .2, react: .84, fireP: .5 }, { err: .1, react: .48, fireP: .75 }, { err: .044, react: .27, fireP: .9 }];
 const SUB_THROW = new Set(['bomb', 'sticky', 'slide', 'balloon', 'popper', 'boomer', 'windup', 'dart', 'fog']);
 const SP_ATTACK = new Set(['beam', 'missile', 'airdrop', 'fireworks', 'rain', 'turret', 'tornado']);
 const SP_SUPPORT = new Set(['barrier', 'armor', 'cloak', 'dash']);
 const SP_PAINT = new Set(['tower', 'rain', 'tornado', 'fireworks', 'dash', 'ring']);
 function botThink(a, dt) {
   const ai = a.ai || (a.ai = { t: 0, path: null, pi: 0, goal: null, strafe: 1, st: 0, stuckT: 0, lx: a.x, lz: a.z, target: null, seeT: 0, refill: 0, subT: rand(4, 9), spawned: false });
-  const P = AIP[SET.diff] || AIP[1], w = a.w;
+  const P0 = AIP[SET.diff] || AIP[1], w = a.w;
+  // チャージャー（スナイパー）の CPU は、一撃で倒せるぶん、ねらいが少し雑で、見つけてから撃つまでがおそい
+  const P = w.cls === 'sniper' ? { err: P0.err * 1.6, react: P0.react * 1.6, fireP: P0.fireP } : P0;
   const ctl = { mx: 0, mz: 0, dive: false, jump: false, fire: false, dodge: false };
   if (a.dead || G.state !== 'play' || a.sj) return ctl;
   // 復活したら、前にいる味方の所へスーパージャンプすることも
@@ -3682,7 +3685,11 @@ function botThink(a, dt) {
     // 先読み：弾がとどくまでの時間だけ、相手の動く先をねらう（遅い弾ほど先を見る）
     const pv = { roller: Math.max(16, (w.frange || 8) * 2), brush: Math.max(16, (w.frange || 5) * 2), blade: d < 6 ? 30 : 24, bucket: w.high ? 9 : 17, hose: w.mist ? 18 : 32 }[w.cls] || w.v || 30;
     const lead = clamp(d / pv, 0, w.cls === 'sniper' ? .4 : .7);
-    const ex = t.x + t.vx * lead + (Math.random() - .5) * P.err * d, ez = t.z + t.vz * lead + (Math.random() - .5) * P.err * d, ey = t.y + (t.dive ? .2 : .8) + (Math.random() - .5) * P.err * d * .5;
+    // ねらいのぶれ：毎フレームばらばらではなく、ゆっくりずれていく（チャージャーの照準線もなめらかに動く）
+    ai.errT = (ai.errT || 0) - dt;
+    if (ai.errT <= 0 || !ai.eo) { ai.errT = rand(.35, .75); ai.eo1 = [Math.random() - .5, Math.random() - .5, Math.random() - .5]; if (!ai.eo) ai.eo = ai.eo1.slice(); }
+    for (let i = 0; i < 3; i++) ai.eo[i] += (ai.eo1[i] - ai.eo[i]) * Math.min(1, dt * 6);
+    const ex = t.x + t.vx * lead + ai.eo[0] * P.err * d, ez = t.z + t.vz * lead + ai.eo[1] * P.err * d, ey = t.y + (t.dive ? .2 : .8) + ai.eo[2] * P.err * d * .5;
     a.aimPt = new T.Vector3(ex, ey, ez);
     const from = muzzle(a), dv = a.aimPt.clone().sub(from);
     const wantYaw = Math.atan2(dv.x, dv.z), wantPit = Math.atan2(dv.y, Math.hypot(dv.x, dv.z));
@@ -3762,7 +3769,9 @@ function botThink(a, dt) {
     if (a.ink < 18) ai.refill = 2.2;
     if (ai.refill > 0) { ai.refill -= dt; if (groundTeam(a) === a.team) ctl.dive = true; }
     else {
-      const paintWpn = !(w.cls === 'sniper' && !w.wide && Math.random() < .7);
+      // チャージャーは、ぬるのは時々だけ（ぬるかどうかを1〜2.5秒ごとに決める。毎フレーム決めると小さな弾をばらまいてしまう）
+      ai.pwT = (ai.pwT || 0) - dt; if (ai.pwT <= 0) { ai.pwT = rand(1, 2.5); ai.pw = Math.random() >= .7; }
+      const paintWpn = !(w.cls === 'sniper' && !w.wide && !ai.pw);
       if (w.cls === 'roller' || w.cls === 'brush') ctl.fire = a.ink > 10;
       else if (paintWpn && !own && a.ink > 25) ctl.fire = w.cls === 'gatling' ? !(a.ws.spin >= .7) && !(a.ws.fireT > 0) : w.cls === 'bow' ? !(a.ws.bow >= .5) : w.cls === 'blade' ? !(a.ws.blade > .05) : w.cls === 'sniper' ? !(a.ws.ch >= .4) : true;
       if (!ctl.fire && groundTeam(a) === a.team && Math.hypot(mx, mz) > .5 && Math.random() < .9) ctl.dive = true;
@@ -3947,11 +3956,12 @@ function playerControl(a, dt) {
   return { mx, mz, dive: dive && !(a.w.cls === 'dual' && fire), jump, fire, dodge };
 }
 
-// スマホのねらい補助：撃っている間だけ、照準から6°以内の見えている相手へ少しだけ向きを寄せる
+// スマホのねらい補助：撃っている間だけ、照準から6°以内（チャージャーは2.5°）の見えている相手へ少しだけ向きを寄せる
 function aimAssist(a, dt) {
   const w = a.w, range = (w.cls === 'blade' ? Math.max(w.range, w.crange * .8) : (w.range || w.frange || 8)) * 1.1;
   const cx = camera.position.x, cz = camera.position.z;
-  let best = null, bang = 6 * Math.PI / 180;
+  const sn = w.cls === 'sniper';   // チャージャー（スナイパー）を持っているときだけ、補助は弱め（せまく、ゆっくり）
+  let best = null, bang = (sn ? 2.5 : 6) * Math.PI / 180 / (G.scopeZ || 1);
   for (const t of actors) {
     if (t.dead || t.team === a.team) continue;
     if ((t.swim || t.cloakT > 0) && !t.revealed && !(t.markT > 0)) continue;
@@ -3959,7 +3969,7 @@ function aimAssist(a, dt) {
     const ang = Math.abs(angD(Math.atan2(t.x - cx, t.z - cz) - G.camYaw));
     if (ang < bang && lineOfSight(a.x, a.y + 1.1, a.z, t.x, t.y + .8, t.z)) { bang = ang; best = t; }
   }
-  if (best) G.camYaw += angD(Math.atan2(best.x - cx, best.z - cz) - G.camYaw) * Math.min(1, dt * 6);
+  if (best) G.camYaw += angD(Math.atan2(best.x - cx, best.z - cz) - G.camYaw) * Math.min(1, dt * (sn ? 2.2 : 6));
 }
 
 // ---------- ゾーン争奪 ----------
@@ -4077,6 +4087,21 @@ function updateCamera(dt) {
     const m = muzzle(a), d = aimFrom(a, m), L = rayGround(m.x, m.y, m.z, d.x, d.y, d.z, a.w.range * (.5 + .5 * a.ws.ch), .2);
     laser.visible = true; laser.material.color.set(teamColor(a.team)); laser.scale.set(1, Math.max(.1, L), 1); laser.position.copy(m).addScaledVector(d, L / 2); laser.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), d);
   } else laser.visible = false;
+  // ほかのチャージャー（スナイパー）がためている間は、その照準線が見える（どこをねらっているか分かる）
+  let li = 0;
+  for (const o of actors) {
+    if (o === a || o.dead || o.dive || o.sj || o.w.cls !== 'sniper' || !(o.ws.ch > 0)) continue;
+    if (o.cloakT > 0 && o.team !== a.team && !o.revealed) continue;
+    const m = muzzle(o), d = aimFrom(o, m), L = rayGround(m.x, m.y, m.z, d.x, d.y, d.z, o.w.range * (.5 + .5 * o.ws.ch), .2), lz = botLaser(li++);
+    lz.visible = true; lz.material.color.set(teamColor(o.team)); lz.material.opacity = .3 + .45 * o.ws.ch;
+    lz.scale.set(1, Math.max(.1, L), 1); lz.position.copy(m).addScaledVector(d, L / 2); lz.quaternion.setFromUnitVectors(_upV, d);
+  }
+  for (let i = li; i < botLasers.length; i++) botLasers[i].visible = false;
+}
+const botLasers = [], _upV = new T.Vector3(0, 1, 0), _blGeo = new T.CylinderGeometry(.03, .03, 1, 6, 1, true);
+function botLaser(i) {
+  if (!botLasers[i]) { const m = new T.Mesh(_blGeo, new T.MeshBasicMaterial({ transparent: true, opacity: .5, depthWrite: false })); m.visible = false; m.frustumCulled = false; scene.add(m); botLasers[i] = m; }
+  return botLasers[i];
 }
 
 // ---------- 表示 ----------
@@ -4751,7 +4776,7 @@ window.__P = {
   wallPainted() { let n = 0; for (let i = 0; i < WP.length; i++) if (WP[i]) n++; return n; },
   hold(v) { hold = !!v; },
   step(sec, dt = 1 / 60, draw = true) { for (let t = 0; t < sec; t += dt) { if (G.state === 'title') titleTick(dt); else update(dt); } if (draw) renderFrame(1 / 60); },
-  input: IN, renderer, camera, scene, syncModel
+  input: IN, renderer, camera, scene, syncModel, aimAssist
 };
 boot();
 </script>
