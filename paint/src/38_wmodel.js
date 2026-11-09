@@ -126,6 +126,12 @@ function weaponMesh(w, team) {
       yoke(wd); break; }
     case 'hopper': { handle(); for (let i = 0; i < 5; i++) add(To(.045, .012, TAU, 10), A, 0, .0 - i * .055, .3 + i * .1, Math.atan2(.89, -.33)); const h = headG(), wd = .9; drum(h, wd); yoke(wd); break; }
     case 'sponge': { handle(1.1, A); const h = headG(), wd = .96; drum(h, wd, .18); for (const s of [-1, 1]) for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; mk(h, Sp(.07, 8, 6), C, s * (wd / 2 + .02), Math.cos(a) * .12, Math.sin(a) * .12); } yoke(wd); break; }
+    case 'elephant': {
+      stick(C, [0, -.27, .95], .034); const h = headG(), wd = 1.5; drum(h, wd, .24);
+      for (const sx of [-1, 1]) mk(h, Cy(.27, .27, .1, 18), C, sx * wd / 2, 0, 0, 0, 0, H);
+      yoke(wd); for (const sx of [-1, 1]) { add(Sp(.2, 12, 8), C, sx * .36, -.12, .9, 0, 0, 0, 1, 1.1, .25); add(Sp(.15, 10, 6), A, sx * .36, -.12, .935, 0, 0, 0, 1, 1.1, .2); }
+      for (let i = 0; i < 4; i++) add(Cy(.05 - i * .007, .05 - i * .007, .12, 8), C, 0, -.2 - i * .09, 1.06 + Math.sin(i * .7) * .06, .4 + i * .25);
+      break; }
     // ---------- ハケ・モップ：毛の動物 ----------
     case 'brush': { stick(Wd, [0, -.36, .96], .03); const h = headG(); mk(h, Bx(.4, .06, .2), Mt, 0, .1, -.05); mk(h, Bx(.38, .12, .2), C, 0, 0, 0); mk(h, Bx(.38, .06, .2), J, 0, -.09, .02); break; }
     case 'bigbrush': { stick(D, [0, -.35, .96], .035); const h = headG(); mk(h, Bx(.56, .06, .24), Mt, 0, .1, -.05); mk(h, Bx(.54, .14, .24), C, 0, 0, 0); mk(h, Bx(.54, .07, .24), J, 0, -.1, .02); break; }
@@ -146,6 +152,11 @@ function weaponMesh(w, team) {
       const glow = wmat(L[1], { emissive: L[1], emissiveIntensity: .9 }); for (let i = 0; i < 3; i++) add(To(.05, .012, TAU, 12), glow, 0, .02, .66 + i * .07);
       add(Bx(.09, .17, .09), D, 0, -.13, 0); break; }
     case 'widesn': add(Bx(.16, .12, .95), C, 0, 0, .28); add(Bx(.3, .06, .14), A, 0, .02, .8); tank(.05, .26, .06, .1); add(Bx(.09, .17, .09), D, 0, -.13, 0); break;
+    case 'straw':
+      add(Cy(.05, .05, 1.1, 14), Gl, 0, .02, .42, H); add(Cy(.036, .036, 1.06, 12), J, 0, .02, .42, H); add(Sp(.11), Gl, 0, .05, -.12); add(Sp(.09), J, 0, .05, -.12);
+      add(Bx(.09, .1, .5), C, 0, -.07, .14); add(Bx(.09, .17, .09), C, 0, -.15, -.02); for (let i = 0; i < 4; i++) add(To(.054, .01, TAU, 12), A, 0, .02, .1 + i * .28);
+      add(new T.OctahedronGeometry(.06), A, 0, .14, .5); add(Co(.04, .1, 8), A, 0, .02, 1.02, H);
+      break;
     // ---------- バケツ：天気 ----------
     case 'bucket': add(Cy(.2, .15, .32, 14), C, 0, 0, .25); add(Cy(.18, .18, .02, 14), J, 0, .13, .25); add(To(.2, .015, PI, 16), Mt, 0, .1, .25); break;
     case 'triple': for (let i = 0; i < 3; i++) { const a = i / 3 * TAU; add(Cy(.11, .08, .26, 12), C, Math.cos(a) * .1, 0, .25 + Math.sin(a) * .1); add(Cy(.1, .1, .02, 12), J, Math.cos(a) * .1, .11, .25 + Math.sin(a) * .1); } add(To(.22, .014, PI, 16), Mt, 0, .1, .25); break;

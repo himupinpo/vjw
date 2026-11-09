@@ -667,6 +667,7 @@ const WEAPONS = [
   W('turbo', 'チーター', 'roller', 'spring', 'dash', { look: [0xf0b040, 0x222222], width: 1.9, rollSpd: 1.0, turbo: true, rollInk: 3, flick: 7, fdmg: 110, frange: 8, fspread: 32, frate: 1.5, ink: 8, desc: 'ころがし続けると、どんどん速くなる。' }),
   W('hopper', 'カンガルー', 'roller', 'balloon', 'tornado', { look: [0xb07848, 0xf2dcc0], width: 2, rollSpd: 1, rollInk: 3.2, flick: 8, fdmg: 115, frange: 9, fspread: 30, frate: 1.4, ink: 9, airFlick: true, desc: 'ジャンプ中に振ると、たて振りで遠くへ届く。' }),
   W('sponge', 'ヒツジ', 'roller', 'fountain', 'tower', { look: [0xf4f2ea, 0x3a3a3a], width: 2.4, rollSpd: 1.1, rollInk: 1.8, flick: 8, fdmg: 80, frange: 8, fspread: 38, frate: 1.8, ink: 5, rollDmg: 80, desc: 'ペンキが長持ちする軽いローラー。力は弱め。' }),
+  W('elephant', 'ゾウ', 'roller', 'sticky', 'slam', { look: [0x8a8e9a, 0xf0a8b8], width: 3.6, rollSpd: .7, rollInk: 5.2, flick: 13, fdmg: 175, frange: 11, fspread: 58, frate: .55, ink: 18, spd: .82, rollDmg: 220, desc: 'とても重い。大きく振ると、広く遠くまで一気にぬりつぶす。ジャンプ振りならさらに遠くへ。' }),
   // ---- ハケ・モップ（7） ----
   W('brush', 'イタチ', 'brush', 'mine', 'slam', { look: [0x9a6a3a, 0xf2e6d0], width: 1.25, rollSpd: 1.55, rollInk: 1.6, flick: 4, fdmg: 34, frange: 5.5, fspread: 30, frate: 5, ink: 2.2, spd: 1.08, desc: '走りながらぬれる。小刻みに振って近くの相手に。' }),
   W('bigbrush', 'ヤギ', 'brush', 'fountain', 'beam', { look: [0xece6da, 0x8a6a4a], width: 1.8, rollSpd: 1.35, rollInk: 2.2, flick: 5, fdmg: 40, frange: 6.5, fspread: 34, frate: 3.4, ink: 3, desc: '少し太いハケ。ふり幅も広い。' }),
@@ -684,6 +685,7 @@ const WEAPONS = [
   W('keep', 'ルナ', 'sniper', 'spring', 'cloak', { look: [0xc8ccd6, 0xfff2b0], charge: 1.0, dmg: 160, mindmg: 40, range: 28, ink: 18, pr: .55, keep: true, spd: .92, desc: 'ためきったまま、もぐって少し待てる。' }),
   W('semi', 'パルサー', 'sniper', 'balloon', 'dash', { look: [0x2a2a3a, 0x3affd8], charge: .35, dmg: 70, mindmg: 35, range: 24, ink: 7, pr: .45, spd: 1.0, desc: 'すぐたまる。クリックの速さで撃てる。' }),
   W('widesn', 'オーロラ', 'sniper', 'fog', 'tower', { look: [0x1e3a4a, 0x5affb0], charge: 1.0, dmg: 120, mindmg: 35, range: 26, ink: 18, pr: 1.0, wide: true, spd: .92, desc: '太い線でぬれるが、一撃にはならない。' }),
+  W('straw', 'ヒコボシ', 'sniper', 'mine', 'airdrop', { look: [0xf2f4f8, 0xffd23f], charge: 1.25, dmg: 180, mindmg: 30, range: 26, ink: 20, pr: .4, keep: true, keepLong: true, spd: .94, desc: 'ためたまま、もぐって長く待てる（5秒）。細い線で、ためきると一撃。' }),
   // ---- バケツ（8） ----
   W('bucket', 'ユウダチ', 'bucket', 'bomb', 'barrier', { look: [0x9aa0aa, 0x3a6ac8], rate: 1.3, dmg: 70, range: 11, ink: 7, pr: 1.15, desc: '大きなペンキのかたまりを山なりに投げる。' }),
   W('triple', 'アラレ', 'bucket', 'fountain', 'beam', { look: [0xd8e4ee, 0x6a8aa8], rate: 1.0, dmg: 55, range: 10, ink: 8, pr: 1.0, triple: true, desc: '3つに分かれて広くかかる。' }),
@@ -2073,6 +2075,12 @@ function weaponMesh(w, team) {
       yoke(wd); break; }
     case 'hopper': { handle(); for (let i = 0; i < 5; i++) add(To(.045, .012, TAU, 10), A, 0, .0 - i * .055, .3 + i * .1, Math.atan2(.89, -.33)); const h = headG(), wd = .9; drum(h, wd); yoke(wd); break; }
     case 'sponge': { handle(1.1, A); const h = headG(), wd = .96; drum(h, wd, .18); for (const s of [-1, 1]) for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; mk(h, Sp(.07, 8, 6), C, s * (wd / 2 + .02), Math.cos(a) * .12, Math.sin(a) * .12); } yoke(wd); break; }
+    case 'elephant': {
+      stick(C, [0, -.27, .95], .034); const h = headG(), wd = 1.5; drum(h, wd, .24);
+      for (const sx of [-1, 1]) mk(h, Cy(.27, .27, .1, 18), C, sx * wd / 2, 0, 0, 0, 0, H);
+      yoke(wd); for (const sx of [-1, 1]) { add(Sp(.2, 12, 8), C, sx * .36, -.12, .9, 0, 0, 0, 1, 1.1, .25); add(Sp(.15, 10, 6), A, sx * .36, -.12, .935, 0, 0, 0, 1, 1.1, .2); }
+      for (let i = 0; i < 4; i++) add(Cy(.05 - i * .007, .05 - i * .007, .12, 8), C, 0, -.2 - i * .09, 1.06 + Math.sin(i * .7) * .06, .4 + i * .25);
+      break; }
     // ---------- ハケ・モップ：毛の動物 ----------
     case 'brush': { stick(Wd, [0, -.36, .96], .03); const h = headG(); mk(h, Bx(.4, .06, .2), Mt, 0, .1, -.05); mk(h, Bx(.38, .12, .2), C, 0, 0, 0); mk(h, Bx(.38, .06, .2), J, 0, -.09, .02); break; }
     case 'bigbrush': { stick(D, [0, -.35, .96], .035); const h = headG(); mk(h, Bx(.56, .06, .24), Mt, 0, .1, -.05); mk(h, Bx(.54, .14, .24), C, 0, 0, 0); mk(h, Bx(.54, .07, .24), J, 0, -.1, .02); break; }
@@ -2093,6 +2101,11 @@ function weaponMesh(w, team) {
       const glow = wmat(L[1], { emissive: L[1], emissiveIntensity: .9 }); for (let i = 0; i < 3; i++) add(To(.05, .012, TAU, 12), glow, 0, .02, .66 + i * .07);
       add(Bx(.09, .17, .09), D, 0, -.13, 0); break; }
     case 'widesn': add(Bx(.16, .12, .95), C, 0, 0, .28); add(Bx(.3, .06, .14), A, 0, .02, .8); tank(.05, .26, .06, .1); add(Bx(.09, .17, .09), D, 0, -.13, 0); break;
+    case 'straw':
+      add(Cy(.05, .05, 1.1, 14), Gl, 0, .02, .42, H); add(Cy(.036, .036, 1.06, 12), J, 0, .02, .42, H); add(Sp(.11), Gl, 0, .05, -.12); add(Sp(.09), J, 0, .05, -.12);
+      add(Bx(.09, .1, .5), C, 0, -.07, .14); add(Bx(.09, .17, .09), C, 0, -.15, -.02); for (let i = 0; i < 4; i++) add(To(.054, .01, TAU, 12), A, 0, .02, .1 + i * .28);
+      add(new T.OctahedronGeometry(.06), A, 0, .14, .5); add(Co(.04, .1, 8), A, 0, .02, 1.02, H);
+      break;
     // ---------- バケツ：天気 ----------
     case 'bucket': add(Cy(.2, .15, .32, 14), C, 0, 0, .25); add(Cy(.18, .18, .02, 14), J, 0, .13, .25); add(To(.2, .015, PI, 16), Mt, 0, .1, .25); break;
     case 'triple': for (let i = 0; i < 3; i++) { const a = i / 3 * TAU; add(Cy(.11, .08, .26, 12), C, Math.cos(a) * .1, 0, .25 + Math.sin(a) * .1); add(Cy(.1, .1, .02, 12), J, Math.cos(a) * .1, .11, .25 + Math.sin(a) * .1); } add(To(.22, .014, PI, 16), Mt, 0, .1, .25); break;
@@ -3057,12 +3070,14 @@ function weaponTick(a, dt, fire, dodge, mx, mz) {
       if (press && s.cd <= 0 && !s.rolling) {
         if (useInk(a, w.ink)) {
           s.cd = 1 / w.frate; s.flickT = brush ? .1 : .32; s.swing = { t: 0, dur: brush ? .2 : .36, kind: 'down' }; const d = aim();
+          // ジャンプ振り：空中で振ると、はばはせまくなるが遠くまで届く（とびはね系はもっと遠く）
           const vert = w.vflick || (w.airFlick && air), n = w.flick, base = Math.atan2(d.x, d.z), up = clamp(Math.asin(d.y), -.3, .5);
-          const fr = w.frange * (w.airFlick && air ? 1.6 : 1);
+          const fr = w.frange * (air ? (w.airFlick ? 1.9 : 1.45) : 1);
           for (let k = 0; k < n; k++) {
             let yaw = base, pit = up + .15, v = fr * 1.6, straight = .08, g = 18;
             // たて振り：遠くまで一直線（まっすぐ飛ぶ時間を長めに）／床をはう波：低く出して順に着地
             if (vert) { pit = up + .05 + k * .012; v = fr * (.55 + .5 * k / n) * 1.25; straight = .22; g = 26; yaw += (Math.random() - .5) * .05; }
+            else if (air) { yaw += (k / Math.max(1, n - 1) - .5) * w.fspread * .28 * Math.PI / 180 + (Math.random() - .5) * .03; pit = up + .1 + (k % 3) * .035; v = fr * (1.02 + .22 * ((k * 7) % 5) / 4); straight = .16; g = 22; }
             else if (w.wave) { pit = up + .03; v = fr * (.35 + .65 * k / Math.max(1, n - 1)) * 1.3; straight = .14; g = 26; yaw += (Math.random() - .5) * w.fspread * Math.PI / 180; }
             else { yaw += (k / Math.max(1, n - 1) - .5) * w.fspread * Math.PI / 180 + (Math.random() - .5) * .04; v *= rand(.8, 1.05); }   // 横振り：だいたい射程の7〜9割まで届く
             const dd = dirOf(yaw, pit);
@@ -3074,7 +3089,7 @@ function weaponTick(a, dt, fire, dodge, mx, mz) {
       if (s.flickT > 0) s.flickT -= dt;
       if (fire && !(s.flickT > 0) && !press) s.rolling = true;
       if (!fire) { s.rolling = false; s.rollT = 0; }
-      if (s.rolling) {
+      if (s.rolling && a.onGround) {   // 空中ではころがしてもぬれない
         const sp = a.moveSpd;
         if (sp > .6) {
           if (!useInk(a, w.rollInk * dt * clamp(sp / 4, .3, 1.5))) { s.rolling = false; break; }
@@ -3234,7 +3249,7 @@ function weaponTick(a, dt, fire, dodge, mx, mz) {
 const KICK = { gun: .3, blaster: .9, charger: 1, roller: .55, brush: .3, slosher: .7, stringer: .6, blade: .6, hose: .12 };
 const CAMKICK = { gun: .004, blaster: .035, charger: .04, roller: .012, brush: .004, slosher: .022, stringer: .018, blade: .012, hose: .001 };
 // ためキープできる時間（キープが得意なブキは長い）
-const keepTime = w => (w.cls === 'gatling' ? 1.5 : 1.0) * (w.keep ? 2.2 : 1);
+const keepTime = w => w.keepLong ? 5 : (w.cls === 'gatling' ? 1.5 : 1.0) * (w.keep ? 2.2 : 1);
 function sfx(a, kind) {
   const d = G.me ? Math.hypot(G.me.x - a.x, G.me.z - a.z) : 0, g = a === G.me ? 1 : clamp(1 - d / 40, 0, 1) * .6;
   if (g > .02) AU.shot(kind, g);

@@ -378,12 +378,14 @@ function weaponTick(a, dt, fire, dodge, mx, mz) {
       if (press && s.cd <= 0 && !s.rolling) {
         if (useInk(a, w.ink)) {
           s.cd = 1 / w.frate; s.flickT = brush ? .1 : .32; s.swing = { t: 0, dur: brush ? .2 : .36, kind: 'down' }; const d = aim();
+          // ジャンプ振り：空中で振ると、はばはせまくなるが遠くまで届く（とびはね系はもっと遠く）
           const vert = w.vflick || (w.airFlick && air), n = w.flick, base = Math.atan2(d.x, d.z), up = clamp(Math.asin(d.y), -.3, .5);
-          const fr = w.frange * (w.airFlick && air ? 1.6 : 1);
+          const fr = w.frange * (air ? (w.airFlick ? 1.9 : 1.45) : 1);
           for (let k = 0; k < n; k++) {
             let yaw = base, pit = up + .15, v = fr * 1.6, straight = .08, g = 18;
             // たて振り：遠くまで一直線（まっすぐ飛ぶ時間を長めに）／床をはう波：低く出して順に着地
             if (vert) { pit = up + .05 + k * .012; v = fr * (.55 + .5 * k / n) * 1.25; straight = .22; g = 26; yaw += (Math.random() - .5) * .05; }
+            else if (air) { yaw += (k / Math.max(1, n - 1) - .5) * w.fspread * .28 * Math.PI / 180 + (Math.random() - .5) * .03; pit = up + .1 + (k % 3) * .035; v = fr * (1.02 + .22 * ((k * 7) % 5) / 4); straight = .16; g = 22; }
             else if (w.wave) { pit = up + .03; v = fr * (.35 + .65 * k / Math.max(1, n - 1)) * 1.3; straight = .14; g = 26; yaw += (Math.random() - .5) * w.fspread * Math.PI / 180; }
             else { yaw += (k / Math.max(1, n - 1) - .5) * w.fspread * Math.PI / 180 + (Math.random() - .5) * .04; v *= rand(.8, 1.05); }   // 横振り：だいたい射程の7〜9割まで届く
             const dd = dirOf(yaw, pit);
@@ -395,7 +397,7 @@ function weaponTick(a, dt, fire, dodge, mx, mz) {
       if (s.flickT > 0) s.flickT -= dt;
       if (fire && !(s.flickT > 0) && !press) s.rolling = true;
       if (!fire) { s.rolling = false; s.rollT = 0; }
-      if (s.rolling) {
+      if (s.rolling && a.onGround) {   // 空中ではころがしてもぬれない
         const sp = a.moveSpd;
         if (sp > .6) {
           if (!useInk(a, w.rollInk * dt * clamp(sp / 4, .3, 1.5))) { s.rolling = false; break; }
@@ -555,7 +557,7 @@ function weaponTick(a, dt, fire, dodge, mx, mz) {
 const KICK = { gun: .3, blaster: .9, charger: 1, roller: .55, brush: .3, slosher: .7, stringer: .6, blade: .6, hose: .12 };
 const CAMKICK = { gun: .004, blaster: .035, charger: .04, roller: .012, brush: .004, slosher: .022, stringer: .018, blade: .012, hose: .001 };
 // ためキープできる時間（キープが得意なブキは長い）
-const keepTime = w => (w.cls === 'gatling' ? 1.5 : 1.0) * (w.keep ? 2.2 : 1);
+const keepTime = w => w.keepLong ? 5 : (w.cls === 'gatling' ? 1.5 : 1.0) * (w.keep ? 2.2 : 1);
 function sfx(a, kind) {
   const d = G.me ? Math.hypot(G.me.x - a.x, G.me.z - a.z) : 0, g = a === G.me ? 1 : clamp(1 - d / 40, 0, 1) * .6;
   if (g > .02) AU.shot(kind, g);

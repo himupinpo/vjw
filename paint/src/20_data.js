@@ -88,6 +88,7 @@ const WEAPONS = [
   W('turbo', 'チーター', 'roller', 'spring', 'dash', { look: [0xf0b040, 0x222222], width: 1.9, rollSpd: 1.0, turbo: true, rollInk: 3, flick: 7, fdmg: 110, frange: 8, fspread: 32, frate: 1.5, ink: 8, desc: 'ころがし続けると、どんどん速くなる。' }),
   W('hopper', 'カンガルー', 'roller', 'balloon', 'tornado', { look: [0xb07848, 0xf2dcc0], width: 2, rollSpd: 1, rollInk: 3.2, flick: 8, fdmg: 115, frange: 9, fspread: 30, frate: 1.4, ink: 9, airFlick: true, desc: 'ジャンプ中に振ると、たて振りで遠くへ届く。' }),
   W('sponge', 'ヒツジ', 'roller', 'fountain', 'tower', { look: [0xf4f2ea, 0x3a3a3a], width: 2.4, rollSpd: 1.1, rollInk: 1.8, flick: 8, fdmg: 80, frange: 8, fspread: 38, frate: 1.8, ink: 5, rollDmg: 80, desc: 'ペンキが長持ちする軽いローラー。力は弱め。' }),
+  W('elephant', 'ゾウ', 'roller', 'sticky', 'slam', { look: [0x8a8e9a, 0xf0a8b8], width: 3.6, rollSpd: .7, rollInk: 5.2, flick: 13, fdmg: 175, frange: 11, fspread: 58, frate: .55, ink: 18, spd: .82, rollDmg: 220, desc: 'とても重い。大きく振ると、広く遠くまで一気にぬりつぶす。ジャンプ振りならさらに遠くへ。' }),
   // ---- ハケ・モップ（7） ----
   W('brush', 'イタチ', 'brush', 'mine', 'slam', { look: [0x9a6a3a, 0xf2e6d0], width: 1.25, rollSpd: 1.55, rollInk: 1.6, flick: 4, fdmg: 34, frange: 5.5, fspread: 30, frate: 5, ink: 2.2, spd: 1.08, desc: '走りながらぬれる。小刻みに振って近くの相手に。' }),
   W('bigbrush', 'ヤギ', 'brush', 'fountain', 'beam', { look: [0xece6da, 0x8a6a4a], width: 1.8, rollSpd: 1.35, rollInk: 2.2, flick: 5, fdmg: 40, frange: 6.5, fspread: 34, frate: 3.4, ink: 3, desc: '少し太いハケ。ふり幅も広い。' }),
@@ -105,6 +106,7 @@ const WEAPONS = [
   W('keep', 'ルナ', 'sniper', 'spring', 'cloak', { look: [0xc8ccd6, 0xfff2b0], charge: 1.0, dmg: 160, mindmg: 40, range: 28, ink: 18, pr: .55, keep: true, spd: .92, desc: 'ためきったまま、もぐって少し待てる。' }),
   W('semi', 'パルサー', 'sniper', 'balloon', 'dash', { look: [0x2a2a3a, 0x3affd8], charge: .35, dmg: 70, mindmg: 35, range: 24, ink: 7, pr: .45, spd: 1.0, desc: 'すぐたまる。クリックの速さで撃てる。' }),
   W('widesn', 'オーロラ', 'sniper', 'fog', 'tower', { look: [0x1e3a4a, 0x5affb0], charge: 1.0, dmg: 120, mindmg: 35, range: 26, ink: 18, pr: 1.0, wide: true, spd: .92, desc: '太い線でぬれるが、一撃にはならない。' }),
+  W('straw', 'ヒコボシ', 'sniper', 'mine', 'airdrop', { look: [0xf2f4f8, 0xffd23f], charge: 1.25, dmg: 180, mindmg: 30, range: 26, ink: 20, pr: .4, keep: true, keepLong: true, spd: .94, desc: 'ためたまま、もぐって長く待てる（5秒）。細い線で、ためきると一撃。' }),
   // ---- バケツ（8） ----
   W('bucket', 'ユウダチ', 'bucket', 'bomb', 'barrier', { look: [0x9aa0aa, 0x3a6ac8], rate: 1.3, dmg: 70, range: 11, ink: 7, pr: 1.15, desc: '大きなペンキのかたまりを山なりに投げる。' }),
   W('triple', 'アラレ', 'bucket', 'fountain', 'beam', { look: [0xd8e4ee, 0x6a8aa8], rate: 1.0, dmg: 55, range: 10, ink: 8, pr: 1.0, triple: true, desc: '3つに分かれて広くかかる。' }),
