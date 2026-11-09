@@ -249,6 +249,18 @@ function weaponMesh(w, team) {
       case 'jet': add(Cy(.035, .05, .3), C, 0, 0, .15, H); add(Cy(.012, .02, .4), A, 0, 0, .5, H); add(Bx(.08, .14, .12), C, 0, -.05, .05); add(Sp(.05), J, 0, .07, .05); break;
     }
   }
+  // スコープ：上にのせる筒と、光る前のレンズ（ためるほどズームするブキ）
+  if (w.scope) {
+    const lensM = wmat(0xa8ecff, { emissive: 0x3aa8ff, emissiveIntensity: .9, roughness: .05, metalness: .3 });
+    const sp = { ranger: [.21, .16, .5, .048], snipeg: [.27, -.1, .42, .05], longbow: [.15, .17, .3, .032] }[w.id];
+    if (sp) {
+      const [y, z0, len, r] = sp;
+      add(Bx(.035, .07, .09), D, 0, y - r - .03, z0 + len * .5);                                   // 台
+      add(Cy(r, r, len, 14), A, 0, y, z0 + len / 2, H);                                          // 筒
+      for (const z of [z0, z0 + len]) add(Cy(r * 1.32, r * 1.32, .06, 14), D, 0, y, z, H);       // 両はしのふち
+      add(Cy(r * 1.12, r * 1.12, .012, 14), lensM, 0, y, z0 + len + .035, H);                     // レンズ
+    } else add(Cy(.05, .05, .012, 14), lensM, 0, .14, .625, H);                                    // ポラリススコープ：もとの筒にレンズ
+  }
   if (!g.children.length) { add(Bx(.12, .14, .5), C, 0, 0, .15); grip(); }
   return g;
 }

@@ -99,9 +99,9 @@ const WEAPONS = [
   W('tawashi', 'ハリネズミ', 'brush', 'windup', 'turret', { look: [0x8a6a4a, 0xd8c8b0], width: .9, rollSpd: 1.75, rollInk: 1.3, flick: 3, fdmg: 28, frange: 4.5, fspread: 30, frate: 7, ink: 1.6, spd: 1.12, desc: 'いちばん速く走れる、小さなハケ。' }),
   // ---- スナイパー（8） ----
   W('sniper', 'シリウス', 'sniper', 'mine', 'beam', { look: [0xe8eef6, 0x3a7ad8], charge: 1.0, dmg: 160, mindmg: 40, range: 30, ink: 18, pr: .55, spd: .92, desc: 'ためきると遠くの相手を一撃。' }),
-  W('scope', 'ポラリス', 'sniper', 'sticky', 'missile', { look: [0x23305a, 0xffcf3a], charge: 1.1, dmg: 160, mindmg: 40, range: 34, ink: 18, pr: .5, scope: true, spd: .9, desc: 'ためている間は遠くがよく見える。' }),
+  W('scope', 'ポラリススコープ', 'sniper', 'sticky', 'missile', { look: [0x23305a, 0xffcf3a], charge: 1.1, dmg: 160, mindmg: 40, range: 34, ink: 18, pr: .5, scope: 2.6, spd: .9, desc: 'シリウスにスコープをつけた形。ためるほどスコープでどんどんズームして、遠くの相手をねらえる。' }),
   W('quick', 'コメット', 'sniper', 'bomb', 'armor', { look: [0x3a3a48, 0xff8a2a], charge: .5, dmg: 85, mindmg: 30, range: 22, ink: 8, pr: .5, desc: 'すぐたまるが、2発でたおす。' }),
-  W('ranger', 'アンドロメダ', 'sniper', 'shield', 'rain', { look: [0x4a3a6a, 0xd8b8ff], charge: 1.6, dmg: 180, mindmg: 40, range: 42, ink: 24, pr: .6, spd: .85, desc: 'ステージの奥まで届く。ためるのはおそい。' }),
+  W('ranger', 'アンドロメダスコープ', 'sniper', 'shield', 'rain', { look: [0x4a3a6a, 0xd8b8ff], charge: 1.6, dmg: 180, mindmg: 40, range: 42, ink: 24, pr: .6, scope: 4, spd: .85, desc: 'ステージの奥まで届く。ためるほど大きなスコープで4倍までズームする。ためるのはおそい。' }),
   W('lance', 'メテオ', 'sniper', 'dart', 'turret', { look: [0x3a2a2a, 0xff5a2a], charge: 1.2, dmg: 150, mindmg: 40, range: 32, ink: 20, pr: .5, pierce: true, spd: .9, model: 'lance', desc: '水流が相手も盾もつらぬいて、後ろまで届く。' }),
   W('keep', 'ルナ', 'sniper', 'spring', 'cloak', { look: [0xc8ccd6, 0xfff2b0], charge: 1.0, dmg: 160, mindmg: 40, range: 28, ink: 18, pr: .55, keep: true, spd: .92, desc: 'ためきったまま、もぐって少し待てる。' }),
   W('semi', 'パルサー', 'sniper', 'balloon', 'dash', { look: [0x2a2a3a, 0x3affd8], charge: .35, dmg: 70, mindmg: 35, range: 24, ink: 7, pr: .45, spd: 1.0, desc: 'すぐたまる。クリックの速さで撃てる。' }),
@@ -122,7 +122,7 @@ const WEAPONS = [
   W('heavyg', 'タイフーン', 'gatling', 'shield', 'barrier', { look: [0x2a2e38, 0xff4a4a], spin: 1.8, dur: 3.2, rate: 15, dmg: 32, range: 21, spread: 3.5, ink: 24, pr: .7, v: 36, spd: .85, desc: 'ためは長いが、長く遠くまで撃ち続ける。' }),
   W('reel', 'コガラシ', 'gatling', 'fog', 'tower', { look: [0x8a5a3a, 0xf2a03a], spin: 1.1, dur: 2.4, rate: 13, dmg: 30, range: 17, spread: 4.5, ink: 18, pr: .66, v: 33, spd: .92, keep: true, model: 'reel', desc: 'ためたまま、もぐって少し待てる。' }),
   W('trig', 'ツムジ', 'gatling', 'balloon', 'fireworks', { look: [0x4a4a6a, 0xb0f0ff], spin: 1.2, dur: 2.0, rate: 10, dmg: 26, range: 14, spread: 3, ink: 22, pr: .6, v: 32, spd: .9, triple: true, desc: '3本の弾をいっしょに広げて撃つ。' }),
-  W('snipeg', 'キタカゼ', 'gatling', 'dart', 'turret', { look: [0xe8eef6, 0x3a5ad8], spin: 2.0, dur: 2.4, rate: 10, dmg: 38, range: 26, spread: 1.2, ink: 22, pr: .6, v: 42, spd: .85, desc: 'とても遠くまで、まっすぐ撃てる。' }),
+  W('snipeg', 'キタカゼスコープ', 'gatling', 'dart', 'turret', { look: [0xe8eef6, 0x3a5ad8], spin: 2.0, dur: 2.4, rate: 10, dmg: 38, range: 26, spread: 1.2, ink: 22, pr: .6, v: 42, scope: 2.2, spd: .85, desc: 'とても遠くまで、まっすぐ撃てる。回すほどスコープでズームし、撃っている間もそのまま。' }),
   W('bounceg', 'コダマ', 'gatling', 'popper', 'dash', { look: [0x5a8a4a, 0xe8f0c8], spin: 1.0, dur: 2.0, rate: 14, dmg: 28, range: 15, spread: 5, ink: 18, pr: .64, v: 32, bounce: 1, desc: '弾が一度はねる。物かげの近くにもかかる。' }),
   // ---- 二丁拳銃（7） ----
   W('dual', 'マラカス', 'dual', 'sticky', 'beam', { look: [0xe84a3a, 0xffd23a], rate: 9, dmg: 30, range: 12, spread: 6, ink: .85, pr: .62, v: 30, rolls: 1, desc: '撃ちながら「もぐる」で1回すべれる。' }),
@@ -141,7 +141,7 @@ const WEAPONS = [
   W('doublepara', 'ヤエザクラ', 'parasol', 'spring', 'turret', { look: [0x5a3a3a, 0xffa8c8], rate: 1.2, pellets: 8, dmg: 17, range: 10, cone: 16, ink: 6, pr: .6, shield: 300, v: 26, regen: true, desc: 'カサがすぐ元にもどる。こわれてもすぐ直る。' }),
   // ---- ボウ（6） ----
   W('bow', 'カジキ', 'bow', 'sticky', 'missile', { look: [0x1e4a8a, 0xd8e4f0], charge: .9, dmg: 50, range: 19, ink: 7, pr: .6, v: 40, arrows: 3, desc: 'ためて3本の矢。ためきると矢が少しおくれて破裂。' }),
-  W('longbow', 'イッカク', 'bow', 'shield', 'slam', { look: [0xd8dde4, 0x5a7a9a], charge: 1.3, dmg: 62, range: 26, ink: 9, pr: .65, v: 46, arrows: 3, spd: .94, desc: '遠くまで届く強い弓。' }),
+  W('longbow', 'イッカクスコープ', 'bow', 'shield', 'slam', { look: [0xd8dde4, 0x5a7a9a], charge: 1.3, dmg: 62, range: 26, ink: 9, pr: .65, v: 46, arrows: 3, scope: 2, spd: .94, desc: '遠くまで届く強い弓。ためるほどスコープでズームする。' }),
   W('fivebow', 'ハリセンボン', 'bow', 'boomer', 'fireworks', { look: [0xd8c890, 0x6a5a3a], charge: 1.0, dmg: 40, range: 16, ink: 9, pr: .55, v: 38, arrows: 5, desc: '5本の矢を広くばらまく。' }),
   W('tatebow', 'タチウオ', 'bow', 'mine', 'airdrop', { look: [0xc8ccd8, 0x8aa0c0], charge: .9, dmg: 48, range: 20, ink: 7, pr: .6, v: 40, arrows: 3, vertical: true, desc: '矢をたてに並べて放つ。まっすぐな線をぬれる。' }),
   W('bakubow', 'フグ', 'bow', 'fog', 'tower', { look: [0xf0d870, 0x4a4a3a], charge: 1.4, dmg: 45, range: 18, ink: 10, pr: .6, v: 38, arrows: 3, boom: true, desc: '半分ためれば、どの矢も破裂する。' }),

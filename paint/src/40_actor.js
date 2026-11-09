@@ -360,7 +360,7 @@ function syncModel(a, dt, viewer) {
   const enemyView = viewer && a.team !== viewer.team;
   const near = viewer ? Math.hypot(viewer.x - a.x, viewer.z - a.z) < 3 : false;
   const cloaked = enemyView && a.cloakT > 0 && !a.revealed && !near;
-  m.root.visible = !cloaked;
+  m.root.visible = !cloaked && !(a === viewer && G.scopeT > .45);   // スコープでのぞいている間は、自分の体を見せない
   m.root.position.set(a.x, a.y, a.z);
   m.root.rotation.set(0, a.yaw, 0);
   const hidden = a.dive && a.swim && enemyView && !a.revealed && !(a.markT > 0);

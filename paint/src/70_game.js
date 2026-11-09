@@ -103,7 +103,7 @@ function startMatch(mode, stage) {
   $('zoneBar').classList.toggle('hidden', mode !== 'zone'); zoneMarks(mode === 'zone');
   rulesInit(mode); $('ruleBar').classList.toggle('hidden', !(mode === 'flag' || mode === 'ball')); $('ruleBar').innerHTML = ''; RS.hud = '';
   buildTeamIcons(); miniInit();
-  G.camY = undefined; G.kick = 0;
+  G.camY = undefined; G.kick = 0; G.scopeT = 0; G.scopeZ = 1;
   const ruleName = RULES[mode] ? RULES[mode].name : 'ぬりあいバトル';
   if (mode !== 'practice') { showMsg('READY?', ruleName + '・' + STAGE.name, 1.8); AU.ready(); } else showMsg('試しうち', 'まとを撃ってブキをためそう', 2);
   AU.musicOn(mode !== 'practice' && SET.music);
@@ -141,8 +141,7 @@ function closeJumpUI() { const j = $('jumpUI'); if (j) j.classList.add('hidden')
 // ---------- 自分の操作 ----------
 const _ray = new T.Raycaster(), _v2 = new T.Vector2();
 function playerControl(a, dt) {
-  const scoping = a.w.scope && a.ws.ch > .1;
-  const sens = .0023 * SET.sens * (scoping ? .45 : 1);
+  const sens = .0023 * SET.sens / (G.scopeZ || 1);   // ズームしているほど、ゆっくり向きが変わる
   G.camYaw -= IN.lookX * sens; G.camPitch = clamp(G.camPitch - IN.lookY * sens * (SET.invY ? -1 : 1), -1.15, .95);
   IN.lookX = IN.lookY = 0;
   const [ax, ay] = moveAxes(), fx = Math.sin(G.camYaw), fz = Math.cos(G.camYaw);
@@ -251,7 +250,7 @@ function endMatch() {
 }
 
 // ---------- カメラ ----------
-const _cam = new T.Vector3(), _piv = new T.Vector3(), _look = new T.Vector3();
+const _cam = new T.Vector3(), _piv = new T.Vector3(), _look = new T.Vector3(), _eye = new T.Vector3(), _lookS = new T.Vector3();
 function updateCamera(dt) {
   const a = G.me; if (!a) return;
   let yaw = G.camYaw, pit = G.camPitch;
@@ -272,14 +271,28 @@ function updateCamera(dt) {
   _cam.set(_piv.x + bx * dd, _piv.y + by * dd + .25, _piv.z + bz * dd);
   if (_cam.y < hAt(_cam.x, _cam.z) + .3) _cam.y = hAt(_cam.x, _cam.z) + .3;
   if (G.shake > 0) { _cam.x += (Math.random() - .5) * G.shake; _cam.y += (Math.random() - .5) * G.shake; G.shake = Math.max(0, G.shake - dt * 1.2); }
-  camera.position.copy(_cam);
   if (a.sj && a.sj.t > SJ_CH) _look.set(a.sj.tx, a.sj.ty, a.sj.tz);
   else _look.set(_piv.x + fx * cp * 12, _piv.y + sp * 12 + .25, _piv.z + fz * cp * 12);
+  // スコープ：ためはじめると目の位置からのぞく形になり、ためるほどどんどんズームしていく
+  const sc = scopeAmt(a);
+  G.scopeT = (G.scopeT || 0) + ((sc > 0 ? clamp(sc / .18, 0, 1) : 0) - (G.scopeT || 0)) * (1 - Math.exp(-dt * 12)); if (G.scopeT < .002) G.scopeT = 0;
+  G.scopeZ = (G.scopeZ || 1) + ((sc > 0 ? Math.pow(a.w.scope, clamp((sc - .06) / .94, 0, 1)) : 1) - (G.scopeZ || 1)) * (1 - Math.exp(-dt * 14));
+  if (G.scopeT > 0) {
+    const e = G.scopeT * G.scopeT * (3 - 2 * G.scopeT);
+    _eye.set(a.x + fx * .3, a.y + 1.32, a.z + fz * .3);
+    _cam.lerp(_eye, e); _look.lerp(_lookS.set(_eye.x + fx * cp * 20, _eye.y + sp * 20, _eye.z + fz * cp * 20), e);
+  }
+  camera.position.copy(_cam);
   camera.lookAt(_look);
-  const wantFov = (a.w.scope && a.ws.ch > .1) ? lerp(70, 32, a.ws.ch) : (a.swim && a.moveSpd > 6) || a.dashT > 0 ? 76 : 70;
-  if (Math.abs(camera.fov - wantFov) > .1) { camera.fov += (wantFov - camera.fov) * Math.min(1, dt * 8); camera.updateProjectionMatrix(); }
+  if (G.scopeT > 0 || G.scopeZ > 1.002) {   // ズームの倍率どおりの画角（なめらかにした倍率をそのまま使う）
+    const f = 2 * Math.atan(Math.tan(35 * Math.PI / 180) / Math.max(1, G.scopeZ)) * 180 / Math.PI;
+    if (Math.abs(camera.fov - f) > .01) { camera.fov = f; camera.updateProjectionMatrix(); }
+  } else {
+    const wantFov = (a.swim && a.moveSpd > 6) || a.dashT > 0 ? 76 : 70;
+    if (Math.abs(camera.fov - wantFov) > .1) { camera.fov += (wantFov - camera.fov) * Math.min(1, dt * 8); camera.updateProjectionMatrix(); }
+  }
   sun.position.set(a.x + 30, 60, a.z + 20); sun.target.position.set(a.x, 0, a.z); sun.target.updateMatrixWorld();
-  if (a.w.cls === 'sniper' && a.ws.ch > 0 && !a.dead && !a.dive) {
+  if (a.w.cls === 'sniper' && a.ws.ch > 0 && !a.dead && !a.dive && G.scopeT < .3) {   // スコープでのぞいている間は、自分の照準線は出さない
     const m = muzzle(a), d = aimFrom(a, m), L = rayGround(m.x, m.y, m.z, d.x, d.y, d.z, a.w.range * (.5 + .5 * a.ws.ch), .2);
     laser.visible = true; laser.material.color.set(teamColor(a.team)); laser.scale.set(1, Math.max(.1, L), 1); laser.position.copy(m).addScaledVector(d, L / 2); laser.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), d);
   } else laser.visible = false;
@@ -307,6 +320,16 @@ function updateHud(dt) {
   if (ch > 0) { $('chargeArc').setAttribute('stroke-dasharray', (ch * 170).toFixed(1) + ' 170'); $('chargeArc').setAttribute('stroke', ch >= 1 ? '#fff' : teamColor(a.team)); }
   const cr = $('cross'); G.hitMark = Math.max(0, G.hitMark - dt); G.killMark = Math.max(0, G.killMark - dt);
   cr.classList.toggle('hit', G.hitMark > 0); cr.classList.toggle('kill', G.killMark > 0); cr.style.opacity = a.dive || a.dead || a.sj ? .3 : 1;
+  // スコープのぞき窓：ためるほど輪が光り、倍率が上がる（のぞいている間は、ふだんの照準とため輪をかくす）
+  const so = G.scopeT || 0, sEl = $('scope');
+  sEl.style.opacity = so.toFixed(3);
+  if (so > .001) {
+    const sc = scopeAmt(a);
+    sEl.style.setProperty('--r', lerp(72, 44, so).toFixed(1) + 'vmin');
+    $('scopeArc').setAttribute('stroke-dasharray', (sc * 610).toFixed(0) + ' 610'); $('scopeArc').setAttribute('stroke', sc >= 1 ? '#fff' : teamColor(a.team));
+    $('scopeZ').textContent = '×' + (G.scopeZ || 1).toFixed(1);
+    if (so > .5) { cr.style.opacity = 0; $('charge').classList.add('hidden'); }
+  }
   G.hurtFlash = Math.max(0, G.hurtFlash - dt * 1.5);
   const v = $('vig'); v.style.setProperty('--hurt', teamColor(3 - a.team)); v.style.opacity = clamp(G.hurtFlash + (1 - a.hp / HP_MAX) * .7, 0, .9);
   if (msgT > 0) { msgT -= dt; if (msgT <= 0) $('msg').style.opacity = 0; }

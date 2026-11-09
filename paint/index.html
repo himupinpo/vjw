@@ -57,6 +57,11 @@ body.hub #mini { bottom: calc(10px + var(--sab)); }
 #feed { position: absolute; right: calc(12px + var(--sar)); top: calc(160px + var(--sat)); display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
 #feed div { font-size: 12.5px; font-weight: 800; padding: 3px 9px; border-radius: 9px; background: rgba(0,0,0,.5); animation: feedIn .25s; }
 @keyframes feedIn { from { transform: translateX(30px); opacity: 0; } }
+/* スコープ：のぞき窓（外は暗く、十字の線と、ためた分だけ光る輪） */
+#scope { position: absolute; inset: 0; pointer-events: none; opacity: 0; --r: 44vmin; background: radial-gradient(circle at 50% 46%, transparent calc(var(--r) - 1px), rgba(5,7,14,.93) var(--r)); }
+#scope .lens { position: absolute; left: 50%; top: 46%; width: calc(var(--r) * 2); height: calc(var(--r) * 2); transform: translate(-50%, -50%); border-radius: 50%; box-shadow: inset 0 0 0 3px rgba(255,255,255,.5), inset 0 0 70px 14px rgba(0,0,0,.5); background: radial-gradient(circle at 32% 26%, rgba(255,255,255,.13), rgba(255,255,255,0) 32%), radial-gradient(circle, rgba(120,190,255,0) 60%, rgba(120,190,255,.08) 100%); }
+#scope svg { position: absolute; left: 50%; top: 46%; width: calc(var(--r) * 2); height: calc(var(--r) * 2); transform: translate(-50%, -50%); overflow: visible; }
+#scope .zoom { position: absolute; left: 50%; top: calc(46% + var(--r) * .62); transform: translateX(-50%); font: 900 15px/1 system-ui, sans-serif; color: #fff; letter-spacing: .06em; text-shadow: 0 1px 3px #000, 0 0 6px rgba(0,0,0,.6); }
 #vig { position: absolute; inset: 0; opacity: 0; background: radial-gradient(ellipse at center, rgba(0,0,0,0) 45%, var(--hurt, rgba(30,200,255,.85)) 100%); }
 #msg { position: absolute; left: 50%; top: 34%; transform: translate(-50%, -50%); text-align: center; font-family: var(--d); font-size: clamp(36px, 9vmin, 72px); text-shadow: 0 4px 0 rgba(0,0,0,.45); white-space: nowrap; }
 #msg small { display: block; font-family: var(--f); font-weight: 900; font-size: 18px; margin-top: 6px; }
@@ -261,6 +266,7 @@ table.st td.n { text-align: right; font-variant-numeric: tabular-nums; }
 <div id="hud" class="hidden">
   <div id="splats"></div>
   <div id="vig"></div>
+  <div id="scope"><div class="lens"></div><svg viewBox="0 0 200 200"><circle cx="100" cy="100" r="97" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="4"/><circle id="scopeArc" cx="100" cy="100" r="97" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-dasharray="0 610" transform="rotate(-90 100 100)"/><g stroke="rgba(255,255,255,.55)" stroke-width="3" stroke-linecap="round"><path d="M4 100H78M122 100H196M100 122V196M100 4V78"/></g><g stroke="#10131c" stroke-linecap="round"><path d="M4 100H78M122 100H196M100 122V196M100 4V78" stroke-width="1.3"/><path d="M4 100H44M156 100H196M100 156V196" stroke-width="5"/><path d="M88 97v6M76 97v6M112 97v6M124 97v6M97 112h6M97 124h6M97 136h6M97 88h6" stroke-width="1.2"/></g><circle cx="100" cy="100" r="2.6" fill="#ff4d5a" stroke="#fff" stroke-width=".8"/></svg><div class="zoom" id="scopeZ">×1.0</div></div>
   <div id="timer">3:00</div>
   <div class="teamRow" id="tA"></div><div class="teamRow" id="tB"></div>
   <div id="zoneBar" class="hidden"><b id="zA">100</b><div id="zMid"><i id="zBarA"></i><i id="zBarB"></i><span>ゾーン</span></div><b id="zB">100</b></div>
@@ -678,9 +684,9 @@ const WEAPONS = [
   W('tawashi', 'ハリネズミ', 'brush', 'windup', 'turret', { look: [0x8a6a4a, 0xd8c8b0], width: .9, rollSpd: 1.75, rollInk: 1.3, flick: 3, fdmg: 28, frange: 4.5, fspread: 30, frate: 7, ink: 1.6, spd: 1.12, desc: 'いちばん速く走れる、小さなハケ。' }),
   // ---- スナイパー（8） ----
   W('sniper', 'シリウス', 'sniper', 'mine', 'beam', { look: [0xe8eef6, 0x3a7ad8], charge: 1.0, dmg: 160, mindmg: 40, range: 30, ink: 18, pr: .55, spd: .92, desc: 'ためきると遠くの相手を一撃。' }),
-  W('scope', 'ポラリス', 'sniper', 'sticky', 'missile', { look: [0x23305a, 0xffcf3a], charge: 1.1, dmg: 160, mindmg: 40, range: 34, ink: 18, pr: .5, scope: true, spd: .9, desc: 'ためている間は遠くがよく見える。' }),
+  W('scope', 'ポラリススコープ', 'sniper', 'sticky', 'missile', { look: [0x23305a, 0xffcf3a], charge: 1.1, dmg: 160, mindmg: 40, range: 34, ink: 18, pr: .5, scope: 2.6, spd: .9, desc: 'シリウスにスコープをつけた形。ためるほどスコープでどんどんズームして、遠くの相手をねらえる。' }),
   W('quick', 'コメット', 'sniper', 'bomb', 'armor', { look: [0x3a3a48, 0xff8a2a], charge: .5, dmg: 85, mindmg: 30, range: 22, ink: 8, pr: .5, desc: 'すぐたまるが、2発でたおす。' }),
-  W('ranger', 'アンドロメダ', 'sniper', 'shield', 'rain', { look: [0x4a3a6a, 0xd8b8ff], charge: 1.6, dmg: 180, mindmg: 40, range: 42, ink: 24, pr: .6, spd: .85, desc: 'ステージの奥まで届く。ためるのはおそい。' }),
+  W('ranger', 'アンドロメダスコープ', 'sniper', 'shield', 'rain', { look: [0x4a3a6a, 0xd8b8ff], charge: 1.6, dmg: 180, mindmg: 40, range: 42, ink: 24, pr: .6, scope: 4, spd: .85, desc: 'ステージの奥まで届く。ためるほど大きなスコープで4倍までズームする。ためるのはおそい。' }),
   W('lance', 'メテオ', 'sniper', 'dart', 'turret', { look: [0x3a2a2a, 0xff5a2a], charge: 1.2, dmg: 150, mindmg: 40, range: 32, ink: 20, pr: .5, pierce: true, spd: .9, model: 'lance', desc: '水流が相手も盾もつらぬいて、後ろまで届く。' }),
   W('keep', 'ルナ', 'sniper', 'spring', 'cloak', { look: [0xc8ccd6, 0xfff2b0], charge: 1.0, dmg: 160, mindmg: 40, range: 28, ink: 18, pr: .55, keep: true, spd: .92, desc: 'ためきったまま、もぐって少し待てる。' }),
   W('semi', 'パルサー', 'sniper', 'balloon', 'dash', { look: [0x2a2a3a, 0x3affd8], charge: .35, dmg: 70, mindmg: 35, range: 24, ink: 7, pr: .45, spd: 1.0, desc: 'すぐたまる。クリックの速さで撃てる。' }),
@@ -701,7 +707,7 @@ const WEAPONS = [
   W('heavyg', 'タイフーン', 'gatling', 'shield', 'barrier', { look: [0x2a2e38, 0xff4a4a], spin: 1.8, dur: 3.2, rate: 15, dmg: 32, range: 21, spread: 3.5, ink: 24, pr: .7, v: 36, spd: .85, desc: 'ためは長いが、長く遠くまで撃ち続ける。' }),
   W('reel', 'コガラシ', 'gatling', 'fog', 'tower', { look: [0x8a5a3a, 0xf2a03a], spin: 1.1, dur: 2.4, rate: 13, dmg: 30, range: 17, spread: 4.5, ink: 18, pr: .66, v: 33, spd: .92, keep: true, model: 'reel', desc: 'ためたまま、もぐって少し待てる。' }),
   W('trig', 'ツムジ', 'gatling', 'balloon', 'fireworks', { look: [0x4a4a6a, 0xb0f0ff], spin: 1.2, dur: 2.0, rate: 10, dmg: 26, range: 14, spread: 3, ink: 22, pr: .6, v: 32, spd: .9, triple: true, desc: '3本の弾をいっしょに広げて撃つ。' }),
-  W('snipeg', 'キタカゼ', 'gatling', 'dart', 'turret', { look: [0xe8eef6, 0x3a5ad8], spin: 2.0, dur: 2.4, rate: 10, dmg: 38, range: 26, spread: 1.2, ink: 22, pr: .6, v: 42, spd: .85, desc: 'とても遠くまで、まっすぐ撃てる。' }),
+  W('snipeg', 'キタカゼスコープ', 'gatling', 'dart', 'turret', { look: [0xe8eef6, 0x3a5ad8], spin: 2.0, dur: 2.4, rate: 10, dmg: 38, range: 26, spread: 1.2, ink: 22, pr: .6, v: 42, scope: 2.2, spd: .85, desc: 'とても遠くまで、まっすぐ撃てる。回すほどスコープでズームし、撃っている間もそのまま。' }),
   W('bounceg', 'コダマ', 'gatling', 'popper', 'dash', { look: [0x5a8a4a, 0xe8f0c8], spin: 1.0, dur: 2.0, rate: 14, dmg: 28, range: 15, spread: 5, ink: 18, pr: .64, v: 32, bounce: 1, desc: '弾が一度はねる。物かげの近くにもかかる。' }),
   // ---- 二丁拳銃（7） ----
   W('dual', 'マラカス', 'dual', 'sticky', 'beam', { look: [0xe84a3a, 0xffd23a], rate: 9, dmg: 30, range: 12, spread: 6, ink: .85, pr: .62, v: 30, rolls: 1, desc: '撃ちながら「もぐる」で1回すべれる。' }),
@@ -720,7 +726,7 @@ const WEAPONS = [
   W('doublepara', 'ヤエザクラ', 'parasol', 'spring', 'turret', { look: [0x5a3a3a, 0xffa8c8], rate: 1.2, pellets: 8, dmg: 17, range: 10, cone: 16, ink: 6, pr: .6, shield: 300, v: 26, regen: true, desc: 'カサがすぐ元にもどる。こわれてもすぐ直る。' }),
   // ---- ボウ（6） ----
   W('bow', 'カジキ', 'bow', 'sticky', 'missile', { look: [0x1e4a8a, 0xd8e4f0], charge: .9, dmg: 50, range: 19, ink: 7, pr: .6, v: 40, arrows: 3, desc: 'ためて3本の矢。ためきると矢が少しおくれて破裂。' }),
-  W('longbow', 'イッカク', 'bow', 'shield', 'slam', { look: [0xd8dde4, 0x5a7a9a], charge: 1.3, dmg: 62, range: 26, ink: 9, pr: .65, v: 46, arrows: 3, spd: .94, desc: '遠くまで届く強い弓。' }),
+  W('longbow', 'イッカクスコープ', 'bow', 'shield', 'slam', { look: [0xd8dde4, 0x5a7a9a], charge: 1.3, dmg: 62, range: 26, ink: 9, pr: .65, v: 46, arrows: 3, scope: 2, spd: .94, desc: '遠くまで届く強い弓。ためるほどスコープでズームする。' }),
   W('fivebow', 'ハリセンボン', 'bow', 'boomer', 'fireworks', { look: [0xd8c890, 0x6a5a3a], charge: 1.0, dmg: 40, range: 16, ink: 9, pr: .55, v: 38, arrows: 5, desc: '5本の矢を広くばらまく。' }),
   W('tatebow', 'タチウオ', 'bow', 'mine', 'airdrop', { look: [0xc8ccd8, 0x8aa0c0], charge: .9, dmg: 48, range: 20, ink: 7, pr: .6, v: 40, arrows: 3, vertical: true, desc: '矢をたてに並べて放つ。まっすぐな線をぬれる。' }),
   W('bakubow', 'フグ', 'bow', 'fog', 'tower', { look: [0xf0d870, 0x4a4a3a], charge: 1.4, dmg: 45, range: 18, ink: 10, pr: .6, v: 38, arrows: 3, boom: true, desc: '半分ためれば、どの矢も破裂する。' }),
@@ -2216,6 +2222,18 @@ function weaponMesh(w, team) {
       case 'jet': add(Cy(.035, .05, .3), C, 0, 0, .15, H); add(Cy(.012, .02, .4), A, 0, 0, .5, H); add(Bx(.08, .14, .12), C, 0, -.05, .05); add(Sp(.05), J, 0, .07, .05); break;
     }
   }
+  // スコープ：上にのせる筒と、光る前のレンズ（ためるほどズームするブキ）
+  if (w.scope) {
+    const lensM = wmat(0xa8ecff, { emissive: 0x3aa8ff, emissiveIntensity: .9, roughness: .05, metalness: .3 });
+    const sp = { ranger: [.21, .16, .5, .048], snipeg: [.27, -.1, .42, .05], longbow: [.15, .17, .3, .032] }[w.id];
+    if (sp) {
+      const [y, z0, len, r] = sp;
+      add(Bx(.035, .07, .09), D, 0, y - r - .03, z0 + len * .5);                                   // 台
+      add(Cy(r, r, len, 14), A, 0, y, z0 + len / 2, H);                                          // 筒
+      for (const z of [z0, z0 + len]) add(Cy(r * 1.32, r * 1.32, .06, 14), D, 0, y, z, H);       // 両はしのふち
+      add(Cy(r * 1.12, r * 1.12, .012, 14), lensM, 0, y, z0 + len + .035, H);                     // レンズ
+    } else add(Cy(.05, .05, .012, 14), lensM, 0, .14, .625, H);                                    // ポラリススコープ：もとの筒にレンズ
+  }
   if (!g.children.length) { add(Bx(.12, .14, .5), C, 0, 0, .15); grip(); }
   return g;
 }
@@ -2581,7 +2599,7 @@ function syncModel(a, dt, viewer) {
   const enemyView = viewer && a.team !== viewer.team;
   const near = viewer ? Math.hypot(viewer.x - a.x, viewer.z - a.z) < 3 : false;
   const cloaked = enemyView && a.cloakT > 0 && !a.revealed && !near;
-  m.root.visible = !cloaked;
+  m.root.visible = !cloaked && !(a === viewer && G.scopeT > .45);   // スコープでのぞいている間は、自分の体を見せない
   m.root.position.set(a.x, a.y, a.z);
   m.root.rotation.set(0, a.yaw, 0);
   const hidden = a.dive && a.swim && enemyView && !a.revealed && !(a.markT > 0);
@@ -3182,7 +3200,7 @@ function weaponTick(a, dt, fire, dodge, mx, mz) {
       break;
     case 'gatling': {
       if (fire && !(s.fireT > 0)) { if (a.ink > 2) { s.spin = Math.min(1, (s.spin || 0) + dt / w.spin); s.busy = .55; } else noInk(a); }
-      if (release && s.spin > .05) { s.fireT = w.dur * s.spin; s.spin = 0; s.cd = 0; }
+      if (release && s.spin > .05) { s.fireT = w.dur * s.spin; s.scopeHold = s.spin; s.spin = 0; s.cd = 0; }
       if (fire && s.fireT > 0 && press) s.fireT = 0;
       if (s.fireT > 0) {
         s.fireT -= dt; s.busy = .4;
@@ -3286,6 +3304,14 @@ const KICK = { gun: .3, blaster: .9, charger: 1, roller: .55, brush: .3, slosher
 const CAMKICK = { gun: .004, blaster: .035, charger: .04, roller: .012, brush: .004, slosher: .022, stringer: .018, blade: .012, hose: .001 };
 // ためキープできる時間（キープが得意なブキは長い）
 const keepTime = w => w.keepLong ? 5 : (w.cls === 'gatling' ? 1.5 : 1.0) * (w.keep ? 2.2 : 1);
+// スコープつきのブキ：ためている具合（0〜1）。ガトリングは撃っている間も、放したときの具合のまま。もぐる・やられると0
+function scopeAmt(a) {
+  const w = a.w, s = a.ws; if (!w.scope || a.dead || a.dive || a.sj || a.climb) return 0;
+  if (w.cls === 'sniper') return s.ch || 0;
+  if (w.cls === 'bow') return s.bow || 0;
+  if (w.cls === 'gatling') return s.fireT > 0 ? (s.scopeHold || 0) : (s.spin || 0);
+  return 0;
+}
 function sfx(a, kind) {
   const d = G.me ? Math.hypot(G.me.x - a.x, G.me.z - a.z) : 0, g = a === G.me ? 1 : clamp(1 - d / 40, 0, 1) * .6;
   if (g > .02) AU.shot(kind, g);
@@ -3858,7 +3884,7 @@ function startMatch(mode, stage) {
   $('zoneBar').classList.toggle('hidden', mode !== 'zone'); zoneMarks(mode === 'zone');
   rulesInit(mode); $('ruleBar').classList.toggle('hidden', !(mode === 'flag' || mode === 'ball')); $('ruleBar').innerHTML = ''; RS.hud = '';
   buildTeamIcons(); miniInit();
-  G.camY = undefined; G.kick = 0;
+  G.camY = undefined; G.kick = 0; G.scopeT = 0; G.scopeZ = 1;
   const ruleName = RULES[mode] ? RULES[mode].name : 'ぬりあいバトル';
   if (mode !== 'practice') { showMsg('READY?', ruleName + '・' + STAGE.name, 1.8); AU.ready(); } else showMsg('試しうち', 'まとを撃ってブキをためそう', 2);
   AU.musicOn(mode !== 'practice' && SET.music);
@@ -3896,8 +3922,7 @@ function closeJumpUI() { const j = $('jumpUI'); if (j) j.classList.add('hidden')
 // ---------- 自分の操作 ----------
 const _ray = new T.Raycaster(), _v2 = new T.Vector2();
 function playerControl(a, dt) {
-  const scoping = a.w.scope && a.ws.ch > .1;
-  const sens = .0023 * SET.sens * (scoping ? .45 : 1);
+  const sens = .0023 * SET.sens / (G.scopeZ || 1);   // ズームしているほど、ゆっくり向きが変わる
   G.camYaw -= IN.lookX * sens; G.camPitch = clamp(G.camPitch - IN.lookY * sens * (SET.invY ? -1 : 1), -1.15, .95);
   IN.lookX = IN.lookY = 0;
   const [ax, ay] = moveAxes(), fx = Math.sin(G.camYaw), fz = Math.cos(G.camYaw);
@@ -4006,7 +4031,7 @@ function endMatch() {
 }
 
 // ---------- カメラ ----------
-const _cam = new T.Vector3(), _piv = new T.Vector3(), _look = new T.Vector3();
+const _cam = new T.Vector3(), _piv = new T.Vector3(), _look = new T.Vector3(), _eye = new T.Vector3(), _lookS = new T.Vector3();
 function updateCamera(dt) {
   const a = G.me; if (!a) return;
   let yaw = G.camYaw, pit = G.camPitch;
@@ -4027,14 +4052,28 @@ function updateCamera(dt) {
   _cam.set(_piv.x + bx * dd, _piv.y + by * dd + .25, _piv.z + bz * dd);
   if (_cam.y < hAt(_cam.x, _cam.z) + .3) _cam.y = hAt(_cam.x, _cam.z) + .3;
   if (G.shake > 0) { _cam.x += (Math.random() - .5) * G.shake; _cam.y += (Math.random() - .5) * G.shake; G.shake = Math.max(0, G.shake - dt * 1.2); }
-  camera.position.copy(_cam);
   if (a.sj && a.sj.t > SJ_CH) _look.set(a.sj.tx, a.sj.ty, a.sj.tz);
   else _look.set(_piv.x + fx * cp * 12, _piv.y + sp * 12 + .25, _piv.z + fz * cp * 12);
+  // スコープ：ためはじめると目の位置からのぞく形になり、ためるほどどんどんズームしていく
+  const sc = scopeAmt(a);
+  G.scopeT = (G.scopeT || 0) + ((sc > 0 ? clamp(sc / .18, 0, 1) : 0) - (G.scopeT || 0)) * (1 - Math.exp(-dt * 12)); if (G.scopeT < .002) G.scopeT = 0;
+  G.scopeZ = (G.scopeZ || 1) + ((sc > 0 ? Math.pow(a.w.scope, clamp((sc - .06) / .94, 0, 1)) : 1) - (G.scopeZ || 1)) * (1 - Math.exp(-dt * 14));
+  if (G.scopeT > 0) {
+    const e = G.scopeT * G.scopeT * (3 - 2 * G.scopeT);
+    _eye.set(a.x + fx * .3, a.y + 1.32, a.z + fz * .3);
+    _cam.lerp(_eye, e); _look.lerp(_lookS.set(_eye.x + fx * cp * 20, _eye.y + sp * 20, _eye.z + fz * cp * 20), e);
+  }
+  camera.position.copy(_cam);
   camera.lookAt(_look);
-  const wantFov = (a.w.scope && a.ws.ch > .1) ? lerp(70, 32, a.ws.ch) : (a.swim && a.moveSpd > 6) || a.dashT > 0 ? 76 : 70;
-  if (Math.abs(camera.fov - wantFov) > .1) { camera.fov += (wantFov - camera.fov) * Math.min(1, dt * 8); camera.updateProjectionMatrix(); }
+  if (G.scopeT > 0 || G.scopeZ > 1.002) {   // ズームの倍率どおりの画角（なめらかにした倍率をそのまま使う）
+    const f = 2 * Math.atan(Math.tan(35 * Math.PI / 180) / Math.max(1, G.scopeZ)) * 180 / Math.PI;
+    if (Math.abs(camera.fov - f) > .01) { camera.fov = f; camera.updateProjectionMatrix(); }
+  } else {
+    const wantFov = (a.swim && a.moveSpd > 6) || a.dashT > 0 ? 76 : 70;
+    if (Math.abs(camera.fov - wantFov) > .1) { camera.fov += (wantFov - camera.fov) * Math.min(1, dt * 8); camera.updateProjectionMatrix(); }
+  }
   sun.position.set(a.x + 30, 60, a.z + 20); sun.target.position.set(a.x, 0, a.z); sun.target.updateMatrixWorld();
-  if (a.w.cls === 'sniper' && a.ws.ch > 0 && !a.dead && !a.dive) {
+  if (a.w.cls === 'sniper' && a.ws.ch > 0 && !a.dead && !a.dive && G.scopeT < .3) {   // スコープでのぞいている間は、自分の照準線は出さない
     const m = muzzle(a), d = aimFrom(a, m), L = rayGround(m.x, m.y, m.z, d.x, d.y, d.z, a.w.range * (.5 + .5 * a.ws.ch), .2);
     laser.visible = true; laser.material.color.set(teamColor(a.team)); laser.scale.set(1, Math.max(.1, L), 1); laser.position.copy(m).addScaledVector(d, L / 2); laser.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), d);
   } else laser.visible = false;
@@ -4062,6 +4101,16 @@ function updateHud(dt) {
   if (ch > 0) { $('chargeArc').setAttribute('stroke-dasharray', (ch * 170).toFixed(1) + ' 170'); $('chargeArc').setAttribute('stroke', ch >= 1 ? '#fff' : teamColor(a.team)); }
   const cr = $('cross'); G.hitMark = Math.max(0, G.hitMark - dt); G.killMark = Math.max(0, G.killMark - dt);
   cr.classList.toggle('hit', G.hitMark > 0); cr.classList.toggle('kill', G.killMark > 0); cr.style.opacity = a.dive || a.dead || a.sj ? .3 : 1;
+  // スコープのぞき窓：ためるほど輪が光り、倍率が上がる（のぞいている間は、ふだんの照準とため輪をかくす）
+  const so = G.scopeT || 0, sEl = $('scope');
+  sEl.style.opacity = so.toFixed(3);
+  if (so > .001) {
+    const sc = scopeAmt(a);
+    sEl.style.setProperty('--r', lerp(72, 44, so).toFixed(1) + 'vmin');
+    $('scopeArc').setAttribute('stroke-dasharray', (sc * 610).toFixed(0) + ' 610'); $('scopeArc').setAttribute('stroke', sc >= 1 ? '#fff' : teamColor(a.team));
+    $('scopeZ').textContent = '×' + (G.scopeZ || 1).toFixed(1);
+    if (so > .5) { cr.style.opacity = 0; $('charge').classList.add('hidden'); }
+  }
   G.hurtFlash = Math.max(0, G.hurtFlash - dt * 1.5);
   const v = $('vig'); v.style.setProperty('--hurt', teamColor(3 - a.team)); v.style.opacity = clamp(G.hurtFlash + (1 - a.hp / HP_MAX) * .7, 0, .9);
   if (msgT > 0) { msgT -= dt; if (msgT <= 0) $('msg').style.opacity = 0; }

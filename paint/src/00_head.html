@@ -57,6 +57,11 @@ body.hub #mini { bottom: calc(10px + var(--sab)); }
 #feed { position: absolute; right: calc(12px + var(--sar)); top: calc(160px + var(--sat)); display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
 #feed div { font-size: 12.5px; font-weight: 800; padding: 3px 9px; border-radius: 9px; background: rgba(0,0,0,.5); animation: feedIn .25s; }
 @keyframes feedIn { from { transform: translateX(30px); opacity: 0; } }
+/* スコープ：のぞき窓（外は暗く、十字の線と、ためた分だけ光る輪） */
+#scope { position: absolute; inset: 0; pointer-events: none; opacity: 0; --r: 44vmin; background: radial-gradient(circle at 50% 46%, transparent calc(var(--r) - 1px), rgba(5,7,14,.93) var(--r)); }
+#scope .lens { position: absolute; left: 50%; top: 46%; width: calc(var(--r) * 2); height: calc(var(--r) * 2); transform: translate(-50%, -50%); border-radius: 50%; box-shadow: inset 0 0 0 3px rgba(255,255,255,.5), inset 0 0 70px 14px rgba(0,0,0,.5); background: radial-gradient(circle at 32% 26%, rgba(255,255,255,.13), rgba(255,255,255,0) 32%), radial-gradient(circle, rgba(120,190,255,0) 60%, rgba(120,190,255,.08) 100%); }
+#scope svg { position: absolute; left: 50%; top: 46%; width: calc(var(--r) * 2); height: calc(var(--r) * 2); transform: translate(-50%, -50%); overflow: visible; }
+#scope .zoom { position: absolute; left: 50%; top: calc(46% + var(--r) * .62); transform: translateX(-50%); font: 900 15px/1 system-ui, sans-serif; color: #fff; letter-spacing: .06em; text-shadow: 0 1px 3px #000, 0 0 6px rgba(0,0,0,.6); }
 #vig { position: absolute; inset: 0; opacity: 0; background: radial-gradient(ellipse at center, rgba(0,0,0,0) 45%, var(--hurt, rgba(30,200,255,.85)) 100%); }
 #msg { position: absolute; left: 50%; top: 34%; transform: translate(-50%, -50%); text-align: center; font-family: var(--d); font-size: clamp(36px, 9vmin, 72px); text-shadow: 0 4px 0 rgba(0,0,0,.45); white-space: nowrap; }
 #msg small { display: block; font-family: var(--f); font-weight: 900; font-size: 18px; margin-top: 6px; }
@@ -261,6 +266,7 @@ table.st td.n { text-align: right; font-variant-numeric: tabular-nums; }
 <div id="hud" class="hidden">
   <div id="splats"></div>
   <div id="vig"></div>
+  <div id="scope"><div class="lens"></div><svg viewBox="0 0 200 200"><circle cx="100" cy="100" r="97" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="4"/><circle id="scopeArc" cx="100" cy="100" r="97" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-dasharray="0 610" transform="rotate(-90 100 100)"/><g stroke="rgba(255,255,255,.55)" stroke-width="3" stroke-linecap="round"><path d="M4 100H78M122 100H196M100 122V196M100 4V78"/></g><g stroke="#10131c" stroke-linecap="round"><path d="M4 100H78M122 100H196M100 122V196M100 4V78" stroke-width="1.3"/><path d="M4 100H44M156 100H196M100 156V196" stroke-width="5"/><path d="M88 97v6M76 97v6M112 97v6M124 97v6M97 112h6M97 124h6M97 136h6M97 88h6" stroke-width="1.2"/></g><circle cx="100" cy="100" r="2.6" fill="#ff4d5a" stroke="#fff" stroke-width=".8"/></svg><div class="zoom" id="scopeZ">×1.0</div></div>
   <div id="timer">3:00</div>
   <div class="teamRow" id="tA"></div><div class="teamRow" id="tB"></div>
   <div id="zoneBar" class="hidden"><b id="zA">100</b><div id="zMid"><i id="zBarA"></i><i id="zBarB"></i><span>ゾーン</span></div><b id="zB">100</b></div>

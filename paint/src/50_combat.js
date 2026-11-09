@@ -461,7 +461,7 @@ function weaponTick(a, dt, fire, dodge, mx, mz) {
       break;
     case 'gatling': {
       if (fire && !(s.fireT > 0)) { if (a.ink > 2) { s.spin = Math.min(1, (s.spin || 0) + dt / w.spin); s.busy = .55; } else noInk(a); }
-      if (release && s.spin > .05) { s.fireT = w.dur * s.spin; s.spin = 0; s.cd = 0; }
+      if (release && s.spin > .05) { s.fireT = w.dur * s.spin; s.scopeHold = s.spin; s.spin = 0; s.cd = 0; }
       if (fire && s.fireT > 0 && press) s.fireT = 0;
       if (s.fireT > 0) {
         s.fireT -= dt; s.busy = .4;
@@ -565,6 +565,14 @@ const KICK = { gun: .3, blaster: .9, charger: 1, roller: .55, brush: .3, slosher
 const CAMKICK = { gun: .004, blaster: .035, charger: .04, roller: .012, brush: .004, slosher: .022, stringer: .018, blade: .012, hose: .001 };
 // ためキープできる時間（キープが得意なブキは長い）
 const keepTime = w => w.keepLong ? 5 : (w.cls === 'gatling' ? 1.5 : 1.0) * (w.keep ? 2.2 : 1);
+// スコープつきのブキ：ためている具合（0〜1）。ガトリングは撃っている間も、放したときの具合のまま。もぐる・やられると0
+function scopeAmt(a) {
+  const w = a.w, s = a.ws; if (!w.scope || a.dead || a.dive || a.sj || a.climb) return 0;
+  if (w.cls === 'sniper') return s.ch || 0;
+  if (w.cls === 'bow') return s.bow || 0;
+  if (w.cls === 'gatling') return s.fireT > 0 ? (s.scopeHold || 0) : (s.spin || 0);
+  return 0;
+}
 function sfx(a, kind) {
   const d = G.me ? Math.hypot(G.me.x - a.x, G.me.z - a.z) : 0, g = a === G.me ? 1 : clamp(1 - d / 40, 0, 1) * .6;
   if (g > .02) AU.shot(kind, g);
