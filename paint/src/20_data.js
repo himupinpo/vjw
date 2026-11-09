@@ -166,7 +166,7 @@ for (const w of WEAPONS) {
   if (w.cls === 'bucket') { w.rate *= 1.3; w.pr *= 1.25; if (!w.fan && !w.small && !w.triple && !w.explode) w.tail = 100 - w.dmg; }   // 後ろについてくる小さなかたまりのダメージ
   if (w.cls === 'cannon') w.pr *= 1.3;
   if (w.cls === 'blade') { w.pr *= 1.6; w.dmg = Math.round(w.dmg * 1.12); w.charge = +(w.charge * .65).toFixed(2); }   // ためが速い
-  if (w.cls === 'hose') { w.pr *= 1.35; w.dmg *= 1.35; }
+  if (w.cls === 'hose') { w.pr *= 1.35; w.dmg *= 1.15; }
   if (w.cls === 'brush') { w.frange *= 1.2; w.spd += .05; }   // ハケの振りは少し遠くまで。身軽に
   if (w.cls === 'blade') w.spd += .04;
   if (w.cls === 'brush') w.width *= 1.12;
@@ -179,6 +179,19 @@ WBY.ladle.dmg = 55;                                   // ツユ：2発でたお�
 WBY.longb.splashR = 2.1;                              // ニジ：上から落ちて広くはねる
 WBY.watering.dmg = 36;                                // コサメ：しぶきを少し強く
 WBY.hera.cdmg = 100; WBY.twinb.cdmg = 100;            // イナズマのつっこみ・ニトウのためた刃も、当たれば一撃
+// 射程は全体に短め（遠いほどダメージが下がる分は 50_combat の fo）。ガトリングは1発のダメージを下げる
+const RANGE_MUL = { gun: .72, dual: .74, gatling: .72, hose: .72, parasol: .75, sniper: .74, bow: .72, cannon: .8, bucket: .82 };
+for (const w of WEAPONS) {
+  if (RANGE_MUL[w.cls] && w.range) w.range = +(w.range * RANGE_MUL[w.cls]).toFixed(1);
+  if (w.cls === 'roller') w.frange = +(w.frange * .8).toFixed(1);
+  if (w.cls === 'brush') w.frange = +(w.frange * .85).toFixed(1);
+  if (w.cls === 'blade') { w.range = +(w.range * .9).toFixed(1); w.crange = +(w.crange * .7).toFixed(1); }
+  if (w.cls === 'gatling') w.dmg = Math.round(w.dmg * .85);
+  // ぬり：射程が短くなって減った分を、ガン・二丁・ホース・パラソルは少しふやす。スナイパーはぬりがひかえめ
+  if (w.cls === 'gun' || w.cls === 'dual' || w.cls === 'hose') w.pr *= 1.15;
+  if (w.cls === 'parasol') w.pr *= 1.1;
+  if (w.cls === 'sniper') w.pr *= .85;
+}
 if (!WBY[SET.weapon]) SET.weapon = 'basic';
 
 // 見た目の強さ（ブキ選びの棒グラフ用。0〜1）
@@ -188,7 +201,7 @@ function wStats(w) {
     : c === 'gatling' ? w.dmg * w.rate * (w.triple ? 2 : 1) / 300 : c === 'cannon' ? w.dmg * w.rate / 160 : c === 'sniper' ? w.dmg / Math.max(.4, w.charge) / 200
     : c === 'roller' ? (w.rollDmg || 140) / 190 : c === 'brush' ? w.fdmg * w.frate / 200 : c === 'bucket' ? (w.dmg + (w.tail || 0)) * w.rate * (w.triple ? 2 : w.fan ? 2.5 : 1) / 120
     : c === 'parasol' ? w.pellets * w.dmg * w.rate / 200 : c === 'bow' ? w.dmg * Math.min(3, w.arrows) / w.charge / 260 : c === 'hose' ? w.dmg * w.rate / 230 : w.dmg * w.rate / 160;
-  const range = (c === 'blade' ? w.crange * .7 : (w.range || w.frange || 6)) / 42;
+  const range = (c === 'blade' ? w.crange * .7 : (w.range || w.frange || 6)) / 32;
   const paint = c === 'roller' ? .9 + w.width * .03 : c === 'brush' ? .75 : c === 'gun' || c === 'dual' ? clamp((w.pr || .6) * (w.rate || 5) * (w.burst || 1) * (w.cone || 1) / 9, .2, 1)
     : c === 'sniper' ? (w.wide ? .45 : .2) : c === 'gatling' ? .65 : c === 'cannon' ? .45 : c === 'bucket' ? .7 : c === 'parasol' ? .55 : c === 'bow' ? .45 : c === 'hose' ? .8 : .5;
   return { atk: clamp(dps, .1, 1), range: clamp(range, .1, 1), paint: clamp(paint, .1, 1), move: clamp((w.spd - .8) / .32, .1, 1) };
@@ -197,7 +210,7 @@ function wStats(w) {
 // 役わり（届く距離）と、たおすのに何発いるか（体力100）
 function wInfo(w) {
   const c = w.cls, r = c === 'blade' ? w.crange * .8 : (w.range || w.frange || 6);
-  const role = r < 9 ? '近距離' : r < 15 ? '中距離' : '長距離';
+  const role = r < 7 ? '近距離' : r < 12 ? '中距離' : '長距離';
   const n = d => d >= 99.5 ? '一撃' : Math.ceil(100 / d) + '発';
   let stk;
   switch (c) {
