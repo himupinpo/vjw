@@ -115,6 +115,10 @@ function landPaint(p, ox, oy, oz, gh) {
   }
   if (p.size > .1 && Math.random() < .5) burst(wall ? ox : p.x, (wall ? oy : gh) + .05, wall ? oz : p.z, p.team, 3, .35);
 }
+// 山なりに投げて、水平距離 R・高さの差 dh（投げる所が上なら＋）の所に落ちる速さ
+function lobSpeed(R, th, dh, g) { const c = Math.cos(th), den = 2 * c * c * (R * Math.tan(th) + dh); return den > .1 ? Math.sqrt(g * R * R / den) : 18; }
+// バケツの着地のしぶき：落ちた所のすぐそばの相手にも少しダメージ
+function splashHurt(p, x, y, z, r, dmg) { for (const o of actors) { if (o.dead || o.team === p.team) continue; if (Math.hypot(o.x - x, o.z - z) < r && Math.abs(o.y - y) < 1.6) hurt(o, dmg, p.owner, 'splash'); } }
 function stepProj(dt) {
   for (let i = proj.length - 1; i >= 0; i--) {
     const p = proj[i];
@@ -179,6 +183,7 @@ function stepProj(dt) {
         Object.assign(p, { kind: 'rollblob', roll: false, life: p.t + .8, trail: .3, trailR: .55, pierce: true, dmg: 40, hitR: .35 }); continue;
       }
       landPaint(p, ox, oy, oz, gh);
+      if (p.splash) splashHurt(p, wall ? ox : p.x, Math.max(gh, oy - .5), wall ? oz : p.z, p.splash, p.dmg * .6);
       proj.splice(i, 1); continue;
     }
     if (p.kind === 'blast' && p.airBurst !== false && p.t >= p.straight) {
@@ -377,7 +382,9 @@ function weaponTick(a, dt, fire, dodge, mx, mz) {
       const brush = cls === 'brush';
       if (press && s.cd <= 0 && !s.rolling) {
         if (useInk(a, w.ink)) {
-          s.cd = 1 / w.frate; s.flickT = brush ? .1 : .32; s.swing = { t: 0, dur: brush ? .2 : .36, kind: 'down' }; const d = aim();
+          s.cd = 1 / w.frate; s.flickT = brush ? .1 : .32; const d = aim();
+          // ジャンプ振りは、頭の上から大きく振り下ろす（とびはね系は宙返り、ゾウは重いたたきつけ）
+          s.swing = air ? { t: 0, dur: brush ? .3 : w.id === 'elephant' ? .55 : .45, kind: w.airFlick ? 'flip' : w.id === 'elephant' ? 'slam' : 'over' } : { t: 0, dur: brush ? .2 : .36, kind: 'down' };
           // ジャンプ振り：空中で振ると、はばはせまくなるが遠くまで届く（とびはね系はもっと遠く）
           const vert = w.vflick || (w.airFlick && air), n = w.flick, base = Math.atan2(d.x, d.z), up = clamp(Math.asin(d.y), -.3, .5);
           const fr = w.frange * (air ? (w.airFlick ? 1.9 : 1.45) : 1);
@@ -387,9 +394,12 @@ function weaponTick(a, dt, fire, dodge, mx, mz) {
             if (vert) { pit = up + .05 + k * .012; v = fr * (.55 + .5 * k / n) * 1.25; straight = .22; g = 26; yaw += (Math.random() - .5) * .05; }
             else if (air) { yaw += (k / Math.max(1, n - 1) - .5) * w.fspread * .28 * Math.PI / 180 + (Math.random() - .5) * .03; pit = up + .1 + (k % 3) * .035; v = fr * (1.02 + .22 * ((k * 7) % 5) / 4); straight = .16; g = 22; }
             else if (w.wave) { pit = up + .03; v = fr * (.35 + .65 * k / Math.max(1, n - 1)) * 1.3; straight = .14; g = 26; yaw += (Math.random() - .5) * w.fspread * Math.PI / 180; }
-            else { yaw += (k / Math.max(1, n - 1) - .5) * w.fspread * Math.PI / 180 + (Math.random() - .5) * .04; v *= rand(.8, 1.05); }   // 横振り：だいたい射程の7〜9割まで届く
+            else {   // 横振り：速く低く飛んで、射程の8〜10割まで届く（短いブキほど重く速いしぶきで、すぐ落ちる）
+              const v0 = Math.max(fr * 2, 16), T = fr * .95 / v0;
+              yaw += (k / Math.max(1, n - 1) - .5) * w.fspread * Math.PI / 180 + (Math.random() - .5) * .04; pit = up + .1; v = v0 * rand(.85, 1.05); straight = .1; g = 2 * (.78 + .1 * v0 * T) / Math.max(.01, (T - .1) ** 2);
+            }
             const dd = dirOf(yaw, pit);
-            shoot({ x: from.x, y: from.y, z: from.z, vx: dd.x * v, vy: dd.y * v, vz: dd.z * v, straight, g, team: a.team, owner: a, dmg: w.fdmg / (brush ? 1.5 : 3.1), pr: brush ? .5 : .75, size: brush ? .1 : .16, hitR: w.wave ? .4 : .3, trail: 1.3, trailR: .32, life: 1.6 });
+            shoot({ x: from.x, y: from.y, z: from.z, vx: dd.x * v, vy: dd.y * v, vz: dd.z * v, straight, g, team: a.team, owner: a, dmg: w.fdmg / (brush ? 1.25 : 3.1), pr: brush ? .5 : .75, size: brush ? .1 : .16, hitR: w.wave ? .45 : brush ? .36 : .4, trail: 1.3, trailR: .32, life: 1.6 });
           }
           sfx(a, cls);
         }
@@ -427,27 +437,24 @@ function weaponTick(a, dt, fire, dodge, mx, mz) {
         if (a.ink < cost * .6 && !(a.dashT > 0)) { noInk(a); break; }
         if (!(a.dashT > 0)) { a.ink = Math.max(0, a.ink - cost); a.inkT = 0; }
         const d = aim(), range = w.range * (.5 + .5 * c), dmg = c >= 1 ? w.dmg : lerp(w.mindmg, w.dmg * .7, c);
-        const end = hitscan(a, from, d, range, dmg, w.pr * (.7 + .5 * c) * (w.wide ? 1.8 : 1), a.team, .5, !!w.pierce, w.wide ? .9 : .55);
+        const end = hitscan(a, from, d, range, dmg, w.pr * (.7 + .5 * c) * (w.wide ? 1.3 : 1), a.team, .5, !!w.pierce, w.wide ? .9 : .55);
         tracer(from, end, a.team, .3, (.05 + c * .05) * (w.wide ? 2 : 1));
         sfx(a, 'charger');
       }
       break;
     }
     case 'bucket':
-      if (press && s.cd <= 0) {
+      if (fire && s.cd <= 0) {   // 押しっぱなしでも、投げられるようになるたびに投げる
         if (useInk(a, w.ink)) {
-          s.cd = 1 / w.rate; const d = aim(); const base = Math.atan2(d.x, d.z), pit = clamp(Math.asin(d.y), -.4, .6) + (w.high ? .45 : .22);
-          const v = w.range * (w.high ? .95 : 1.1);
-          if (w.fan) {
-            for (let k = 0; k < w.fan; k++) { const dd = dirOf(base + (k / (w.fan - 1) - .5) * .7, pit - .05 + Math.random() * .08); const vv = v * rand(.8, 1.05); shoot({ x: from.x, y: from.y + .1, z: from.z, vx: dd.x * vv, vy: dd.y * vv, vz: dd.z * vv, g: 20, team: a.team, owner: a, dmg: w.dmg, pr: w.pr, size: .12, hitR: .3, trail: 1.2, trailR: .35, life: 3 }); }
-          } else {
-            const offs = w.triple ? [-.2, 0, .2] : [0];
-            for (const o of offs) {
-              const dd = dirOf(base + o, pit);
-              shoot({ kind: w.explode ? 'blast' : 'shot', airBurst: false, x: from.x, y: from.y + .2, z: from.z, vx: dd.x * v, vy: dd.y * v, vz: dd.z * v, g: 20, team: a.team, owner: a, dmg: w.dmg, sdmg: w.sdmg, er: w.er, pr: w.pr,
-                size: w.small ? .17 : .26, hitR: w.small ? .35 : .45, trail: .7, trailR: w.small ? .4 : .5, life: 3, swirl: !!w.swirl, roll: !!w.roll });
-            }
-          }
+          s.cd = 1 / w.rate; const d = aim(), base = Math.atan2(d.x, d.z);
+          // ねらった所に落ちるように投げる（とどく距離まで）。高投げは高い山なり
+          const ap = a.aimPt, R = clamp(ap ? Math.hypot(ap.x - from.x, ap.z - from.z) : w.range, w.range * .25, w.range);
+          const th = w.high ? .9 : w.small ? .3 : .38, gg = w.high ? 24 : 30, y0 = from.y + .2, ty = ap ? Math.max(hAt(ap.x, ap.z), ap.y - .6) : y0 - 1, v = lobSpeed(R, th, y0 - ty, gg);
+          const lob = (yawOff, vMul, extra) => { const dd = dirOf(base + yawOff, th), vv = v * vMul; shoot(Object.assign({ x: from.x, y: y0, z: from.z, vx: dd.x * vv, vy: dd.y * vv, vz: dd.z * vv, g: gg, team: a.team, owner: a, dmg: w.dmg, pr: w.pr, splash: w.splashR || 1.4 }, extra)); };
+          if (w.fan) for (let k = 0; k < w.fan; k++) lob((k / (w.fan - 1) - .5) * .5, rand(.86, 1.04), { size: .12, hitR: .4, trail: 1.2, trailR: .35, life: 3 });
+          else for (const o of (w.triple ? [-.1, 0, .1] : [0])) lob(o, 1, { kind: w.explode ? 'blast' : 'shot', airBurst: false, sdmg: w.sdmg, er: w.er, size: w.small ? .17 : .26, hitR: w.small ? .5 : .7, trail: .7, trailR: w.small ? .45 : .58, life: 3, swirl: !!w.swirl, roll: !!w.roll });
+          // ふつうのバケツ：大きなかたまりのすぐ後ろに、小さなかたまりが同じ道をついてくる（両方当たれば1回でたおせる）
+          if (w.tail) { const n0 = proj.length; lob(0, 1, { dmg: w.tail, size: .17, hitR: .45, trail: .9, trailR: .4, life: 3 }); for (let q = n0; q < proj.length; q++) proj[q].wait = .06; }
           s.busy = .4; s.swing = { t: 0, dur: .32, kind: 'up' }; sfx(a, 'slosher');
         }
       }
@@ -516,15 +523,15 @@ function weaponTick(a, dt, fire, dodge, mx, mz) {
         const d = aim(), base = Math.atan2(d.x, d.z), pit = clamp(Math.asin(d.y), -.3, .3);
         if (charged) {
           if (!useInk(a, w.ink * 2)) return;
-          if (w.lunge) { s.lungeT = .32; s.lungeHits = new Set(); sfx(a, 'blade'); return; }
+          if (w.lunge) { s.lungeT = .32; s.lungeHits = new Set(); a.rollArmor = Math.max(a.rollArmor || 0, .36); sfx(a, 'blade'); return; }   // つっこむ間はダメージ半分
           const v = 24, dd = dirOf(base, pit);
-          shoot({ x: from.x, y: from.y, z: from.z, vx: dd.x * v, vy: dd.y * v, vz: dd.z * v, straight: w.crange / v, g: w.ret ? 0 : 30, team: a.team, owner: a, dmg: w.cdmg, pr: .8, size: .3, hitR: .7, pierce: true, trail: .45, trailR: .6, life: 3, ret: !!w.ret });
+          shoot({ x: from.x, y: from.y, z: from.z, vx: dd.x * v, vy: dd.y * v, vz: dd.z * v, straight: w.crange / v, g: w.ret ? 0 : 30, team: a.team, owner: a, dmg: w.cdmg, pr: 1.0, size: .3, hitR: .7, pierce: true, trail: .4, trailR: .85, life: 3, ret: !!w.ret });
         } else {
           if (!useInk(a, w.ink)) return;
           const v = 15, volleys = w.twin ? 2 : 1;
           for (let q = 0; q < volleys; q++) for (let k = -2; k <= 2; k++) {
             const dd = dirOf(base + k * .2 + (q ? .1 : 0), pit);
-            const p = shoot({ x: from.x, y: from.y - .1, z: from.z, vx: dd.x * v, vy: dd.y * v, vz: dd.z * v, straight: w.range / v, g: 30, team: a.team, owner: a, dmg: w.dmg, pr: w.pr, size: .14, hitR: .45, pierce: true, trail: .9, trailR: .4, life: .8 });
+            const p = shoot({ x: from.x, y: from.y - .1, z: from.z, vx: dd.x * v, vy: dd.y * v, vz: dd.z * v, straight: w.range / v, g: 30, team: a.team, owner: a, dmg: w.dmg, pr: w.pr, size: .14, hitR: .45, pierce: true, trail: .7, trailR: .55, life: .8 });
             if (q) p.wait = .12;
           }
         }
@@ -543,7 +550,7 @@ function weaponTick(a, dt, fire, dodge, mx, mz) {
         while (s.acc >= 1) {
           s.acc -= 1; const d = aim(), b = Math.atan2(d.x, d.z), p0 = Math.asin(clamp(d.y, -1, 1));
           for (const o of streams) {
-            const dd = jitter(dirOf(b + o, p0), w.spread * spreadMul, w.mist ? w.spread * .6 : w.spread * .4), v = w.mist ? 15 : 26;
+            const dd = jitter(dirOf(b + o, p0), w.spread * spreadMul, w.mist ? w.spread * .6 : w.spread * .4), v = w.mist ? 18 : 32;
             shoot({ x: from.x, y: from.y, z: from.z, vx: dd.x * v, vy: dd.y * v, vz: dd.z * v, straight: range / v * .85, g: 24, team: a.team, owner: a, dmg: w.dmg, pr: w.pr, size: w.mist ? .08 : .1, hitR: .25, life: 2, fall: true });
           }
         }

@@ -213,8 +213,8 @@ function update(dt) {
     const me = G.me;
     for (const a of actors) {
       let ctl;
-      if (a === me) ctl = playerControl(a, dt);
-      else if (a.bot) ctl = playing ? botThink(a, dt) : { mx: 0, mz: 0 };
+      if (a === me && !G.auto) ctl = playerControl(a, dt);
+      else if (a.bot || a === me) ctl = playing ? botThink(a, dt) : { mx: 0, mz: 0 };   // G.auto：自分もCPUにまかせる（テスト用）
       else ctl = { mx: 0, mz: 0 };
       if (a.dead) { if (playing) { a.respawnT -= dt; if (a.respawnT <= 0) respawn(a); } continue; }
       if (G.state === 'count') { ctl.mx = ctl.mz = 0; ctl.fire = false; ctl.jump = false; }

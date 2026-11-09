@@ -223,7 +223,7 @@ function stepMove(a, dt, ctl) {
   a.dive = !!ctl.dive && !a.spOn && !(a.ws.rolling) && !ruleNoDive(a) && !(a.rollT > 0);
   a.swim = a.dive && ownInk;
   let spd = SPEED.walk * a.w.spd;
-  if (a.dive) spd = a.swim ? SPEED.swim : SPEED.blob;
+  if (a.dive) spd = a.swim ? SPEED.swim * (1 + (a.w.spd - 1) * .9) : SPEED.blob;   // 軽いブキほど速く泳げる（重いブキはおそい）
   else if (a.ws.rolling) spd = SPEED.walk * (a.w.rollSpd || 1) * (a.ws.rollMul || 1);
   else spd *= 1 - busy;
   if (enemyInk && !a.swim) spd = Math.min(spd, SPEED.enemy);
@@ -316,7 +316,9 @@ function hurt(a, dmg, src, kind) {
   if (src && src.team === a.team) return false;
   if (a.sj && a.sj.t > SJ_CH) return false;
   if (inBarrier(a)) return false;
-  if (a.rollArmor > 0) dmg *= .5;   // くるりターンの出だし
+  if (a.rollArmor > 0) dmg *= .5;   // くるりターンの出だし（ブレードのつっこみも）
+  // ローラーをころがしている間は、大きなローラーが盾になって正面からのダメージが少し減る
+  if (a.ws.rolling && a.w.cls === 'roller' && src && src !== a) { const [fx, fz] = [Math.sin(a.yaw), Math.cos(a.yaw)], dx = src.x - a.x, dz = src.z - a.z, l = Math.hypot(dx, dz) || 1; if ((dx * fx + dz * fz) / l > .35) dmg *= .6; }
   if (a.armor > 0) { const used = Math.min(a.armor, dmg); a.armor -= used; dmg -= used; burst(a.x, a.y + 1, a.z, a.team, 6, .5); if (dmg <= 0) return true; }
   a.hp -= dmg; a.hurtT = 0; a.lastHitBy = src; a.hitN = (a.hitN || 0) + 1; a.flashT = .16;
   if (a.cloakT > 0) { a.revealed = true; a.revealT = .8; }
@@ -401,7 +403,7 @@ function syncModel(a, dt, viewer) {
     let wob = 0; if (a.flashT > 0) { a.flashT -= dt; wob = Math.sin(clock * 45) * a.flashT * .9; }   // 撃たれてぷるぷる
     m.body.scale.set((1 + wob) / Math.sqrt(sq), sq, (1 - wob) / Math.sqrt(sq));
     m.body.rotation.y = a.sj && a.sj.t >= SJ_CH ? a.sj.t * 14 : a.rollT > 0 ? (1 - a.rollT / .5) * TAU * (a.rollDir || 1) : 0;
-    m.body.rotation.x = k * .14;                                          // 走ると前かがみ
+    m.body.rotation.x = k * .14;                                          // 走ると前かがみ（ジャンプ振りの体の動きは下で足す）
     m.body.position.y = Math.abs(Math.sin(ph)) * .045 * k;                // 走ると上下にはずむ
     for (const f of m.feet) { const p = ph + (f.userData.foot > 0 ? 0 : Math.PI); f.position.z = .03 + Math.sin(p) * .12 * k; f.position.y = air ? .14 : .08 + Math.max(0, Math.cos(p)) * .07 * k; }
     // まばたき
@@ -411,14 +413,23 @@ function syncModel(a, dt, viewer) {
     // 撃った反動：ブキが少し後ろへ下がって、はね上がる
     const kick = a.kick || 0; a.kick = Math.max(0, kick - dt * 7);
     // ふる動き（ローラー・ハケ：ふり上げてたたきつける／ブレード：横なぎ／バケツ：すくい上げ）
-    let swX = 0, swY = 0; const sw = a.ws.swing;
+    let swX = 0, swY = 0, lean = 0, flip = 0; const sw = a.ws.swing;
     if (sw) {
       sw.t += dt; const u = sw.t / sw.dur;
       if (u >= 1) a.ws.swing = null;
       else if (sw.kind === 'side') swY = 1.2 - u * 2.4;
       else if (sw.kind === 'up') swX = -Math.sin(u * Math.PI) * 1.1;
+      else if (sw.kind === 'over' || sw.kind === 'flip' || sw.kind === 'slam') {
+        // ジャンプ振り：ブキを頭の上までふりかぶって、体ごと前へ振り下ろす
+        const wind = sw.kind === 'slam' ? .42 : .3, e = u < wind ? u / wind : (u - wind) / (1 - wind);
+        swX = u < wind ? -e * e * 2.7 : -2.7 + Math.sin(e * Math.PI / 2) * 3.7;
+        lean = u < wind ? -.3 * e : -.3 + e * .7;
+        if (sw.kind === 'flip') flip = u * TAU;                                   // とびはね系：くるっと前に宙返り
+        if (sw.kind === 'slam' && u >= wind + .25 && !sw.hit) { sw.hit = true; if (a === G.me) G.shake = Math.max(G.shake, .22); }   // ゾウ：ずしん
+      }
       else swX = u < .35 ? -u / .35 * 1.3 : -1.3 + (u - .35) / .65 * 2.0;
     }
+    if (lean || flip) m.body.rotation.x += lean + flip;
     m.wp.rotation.set(-a.aimPitch * .8 - kick * .45 + swX, swY, 0); m.wp.position.z = .2 - kick * .14;
     if (a.wp2) { a.wp2.rotation.x = -a.aimPitch * .8 - kick * .45; a.wp2.position.z = .2 - kick * .14; }
     // 腕：ブキを持つ手はねらう向きへ。両手持ちは左手もそえる。空いた手は走ると振り、ジャンプ中はバンザイ

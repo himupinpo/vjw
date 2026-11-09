@@ -93,7 +93,7 @@ function botThink(a, dt) {
     }
   }
   ai.t -= dt; ai.subT -= dt; ai.st -= dt; if (ai.ignoreT > 0) ai.ignoreT -= dt;
-  const engage = (w.cls === 'blade' ? Math.max(w.range, w.crange * .6) : (w.range || w.frange || 6)) * (w.cls === 'roller' || w.cls === 'brush' ? 1.6 : 1.15);
+  const engage = (w.cls === 'blade' ? Math.max(w.range, w.crange * .85) : (w.range || w.frange || 6)) * (w.cls === 'roller' || w.cls === 'brush' ? 1.6 : 1.15);
   if (ai.t <= 0) {
     ai.t = .25;
     let best = null, bd = 1e9;
@@ -138,15 +138,19 @@ function botThink(a, dt) {
   if (t) {
     ai.seeT += dt;
     const dx = t.x - a.x, dz = t.z - a.z, d = Math.hypot(dx, dz) || 1;
-    const lead = clamp(d / 30, 0, .4);
+    // 先読み：弾がとどくまでの時間だけ、相手の動く先をねらう（遅い弾ほど先を見る）
+    const pv = { roller: Math.max(16, (w.frange || 8) * 2), brush: Math.max(16, (w.frange || 5) * 2), blade: d < 6 ? 30 : 24, bucket: w.high ? 9 : 17, hose: w.mist ? 18 : 32 }[w.cls] || w.v || 30;
+    const lead = clamp(d / pv, 0, w.cls === 'sniper' ? .4 : .7);
     const ex = t.x + t.vx * lead + (Math.random() - .5) * P.err * d, ez = t.z + t.vz * lead + (Math.random() - .5) * P.err * d, ey = t.y + (t.dive ? .2 : .8) + (Math.random() - .5) * P.err * d * .5;
     a.aimPt = new T.Vector3(ex, ey, ez);
     const from = muzzle(a), dv = a.aimPt.clone().sub(from);
     const wantYaw = Math.atan2(dv.x, dv.z), wantPit = Math.atan2(dv.y, Math.hypot(dv.x, dv.z));
     a.aimYaw += angD(wantYaw - a.aimYaw) * Math.min(1, dt * 10); a.aimPitch += (wantPit - a.aimPitch) * Math.min(1, dt * 10);
     const facing = Math.abs(angD(wantYaw - a.aimYaw)) < .25;
-    const melee = w.cls === 'roller' || w.cls === 'brush' || (w.cls === 'blade' && w.lunge);
+    // 近づいて戦うブキ（ローラー・ハケ・ブレード）は相手のそばまで。ほかは射程の7〜8割の所をたもつ
+    const melee = w.cls === 'roller' || w.cls === 'brush' || w.cls === 'blade';
     const prefer = melee ? .5 : w.cls === 'sniper' ? engage * .8 : engage * .7;
+    const near = w.cls === 'blade' ? w.range + .4 : (w.frange || 5) * .85;   // 振れば届く距離
     let fx = 0, fz = 0;
     if (d > prefer + 1.5) { fx = dx / d; fz = dz / d; } else if (d < prefer - 2 && !melee) { fx = -dx / d; fz = -dz / d; }
     if (ai.st <= 0) { ai.strafe = Math.random() < .5 ? -1 : 1; ai.st = rand(.6, 1.6); }
@@ -154,19 +158,44 @@ function botThink(a, dt) {
     const nx = a.x + fx * 1.2, nz = a.z + fz * 1.2;
     if (!navOk(navOf(nx, nz), a.team) || hAround(nx, nz) > a.y + STEP) { fx = -fx; fz = -fz; ai.strafe *= -1; }
     mx = fx; mz = fz;
-    if (melee) { mx = dx / d; mz = dz / d; }
+    if (melee) {
+      // まっすぐではなく、左右にゆれながら近づく（ねらわれにくい）。ブレードはすぐそばでは回りこむ
+      const side = d > 5 ? .5 : 0;
+      if (w.cls === 'blade' && d < 1.8) { mx = -dz / d * ai.strafe; mz = dx / d * ai.strafe; }
+      else { mx = dx / d - dz / d * ai.strafe * side; mz = dz / d + dx / d * ai.strafe * side; }
+    }
+    // 自分の色の上なら、もぐって泳いで近づく（泳いでいる相手は見つけにくい）
+    // （射程の外にいる相手へは、どのブキでも泳いで近づく）
+    const charging = a.ws.blade > 0 || a.ws.ch > 0 || a.ws.spin > 0 || a.ws.bow > 0;
+    const swimIn = (melee ? d > near : d > engage * .95) && groundTeam(a) === a.team && !carrierOf(a) && !charging;
     if (carrierOf(a)) { mx = mz = 0; follow(); }   // 運んでいる間は、撃ちあうより目的地へ
-    else if (ai.rg && roleOf(a) === 0 && !melee && d > 3) {   // 攻め役：撃ちながら目的地へ進む
+    else if (ai.rg && roleOf(a) === 0 && (!melee || d > near * 1.6) && d > 3) {   // 攻め役：撃ちながら目的地へ進む（近づいて戦うブキも、相手が遠いうちは目的地へ）
       const sx = mx, sz = mz; mx = mz = 0; follow();
       if (!mx && !mz) { mx = sx; mz = sz; } else { mx += sx * .35; mz += sz * .35; }
     }
     const inRange = d < engage, ready = ai.seeT > P.react && facing && inRange;
-    switch (w.cls) {
-      case 'sniper': ctl.fire = ready || (a.ws.ch > 0 && a.ws.ch < 1); if (a.ws.ch >= 1 && ready) ctl.fire = false; if (d < 6 && a.ws.ch > .35) ctl.fire = false; break;
-      case 'bow': ctl.fire = ready && !(a.ws.bow >= (d < 8 ? .4 : 1)); break;
-      case 'gatling': ctl.fire = ready && !(a.ws.spin >= (d < 8 ? .5 : 1)) && !(a.ws.fireT > 0); break;
-      case 'blade': ctl.fire = ready && !(a.ws.blade >= ((d > 5 || w.lunge) && d > 2.5 ? w.charge + .05 : .05)); break;
-      case 'roller': case 'brush': ctl.fire = ready && d < 9; break;
+    const s = a.ws, tap = !s.prev && !(s.cd > 0);   // 「うつ」を1回だけ押す（押しっぱなしにしない）
+    if (swimIn) ctl.dive = true;
+    else switch (w.cls) {
+      case 'sniper': ctl.fire = ready || (s.ch > 0 && s.ch < 1); if (s.ch >= 1 && ready) ctl.fire = false; if (d < 6 && s.ch > .35) ctl.fire = false; break;
+      // ためるブキ：相手を見つけたらすぐためはじめ、ねらえたら放つ（近いときは少しだけためて）
+      case 'bow': ctl.fire = (s.bow || 0) < (d < 8 ? .45 : 1) ? true : !ready; break;
+      case 'gatling': ctl.fire = s.fireT > 0 ? false : (s.spin || 0) < (d < 8 ? .5 : 1) ? true : !ready; break;
+      case 'blade': {
+        const b = s.blade || 0;
+        if (w.lunge && d > 2.2 && d < 5.5) ctl.fire = !(b >= w.charge + .02 && ready);    // ためて一気につっこむ
+        else if (d < near) ctl.fire = ready && !(b > 0) && !(s.cd > 0);                  // すぐそば：連続で切る
+        else ctl.fire = !(b >= w.charge + .02 && ai.seeT > P.react && facing && d < w.crange * .9);   // はなれている：ためた刃を飛ばす
+        break;
+      }
+      case 'roller': case 'brush': {
+        if (w.cls === 'roller' && d < 2.6) ctl.fire = true;                              // すぐそば：ころがしてひく
+        else if (d < near) ctl.fire = ready && tap && !s.rolling;                        // 振ってたたく（何度も）
+        else if (w.cls === 'roller' && d < near * 1.4 && ready) {                         // 少し遠い：ジャンプ振りで遠くまで
+          if (a.onGround && !s.rolling) ctl.jump = true; else ctl.fire = tap && !a.onGround && a.vy < 2.5;
+        } else ctl.fire = d < 16;                                                          // 遠い：ころがして（ハケは走って）近づく
+        break;
+      }
       case 'hose': ctl.fire = ready; break;
       default: ctl.fire = ready && Math.random() < P.fireP + .2;
     }

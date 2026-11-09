@@ -7,10 +7,10 @@ const PALETTES = [
 const CLASSES = {
   gun:     { name: 'ガン',       desc: '押している間、連続でペンキを撃つ。いちばん基本の形。' },
   cannon:  { name: 'キャノン',   desc: '弾が飛んだ先で破裂する。直撃なら大ダメージ、まわりにも爆風。' },
-  roller:  { name: 'ローラー',   desc: 'おしたまま進むと太い道をぬり、ぶつかった相手をおしつぶす。ひと振りでペンキを飛ばす。' },
+  roller:  { name: 'ローラー',   desc: 'おしたまま進むと太い道をぬり、ぶつかった相手をおしつぶす（ころがす間は正面からのダメージが減る）。ひと振りでペンキを飛ばす。' },
   brush:   { name: 'ハケ・モップ', desc: 'ローラーより細いが、とても速く走れる。小刻みに振ってまく。' },
   sniper:  { name: 'スナイパー', desc: 'ためて放つ一直線の弾。ためきると遠くの相手を一撃。' },
-  bucket:  { name: 'バケツ',     desc: '山なりにペンキをぶちまける。段差の向こうにも届く。' },
+  bucket:  { name: 'バケツ',     desc: '押している間、ねらった所へ山なりにペンキをぶちまける。段差の向こうにも届き、落ちた所のまわりにもダメージ。' },
   gatling: { name: 'ガトリング', desc: '回してためると、ためた分だけ弾の雨を降らせる。' },
   dual:    { name: '二丁拳銃',   desc: '両手で撃つ。撃ちながら「もぐる」で横へすべってよける。' },
   parasol: { name: 'パラソル',   desc: '散弾を撃ちつつ、カサで正面の弾をふせぐ。' },
@@ -108,7 +108,7 @@ const WEAPONS = [
   W('widesn', 'オーロラ', 'sniper', 'fog', 'tower', { look: [0x1e3a4a, 0x5affb0], charge: 1.0, dmg: 120, mindmg: 35, range: 26, ink: 18, pr: 1.0, wide: true, spd: .92, desc: '太い線でぬれるが、一撃にはならない。' }),
   W('straw', 'ヒコボシ', 'sniper', 'mine', 'airdrop', { look: [0xf2f4f8, 0xffd23f], charge: 1.25, dmg: 180, mindmg: 30, range: 26, ink: 20, pr: .4, keep: true, keepLong: true, spd: .94, desc: 'ためたまま、もぐって長く待てる（5秒）。細い線で、ためきると一撃。' }),
   // ---- バケツ（8） ----
-  W('bucket', 'ユウダチ', 'bucket', 'bomb', 'barrier', { look: [0x9aa0aa, 0x3a6ac8], rate: 1.3, dmg: 70, range: 11, ink: 7, pr: 1.15, desc: '大きなペンキのかたまりを山なりに投げる。' }),
+  W('bucket', 'ユウダチ', 'bucket', 'bomb', 'barrier', { look: [0x9aa0aa, 0x3a6ac8], rate: 1.3, dmg: 70, range: 11, ink: 7, pr: 1.15, desc: '大きなかたまりと、すぐ後ろの小さなかたまりを投げる。両方当たれば一撃。' }),
   W('triple', 'アラレ', 'bucket', 'fountain', 'beam', { look: [0xd8e4ee, 0x6a8aa8], rate: 1.0, dmg: 55, range: 10, ink: 8, pr: 1.0, triple: true, desc: '3つに分かれて広くかかる。' }),
   W('longb', 'ニジ', 'bucket', 'mine', 'slam', { look: [0xf4f4f4, 0xff5a5a], rate: .9, dmg: 76, range: 15, ink: 9, pr: 1.2, high: true, desc: '高い山なりで遠くの段の上にも。' }),
   W('watering', 'コサメ', 'bucket', 'spring', 'rain', { look: [0x6aa8d8, 0xffffff], rate: 1.8, dmg: 32, range: 9, ink: 6, pr: .75, fan: 7, model: 'watering', desc: '細かいしぶきを扇のようにまく。' }),
@@ -149,7 +149,7 @@ const WEAPONS = [
   // ---- ブレード（6） ----
   W('blade', 'ミカヅキ', 'blade', 'bomb', 'beam', { look: [0x2a2a36, 0xfff2b0], rate: 2.6, dmg: 50, range: 4.5, cdmg: 110, crange: 12, charge: .7, ink: 3, pr: .7, spd: 1.05, desc: '横振りで近くを切り、ためると遠くへ飛ぶ刃。' }),
   W('heavyb', 'オオナタ', 'blade', 'sticky', 'barrier', { look: [0x4a3a2a, 0xc8ccd4], rate: 1.6, dmg: 70, range: 5, cdmg: 150, crange: 14, charge: 1.0, ink: 5, pr: .85, spd: .96, desc: '重い刃。ためた一撃は一発でたおせる。' }),
-  W('hera', 'イナズマ', 'blade', 'windup', 'cloak', { look: [0x2a2a30, 0xffe03a], rate: 3.4, dmg: 36, range: 3.8, cdmg: 90, crange: 6, charge: .5, ink: 2, pr: .6, spd: 1.1, lunge: true, model: 'hera', desc: 'ためると前へ一気につっこんで切る。' }),
+  W('hera', 'イナズマ', 'blade', 'windup', 'cloak', { look: [0x2a2a30, 0xffe03a], rate: 3.4, dmg: 36, range: 3.8, cdmg: 90, crange: 6, charge: .5, ink: 2, pr: .6, spd: 1.1, lunge: true, model: 'hera', desc: 'ためると前へ一気につっこんで切る。つっこむ間はダメージ半分。' }),
   W('twinb', 'ニトウ', 'blade', 'dart', 'ring', { look: [0x3a2a3a, 0xe8e8f0], rate: 2.2, dmg: 34, range: 4.5, cdmg: 90, crange: 11, charge: .7, ink: 3.2, pr: .65, spd: 1.05, twin: true, desc: '1回で2度切る。' }),
   W('longblade', 'ナガレボシ', 'blade', 'shield', 'turret', { look: [0x23284a, 0xb8d8ff], rate: 1.8, dmg: 55, range: 5, cdmg: 120, crange: 18, charge: 1.0, ink: 4, pr: .75, spd: .98, desc: 'ためた刃がとても遠くまで飛ぶ。' }),
   W('boomblade', 'トンボガエリ', 'blade', 'spring', 'tornado', { look: [0x3a5a3a, 0x8ae8a0], rate: 2.0, dmg: 48, range: 4.5, cdmg: 100, crange: 11, charge: .8, ink: 3.5, pr: .75, spd: 1.0, ret: true, desc: 'ためた刃が手もとにもどってくる。' }),
@@ -161,7 +161,24 @@ const WEAPONS = [
   W('misthose', 'ヤマギリ', 'hose', 'fog', 'cloak', { look: [0x8aa0a8, 0xf0f4f8], rate: 34, dmg: 5, range: 6.5, inkS: 8, pr: .7, spread: 30, mist: true, spd: 1.05, desc: '近くをふんわりぬりつぶす霧。' }),
   W('jet', 'ハヤセ', 'hose', 'dart', 'turret', { look: [0x2a3a5a, 0x4ae0ff], rate: 20, dmg: 14, range: 15, inkS: 12, pr: .45, spread: .5, spd: .94, desc: '細く強い水流。当たると痛い。' })
 ];
+// バランス調整：スナイパーとガンにくらべて弱かった種類を底上げ（ぬりの広さ・連射・ダメージ）
+for (const w of WEAPONS) {
+  if (w.cls === 'bucket') { w.rate *= 1.3; w.pr *= 1.25; if (!w.fan && !w.small && !w.triple && !w.explode) w.tail = 100 - w.dmg; }   // 後ろについてくる小さなかたまりのダメージ
+  if (w.cls === 'cannon') w.pr *= 1.3;
+  if (w.cls === 'blade') { w.pr *= 1.6; w.dmg = Math.round(w.dmg * 1.12); w.charge = +(w.charge * .65).toFixed(2); }   // ためが速い
+  if (w.cls === 'hose') { w.pr *= 1.35; w.dmg *= 1.35; }
+  if (w.cls === 'brush') { w.frange *= 1.2; w.spd += .05; }   // ハケの振りは少し遠くまで。身軽に
+  if (w.cls === 'blade') w.spd += .04;
+  if (w.cls === 'brush') w.width *= 1.12;
+  if (w.cls === 'parasol') w.pr *= 1.2;
+  if (w.cls === 'bow') w.pr *= 1.1;
+}
 const WBY = Object.fromEntries(WEAPONS.map(w => [w.id, w]));
+WBY.longb.rate = 1.35; WBY.longb.pr = 1.7;          // ニジ：高い山なりで手数が少なすぎたので
+WBY.ladle.dmg = 55;                                   // ツユ：2発でたおせるように
+WBY.longb.splashR = 2.1;                              // ニジ：上から落ちて広くはねる
+WBY.watering.dmg = 36;                                // コサメ：しぶきを少し強く
+WBY.hera.cdmg = 100; WBY.twinb.cdmg = 100;            // イナズマのつっこみ・ニトウのためた刃も、当たれば一撃
 if (!WBY[SET.weapon]) SET.weapon = 'basic';
 
 // 見た目の強さ（ブキ選びの棒グラフ用。0〜1）
@@ -169,7 +186,7 @@ function wStats(w) {
   const c = w.cls;
   const dps = c === 'gun' || c === 'dual' ? w.dmg * w.rate * (w.burst || 1) * (w.cone || 1) / 300
     : c === 'gatling' ? w.dmg * w.rate * (w.triple ? 2 : 1) / 300 : c === 'cannon' ? w.dmg * w.rate / 160 : c === 'sniper' ? w.dmg / Math.max(.4, w.charge) / 200
-    : c === 'roller' ? (w.rollDmg || 140) / 190 : c === 'brush' ? w.fdmg * w.frate / 200 : c === 'bucket' ? w.dmg * w.rate * (w.triple ? 2 : w.fan ? 2.5 : 1) / 120
+    : c === 'roller' ? (w.rollDmg || 140) / 190 : c === 'brush' ? w.fdmg * w.frate / 200 : c === 'bucket' ? (w.dmg + (w.tail || 0)) * w.rate * (w.triple ? 2 : w.fan ? 2.5 : 1) / 120
     : c === 'parasol' ? w.pellets * w.dmg * w.rate / 200 : c === 'bow' ? w.dmg * Math.min(3, w.arrows) / w.charge / 260 : c === 'hose' ? w.dmg * w.rate / 230 : w.dmg * w.rate / 160;
   const range = (c === 'blade' ? w.crange * .7 : (w.range || w.frange || 6)) / 42;
   const paint = c === 'roller' ? .9 + w.width * .03 : c === 'brush' ? .75 : c === 'gun' || c === 'dual' ? clamp((w.pr || .6) * (w.rate || 5) * (w.burst || 1) * (w.cone || 1) / 9, .2, 1)
@@ -187,10 +204,11 @@ function wInfo(w) {
     case 'cannon': stk = '直撃なら' + n(w.dmg); break;
     case 'sniper': stk = 'ためきれば' + n(w.dmg); break;
     case 'roller': stk = 'ころがし' + n(w.rollDmg || 140) + '・ふり（近く）' + n(w.fdmg * .97); break;
-    case 'brush': stk = 'ふり（近く）' + Math.ceil(100 / (w.fdmg / 1.5 * 2)) + '回'; break;
+    case 'brush': stk = 'ふり（近く）' + Math.ceil(100 / (w.fdmg / 1.25 * 2)) + '回'; break;
+    case 'bucket': stk = w.tail ? '2つとも当たれば一撃・1つなら' + n(w.dmg) : w.triple ? '近くで2つ当たれば' + n(w.dmg * 2) : n(w.dmg); break;
     case 'parasol': stk = '近くで全弾' + n(w.pellets * w.dmg); break;
     case 'bow': stk = 'ためきって' + n(w.dmg * 1.15); break;
-    case 'blade': stk = '横振り' + n(w.dmg) + '・ため' + n(w.cdmg); break;
+    case 'blade': stk = '横振り' + n(w.dmg) + (w.lunge ? '・つっこみ' : '・ため') + n(w.cdmg); break;
     case 'hose': stk = Math.ceil(100 / w.dmg) + '粒（約' + (100 / w.dmg / w.rate).toFixed(1) + '秒）'; break;
     default: stk = n(w.dmg);
   }
