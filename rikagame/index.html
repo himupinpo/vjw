@@ -410,14 +410,21 @@ function massIn(r, withPlayer = false) {
   if (withPlayer && inBox(player.body.position, r)) m += PLAYER_MASS;
   return m;
 }
+// 床に貼るだけの板（当たり判定なし＝段差ができない）
+function flatPanel(w, d, x, y, z, material) {
+  const mesh = box3(w, 0.02, d, material); mesh.castShadow = false;
+  mesh.position.set(x, y + 0.006, z);
+  addMesh(mesh);
+  return { mesh };
+}
 function pad(x, z, w, d, color, text) {
-  const p = staticBox(w, 0.08, d, x, 0.04, z, color, { mopt: { emissive: color, emissiveIntensity: 0.15 } });
+  const p = flatPanel(w, d, x, 0, z, mat(color, { emissive: color, emissiveIntensity: 0.15 }));
   const lab = makeLabel(text, 0.6); lab.position.set(x, 1.2, z); addMesh(lab);
   return { x, z, w, d, mesh: p.mesh, lab, was: false,
     pressed() { const q = player.body.position; return Math.abs(q.x - x) < w / 2 && Math.abs(q.z - z) < d / 2 && q.y < 0.6 && player.grounded; } };
 }
 function plate(x, y, z, w, d, text) {
-  const p = staticBox(w, 0.08, d, x, y + 0.04, z, 0x8a94a6, { mopt: { metalness: 0.5, roughness: 0.4 } });
+  const p = flatPanel(w, d, x, y, z, mat(0x8a94a6, { metalness: 0.5, roughness: 0.4 }));
   const lab = makeLabel(text, 0.85); lab.position.set(x, y + 2.2, z); addMesh(lab);
   return { region: [x - w / 2 - 0.1, x + w / 2 + 0.1, y - 0.2, y + 2.5, z - d / 2 - 0.1, z + d / 2 + 0.1], lab, mesh: p.mesh };
 }
