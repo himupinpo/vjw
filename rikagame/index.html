@@ -1,0 +1,1477 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>ぐらぐら理科ラボ</title>
+<style>
+  :root {
+    --bg:#0f1420; --card:rgba(255,255,255,.96); --fg:#1b2030; --sub:#5d6475;
+    --accent:#ff8a3d; --accent2:#3d8bff; --ok:#2fbf71; --line:rgba(0,0,0,.1);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --card:rgba(28,32,44,.96); --fg:#eef1f7; --sub:#a3abbd; --line:rgba(255,255,255,.12); }
+  }
+  :root[data-theme="dark"] { --card:rgba(28,32,44,.96); --fg:#eef1f7; --sub:#a3abbd; --line:rgba(255,255,255,.12); }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; overflow:hidden; background:var(--bg); color:var(--fg);
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP","Yu Gothic",sans-serif;
+    -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent; touch-action:none; }
+  #game, #game canvas { position:fixed; inset:0; width:100%; height:100%; display:block; }
+  .hidden { display:none !important; }
+  button { font:inherit; cursor:pointer; border:0; }
+
+  /* HUD */
+  #topbar { position:fixed; top:calc(env(safe-area-inset-top,0px) + 10px); left:12px; right:12px;
+    display:flex; align-items:flex-start; justify-content:space-between; gap:8px; pointer-events:none; }
+  #stageName { background:rgba(0,0,0,.5); color:#fff; padding:6px 12px; border-radius:12px; font-weight:800; font-size:15px; }
+  #stageName small { display:block; font-weight:600; font-size:11px; opacity:.8; }
+  .tb-btns { display:flex; gap:6px; pointer-events:auto; flex-wrap:wrap; justify-content:flex-end; }
+  .tb-btns button { background:rgba(0,0,0,.5); color:#fff; padding:7px 11px; border-radius:10px; font-size:13px; font-weight:700; }
+  #meter { position:fixed; top:calc(env(safe-area-inset-top,0px) + 62px); left:12px; max-width:min(380px,calc(100vw - 24px));
+    background:rgba(0,0,0,.55); color:#fff; padding:8px 12px; border-radius:12px; font-size:13px; line-height:1.55; pointer-events:none; white-space:pre-line; }
+  #meter:empty { display:none; }
+  #meter b { color:#ffd27a; }
+  #armbar { position:fixed; left:50%; transform:translateX(-50%); bottom:calc(env(safe-area-inset-bottom,0px) + 12px);
+    display:flex; gap:8px; pointer-events:none; }
+  #armbar span { background:rgba(0,0,0,.5); color:#fff; padding:5px 10px; border-radius:10px; font-size:12px; font-weight:700; min-width:118px; text-align:center; }
+  #armbar span.on { background:rgba(255,138,61,.85); }
+  #armbar span.max { background:rgba(230,50,50,.9); }
+  #toast { position:fixed; top:38%; left:50%; transform:translate(-50%,-50%); background:rgba(0,0,0,.7); color:#fff;
+    padding:12px 20px; border-radius:14px; font-weight:800; font-size:18px; pointer-events:none; opacity:0; transition:opacity .3s; text-align:center; }
+  #toast.show { opacity:1; }
+  #keys { position:fixed; right:12px; bottom:calc(env(safe-area-inset-bottom,0px) + 12px); background:rgba(0,0,0,.45); color:#fff;
+    font-size:11px; padding:6px 10px; border-radius:10px; line-height:1.5; pointer-events:none; }
+  #cross { position:fixed; left:50%; top:50%; width:6px; height:6px; margin:-3px 0 0 -3px; border-radius:50%; background:rgba(255,255,255,.8); box-shadow:0 0 0 1px rgba(0,0,0,.4); pointer-events:none; }
+
+  /* screens */
+  .screen { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(8,12,22,.55); z-index:10; }
+  .panel { background:var(--card); color:var(--fg); border-radius:18px; padding:20px 20px 16px; width:min(560px,100%); max-height:calc(100% - 8px); overflow:auto;
+    box-shadow:0 10px 40px rgba(0,0,0,.35); }
+  .panel h1 { margin:0 0 4px; font-size:26px; letter-spacing:-.01em; }
+  .panel h2 { margin:0 0 6px; font-size:21px; }
+  .panel .tag { display:inline-block; font-size:12px; font-weight:800; color:#fff; background:var(--accent2); padding:2px 8px; border-radius:20px; margin-bottom:8px; }
+  .panel p, .panel li { font-size:14px; line-height:1.7; }
+  .panel .sci { background:rgba(61,139,255,.1); border-left:4px solid var(--accent2); padding:8px 12px; border-radius:8px; margin:10px 0; }
+  .panel .goal { background:rgba(255,138,61,.12); border-left:4px solid var(--accent); padding:8px 12px; border-radius:8px; margin:10px 0; }
+  .panel .formula { font-weight:800; font-size:15px; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+  .btn { background:var(--accent); color:#fff; padding:11px 18px; border-radius:12px; font-weight:800; font-size:15px; }
+  .btn.sub { background:transparent; color:var(--fg); border:1px solid var(--line); }
+  .stages { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px; margin:12px 0; }
+  .stages button { text-align:left; background:rgba(61,139,255,.1); color:var(--fg); padding:10px 12px; border-radius:12px; font-size:13px; line-height:1.4; }
+  .stages button b { display:block; font-size:14px; }
+  .stages button.done { background:rgba(47,191,113,.16); }
+  .stages button:disabled { opacity:.4; cursor:default; }
+  .ctrl { font-size:12.5px; color:var(--sub); line-height:1.7; }
+  kbd { background:rgba(127,127,127,.18); border-radius:5px; padding:0 5px; font-family:inherit; font-weight:700; }
+  #loading { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; color:#fff; font-size:16px; z-index:20; background:var(--bg); text-align:center; padding:20px; }
+
+  /* touch */
+  #touch { position:fixed; inset:0; pointer-events:none; }
+  #stick { position:fixed; left:calc(env(safe-area-inset-left,0px) + 24px); bottom:calc(env(safe-area-inset-bottom,0px) + 40px); width:130px; height:130px; border-radius:50%;
+    background:rgba(255,255,255,.14); border:2px solid rgba(255,255,255,.35); pointer-events:auto; }
+  #knob { position:absolute; left:50%; top:50%; width:56px; height:56px; margin:-28px 0 0 -28px; border-radius:50%; background:rgba(255,255,255,.55); }
+  .tbtn { position:fixed; width:68px; height:68px; border-radius:50%; background:rgba(255,255,255,.22); border:2px solid rgba(255,255,255,.45);
+    color:#fff; font-weight:800; font-size:14px; pointer-events:auto; display:flex; align-items:center; justify-content:center; text-shadow:0 1px 2px rgba(0,0,0,.5); }
+  .tbtn.on { background:rgba(255,138,61,.75); }
+  #tJump { right:calc(env(safe-area-inset-right,0px) + 22px); bottom:calc(env(safe-area-inset-bottom,0px) + 34px); }
+  #tR { right:calc(env(safe-area-inset-right,0px) + 100px); bottom:calc(env(safe-area-inset-bottom,0px) + 70px); }
+  #tL { right:calc(env(safe-area-inset-right,0px) + 176px); bottom:calc(env(safe-area-inset-bottom,0px) + 40px); }
+  #tB { right:calc(env(safe-area-inset-right,0px) + 60px); bottom:calc(env(safe-area-inset-bottom,0px) + 148px); width:58px; height:58px; font-size:12px; }
+  body.touch #keys, body.touch #cross { display:none; }
+  body.touch #armbar { bottom:auto; top:calc(env(safe-area-inset-top,0px) + 54px); left:auto; right:12px; transform:none; flex-direction:column; gap:4px; }
+  body.touch #armbar span { min-width:0; font-size:11px; }
+  body.touch #meter { font-size:11px; line-height:1.45; max-width:min(300px,45vw); padding:6px 10px; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "cannon-es": "https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js"
+} }
+</script>
+</head>
+<body>
+<div id="game"></div>
+<div id="loading">読み込み中…</div>
+
+<div id="hud" class="hidden">
+  <div id="topbar">
+    <div id="stageName"></div>
+    <div class="tb-btns">
+      <button id="btnInfo">解説</button>
+      <button id="btnRestart">やり直し</button>
+      <button id="btnMenu">メニュー</button>
+    </div>
+  </div>
+  <div id="meter"></div>
+  <div id="armbar"><span id="armL">左手</span><span id="armR">右手</span></div>
+  <div id="cross"></div>
+  <div id="keys"><kbd>WASD</kbd> 移動　<kbd>マウス</kbd> 視点（上を見ると腕が上がる）<br><kbd>左クリック</kbd>/<kbd>Q</kbd> 左手　<kbd>右クリック</kbd>/<kbd>E</kbd> 右手　<kbd>Space</kbd> ジャンプ　<kbd>R</kbd> やり直し</div>
+  <div id="toast"></div>
+</div>
+
+<div id="touch" class="hidden">
+  <div id="stick"><div id="knob"></div></div>
+  <div class="tbtn" id="tL">左手</div>
+  <div class="tbtn" id="tR">右手</div>
+  <div class="tbtn" id="tB">両手</div>
+  <div class="tbtn" id="tJump">ジャンプ</div>
+</div>
+
+<div id="menu" class="screen hidden">
+  <div class="panel">
+    <h1>ぐらぐら理科ラボ</h1>
+    <p style="margin:0;color:var(--sub)">ぐにゃぐにゃの体で、力・仕事・てこ・滑車・浮力・水圧・合力を使って謎を解こう！</p>
+    <div class="stages" id="stageList"></div>
+    <div class="ctrl">
+      <b>パソコン</b>：<kbd>WASD</kbd>移動／マウスで視点（画面をクリックで固定）／<kbd>左クリック</kbd>・<kbd>右クリック</kbd>（または<kbd>Q</kbd>・<kbd>E</kbd>）を押している間その手でつかむ／<kbd>Space</kbd>ジャンプ／<kbd>R</kbd>やり直し<br>
+      <b>スマホ</b>：左のスティックで移動、右側をなぞって視点、ボタンでつかむ・ジャンプ（横向きがおすすめ）<br>
+      <b>コツ</b>：上を見ると腕が上がり、下を見ると腕が下がる。腕の力は片手200N・両手で400Nまで。
+    </div>
+  </div>
+</div>
+
+<div id="card" class="screen hidden"><div class="panel" id="cardBody"></div></div>
+
+<script type="module">
+import * as THREE from 'three';
+import * as CANNON from 'cannon-es';
+
+// ================= 定数 =================
+const G = 9.8;
+const PLAYER_MASS = 50;
+const ARM_MAX = 200;          // 片手の最大の力 [N]
+const MOVE_F_GROUND = 700;    // 足で地面をける最大の力 [N]
+const MOVE_F_AIR = 120;
+const WALK_SPEED = 4.2;
+const JUMP_V = 5.3;
+const H = 1 / 120;            // 物理の刻み
+const MU = 0.3;               // 物と床の摩擦係数
+const GRP_STATIC = 1, GRP_PLAYER = 2, GRP_DYN = 4;
+const isTouch = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
+if (isTouch) document.body.classList.add('touch');
+const $ = id => document.getElementById(id);
+
+// ================= 描画 =================
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, isTouch ? 1.5 : 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+$('game').appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xa9d8ff);
+scene.fog = new THREE.Fog(0xa9d8ff, 45, 130);
+const camera = new THREE.PerspectiveCamera(62, 1, 0.05, 400);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8899aa, 1.1));
+const sun = new THREE.DirectionalLight(0xffffff, 1.6);
+sun.position.set(8, 18, 6);
+sun.castShadow = true;
+sun.shadow.mapSize.set(isTouch ? 1024 : 2048, isTouch ? 1024 : 2048);
+const sc = sun.shadow.camera; sc.left = -22; sc.right = 22; sc.top = 22; sc.bottom = -22; sc.near = 1; sc.far = 70;
+sun.shadow.bias = -0.0005;
+scene.add(sun); scene.add(sun.target);
+function resize() {
+  renderer.setSize(innerWidth, innerHeight);
+  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize); resize();
+
+// テクスチャ
+function canvasTex(w, h, draw) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  draw(c.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4;
+  return t;
+}
+const gridTex = canvasTex(256, 256, (g, w, h) => {
+  g.fillStyle = '#fff'; g.fillRect(0, 0, w, h);
+  g.strokeStyle = 'rgba(0,0,0,.10)'; g.lineWidth = 6; g.strokeRect(0, 0, w, h);
+  g.strokeStyle = 'rgba(0,0,0,.05)'; g.lineWidth = 2;
+  g.beginPath(); g.moveTo(w / 2, 0); g.lineTo(w / 2, h); g.moveTo(0, h / 2); g.lineTo(w, h / 2); g.stroke();
+});
+const crateTexCache = {};
+function crateTex() {
+  if (crateTexCache.c) return crateTexCache.c;
+  return crateTexCache.c = canvasTex(128, 128, (g, w, h) => {
+    g.fillStyle = '#fff'; g.fillRect(0, 0, w, h);
+    g.strokeStyle = 'rgba(0,0,0,.28)'; g.lineWidth = 12; g.strokeRect(6, 6, w - 12, h - 12);
+    g.lineWidth = 7; g.beginPath(); g.moveTo(12, 12); g.lineTo(w - 12, h - 12); g.stroke();
+  });
+}
+const matCache = {};
+function mat(color, o = {}) {
+  const key = color + JSON.stringify(o);
+  if (!o.noCache && matCache[key]) return matCache[key];
+  const m = new THREE.MeshStandardMaterial({ color, roughness: 0.85, metalness: 0, ...o });
+  delete m.noCache;
+  return matCache[key] = m;
+}
+function floorMat(color, sx, sz) {
+  const t = gridTex.clone(); t.needsUpdate = true; t.repeat.set(Math.max(1, sx / 2), Math.max(1, sz / 2));
+  return new THREE.MeshStandardMaterial({ color, roughness: 0.9, map: t });
+}
+
+// 文字ラベル（3D空間に浮かぶ）
+function makeLabel(text, scale = 1, opt = {}) {
+  const c = document.createElement('canvas'); c.width = 512; c.height = 160;
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false }));
+  sp.scale.set(2.8 * scale, 0.875 * scale, 1);
+  sp.renderOrder = 5;
+  sp.userData.set = (t) => {
+    if (sp.userData.t === t) return; sp.userData.t = t;
+    const g = c.getContext('2d'); g.clearRect(0, 0, 512, 160);
+    const lines = String(t).split('\n');
+    const fs = lines.length > 2 ? 34 : lines.length > 1 ? 42 : 52;
+    g.font = `800 ${fs}px "Hiragino Sans","Noto Sans JP",sans-serif`;
+    let mw = 0; for (const l of lines) mw = Math.max(mw, g.measureText(l).width);
+    const bw = Math.min(508, mw + 36), bh = lines.length * fs * 1.22 + 18;
+    const x0 = (512 - bw) / 2, y0 = (160 - bh) / 2;
+    g.fillStyle = opt.bg || 'rgba(15,20,35,.72)';
+    g.beginPath(); if (g.roundRect) g.roundRect(x0, y0, bw, bh, 22); else g.rect(x0, y0, bw, bh); g.fill();
+    g.fillStyle = opt.color || '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    lines.forEach((l, i) => g.fillText(l, 256, y0 + 9 + fs * 1.22 * (i + 0.5), 490));
+    tex.needsUpdate = true;
+  };
+  sp.userData.set(text);
+  return sp;
+}
+function makeArrow(color) {
+  const a = new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), new THREE.Vector3(), 1, color, 0.25, 0.16);
+  a.line.material.depthTest = false; a.cone.material.depthTest = false;
+  a.line.material.linewidth = 3; a.renderOrder = 6; a.line.renderOrder = 6; a.cone.renderOrder = 6;
+  a.setVec = (origin, vec, scale = 1) => {
+    const len = vec.length() * scale;
+    a.visible = len > 0.03;
+    if (!a.visible) return;
+    a.position.copy(origin);
+    a.setDirection(vec.clone().normalize());
+    a.setLength(len, Math.min(0.3, len * 0.35), Math.min(0.18, len * 0.25));
+  };
+  return a;
+}
+function makeLine(color, dashed = false) {
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(3 * 8), 3));
+  const m = dashed ? new THREE.LineDashedMaterial({ color, dashSize: 0.15, gapSize: 0.1, depthTest: false })
+                   : new THREE.LineBasicMaterial({ color });
+  const line = new THREE.Line(geo, m);
+  line.frustumCulled = false;
+  line.userData.set = (pts) => {
+    const arr = geo.attributes.position.array;
+    pts.forEach((p, i) => { arr[i * 3] = p.x; arr[i * 3 + 1] = p.y; arr[i * 3 + 2] = p.z; });
+    geo.setDrawRange(0, pts.length); geo.attributes.position.needsUpdate = true;
+    if (dashed) line.computeLineDistances();
+  };
+  if (dashed) line.renderOrder = 6;
+  return line;
+}
+
+// ================= 物理 =================
+const world = new CANNON.World({ gravity: new CANNON.Vec3(0, -G, 0) });
+world.broadphase = new CANNON.SAPBroadphase(world);
+world.solver.iterations = 14;
+world.allowSleep = false;
+world.narrowphase.enableFrictionReduction = true;
+const mDef = new CANNON.Material('def'), mPlayer = new CANNON.Material('player'), mIce = new CANNON.Material('ice');
+world.addContactMaterial(new CANNON.ContactMaterial(mDef, mDef, { friction: 0, restitution: 0.05 }));
+world.addContactMaterial(new CANNON.ContactMaterial(mPlayer, mDef, { friction: 0, restitution: 0 }));
+world.addContactMaterial(new CANNON.ContactMaterial(mPlayer, mIce, { friction: 0, restitution: 0 }));
+world.addContactMaterial(new CANNON.ContactMaterial(mIce, mDef, { friction: 0.01, restitution: 0.3 }));
+world.addContactMaterial(new CANNON.ContactMaterial(mIce, mIce, { friction: 0.01, restitution: 0.3 }));
+const V3 = (x = 0, y = 0, z = 0) => new CANNON.Vec3(x, y, z);
+const tv = (v) => new THREE.Vector3(v.x, v.y, v.z);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+// ================= ステージ管理 =================
+const L = { bodies: [], meshes: [], objs: [], movers: [], water: null, goal: null, def: null, t: 0, cleared: false };
+function addBody(b) { world.addBody(b); L.bodies.push(b); return b; }
+function addMesh(m) { scene.add(m); L.meshes.push(m); return m; }
+function clearLevel() {
+  for (const h of hands) release(h);
+  for (const b of L.bodies) world.removeBody(b);
+  for (const m of L.meshes) { scene.remove(m); }
+  L.bodies = []; L.meshes = []; L.objs = []; L.movers = []; L.water = null; L.goal = null; L.t = 0; L.cleared = false; L.jets = null;
+}
+function box3(sx, sy, sz, material) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), material);
+  m.castShadow = true; m.receiveShadow = true; return m;
+}
+// 動かない箱（中心座標）
+function staticBox(sx, sy, sz, x, y, z, color, o = {}) {
+  const body = new CANNON.Body({ mass: 0, material: o.phys || mDef, collisionFilterGroup: GRP_STATIC });
+  body.addShape(new CANNON.Box(V3(sx / 2, sy / 2, sz / 2)));
+  body.position.set(x, y, z);
+  if (o.rot) body.quaternion.setFromEuler(o.rot[0], o.rot[1], o.rot[2]);
+  addBody(body);
+  const mesh = box3(sx, sy, sz, o.material || (o.floor ? floorMat(color, sx, sz) : mat(color, o.mopt || {})));
+  if (o.noShadow) mesh.castShadow = false;
+  mesh.position.copy(body.position); mesh.quaternion.copy(body.quaternion);
+  addMesh(mesh);
+  return { body, mesh };
+}
+// 範囲で指定する箱
+function block(x0, x1, y0, y1, z0, z1, color, o = {}) {
+  const [ax, bx] = [Math.min(x0, x1), Math.max(x0, x1)], [ay, by] = [Math.min(y0, y1), Math.max(y0, y1)], [az, bz] = [Math.min(z0, z1), Math.max(z0, z1)];
+  return staticBox(bx - ax, by - ay, bz - az, (ax + bx) / 2, (ay + by) / 2, (az + bz) / 2, color, o);
+}
+function ground(x0, x1, z0, z1, top = 0, color = 0xdfe5ec, o = {}) { return block(x0, x1, top - 1, top, z0, z1, color, { floor: true, ...o }); }
+function fence(x0, x1, z0, z1, h = 1.2, y0 = 0) { return block(x0, x1, y0, y0 + h, z0, z1, 0x9aa7b8); }
+// 斜面：zB（下）→ zT（上）
+function ramp(x, w, zB, zT, yB, yT, color) {
+  const dz = zB - zT, dy = yT - yB, len = Math.hypot(dz, dy), a = Math.atan2(dy, dz), th = 0.4;
+  const ny = Math.cos(a), nz = Math.sin(a);
+  staticBox(w, th, len + 0.4, x, (yB + yT) / 2 - ny * th / 2, (zB + zT) / 2 - nz * th / 2, color, { rot: [a, 0, 0], floor: true });
+  return a;
+}
+// 動かせる箱
+function dynBox(o) {
+  const [sx, sy, sz] = o.size, [x, y, z] = o.pos;
+  const body = new CANNON.Body({ mass: o.mass, material: o.phys || mDef, collisionFilterGroup: GRP_DYN, linearDamping: 0.01, angularDamping: 0.08 });
+  body.addShape(new CANNON.Box(V3(sx / 2, sy / 2, sz / 2)));
+  body.position.set(x, y, z);
+  if (o.rotY) body.quaternion.setFromEuler(0, o.rotY, 0);
+  addBody(body);
+  const t = crateTex();
+  const mesh = box3(sx, sy, sz, new THREE.MeshStandardMaterial({ color: o.color, map: t, roughness: 0.8, metalness: o.metal ? 0.6 : 0 }));
+  addMesh(mesh);
+  const obj = { body, mesh, kind: 'box', half: [sx / 2, sy / 2, sz / 2], mass: o.mass, volume: sx * sy * sz, grab: o.grab !== false,
+    buoy: o.buoy !== false, init: [x, y, z], initQ: body.quaternion.clone(), name: o.name || '', labelY: sy / 2 + 0.5 };
+  if (o.label) { obj.label = addMesh(makeLabel(o.label, o.labelScale || 0.8)); }
+  L.objs.push(obj);
+  return obj;
+}
+function dynSphere(o) {
+  const [x, y, z] = o.pos;
+  const body = new CANNON.Body({ mass: o.mass, material: o.phys || mDef, collisionFilterGroup: GRP_DYN, linearDamping: o.damp ?? 0.01, angularDamping: 0.05 });
+  body.addShape(new CANNON.Sphere(o.r));
+  body.position.set(x, y, z);
+  addBody(body);
+  const mesh = new THREE.Mesh(new THREE.SphereGeometry(o.r, 24, 16), mat(o.color, { metalness: o.metal ? 0.6 : 0, roughness: 0.4 }));
+  mesh.castShadow = true; addMesh(mesh);
+  const obj = { body, mesh, kind: 'sphere', r: o.r, mass: o.mass, volume: 4 / 3 * Math.PI * o.r ** 3, grab: o.grab !== false,
+    buoy: o.buoy !== false, init: [x, y, z], initQ: body.quaternion.clone(), labelY: o.r + 0.45 };
+  if (o.label) obj.label = addMesh(makeLabel(o.label, 0.7));
+  L.objs.push(obj);
+  return obj;
+}
+// 動く仕掛け（キネマティック）
+function kinBox(sx, sy, sz, x, y, z, color, o = {}) {
+  const body = new CANNON.Body({ mass: 0, type: CANNON.Body.KINEMATIC, material: mDef, collisionFilterGroup: GRP_STATIC });
+  body.addShape(new CANNON.Box(V3(sx / 2, sy / 2, sz / 2)));
+  body.position.set(x, y, z);
+  addBody(body);
+  const mesh = box3(sx, sy, sz, o.material || mat(color, o.mopt || {}));
+  addMesh(mesh);
+  const mv = { body, mesh, base: V3(x, y, z) };
+  L.movers.push(mv);
+  return mv;
+}
+// 扉：open(0〜1)
+function makeDoor(sx, sy, sz, x, y, z, color = 0xe0574f) {
+  const d = kinBox(sx, sy, sz, x, y, z, color, { mopt: { metalness: 0.3, roughness: 0.5 } });
+  d.amount = 0; d.target = 0; d.rise = sy + 0.1;
+  d.step = (h) => {
+    const prev = d.amount;
+    d.amount += clamp(d.target - d.amount, -0.6 * h, 0.6 * h);
+    d.body.velocity.set(0, (d.amount - prev) * d.rise / h, 0);
+    d.body.position.y = d.base.y + d.amount * d.rise - d.body.velocity.y * h; // world.step で進む分を先に引く
+  };
+  return d;
+}
+function wallWithDoor(z, x0, x1, doorX, doorW, h, color = 0xb7c2d0, y0 = 0) {
+  block(x0, doorX - doorW / 2, y0, y0 + h, z - 0.3, z + 0.3, color);
+  block(doorX + doorW / 2, x1, y0, y0 + h, z - 0.3, z + 0.3, color);
+  return makeDoor(doorW, 3, 0.4, doorX, y0 + 1.5, z);
+}
+// ゴール
+function makeGoal(x, y, z) {
+  const g = new THREE.Group();
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(1.1, 0.1, 12, 40), mat(0xffcc33, { emissive: 0xffaa00, emissiveIntensity: 0.6 }));
+  ring.rotation.x = Math.PI / 2; ring.position.y = 0.05; g.add(ring);
+  const beam = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 6, 32, 1, true),
+    new THREE.MeshBasicMaterial({ color: 0xffdd55, transparent: true, opacity: 0.18, side: THREE.DoubleSide, depthWrite: false }));
+  beam.position.y = 3; g.add(beam);
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.6), mat(0x777777)); pole.position.set(0, 1.3, 0); g.add(pole);
+  const flag = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.55), new THREE.MeshStandardMaterial({ color: 0xff5a4f, side: THREE.DoubleSide }));
+  flag.position.set(0.47, 2.3, 0); g.add(flag);
+  const lab = makeLabel('ゴール', 0.8); lab.position.y = 3.1; g.add(lab);
+  g.position.set(x, y, z);
+  addMesh(g);
+  L.goal = { x, y, z, g, flag };
+}
+function inBox(p, r) { return p.x >= r[0] && p.x <= r[1] && p.y >= r[2] && p.y <= r[3] && p.z >= r[4] && p.z <= r[5]; }
+function massIn(r, withPlayer = false) {
+  let m = 0;
+  for (const o of L.objs) if (o.body.type === CANNON.Body.DYNAMIC && inBox(o.body.position, r)) m += o.mass;
+  if (withPlayer && inBox(player.body.position, r)) m += PLAYER_MASS;
+  return m;
+}
+function pad(x, z, w, d, color, text) {
+  const p = staticBox(w, 0.08, d, x, 0.04, z, color, { mopt: { emissive: color, emissiveIntensity: 0.15 } });
+  const lab = makeLabel(text, 0.6); lab.position.set(x, 1.2, z); addMesh(lab);
+  return { x, z, w, d, mesh: p.mesh, lab, was: false,
+    pressed() { const q = player.body.position; return Math.abs(q.x - x) < w / 2 && Math.abs(q.z - z) < d / 2 && q.y < 0.6 && player.grounded; } };
+}
+function plate(x, y, z, w, d, text) {
+  const p = staticBox(w, 0.08, d, x, y + 0.04, z, 0x8a94a6, { mopt: { metalness: 0.5, roughness: 0.4 } });
+  const lab = makeLabel(text, 0.85); lab.position.set(x, y + 2.2, z); addMesh(lab);
+  return { region: [x - w / 2 - 0.1, x + w / 2 + 0.1, y - 0.2, y + 2.5, z - d / 2 - 0.1, z + d / 2 + 0.1], lab, mesh: p.mesh };
+}
+function waterMesh(x0, x1, y0, y1, z0, z1, opacity = 0.55) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(Math.abs(x1 - x0), Math.abs(y1 - y0), Math.abs(z1 - z0)),
+    new THREE.MeshStandardMaterial({ color: 0x2f8fff, transparent: true, opacity, roughness: 0.15, metalness: 0.1, depthWrite: false }));
+  m.position.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
+  m.renderOrder = 2;
+  return addMesh(m);
+}
+
+// ================= プレイヤー =================
+const player = { grounded: false, groundBody: null, groundN: new CANNON.Vec3(0, 1, 0), facing: 0, walkPhase: 0, jumpCd: 0, spawn: [0, 0.1, 3], spawnYaw: 0 };
+{
+  const b = new CANNON.Body({ mass: PLAYER_MASS, material: mPlayer, fixedRotation: true, collisionFilterGroup: GRP_PLAYER, collisionFilterMask: GRP_STATIC | GRP_DYN });
+  b.addShape(new CANNON.Sphere(0.32), V3(0, 0.32, 0));
+  b.addShape(new CANNON.Sphere(0.32), V3(0, 0.92, 0));
+  b.addShape(new CANNON.Sphere(0.26), V3(0, 1.42, 0));
+  b.updateMassProperties();
+  world.addBody(b);
+  player.body = b;
+}
+// 見た目（ぐにゃっとしたキャラ）
+const pv = new THREE.Group(); scene.add(pv);
+const skin = mat(0xf4f1ea, { roughness: 0.6 }), suit = mat(0x4d7cff, { roughness: 0.7 });
+const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.3, 0.42, 6, 14), suit); torso.position.y = 1.0; torso.castShadow = true; pv.add(torso);
+const head = new THREE.Mesh(new THREE.SphereGeometry(0.27, 20, 16), skin); head.position.y = 1.55; head.castShadow = true; pv.add(head);
+for (const s of [-1, 1]) {
+  const eye = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 8), mat(0x111111)); eye.position.set(s * 0.1, 1.6, -0.23); pv.add(eye);
+}
+const goggles = new THREE.Mesh(new THREE.TorusGeometry(0.27, 0.035, 8, 24), mat(0xffb347)); goggles.position.y = 1.6; goggles.rotation.x = Math.PI / 2; pv.add(goggles);
+const legs = [-1, 1].map(s => {
+  const g = new THREE.Group(); g.position.set(s * 0.15, 0.68, 0);
+  const m = new THREE.Mesh(new THREE.CapsuleGeometry(0.11, 0.42, 4, 10), suit); m.position.y = -0.33; m.castShadow = true; g.add(m);
+  const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.12, 0.3), mat(0x333a48)); shoe.position.set(0, -0.62, -0.05); g.add(shoe);
+  pv.add(g); return g;
+});
+const armMeshes = [0, 1].map(() => {
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 1, 10), suit); m.castShadow = true; scene.add(m); return m;
+});
+const handMeshes = [0, 1].map(() => {
+  const m = new THREE.Mesh(new THREE.SphereGeometry(0.11, 14, 10), skin); m.castShadow = true; scene.add(m); return m;
+});
+function setLimb(mesh, a, b) {
+  const d = b.clone().sub(a); const len = d.length();
+  mesh.position.copy(a).addScaledVector(d, 0.5);
+  mesh.scale.set(1, Math.max(0.01, len), 1);
+  mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize());
+}
+
+// ================= 入力 =================
+const input = { f: 0, r: 0, keys: {}, mouseL: false, mouseR: false, tL: false, tR: false, tB: false, jump: false, stick: { x: 0, y: 0 } };
+let yaw = 0, pitch = 0.32, camDist = 4.6;
+addEventListener('keydown', e => {
+  if (e.repeat) return;
+  input.keys[e.code] = true;
+  if (e.code === 'Space') { input.jump = true; e.preventDefault(); }
+  if (e.code === 'KeyR' && state === 'play') restartStage();
+  if (e.code === 'Escape' && state === 'play') showMenu();
+});
+addEventListener('keyup', e => { input.keys[e.code] = false; });
+addEventListener('blur', () => { input.keys = {}; input.mouseL = input.mouseR = false; });
+const cv = renderer.domElement;
+cv.addEventListener('contextmenu', e => e.preventDefault());
+cv.addEventListener('mousedown', e => {
+  if (isTouch || state !== 'play') return;
+  if (document.pointerLockElement !== cv) { cv.requestPointerLock?.(); }
+  if (e.button === 0) input.mouseL = true;
+  if (e.button === 2) input.mouseR = true;
+});
+addEventListener('mouseup', e => { if (e.button === 0) input.mouseL = false; if (e.button === 2) input.mouseR = false; });
+addEventListener('mousemove', e => {
+  if (document.pointerLockElement !== cv || state !== 'play') return;
+  yaw -= e.movementX * 0.0025; pitch = clamp(pitch + e.movementY * 0.0025, -0.9, 1.35);
+});
+addEventListener('wheel', e => { camDist = clamp(camDist + e.deltaY * 0.004, 2.5, 9); }, { passive: true });
+
+// タッチ操作
+if (isTouch) {
+  const stick = $('stick'), knob = $('knob');
+  let stickId = null, lookId = null, lx = 0, ly = 0;
+  const setStick = (t) => {
+    const r = stick.getBoundingClientRect(); const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    let dx = t.clientX - cx, dy = t.clientY - cy; const m = Math.hypot(dx, dy), max = r.width / 2;
+    if (m > max) { dx *= max / m; dy *= max / m; }
+    knob.style.transform = `translate(${dx}px,${dy}px)`;
+    input.stick.x = dx / max; input.stick.y = -dy / max;
+  };
+  stick.addEventListener('touchstart', e => { const t = e.changedTouches[0]; stickId = t.identifier; setStick(t); e.preventDefault(); }, { passive: false });
+  const btn = (id, key) => {
+    const el = $(id);
+    el.addEventListener('touchstart', e => { input[key] = true; el.classList.add('on'); if (key === 'jumpBtn') input.jump = true; e.preventDefault(); }, { passive: false });
+    const up = e => { input[key] = false; el.classList.remove('on'); };
+    el.addEventListener('touchend', up); el.addEventListener('touchcancel', up);
+  };
+  btn('tL', 'tL'); btn('tR', 'tR'); btn('tB', 'tB'); btn('tJump', 'jumpBtn');
+  cv.addEventListener('touchstart', e => {
+    for (const t of e.changedTouches) if (lookId === null) { lookId = t.identifier; lx = t.clientX; ly = t.clientY; }
+    e.preventDefault();
+  }, { passive: false });
+  addEventListener('touchmove', e => {
+    for (const t of e.changedTouches) {
+      if (t.identifier === stickId) setStick(t);
+      else if (t.identifier === lookId && state === 'play') {
+        yaw -= (t.clientX - lx) * 0.006; pitch = clamp(pitch + (t.clientY - ly) * 0.006, -0.9, 1.35); lx = t.clientX; ly = t.clientY;
+      }
+    }
+  }, { passive: false });
+  const end = e => {
+    for (const t of e.changedTouches) {
+      if (t.identifier === stickId) { stickId = null; input.stick.x = input.stick.y = 0; knob.style.transform = ''; }
+      if (t.identifier === lookId) lookId = null;
+    }
+  };
+  addEventListener('touchend', end); addEventListener('touchcancel', end);
+}
+function moveInput() {
+  const k = input.keys;
+  let f = (k.KeyW || k.ArrowUp ? 1 : 0) - (k.KeyS || k.ArrowDown ? 1 : 0);
+  let r = (k.KeyD || k.ArrowRight ? 1 : 0) - (k.KeyA || k.ArrowLeft ? 1 : 0);
+  f += input.stick.y; r += input.stick.x;
+  const m = Math.hypot(f, r); if (m > 1) { f /= m; r /= m; }
+  return { f, r };
+}
+
+// ================= 手（つかむ） =================
+const hands = [-1, 1].map(side => ({ side, obj: null, local: null, force: 0, target: new THREE.Vector3(), vis: new THREE.Vector3(), prevTarget: new THREE.Vector3() }));
+function wantGrab(h) {
+  const k = input.keys;
+  if (h.side < 0) return input.mouseL || k.KeyQ || input.tL || input.tB;
+  return input.mouseR || k.KeyE || input.tR || input.tB;
+}
+function release(h) {
+  if (h.obj) { h.obj.body.angularDamping = h.obj.savedAD ?? 0.08; h.obj.held = Math.max(0, (h.obj.held || 1) - 1); }
+  h.obj = null; h.local = null; h.force = 0;
+}
+function handTarget(h, out) {
+  const p = player.body.position;
+  const fx = -Math.sin(yaw), fz = -Math.cos(yaw), rx = Math.cos(yaw), rz = -Math.sin(yaw);
+  const ap = clamp(-pitch * 1.15 + 0.22, -1.25, 1.45);
+  const reach = h.obj ? 0.85 : 0.8;
+  out.set(p.x + rx * h.side * 0.24 + fx * Math.cos(ap) * reach,
+          p.y + 1.25 + Math.sin(ap) * reach,
+          p.z + rz * h.side * 0.24 + fz * Math.cos(ap) * reach);
+  return out;
+}
+const _v = new CANNON.Vec3(), _v2 = new CANNON.Vec3(), _v3 = new CANNON.Vec3();
+function closestPoint(o, hp) {
+  const b = o.body; _v.set(hp.x, hp.y, hp.z);
+  const loc = b.pointToLocalFrame(_v, new CANNON.Vec3());
+  if (o.kind === 'box') {
+    loc.x = clamp(loc.x, -o.half[0], o.half[0]); loc.y = clamp(loc.y, -o.half[1], o.half[1]); loc.z = clamp(loc.z, -o.half[2], o.half[2]);
+  } else {
+    const n = loc.length(); if (n > o.r) loc.scale(o.r / n, loc);
+  }
+  const w = b.pointToWorldFrame(loc, new CANNON.Vec3());
+  return { loc, w, d: Math.hypot(w.x - hp.x, w.y - hp.y, w.z - hp.z) };
+}
+function updateHands(h_) {
+  for (const h of hands) {
+    h.prevTarget.copy(h.target);
+    handTarget(h, h.target);
+    const want = wantGrab(h) && state === 'play';
+    if (!want) { if (h.obj) release(h); continue; }
+    if (!h.obj) {
+      let best = null;
+      for (const o of L.objs) {
+        if (!o.grab) continue;
+        const c = closestPoint(o, h.target);
+        if (c.d < 0.32 && (!best || c.d < best.d)) best = { o, ...c };
+      }
+      if (best) {
+        h.obj = best.o; h.local = best.loc;
+        best.o.held = (best.o.held || 0) + 1;
+        if (best.o.savedAD === undefined) best.o.savedAD = best.o.body.angularDamping;
+        best.o.body.angularDamping = 0.7;
+      } else { h.force = 0; continue; }
+    }
+    // つかんだ点をばねで手の位置へ引く（最大 ARM_MAX）
+    const o = h.obj, b = o.body;
+    const pw = b.pointToWorldFrame(h.local, _v);
+    const dx = h.target.x - pw.x, dy = h.target.y - pw.y, dz = h.target.z - pw.z;
+    const dist = Math.hypot(dx, dy, dz);
+    if (o.onPull) o.onPull(dist, h);
+    if (!h.obj) continue;
+    if (b.type !== CANNON.Body.DYNAMIC) { h.force = Math.min(ARM_MAX, dist * 1500); if (dist > 1.2) release(h); continue; }
+    if (dist > 1.9) { release(h); continue; }
+    const rel = _v2.set(pw.x - b.position.x, pw.y - b.position.y, pw.z - b.position.z);
+    const av = b.angularVelocity;
+    const vpx = b.velocity.x + av.y * rel.z - av.z * rel.y, vpy = b.velocity.y + av.z * rel.x - av.x * rel.z, vpz = b.velocity.z + av.x * rel.y - av.y * rel.x;
+    const hvx = (h.target.x - h.prevTarget.x) / h_, hvy = (h.target.y - h.prevTarget.y) / h_, hvz = (h.target.z - h.prevTarget.z) / h_;
+    const share = o.held > 1 ? 0.5 : 1;
+    const m = Math.min(o.mass, 60) * share, w = 13, c = 2 * 0.9 * w;
+    let Fx = m * (w * w * dx + c * (hvx - vpx));
+    let Fy = m * (w * w * dy + c * (hvy - vpy));
+    let Fz = m * (w * w * dz + c * (hvz - vpz));
+    // 重力を支える分(m*G)は、腕力の上限内で入るだけ足す（引く方向を優先）
+    const gc = o.mass >= 25 ? 0 : m * G, sm = Math.hypot(Fx, Fy, Fz);
+    if (sm >= ARM_MAX) { const s = ARM_MAX / sm; Fx *= s; Fy *= s; Fz *= s; }
+    else { const k = Fy * Fy - sm * sm + ARM_MAX * ARM_MAX; Fy += Math.min(gc, -Fy + Math.sqrt(Math.max(0, k))); }
+    const Fm = sm + gc;
+    h.force = Math.min(Math.hypot(Fx, Fy, Fz), ARM_MAX);
+    h.maxed = Fm > ARM_MAX * 0.98;
+    // 重い物は重心を引く（てこで箱がたおれて引っかからないように）
+    if (o.mass >= 25) { rel.set(0, o.kind === 'box' ? -o.half[1] * 0.7 : 0, 0); b.angularVelocity.scale(0.96, b.angularVelocity); }
+    b.applyForce(_v3.set(Fx, Fy, Fz), rel);
+    // 反作用：体が引っぱられる（水平方向）
+    player.body.applyForce(_v3.set(-Fx, 0, -Fz));
+    // 腕がのびきったら体も引きとめられる（重い物を置き去りにできない）
+    const hd = Math.hypot(dx, dz);
+    if (hd > 0.7) {
+      const T = Math.min(MOVE_F_GROUND * 1.4, 3000 * (hd - 0.7)) * (o.held > 1 ? 0.5 : 1);
+      player.body.applyForce(_v3.set(-dx / hd * T, 0, -dz / hd * T));
+    }
+  }
+}
+
+// ================= プレイヤーの移動 =================
+const ray = new CANNON.RaycastResult();
+function groundCheck() {
+  const p = player.body.position;
+  player.grounded = false; player.groundBody = null;
+  const offs = [[0, 0], [0.2, 0], [-0.2, 0], [0, 0.2], [0, -0.2]];
+  for (const [ox, oz] of offs) {
+    ray.reset();
+    world.raycastClosest(V3(p.x + ox, p.y + 0.35, p.z + oz), V3(p.x + ox, p.y - 0.12, p.z + oz), { collisionFilterMask: GRP_STATIC | GRP_DYN, skipBackfaces: true }, ray);
+    if (ray.hasHit && ray.hitNormalWorld.y > 0.55) {
+      player.grounded = true; player.groundBody = ray.body; player.groundN.copy(ray.hitNormalWorld);
+      if (ox === 0 && oz === 0) break;
+    }
+  }
+}
+function movePlayer(h) {
+  const b = player.body;
+  groundCheck();
+  const { f, r } = moveInput();
+  const fx = -Math.sin(yaw), fz = -Math.cos(yaw), rx = Math.cos(yaw), rz = -Math.sin(yaw);
+  let wx = fx * f + rx * r, wz = fz * f + rz * r;
+  // 物をつかんで腕がのびきっていたら、それ以上はなれる向きには歩けない
+  for (const hd of hands) {
+    if (!hd.obj || hd.obj.body.type !== CANNON.Body.DYNAMIC) continue;
+    const pw = hd.obj.body.pointToWorldFrame(hd.local);
+    let ux = pw.x - b.position.x, uz = pw.z - b.position.z; const ul = Math.hypot(ux, uz);
+    if (ul < 1.4) continue;
+    ux /= ul; uz /= ul;
+    const away = -(wx * ux + wz * uz);
+    if (away > 0) { wx += away * ux; wz += away * uz; }
+  }
+  const wm = Math.hypot(wx, wz);
+  const gv = player.groundBody ? player.groundBody.velocity : null;
+  const gvx = gv ? gv.x : 0, gvz = gv ? gv.z : 0;
+  if (player.grounded) {
+    let Fx = PLAYER_MASS * (wx * WALK_SPEED - (b.velocity.x - gvx)) * 9;
+    let Fz = PLAYER_MASS * (wz * WALK_SPEED - (b.velocity.z - gvz)) * 9;
+    // 斜面ですべり落ちないように重力の斜面方向成分も打ち消す
+    const n = player.groundN;
+    Fx -= PLAYER_MASS * G * n.x * n.y; Fz -= PLAYER_MASS * G * n.z * n.y;
+    const m = Math.hypot(Fx, Fz);
+    if (m > MOVE_F_GROUND) { Fx *= MOVE_F_GROUND / m; Fz *= MOVE_F_GROUND / m; }
+    b.applyForce(V3(Fx, 0, Fz));
+    if (gv && player.groundBody.type === CANNON.Body.DYNAMIC) player.groundBody.applyForce(V3(-Fx * 0.5, 0, -Fz * 0.5));
+  } else if (wm > 0.05) {
+    const vx = b.velocity.x, vz = b.velocity.z;
+    let Fx = PLAYER_MASS * (wx * WALK_SPEED - vx) * 3, Fz = PLAYER_MASS * (wz * WALK_SPEED - vz) * 3;
+    const m = Math.hypot(Fx, Fz); if (m > MOVE_F_AIR) { Fx *= MOVE_F_AIR / m; Fz *= MOVE_F_AIR / m; }
+    b.applyForce(V3(Fx, 0, Fz));
+  }
+  player.jumpCd -= h;
+  if ((input.jump) && player.grounded && player.jumpCd <= 0) {
+    b.velocity.y = JUMP_V + (gv ? Math.max(0, gv.y) : 0);
+    player.jumpCd = 0.3; player.grounded = false;
+  }
+  input.jump = false;
+  if (wm > 0.1) player.wantFacing = Math.atan2(-wx, -wz);
+  if (hands[0].obj || hands[1].obj) player.wantFacing = yaw;
+}
+function resetPlayer() {
+  const [x, y, z] = player.spawn;
+  player.body.position.set(x, y, z); player.body.velocity.set(0, 0, 0);
+  yaw = player.spawnYaw; player.facing = yaw; player.wantFacing = yaw; pitch = 0.32;
+  for (const h of hands) { release(h); handTarget(h, h.target); h.vis.copy(h.target); h.prevTarget.copy(h.target); }
+}
+
+// ================= 摩擦（自前で計算：摩擦力 ＝ μ × 垂直抗力） =================
+function applyFriction(h) {
+  const seen = new Map();
+  for (const c of world.contacts) {
+    let me, other, ny, nx, nz;
+    if (c.bi.type === CANNON.Body.DYNAMIC && c.bi !== player.body && c.bi.material === mDef) { me = c.bi; other = c.bj; nx = -c.ni.x; ny = -c.ni.y; nz = -c.ni.z; }
+    else if (c.bj.type === CANNON.Body.DYNAMIC && c.bj !== player.body && c.bj.material === mDef) { me = c.bj; other = c.bi; nx = c.ni.x; ny = c.ni.y; nz = c.ni.z; }
+    else continue;
+    if (other === player.body || ny < 0.3) continue;
+    const key = me.id * 100000 + other.id;
+    const prev = seen.get(key);
+    if (!prev || ny > prev.ny) seen.set(key, { me, other, nx, ny, nz });
+  }
+  for (const { me, other, nx, ny, nz } of seen.values()) {
+    const rvx = me.velocity.x - other.velocity.x, rvy = me.velocity.y - other.velocity.y, rvz = me.velocity.z - other.velocity.z;
+    const vn = rvx * nx + rvy * ny + rvz * nz;
+    const tx = rvx - vn * nx, ty = rvy - vn * ny, tz = rvz - vn * nz;
+    // 止めるのに必要な力（今の動き＋重力の斜面方向の分力）
+    const m = me.mass, gn = -G * ny;
+    let dx = m * (tx / h) + m * (0 - gn * nx), dy = m * (ty / h) + m * (-G - gn * ny), dz = m * (tz / h) + m * (0 - gn * nz);
+    const dm = Math.hypot(dx, dy, dz);
+    if (dm < 1e-6) continue;
+    const N = m * G * ny, Fmax = MU * N;
+    if (dm > Fmax) { const vt = Math.hypot(tx, ty, tz); if (vt > 1e-4) { dx = tx / vt * Fmax; dy = ty / vt * Fmax; dz = tz / vt * Fmax; } else { dx *= Fmax / dm; dy *= Fmax / dm; dz *= Fmax / dm; } }
+    me.applyForce(_v3.set(-dx, -dy, -dz));
+  }
+}
+
+// ================= 浮力 =================
+function applyWater(h) {
+  const w = L.water; if (!w) return;
+  for (const o of L.objs) {
+    const b = o.body; if (b.type !== CANNON.Body.DYNAMIC || !o.buoy) continue;
+    const p = b.position;
+    if (p.x < w.x0 || p.x > w.x1 || p.z < w.z0 || p.z > w.z1) { o.sub = 0; continue; }
+    let sub = 0;
+    if (o.kind === 'box') {
+      const [hx, hy, hz] = o.half, r = (hx + hy + hz) / 6;
+      for (const sx of [-0.5, 0.5]) for (const sy of [-0.5, 0.5]) for (const sz of [-0.5, 0.5]) {
+        const wp = b.pointToWorldFrame(_v.set(sx * hx, sy * hy, sz * hz), _v2);
+        const f = clamp((w.y - (wp.y - r)) / (2 * r), 0, 1);
+        if (f <= 0) continue;
+        sub += f / 8;
+        b.applyForce(_v3.set(0, 1000 * G * (o.volume / 8) * f, 0), _v.set(wp.x - p.x, wp.y - p.y, wp.z - p.z));
+      }
+    } else {
+      sub = clamp((w.y - (p.y - o.r)) / (2 * o.r), 0, 1);
+      b.applyForce(_v3.set(0, 1000 * G * o.volume * sub, 0));
+    }
+    o.sub = sub;
+    if (sub > 0) {
+      const k = (o.mass * 1.5 + 300 * o.volume) * Math.max(sub, 0.3);
+      const cx = w.flow ? w.flow[0] : 0, cz = w.flow ? w.flow[1] : 0;
+      b.applyForce(_v3.set((cx - b.velocity.x) * k, -b.velocity.y * k * 0.6, (cz - b.velocity.z) * k));
+      const ad = Math.max(0, 1 - 3 * h * sub); b.angularVelocity.scale(ad, b.angularVelocity);
+    }
+  }
+}
+
+// ================= 画面・状態 =================
+let state = 'loading', cur = 0;
+let progress = 0;
+try { progress = +localStorage.getItem('gurarika.progress') || 0; } catch (e) {}
+function saveProgress(n) { progress = Math.max(progress, n); try { localStorage.setItem('gurarika.progress', String(progress)); } catch (e) {} }
+let toastT = 0;
+function toast(msg, sec = 2.2) { const t = $('toast'); t.innerHTML = msg; t.classList.add('show'); toastT = sec; }
+function setMeter(html) { const m = $('meter'); if (m.innerHTML !== html) m.innerHTML = html; }
+
+function showMenu() {
+  state = 'menu';
+  document.exitPointerLock?.();
+  $('hud').classList.add('hidden'); $('touch').classList.add('hidden'); $('card').classList.add('hidden');
+  const list = $('stageList'); list.innerHTML = '';
+  LEVELS.forEach((lv, i) => {
+    const b = document.createElement('button');
+    b.innerHTML = `<b>${i + 1}. ${lv.title}</b>${lv.sub}`;
+    if (i < progress) b.classList.add('done');
+    b.disabled = i > progress;
+    b.onclick = () => loadStage(i);
+    list.appendChild(b);
+  });
+  $('menu').classList.remove('hidden');
+}
+function card(html, buttons) {
+  state = 'card';
+  document.exitPointerLock?.();
+  $('cardBody').innerHTML = html + '<div class="row" id="cardBtns"></div>';
+  for (const [label, fn, sub] of buttons) {
+    const b = document.createElement('button'); b.className = 'btn' + (sub ? ' sub' : ''); b.textContent = label; b.onclick = fn;
+    $('cardBtns').appendChild(b);
+  }
+  $('card').classList.remove('hidden');
+}
+function play() {
+  $('card').classList.add('hidden'); $('menu').classList.add('hidden');
+  $('hud').classList.remove('hidden'); if (isTouch) $('touch').classList.remove('hidden');
+  state = 'play';
+  input.jump = false;
+}
+function introHtml(lv, i) {
+  return `<span class="tag">ステージ ${i + 1}</span><h2>${lv.title}</h2><div class="sci">${lv.science}</div><div class="goal"><b>やること：</b>${lv.goalText}</div>`;
+}
+function loadStage(i) {
+  cur = i;
+  const lv = LEVELS[i];
+  clearLevel();
+  L.def = lv;
+  player.spawn = lv.spawn || [0, 0.1, 3]; player.spawnYaw = lv.spawnYaw || 0;
+  lv.build();
+  resetPlayer();
+  $('stageName').innerHTML = `${i + 1}. ${lv.title}<small>${lv.sub}</small>`;
+  setMeter('');
+  updateVisuals(0); updateCamera(1);
+  card(introHtml(lv, i), [['スタート', play], ['メニュー', showMenu, true]]);
+}
+function restartStage() { loadStage(cur); play(); }
+function stageClear() {
+  if (L.cleared) return; L.cleared = true;
+  saveProgress(cur + 1);
+  const lv = LEVELS[cur];
+  const last = cur === LEVELS.length - 1;
+  setTimeout(() => {
+    card(`<span class="tag" style="background:var(--ok)">クリア！</span><h2>${lv.title}</h2><div class="sci"><b>まとめ：</b>${lv.clearText}</div>` +
+      (last ? '<p><b>全ステージクリア！</b> 力・仕事・てこ・滑車・浮力・水圧・合力、ぜんぶ使いこなせたね。</p>' : ''),
+      last ? [['メニューへ', showMenu]] : [['次のステージへ', () => loadStage(cur + 1)], ['メニュー', showMenu, true]]);
+  }, 700);
+  toast('ゴール！');
+}
+$('btnMenu').onclick = showMenu;
+$('btnRestart').onclick = restartStage;
+$('btnInfo').onclick = () => card(introHtml(LEVELS[cur], cur), [['つづける', play]]);
+
+// ================= ステージ =================
+const LEVELS = [];
+
+// ---------- 1. 力と重さ ----------
+LEVELS.push({
+  title: '力と重さ', sub: 'はかりに荷物をのせよう',
+  science: `<p>物体にはたらく<b>重力</b>の大きさを<b>重さ</b>といい、単位は<b>N（ニュートン）</b>。地球上では質量1kgの物体にはたらく重力は約<b>9.8N</b>。</p>
+    <p class="formula">重さ[N] ＝ 質量[kg] × 9.8</p><p>キミの腕の力は<b>片手200N・両手で400N</b>まで。それより重いものは持ち上げられない！</p>`,
+  goalText: 'はかりに荷物をのせて合計<b>250N以上</b>にすると扉が開く。手で荷物をつかんで運ぼう（左クリック／右クリック、またはボタン）。',
+  clearText: '15kgの荷物は 15×9.8＝147N。2つで294Nになり250Nをこえた。5kg（49N）を足しても1つだけでは足りなかったね。',
+  spawn: [0, 0.1, 4],
+  build() {
+    ground(-6, 6, 8, -26, 0, 0xdfe5ec);
+    fence(-6.5, -6, 8, -26, 1.2); fence(6, 6.5, 8, -26, 1.2); fence(-6.5, 6.5, 8, 8.5, 1.2);
+    dynBox({ size: [0.6, 0.6, 0.6], pos: [-2.2, 0.3, -3.5], mass: 15, color: 0xe2a35a, label: '15kg（147N）' });
+    dynBox({ size: [0.6, 0.6, 0.6], pos: [2.4, 0.3, -5], mass: 15, color: 0xe2a35a, label: '15kg（147N）' });
+    dynBox({ size: [0.42, 0.42, 0.42], pos: [0.3, 0.21, -2], mass: 5, color: 0x7fc97f, label: '5kg（49N）' });
+    dynBox({ size: [1.1, 1.1, 1.1], pos: [-3.5, 0.55, -7.5], mass: 60, color: 0x9a6b4a, label: '60kg（588N）' });
+    this.plate = plate(0, 0, -9, 2.4, 2.4, 'はかり 0N / 250N');
+    this.door = wallWithDoor(-12, -6, 6, 0, 2.6, 4);
+    block(-6, 6, 0, 0.9, -15, -26, 0xc8d3e0, { floor: true });
+    const s = makeLabel('ジャンプでのぼろう', 0.8); s.position.set(0, 1.9, -14.6); addMesh(s);
+    makeGoal(0, 0.9, -21);
+  },
+  pre(h) {
+    const w = massIn(this.plate.region) * G;
+    this.plate.lab.userData.set(`はかり ${w.toFixed(0)}N / 250N`);
+    if (w >= 249 && this.door.target === 0) { this.door.target = 1; toast('250Nをこえた！扉が開いた'); }
+    this.door.step(h);
+    setMeter(`はかりの荷物：<b>${w.toFixed(0)} N</b>（必要 250 N）\n腕の力：片手 最大200N／両手 400N\n<small>60kgの箱は588N。両手でも持ち上げられない！</small>`);
+  }
+});
+
+// ---------- 2. 斜面と仕事の原理 ----------
+LEVELS.push({
+  title: '斜面と仕事の原理', sub: '重い箱を上の段へ（分力）',
+  science: `<p><b>仕事[J] ＝ 力[N] × 力の向きに動いた距離[m]</b></p>
+    <p>斜面や道具を使うと<b>必要な力は小さくなる</b>が、そのぶん<b>動かす距離が長くなり</b>、仕事の大きさは変わらない。これを<b>仕事の原理</b>という。</p>
+    <p>斜面の上の物体の重力は、<b>斜面に沿った分力</b>と<b>斜面に垂直な分力</b>に分けられる。斜面がゆるやかなほど、斜面に沿った分力は小さい。</p>`,
+  goalText: '50kg（490N）の箱を高さ1.6mの段の上の<b>はかり</b>まで運ぶ。両手400Nではまっすぐ持ち上げられない…どっちの斜面を使う？',
+  clearText: '1.6m持ち上げる仕事は 490N×1.6m＝784J。15°の斜面は長さ約6.2mなので、摩擦がなければ 784J÷6.2m≒127N の力で足りる（重力の斜面方向の分力 490×sin15°）。45°の斜面は長さ約2.3mで短いけれど、分力が約346N＋摩擦でキミの力400Nでは足りなかった。',
+  spawn: [0, 0.1, 4],
+  build() {
+    ground(-8, 8, 7, -12, 0);
+    block(-8, 8, 0, 1.6, -12, -30, 0xc8d3e0, { floor: true });
+    fence(-8.5, -8, 7, -30, 3); fence(8, 8.5, 7, -30, 3); fence(-8.5, 8.5, 7, 7.5, 1.2);
+    const a1 = ramp(-5, 2.8, -12 + 1.6 / Math.tan(15 * Math.PI / 180), -12, 0, 1.6, 0x9fd18b);
+    const a2 = ramp(5, 2.8, -12 + 1.6 / Math.tan(45 * Math.PI / 180), -12, 0, 1.6, 0xf2a07b);
+    const need = (deg) => Math.round(490 * (Math.sin(deg * Math.PI / 180) + MU * Math.cos(deg * Math.PI / 180)));
+    const l1 = makeLabel(`ゆるい斜面 15°\n必要な力 約${need(15)}N`, 1); l1.position.set(-5, 3.2, -9.5); addMesh(l1);
+    const l2 = makeLabel(`急な斜面 45°\n必要な力 約${need(45)}N`, 1); l2.position.set(5, 3.4, -10.5); addMesh(l2);
+    const l3 = makeLabel('段の高さ 1.6m', 0.8); l3.position.set(0, 2.4, -11.8); addMesh(l3);
+    this.crate = dynBox({ size: [1, 1, 1], pos: [0, 0.5, -4], mass: 50, color: 0xd08a4a, label: '50kg（490N）' });
+    this.plate = plate(0, 1.6, -16, 2.6, 2.6, 'はかり');
+    this.door = wallWithDoor(-19, -8, 8, 0, 2.6, 4, 0xb7c2d0, 1.6);
+    makeGoal(0, 1.6, -24);
+    this.arrows = [makeArrow(0xff4444), makeArrow(0x33bbff), makeArrow(0x55dd55)].map(a => addMesh(a));
+    const lg = makeLabel('赤：重力　青：斜面に沿った分力　緑：斜面に垂直な分力', 1.4); lg.position.set(0, 4.2, -3); addMesh(lg);
+  },
+  pre(h) {
+    const c = this.crate.body;
+    if (this.door.target === 0 && inBox(c.position, this.plate.region)) { this.door.target = 1; toast('箱がはかりにのった！扉が開いた'); }
+    this.door.step(h);
+    // 分力の表示：箱の下の面の向きを調べる
+    ray.reset();
+    world.raycastClosest(V3(c.position.x, c.position.y, c.position.z), V3(c.position.x, c.position.y - 1.6, c.position.z), { collisionFilterMask: GRP_STATIC }, ray);
+    const n = ray.hasHit ? tv(ray.hitNormalWorld) : new THREE.Vector3(0, 1, 0);
+    const g = new THREE.Vector3(0, -490, 0);
+    const perp = n.clone().multiplyScalar(g.dot(n));
+    const along = g.clone().sub(perp);
+    const o = tv(c.position);
+    const s = 1 / 280;
+    this.arrows[0].setVec(o, g, s); this.arrows[1].setVec(o, along, s); this.arrows[2].setVec(o, perp, s);
+    const ang = Math.acos(clamp(n.y, -1, 1)) * 180 / Math.PI;
+    const hf = hands[0].force + hands[1].force;
+    setMeter(`箱の重さ（重力）：<b>490 N</b>\n今の面の角度：<b>${ang.toFixed(0)}°</b>\n斜面に沿った分力：<b>${along.length().toFixed(0)} N</b>／垂直な分力：<b>${perp.length().toFixed(0)} N</b>\n両手の力：<b>${hf.toFixed(0)} N</b>（最大400N）`);
+  }
+});
+
+// ---------- 3. てこ ----------
+LEVELS.push({
+  title: 'てこの原理', sub: '支点を動かして門を上げよう',
+  science: `<p>てこは<b>支点</b>を中心に回る。左右で <b>力 × 支点からの距離</b>（モーメント）が大きいほうに傾く。</p>
+    <p class="formula">左の 力×距離 ＜ 右の 力×距離 → 右が下がる</p>
+    <p>支点を重い物の近くにすると、<b>小さな力</b>で持ち上げられる。ただし押し下げる距離は長くなる（仕事の原理）。</p>`,
+  goalText: '板の左はしは、地下のロープで<b>100kg（980N）の門</b>につながっている。板の右側を下げると門が上がる。床のボタンで支点の位置を変え、荷物をのせて門を開けたまま通りぬけよう。',
+  clearText: '支点を左はしから1mにすると、左は 980N×1m＝980N·m。右は最大5mあるので、10kgの箱（98N）3つを4m前後に置けば 98×3×約4m≒1180N·m で逆転！ 支点が真ん中（3m）だと 2940N·m 必要で、荷物では足りなかった。',
+  spawn: [3, 0.1, 4],
+  build() {
+    ground(-8, 8, 7, -24, 0);
+    fence(-8.5, -8, 7, -24, 1.2); fence(8, 8.5, 7, -24, 1.2); fence(-8.5, 8.5, 7, 7.5, 1.2);
+    block(-8, 1.5, 0, 5, -13.7, -14.3, 0xb7c2d0); block(4.5, 8, 0, 5, -13.7, -14.3, 0xb7c2d0);
+    this.gate = kinBox(3, 3.4, 0.3, 3, 1.7, -14, 0x8a5a3a, { mopt: { metalness: 0.2 } });
+    const gl = makeLabel('門 100kg（980N）', 0.9); gl.position.set(3, 5.6, -13.4); addMesh(gl);
+    // てこ
+    this.L0 = -7; this.len = 6; this.a = 3; this.maxA = 0.15; this.angle = 0; this.z = -8;
+    const beam = new CANNON.Body({ mass: 0, type: CANNON.Body.KINEMATIC, material: mDef, collisionFilterGroup: GRP_STATIC });
+    beam.addShape(new CANNON.Box(V3(3, 0.1, 0.7)), V3(0, 0, 0));
+    beam.addShape(new CANNON.Box(V3(0.05, 0.12, 0.7)), V3(3, 0.2, 0));
+    addBody(beam); this.beam = beam;
+    this.beamMesh = new THREE.Group(); addMesh(this.beamMesh);
+    const bm = box3(6, 0.2, 1.4, new THREE.MeshStandardMaterial({ color: 0xc9925a, roughness: 0.8 })); this.beamMesh.add(bm); this.beamInner = bm;
+    const rim = box3(0.1, 0.24, 1.4, mat(0x8a5a3a)); rim.position.set(3, 0.2, 0); bm.add(rim);
+    for (let i = 0; i <= 6; i++) { const t = box3(0.03, 0.21, 1.41, mat(0x6b4a2a)); t.castShadow = false; t.position.x = -3 + i; bm.add(t); }
+    this.fulcrum = new THREE.Mesh(new THREE.ConeGeometry(0.45, 0.8, 3), mat(0x555f70)); this.fulcrum.castShadow = true; addMesh(this.fulcrum);
+    this.fulBody = kinBox(0.3, 0.8, 0.3, 0, 0.4, this.z, 0x555f70); this.fulBody.mesh.visible = false;
+    const hole = new THREE.Mesh(new THREE.CircleGeometry(0.25, 16), mat(0x222222)); hole.rotation.x = -Math.PI / 2; hole.position.set(this.L0, 0.01, this.z); addMesh(hole);
+    this.rope = addMesh(makeLine(0x333333)); this.rope2 = addMesh(makeLine(0x333333));
+    const pul = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.15, 16), mat(0x555f70)); pul.rotation.x = Math.PI / 2; pul.position.set(3, 5.3, -13.4); addMesh(pul);
+    this.pads = [1, 2, 3].map((a, i) => { const p = pad(-6 + i * 1.6, -4.3, 1.3, 1.3, 0x4d7cff, `支点 ${a}m`); p.a = a; return p; });
+    const ll = makeLabel('左はし→地下ロープ→門', 0.8); ll.position.set(this.L0, 2.2, this.z); addMesh(ll);
+    this.tl = makeLabel('', 1.1); this.tl.position.set(-4, 3.6, this.z); addMesh(this.tl);
+    [[2, 0.3, -3], [4, 0.3, -5.5], [5.5, 0.3, -3.5]].forEach(p => dynBox({ size: [0.6, 0.6, 0.6], pos: p, mass: 10, color: 0xe2a35a, label: '10kg' }));
+    dynBox({ size: [0.45, 0.45, 0.45], pos: [6, 0.23, -7], mass: 5, color: 0x7fc97f, label: '5kg' });
+    this.setFulcrum(3);
+    makeGoal(3, 0, -19);
+  },
+  setFulcrum(a) {
+    this.a = a; this.angle = 0;
+    const xf = this.L0 + a;
+    this.beam.position.set(xf, 0.9, this.z); this.beam.quaternion.set(0, 0, 0, 1);
+    const off = (this.len / 2) - a; // 板の中心は支点から右へ (3-a)
+    this.beam.shapeOffsets[0].set(off, 0, 0); this.beam.shapeOffsets[1].set(off + 3, 0.2, 0);
+    this.beam.updateBoundingRadius(); this.beam.aabbNeedsUpdate = true;
+    this.beamInner.position.set(off, 0, 0);
+    this.fulBody.body.position.set(xf, 0.4, this.z);
+    this.fulcrum.position.set(xf, 0.4, this.z);
+    for (const p of this.pads) p.mesh.material = mat(p.a === a ? 0xff8a3d : 0x4d7cff, { emissive: p.a === a ? 0xff8a3d : 0x4d7cff, emissiveIntensity: 0.2 });
+  },
+  pre(h) {
+    for (const p of this.pads) { const on = p.pressed(); if (on && !p.was && p.a !== this.a) { this.setFulcrum(p.a); toast(`支点を左はしから ${p.a}m に`); } p.was = on; }
+    const xf = this.L0 + this.a;
+    // モーメントの計算
+    let right = 0, leftLoad = 0;
+    const consider = (pos, m) => {
+      const loc = this.beam.pointToLocalFrame(V3(pos.x, pos.y, pos.z));
+      if (loc.y < -0.05 || loc.y > 1.5 || Math.abs(loc.z) > 0.85) return;
+      if (loc.x < -this.a - 0.2 || loc.x > this.len - this.a + 0.2) return;
+      const d = clamp(loc.x, -this.a, this.len - this.a);
+      if (d >= 0) right += m * G * d; else leftLoad += m * G * -d;
+    };
+    for (const o of L.objs) if (o.body.type === CANNON.Body.DYNAMIC) consider(o.body.position, o.mass);
+    consider(player.body.position, PLAYER_MASS);
+    const left = 980 * this.a + leftLoad;
+    const target = right > left ? this.maxA : 0;
+    const prev = this.angle;
+    this.angle += clamp(target - this.angle, -0.5 * h, 0.5 * h);
+    const w = (this.angle - prev) / h;
+    this.beam.angularVelocity.set(0, 0, -w);
+    this.beam.quaternion.setFromAxisAngle(V3(0, 0, 1), -prev);
+    const gy = 1.7 + (this.angle / this.maxA) * 3.0;
+    this.gate.body.velocity.set(0, (gy - this.gate.body.position.y) / h, 0);
+    this.gate.body.position.y = gy - this.gate.body.velocity.y * h;
+    this.tl.userData.set(`左 ${left.toFixed(0)} N·m ${right > left ? '＜' : '＞'} 右 ${right.toFixed(0)} N·m`);
+    setMeter(`支点：左はしから <b>${this.a} m</b>（右側の長さ ${this.len - this.a} m）\n左（門）：980N × ${this.a}m ${leftLoad > 0 ? '＋ 左にのった物 ' : ''}＝ <b>${left.toFixed(0)} N·m</b>\n右（のせた物）：Σ 重さ×距離 ＝ <b>${right.toFixed(0)} N·m</b>\n${right > left ? '→ 右が下がって門が上がる！' : '→ 右をもっと重く／遠くに'}`);
+  },
+  post() {
+    this.beam.quaternion.setFromAxisAngle(V3(0, 0, 1), -this.angle);
+  },
+  frame() {
+    this.beamMesh.position.copy(this.beam.position); this.beamMesh.quaternion.copy(this.beam.quaternion);
+    const le = this.beam.pointToWorldFrame(V3(-this.a, 0, 0));
+    this.rope.userData.set([tv(le), new THREE.Vector3(this.L0, 0.02, this.z)]);
+    const gt = this.gate.body.position;
+    this.rope2.userData.set([new THREE.Vector3(3, gt.y + 1.7, -14), new THREE.Vector3(3, 5.3, -13.6), new THREE.Vector3(3, 5.3, -13.2), new THREE.Vector3(3, 0.02, -13.2)]);
+  }
+});
+
+// ---------- 4. 滑車 ----------
+LEVELS.push({
+  title: '定滑車と動滑車', sub: 'おもりでリフトを上げよう',
+  science: `<p><b>定滑車</b>：力の向きを変えるだけ。引く力は荷物の重さと同じ。</p>
+    <p><b>動滑車</b>：荷物を2本のひもで支えるので、<b>引く力は半分</b>。そのかわり<b>ひもを引く長さは2倍</b>（仕事の原理）。</p>`,
+  goalText: 'がけの上へ行きたい。穴の中の<b>かご</b>に箱を入れると、その重さでリフトを引き上げる。リフトに乗ると動き出す。リフト20kg＋キミ50kg＝70kg。どっちのリフトなら上がる？',
+  clearText: '動滑車のリフトは、かごの重さの2倍の力で持ち上がる。40kg×2＝80kg分 ＞ 70kg なので上がった！ そのかわり、リフトが4m上がる間にかごは8m下がった（仕事の原理）。定滑車では70kgより重いおもりが必要だった。',
+  spawn: [0, 0.1, 4],
+  build() {
+    // 地面（穴あき）
+    ground(-8, 8, 7, -7.1); ground(-8, 8, -8.9, -14);
+    ground(-8, -4.4, -7.1, -8.9); ground(-2.6, 2.6, -7.1, -8.9); ground(4.4, 8, -7.1, -8.9);
+    block(-8, 8, 0, 4, -14, -28, 0xc8d3e0, { floor: true });
+    fence(-8.5, -8, 7, -28, 1.5, 0); fence(8, 8.5, 7, -28, 1.5, 0); fence(-8.5, 8.5, 7, 7.5, 1.2);
+    fence(-8.5, -8, -14, -28, 1.2, 4); fence(8, 8.5, -14, -28, 1.2, 4);
+    this.lifts = [];
+    for (const [x, ratio] of [[-3.5, 1], [3.5, 2]]) {
+      // 縦穴
+      for (const [a, b, c, d] of [[x - 0.95, x - 0.9, -7.05, -8.95], [x + 0.9, x + 0.95, -7.05, -8.95], [x - 0.9, x + 0.9, -7.05, -7.1], [x - 0.9, x + 0.9, -8.9, -8.95]])
+        block(a, b, -10.5, 0, c, d, 0x4a5262);
+      block(x - 0.95, x + 0.95, -11, -10.5, -7.05, -8.95, 0x333a48);
+      // リフト
+      const lift = kinBox(2, 0.3, 2, x, 0, -13, ratio === 2 ? 0x4d7cff : 0x9aa7b8, { mopt: { metalness: 0.3 } });
+      // かご（ふたのない箱）
+      const bk = new CANNON.Body({ mass: 0, type: CANNON.Body.KINEMATIC, material: mDef, collisionFilterGroup: GRP_STATIC });
+      bk.addShape(new CANNON.Box(V3(0.8, 0.1, 0.8)), V3(0, -1.0, 0));
+      bk.addShape(new CANNON.Box(V3(0.05, 0.5, 0.8)), V3(-0.78, -0.5, 0));
+      bk.addShape(new CANNON.Box(V3(0.05, 0.5, 0.8)), V3(0.78, -0.5, 0));
+      bk.addShape(new CANNON.Box(V3(0.8, 0.5, 0.05)), V3(0, -0.5, -0.78));
+      bk.addShape(new CANNON.Box(V3(0.8, 0.5, 0.05)), V3(0, -0.5, 0.78));
+      bk.position.set(x, 0, -8); addBody(bk);
+      const bmesh = new THREE.Group(); addMesh(bmesh);
+      const bmat = mat(0xa0784a);
+      for (let i = 0; i < bk.shapes.length; i++) {
+        const he = bk.shapes[i].halfExtents; const m = box3(he.x * 2, he.y * 2, he.z * 2, bmat); m.position.copy(bk.shapeOffsets[i]); bmesh.add(m);
+      }
+      // 滑車とロープ
+      const top = 6.5;
+      block(x - 0.15, x + 0.15, 0, top + 0.3, -14.2, -14.5, 0x6b7385);
+      block(x - 0.15, x + 0.15, 0, top + 0.3, -6.6, -6.9, 0x6b7385);
+      block(x - 0.15, x + 0.15, top + 0.3, top + 0.5, -6.6, -14.5, 0x6b7385);
+      const wheel = (px, py, pz) => { const w = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.12, 18), mat(0xffb347, { metalness: 0.4 })); w.rotation.z = Math.PI / 2; w.position.set(px, py, pz); addMesh(w); return w; };
+      wheel(x, top, -13); wheel(x, top, -8);
+      const lp = ratio === 2 ? wheel(x, 0, -13) : null;
+      const rope = addMesh(makeLine(0x222222));
+      const lab = makeLabel(ratio === 2 ? '動滑車' : '定滑車', 1.1); lab.position.set(x, top + 1.2, -13); addMesh(lab);
+      const info = makeLabel('', 0.9); info.position.set(x, 2.6, -10.3); addMesh(info);
+      this.lifts.push({ x, ratio, lift, bk, bmesh, s: 0, rope, lp, top, info, liftMass: 20, travel: 3.85 });
+    }
+    const l = makeLabel('かご ↓', 0.7); l.position.set(0, 1.4, -8); addMesh(l);
+    [[-1.2, 0.3, -2.5], [1.2, 0.3, -3], [-0.3, 0.3, -4.6], [0.9, 0.3, -5.6]].forEach(p => dynBox({ size: [0.6, 0.6, 0.6], pos: p, mass: 10, color: 0xe2a35a, label: '10kg' }));
+    makeGoal(0, 4, -22);
+  },
+  pre(h) {
+    let txt = '';
+    for (const L_ of this.lifts) {
+      const lp = L_.lift.body.position;
+      const pp = player.body.position;
+      const onLift = Math.abs(pp.x - L_.x) < 1.05 && Math.abs(pp.z + 13) < 1.05 && pp.y > lp.y - 0.1 && pp.y < lp.y + 0.9;
+      const bkp = L_.bk.position;
+      const pull = massIn([L_.x - 0.85, L_.x + 0.85, bkp.y - 1.1, bkp.y + 0.6, -8.85, -7.15], true);
+      const onboard = massIn([L_.x - 1.05, L_.x + 1.05, lp.y, lp.y + 1.5, -14.05, -11.95]);
+      const load = L_.liftMass + (onLift ? PLAYER_MASS : 0) + onboard;
+      let dir = 0;
+      if (onLift) dir = pull * L_.ratio > load ? 1 : (pull * L_.ratio < load ? -1 : 0);
+      const prev = L_.s;
+      L_.s = clamp(L_.s + dir * 0.9 * h, 0, L_.travel);
+      const v = (L_.s - prev) / h;
+      L_.lift.body.velocity.set(0, v, 0);
+      L_.lift.body.position.y = prev;
+      L_.bk.velocity.set(0, -v * L_.ratio, 0);
+      L_.bk.position.y = -prev * L_.ratio;
+      const ok = pull * L_.ratio > load;
+      L_.info.userData.set(`${L_.ratio === 2 ? '動滑車' : '定滑車'}：かご ${pull}kg ×${L_.ratio}\n＝ ${pull * L_.ratio}kg分 ${ok ? '＞' : '≦'} 荷 ${load}kg`);
+      txt += `<b>${L_.ratio === 2 ? '動滑車' : '定滑車'}</b>：おもり ${pull}kg（${(pull * G).toFixed(0)}N）→ 持ち上げる力 ${(pull * G * L_.ratio).toFixed(0)}N\n　リフト ${L_.s.toFixed(1)}m 上昇／かご ${(L_.s * L_.ratio).toFixed(1)}m 下降\n`;
+    }
+    setMeter(txt + 'リフト20kg＋人50kg＝70kg（686N）');
+  },
+  frame() {
+    for (const L_ of this.lifts) {
+      L_.bmesh.position.copy(L_.bk.position);
+      const ly = L_.lift.body.position.y, by = L_.bk.position.y, x = L_.x, t = L_.top;
+      if (L_.ratio === 2) {
+        L_.lp.position.y = ly + 0.6;
+        L_.rope.userData.set([new THREE.Vector3(x - 0.05, t + 0.3, -13.28), new THREE.Vector3(x, ly + 0.6, -13.28), new THREE.Vector3(x, ly + 0.6, -12.72), new THREE.Vector3(x, t, -12.72), new THREE.Vector3(x, t + 0.28, -13), new THREE.Vector3(x, t + 0.28, -8), new THREE.Vector3(x, t, -7.72), new THREE.Vector3(x, by, -8)]);
+      } else {
+        L_.rope.userData.set([new THREE.Vector3(x, ly + 0.15, -13), new THREE.Vector3(x, t, -13.28), new THREE.Vector3(x, t + 0.28, -13), new THREE.Vector3(x, t + 0.28, -8), new THREE.Vector3(x, t, -7.72), new THREE.Vector3(x, by, -8)]);
+      }
+    }
+  }
+});
+
+// ---------- 5. 浮力 ----------
+LEVELS.push({
+  title: '浮力', sub: '浮く物で水路をわたろう',
+  science: `<p>水中の物体は、<b>押しのけた水の重さと同じ大きさの上向きの力（浮力）</b>を受ける（アルキメデスの原理）。</p>
+    <p class="formula">浮力[N] ＝ 水中にある体積[m³] × 1000[kg/m³] × 9.8</p>
+    <p><b>重力 ＜ 浮力（全部しずめたとき）</b>なら浮く。同じ大きさでも重い物はしずむ。</p>`,
+  goalText: 'キミは泳げない！ 水路に<b>浮く物</b>を落として足場にし、向こう岸へわたろう。水は向こう岸へゆっくり流れている。',
+  clearText: '空き箱は体積1.73m³なので、全部しずめると浮力は約16900N。重さはたった294Nなので、ほんの少ししずむだけで浮き、キミが乗っても平気。鉄のおもりは体積0.027m³で浮力265N、重さ343Nなのでしずんだ。',
+  spawn: [0, 0.1, 5],
+  build() {
+    ground(-6, 6, 8, -6);
+    fence(-6.5, -6, 8, -6, 1.2); fence(6, 6.5, 8, -6, 1.2); fence(-6.5, 6.5, 8, 8.5, 1.2);
+    block(-6, -1.6, 0, 3, -5.7, -6.1, 0xb7c2d0); block(1.6, 6, 0, 3, -5.7, -6.1, 0xb7c2d0);
+    block(-2.1, -1.6, -3, 3, -6, -12.5, 0xb7c2d0); block(1.6, 2.1, -3, 3, -6, -12.5, 0xb7c2d0);
+    block(-1.6, 1.6, -3.5, -3, -6, -12.5, 0x6a7a90);
+    block(-1.6, 1.6, -3, -1, -5.6, -6.0, 0x6a7a90, { noShadow: true }); block(-1.6, 1.6, -3, -1, -12.5, -12.9, 0x6a7a90, { noShadow: true });
+    ground(-6, 6, -12.5, -26);
+    fence(-6.5, -6, -12.5, -26, 1.2); fence(6, 6.5, -12.5, -26, 1.2);
+    L.water = { y: -0.4, x0: -1.6, x1: 1.6, z0: -12.5, z1: -6, flow: [0, -0.35] };
+    this.waterM = waterMesh(-1.6, 1.6, -3, -0.4, -6, -12.5);
+    const wl = makeLabel('水路（深さ2.6m）', 0.8); wl.position.set(0, 1.6, -7); addMesh(wl);
+    this.items = [
+      dynBox({ size: [1.2, 1.2, 1.2], pos: [-3.5, 0.6, -2.5], mass: 30, color: 0xd9b27c, label: '空き箱 30kg\n体積1.73m³' }),
+      dynBox({ size: [1.2, 1.2, 1.2], pos: [3.5, 0.6, -2], mass: 30, color: 0xd9b27c, label: '空き箱 30kg\n体積1.73m³' }),
+      dynBox({ size: [1.2, 1.2, 1.2], pos: [-3, 0.6, 1.5], mass: 30, color: 0xd9b27c, label: '空き箱 30kg\n体積1.73m³' }),
+      dynBox({ size: [0.3, 0.3, 0.3], pos: [-1, 0.15, -1], mass: 35, color: 0x7d8796, metal: true, label: '鉄 35kg\n体積0.027m³' }),
+      dynBox({ size: [0.3, 0.3, 0.3], pos: [1.2, 0.15, -1.5], mass: 35, color: 0x7d8796, metal: true, label: '鉄 35kg\n体積0.027m³' }),
+    ];
+    makeGoal(0, 0, -20);
+  },
+  pre(h) {
+    // 近くの物の浮力を表示
+    const pp = player.body.position;
+    let best = null, bd = 1e9;
+    for (const o of this.items) { const d = o.body.position.distanceTo(pp); if (d < bd) { bd = d; best = o; } }
+    let txt = '';
+    if (best) {
+      const W = best.mass * G, Bmax = 1000 * best.volume * G, Bnow = Bmax * (best.sub || 0);
+      txt = `近くの物：<b>${best.kind === 'box' && best.mass === 30 ? '空き箱' : '鉄のおもり'}</b>\n重力：<b>${W.toFixed(0)} N</b>\n全部しずめたときの浮力：<b>${Bmax.toFixed(0)} N</b> → ${Bmax > W ? '<b>浮く</b>' : '<b>しずむ</b>'}\n今の浮力：${Bnow.toFixed(0)} N`;
+    }
+    setMeter(txt);
+    if (pp.y < L.water.y - 0.5 && pp.z < -6 && pp.z > -12.5 && Math.abs(pp.x) < 1.7) { toast('ぶくぶく…泳げない！'); resetPlayer(); }
+  }
+});
+
+// ---------- 6. 水圧 ----------
+LEVELS.push({
+  title: '水圧', sub: '水車を回せるのはどのタンク？',
+  science: `<p>水の重さによる圧力を<b>水圧</b>という。水圧は<b>水面からの深さ</b>に比例し、あらゆる向きにはたらく。</p>
+    <p class="formula">水圧[Pa] ＝ 1000[kg/m³] × 9.8 × 深さ[m]</p>
+    <p>水の<b>量</b>ではなく<b>深さ</b>で決まる！ 深いところの穴ほど、水が強くふき出す。</p>`,
+  goalText: '3つのタンクの<b>栓</b>をつかんで引きぬくと水がふき出す。水車に<b>700N以上</b>の力を当てると扉が開く。どのタンクの栓をぬく？（ふき出す水に注意！）',
+  clearText: '栓の穴にかかる水圧は、Aは深さ1.3mで12.7kPa、Bは2.8mで27.4kPa、細いCは5.3mで51.9kPa。Cはいちばん水の量が少ないのに、いちばん深いので水圧が最大。AとBを合わせても約600Nで、700Nには届かなかった。',
+  spawn: [4, 0.1, 5], spawnYaw: 0.5,
+  build() {
+    ground(-9, 8, 8, -24);
+    fence(-9.5, -9, 8, -24, 1.2); fence(8, 8.5, 8, -24, 1.2); fence(-9.5, 8.5, 8, 8.5, 1.2);
+    this.A_ = 0.0075;
+    const tanks = [
+      { name: 'A', z0: -1.5, z1: -7.5, x0: -9, level: 2.5, h: 3.0 },
+      { name: 'B', z0: -8, z1: -11, x0: -8.2, level: 4.0, h: 4.6 },
+      { name: 'C', z0: -11.6, z1: -12.6, x0: -7.0, level: 6.5, h: 7.2 },
+    ];
+    const plugY = 1.2;
+    this.jets = [];
+    for (const t of tanks) {
+      const glass = new THREE.MeshStandardMaterial({ color: 0xcfe8ff, transparent: true, opacity: 0.25, roughness: 0.1, depthWrite: false });
+      staticBox(-6 - t.x0, t.h, t.z0 - t.z1, (t.x0 - 6) / 2, t.h / 2, (t.z0 + t.z1) / 2, 0, { material: glass, noShadow: true });
+      const wm = waterMesh(t.x0 + 0.05, -6.05, 0.02, t.level, t.z0 - 0.05, t.z1 + 0.05, 0.6);
+      const zc = (t.z0 + t.z1) / 2;
+      const depth = t.level - plugY;
+      const P = 1000 * G * depth;
+      const F = 2 * P * this.A_;
+      const lab = makeLabel(`タンク${t.name}\n深さ${depth.toFixed(1)}m 水圧${(P / 1000).toFixed(1)}kPa`, 0.95);
+      lab.position.set(-4.6, Math.max(t.h, 2.6) + 0.9, zc); addMesh(lab);
+      // 給水パイプ
+      block(t.x0 + 0.2, t.x0 + 0.5, t.level - 0.1, t.h + 1.2, zc - 0.15, zc + 0.15, 0x6b7385, { noShadow: true });
+      // 栓
+      const plug = kinBox(0.3, 0.3, 0.3, -5.85, plugY, zc, 0xff5a4f, { mopt: { roughness: 0.4 } });
+      const o = { body: plug.body, mesh: plug.mesh, kind: 'box', half: [0.15, 0.15, 0.15], mass: 1, volume: 0.027, grab: true, buoy: false, init: [-5.85, plugY, zc], initQ: plug.body.quaternion.clone(), labelY: 0.5 };
+      o.label = addMesh(makeLabel(`栓${t.name}`, 0.6));
+      const jet = { name: t.name, x: -5.97, y: plugY, z: zc, depth, P, F, open: false, v: Math.sqrt(2 * G * depth), plugObj: o, hitWheel: false };
+      o.onPull = (dist) => {
+        if (jet.open || dist < 0.32) return;
+        jet.open = true;
+        plug.body.type = CANNON.Body.DYNAMIC; plug.body.mass = 1; plug.body.collisionFilterGroup = GRP_DYN;
+        plug.body.updateMassProperties(); plug.body.velocity.set(4, 1, 0);
+        L.movers.splice(L.movers.indexOf(plug), 1);
+        toast(`栓${t.name}がぬけた！ 水圧${(P / 1000).toFixed(1)}kPa`);
+      };
+      L.objs.push(o);
+      this.jets.push(jet);
+    }
+    // 水車
+    const wheel = new CANNON.Body({ mass: 0, collisionFilterGroup: GRP_STATIC, material: mDef });
+    const cyl = new CANNON.Cylinder(1.2, 1.2, 12.5, 16);
+    const q = new CANNON.Quaternion(); q.setFromEuler(Math.PI / 2, 0, 0);
+    wheel.addShape(cyl, V3(0, 0, 0), q);
+    wheel.position.set(-3.3, 1.35, -7.85); addBody(wheel); this.wheelBody = wheel;
+    this.wheelG = new THREE.Group(); this.wheelG.position.copy(wheel.position); addMesh(this.wheelG);
+    const core = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.9, 12.5, 20), mat(0x8a5a3a)); core.rotation.x = Math.PI / 2; core.castShadow = true; this.wheelG.add(core);
+    for (let i = 0; i < 8; i++) {
+      const p = box3(0.12, 0.7, 12.5, mat(0xc9925a)); const a = i / 8 * Math.PI * 2;
+      p.position.set(Math.cos(a) * 1.0, Math.sin(a) * 1.0, 0); p.rotation.z = a + Math.PI / 2; this.wheelG.add(p);
+    }
+    block(-3.45, -3.15, 0, 1.35, -1.3, -1.5, 0x6b7385); block(-3.45, -3.15, 0, 1.35, -14.2, -14.4, 0x6b7385);
+    this.wl = makeLabel('水車 0N / 700N', 1.1); this.wl.position.set(-3.3, 3.6, -7.85); addMesh(this.wl);
+    this.door = wallWithDoor(-17, -9, 8, 2.5, 2.6, 4);
+    makeGoal(2.5, 0, -21);
+    // しぶき
+    const N = 1500;
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(N * 3), 3));
+    this.pts = new THREE.Points(geo, new THREE.PointsMaterial({ color: 0x6fb8ff, size: 0.09, transparent: true, opacity: 0.85 }));
+    this.pts.frustumCulled = false; addMesh(this.pts);
+    this.parts = []; for (let i = 0; i < N; i++) this.parts.push({ x: 0, y: -99, z: 0, vx: 0, vy: 0, vz: 0, life: 0 });
+    this.pi = 0; this.spin = 0; this.okT = 0;
+  },
+  pre(h) {
+    let wheelF = 0;
+    const hitMask = GRP_STATIC | GRP_DYN | GRP_PLAYER;
+    for (const j of this.jets) {
+      if (!j.open) continue;
+      // 噴流の軌道をたどってぶつかる物に力をあたえる
+      let x = j.x, y = j.y, z = j.z, vx = j.v, vy = 0;
+      for (let i = 0; i < 40; i++) {
+        const dt = 0.025;
+        const nx = x + vx * dt, ny = y + vy * dt - 0.5 * G * dt * dt;
+        ray.reset();
+        world.raycastClosest(V3(x, y, z), V3(nx, ny, z), { collisionFilterMask: hitMask, skipBackfaces: true }, ray);
+        if (ray.hasHit) {
+          const b = ray.body;
+          if (b === this.wheelBody) wheelF += j.F;
+          else if (b === player.body) b.applyForce(V3(j.F, 0, 0));
+          else if (b.type === CANNON.Body.DYNAMIC) b.applyForce(V3(j.F, 0, 0), V3(ray.hitPointWorld.x - b.position.x, ray.hitPointWorld.y - b.position.y, ray.hitPointWorld.z - b.position.z));
+          j.hitX = ray.hitPointWorld.x;
+          break;
+        }
+        x = nx; y = ny; vy -= G * dt;
+        if (y < 0) break;
+      }
+    }
+    this.wheelF = wheelF;
+    this.spin += wheelF * 0.000006 * 120 * h * 60;
+    this.wl.userData.set(`水車 ${wheelF.toFixed(0)}N / 700N`);
+    if (wheelF >= 700) this.okT += h; else this.okT = 0;
+    if (this.okT > 1.2 && this.door.target === 0) { this.door.target = 1; toast('水車が勢いよく回った！扉が開いた'); }
+    this.door.step(h);
+    let txt = '栓の穴の面積：0.0075m²　ふき出す力 ≒ 2×水圧×面積\n';
+    for (const j of this.jets) txt += `タンク${j.name}：深さ${j.depth.toFixed(1)}m → 水圧 <b>${(j.P / 1000).toFixed(1)}kPa</b> → 力 <b>${j.F.toFixed(0)}N</b> ${j.open ? '（放水中）' : ''}\n`;
+    txt += `水車に当たる力：<b>${wheelF.toFixed(0)} N</b>（700N以上で扉が開く）`;
+    if (this.jets.some(j => j.open) && wheelF === 0) txt += '\n<small>水の通り道に立っていると水車に届かないよ</small>';
+    setMeter(txt);
+  },
+  frame(dt) {
+    this.wheelG.rotation.z -= Math.min(0.3, (this.wheelF || 0) * 0.00004) * dt * 60;
+    const arr = this.pts.geometry.attributes.position.array;
+    for (const j of this.jets) if (j.open) for (let k = 0; k < 6; k++) {
+      const p = this.parts[this.pi = (this.pi + 1) % this.parts.length];
+      p.x = j.x; p.y = j.y + (Math.random() - 0.5) * 0.06; p.z = j.z + (Math.random() - 0.5) * 0.06;
+      p.vx = j.v * (0.95 + Math.random() * 0.1); p.vy = (Math.random() - 0.5) * 0.3; p.vz = (Math.random() - 0.5) * 0.3; p.life = 1.5; p.stop = j.hitX ?? 99;
+    }
+    this.parts.forEach((p, i) => {
+      if (p.life > 0) {
+        p.life -= dt; p.vy -= G * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt;
+        if (p.x > p.stop) { p.vx = -Math.abs(p.vx) * 0.2; p.vz += (Math.random() - 0.5) * 2; p.stop = 99; }
+        if (p.y < 0) { p.y = 0.02; p.vy = Math.abs(p.vy) * 0.2; p.vx *= 0.5; }
+      }
+      arr[i * 3] = p.x; arr[i * 3 + 1] = p.life > 0 ? p.y : -99; arr[i * 3 + 2] = p.z;
+    });
+    this.pts.geometry.attributes.position.needsUpdate = true;
+  }
+});
+
+// ---------- 7. 合力 ----------
+LEVELS.push({
+  title: '力の合成（合力）', sub: '2つの風でボールを穴へ',
+  science: `<p>1つの物体に2つの力がはたらくとき、それらを合わせた1つの力を<b>合力</b>という。</p>
+    <p>合力は、2つの力を2辺とする<b>平行四辺形の対角線</b>で表される。反対に、1つの力を2つに分けたものが<b>分力</b>。</p>`,
+  goalText: '送風機A（右向き）と送風機B（奥向き）の強さを床のボタンで変えて、<b>発射</b>！ ボールが合力の向きにまっすぐ進み、穴に入ると橋がかかる。ボールから穴への向きをよく見よう。',
+  clearText: '穴は「右に1・奥に2」の向き。A＝1、B＝2 にすると合力（平行四辺形の対角線）がちょうど穴の方向を向いた。強さを2倍にした A＝2、B＝4 でも同じ向きだけど、ボタンは3までだったね。',
+  spawn: [0, 0.1, 4],
+  build() {
+    ground(-8, 8, 7, -3);
+    fence(-8.5, -8, 7, -3, 1.2); fence(-8.5, 8, 7, 7.5, 1.2);
+    fence(8, 8.5, 7, 1.5); fence(8, 8.5, -0.5, -3);
+    // リンク（氷）
+    block(-6.5, 6.5, -1, 0, -3.4, -16, 0xdff4ff, { phys: mIce, floor: true });
+    const glass = new THREE.MeshStandardMaterial({ color: 0xcfe8ff, transparent: true, opacity: 0.25, depthWrite: false });
+    block(-6.5, 6.5, 0, 1.7, -3, -3.4, 0, { material: glass, noShadow: true });
+    block(-6.9, -6.5, 0, 1.7, -3, -16, 0x9aa7b8); block(6.5, 6.9, 0, 1.7, -3, -16, 0x9aa7b8);
+    block(-6.9, 6.9, 0, 1.7, -16, -16.4, 0x9aa7b8);
+    this.S = new THREE.Vector3(-4, 0.3, -6); this.G = new THREE.Vector3(-1.5, 0, -11);
+    const hole = new THREE.Mesh(new THREE.CircleGeometry(0.55, 32), mat(0x111111)); hole.rotation.x = -Math.PI / 2; hole.position.set(this.G.x, 0.01, this.G.z); addMesh(hole);
+    const hl = makeLabel('穴', 0.7); hl.position.set(this.G.x, 1.0, this.G.z); addMesh(hl);
+    const st = new THREE.Mesh(new THREE.RingGeometry(0.35, 0.45, 32), mat(0xff8a3d)); st.rotation.x = -Math.PI / 2; st.position.set(this.S.x, 0.01, this.S.z); addMesh(st);
+    this.ball = dynSphere({ r: 0.3, pos: [this.S.x, 0.3, this.S.z], mass: 1, color: 0xff5a4f, phys: mIce, grab: false, damp: 0.02 });
+    this.u = 1.5; this.a = 0; this.b = 0; this.active = false; this.done = false;
+    // 送風機
+    const fan = (x, z, ry) => {
+      const g = new THREE.Group(); g.position.set(x, 0.8, z); g.rotation.y = ry; addMesh(g);
+      const body = box3(1.4, 1.4, 0.5, mat(0x6b7385)); g.add(body);
+      const blades = new THREE.Group(); blades.position.z = -0.3; g.add(blades);
+      for (let i = 0; i < 3; i++) { const bl = box3(0.2, 0.6, 0.05, mat(0xffffff)); bl.position.y = 0.3; const p = new THREE.Group(); p.rotation.z = i * 2.094; p.add(bl); blades.add(p); }
+      return blades;
+    };
+    this.fanA = fan(-6.2, this.S.z, -Math.PI / 2 + Math.PI);
+    this.fanB = fan(this.S.x, -3.7, Math.PI);
+    this.labA = makeLabel('', 0.9); this.labA.position.set(-6.2, 2.5, this.S.z); addMesh(this.labA);
+    this.labB = makeLabel('', 0.9); this.labB.position.set(this.S.x, 2.5, -3.5); addMesh(this.labB);
+    this.arA = addMesh(makeArrow(0xff4444)); this.arB = addMesh(makeArrow(0x3d8bff)); this.arR = addMesh(makeArrow(0xb04dff));
+    this.par = addMesh(makeLine(0x888888, true));
+    this.pads = [
+      ['A−', -6.5, 'a', -1], ['A＋', -5, 'a', 1], ['B−', -3, 'b', -1], ['B＋', -1.5, 'b', 1], ['発射', 1.5, 'go', 0],
+    ].map(([t, x, k, d]) => { const p = pad(x, -1.2, 1.2, 1.2, k === 'go' ? 0xff8a3d : (k === 'a' ? 0xff4444 : 0x3d8bff), t); p.k = k; p.d = d; return p; });
+    // 谷と橋
+    this.bridge = kinBox(5.2, 0.3, 2, 10.5, -6, 0.5, 0x8a5a3a);
+    ground(13, 19, 3, -2);
+    fence(19, 19.5, 3, -2, 1.2); fence(13, 19.5, 3, 3.5, 1.2); fence(13, 19.5, -2, -2.5, 1.2);
+    makeGoal(16, 0, 0.5);
+  },
+  pre(h) {
+    for (const p of this.pads) {
+      const on = p.pressed();
+      if (on && !p.was) {
+        if (p.k === 'go') { this.active = true; this.resetBall(); toast('発射！'); }
+        else { this[p.k] = clamp(this[p.k] + p.d, 0, 3); this.active = false; this.resetBall(); }
+      }
+      p.was = on;
+    }
+    const b = this.ball.body;
+    if (!this.active || this.done) { b.position.set(this.done ? this.G.x : this.S.x, this.done ? -0.2 : 0.3, this.done ? this.G.z : this.S.z); b.velocity.set(0, 0, 0); b.angularVelocity.set(0, 0, 0); }
+    else {
+      b.applyForce(V3(this.a * this.u, 0, -this.b * this.u));
+      const dx = b.position.x - this.G.x, dz = b.position.z - this.G.z;
+      if (Math.hypot(dx, dz) < 0.55) { this.done = true; b.collisionFilterMask = 0; toast('ナイスショット！ 橋がかかった'); }
+    }
+    if (this.done) {
+      const bb = this.bridge.body; const ty = -0.15;
+      const ny = Math.min(ty, bb.position.y + 3 * h);
+      bb.velocity.set(0, (ny - bb.position.y) / h, 0); bb.position.y = ny - bb.velocity.y * h;
+    }
+    const FA = new THREE.Vector3(this.a * this.u, 0, 0), FB = new THREE.Vector3(0, 0, -this.b * this.u), R = FA.clone().add(FB);
+    const ang = R.length() > 0 ? Math.atan2(-R.z, R.x) * 180 / Math.PI : 0;
+    const tgt = Math.atan2(-(this.G.z - this.S.z), this.G.x - this.S.x) * 180 / Math.PI;
+    setMeter(`送風機A（右向き）：<b>${this.a}</b> → <b>${(this.a * this.u).toFixed(1)} N</b>\n送風機B（奥向き）：<b>${this.b}</b> → <b>${(this.b * this.u).toFixed(1)} N</b>\n合力：<b>${R.length().toFixed(2)} N</b>　向き ${R.length() > 0 ? ang.toFixed(0) + '°' : '—'}（穴の向き ${tgt.toFixed(0)}°）\n<small>赤：A　青：B　紫：合力（平行四辺形の対角線）</small>`);
+  },
+  resetBall() { const b = this.ball.body; b.position.set(this.S.x, 0.3, this.S.z); b.velocity.set(0, 0, 0); b.angularVelocity.set(0, 0, 0); },
+  frame(dt) {
+    this.fanA.rotation.z += this.a * dt * 8; this.fanB.rotation.z += this.b * dt * 8;
+    this.labA.userData.set(`送風機A：${this.a}（${(this.a * this.u).toFixed(1)}N）`);
+    this.labB.userData.set(`送風機B：${this.b}（${(this.b * this.u).toFixed(1)}N）`);
+    const o = this.S.clone(); o.y = 0.35; const s = 0.9;
+    const FA = new THREE.Vector3(this.a * this.u, 0, 0), FB = new THREE.Vector3(0, 0, -this.b * this.u), R = FA.clone().add(FB);
+    this.arA.setVec(o, FA, s); this.arB.setVec(o, FB, s); this.arR.setVec(o, R, s);
+    const pa = o.clone().addScaledVector(FA, s), pb = o.clone().addScaledVector(FB, s), pr = o.clone().addScaledVector(R, s);
+    this.par.userData.set([pa, pr, pb]);
+    this.par.visible = this.a > 0 && this.b > 0;
+  }
+});
+
+// ================= メインループ =================
+function preStep(h) {
+  updateHands(h);
+  movePlayer(h);
+  applyWater(h);
+  applyFriction(h);
+  L.def?.pre?.call(L.def, h);
+  for (const o of L.objs) {
+    const p = o.body.position;
+    if (p.y < -18 && o.body.type === CANNON.Body.DYNAMIC) {
+      for (const hd of hands) if (hd.obj === o) release(hd);
+      p.set(...o.init); o.body.velocity.set(0, 0, 0); o.body.angularVelocity.set(0, 0, 0); o.body.quaternion.copy(o.initQ);
+    }
+  }
+}
+function postStep(h) {
+  L.def?.post?.call(L.def, h);
+  const p = player.body.position;
+  if (p.y < -12) { toast('落ちちゃった！'); resetPlayer(); }
+  if (L.goal && !L.cleared) {
+    const g = L.goal;
+    if (Math.hypot(p.x - g.x, p.z - g.z) < 1.1 && Math.abs(p.y - g.y) < 1.2) stageClear();
+  }
+}
+const camTarget = new THREE.Vector3();
+function updateCamera(dt) {
+  const p = player.body.position;
+  const tgt = new THREE.Vector3(p.x, p.y + 1.5, p.z);
+  camTarget.lerp(tgt, dt >= 1 ? 1 : 1 - Math.pow(0.0001, dt));
+  const dir = new THREE.Vector3(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
+  let d = camDist;
+  ray.reset();
+  const from = V3(camTarget.x, camTarget.y, camTarget.z);
+  const to = V3(camTarget.x + dir.x * d, camTarget.y + dir.y * d, camTarget.z + dir.z * d);
+  world.raycastClosest(from, to, { collisionFilterMask: GRP_STATIC, skipBackfaces: true }, ray);
+  if (ray.hasHit) d = Math.max(0.8, ray.distance - 0.25);
+  camera.position.copy(camTarget).addScaledVector(dir, d);
+  camera.lookAt(camTarget);
+  sun.position.set(p.x + 8, p.y + 18, p.z + 6); sun.target.position.set(p.x, p.y, p.z);
+}
+function updateVisuals(dt) {
+  for (const o of L.objs) {
+    o.mesh.position.copy(o.body.position); o.mesh.quaternion.copy(o.body.quaternion);
+    if (o.label) o.label.position.set(o.body.position.x, o.body.position.y + o.labelY, o.body.position.z);
+  }
+  for (const m of L.movers) { m.mesh.position.copy(m.body.position); m.mesh.quaternion.copy(m.body.quaternion); }
+  L.def?.frame?.call(L.def, dt);
+  if (L.goal) { L.goal.flag.rotation.y = Math.sin(performance.now() / 300) * 0.3; }
+  // キャラクター
+  const b = player.body, p = b.position;
+  let df = (player.wantFacing ?? player.facing) - player.facing;
+  df = Math.atan2(Math.sin(df), Math.cos(df));
+  player.facing += df * Math.min(1, dt * 10);
+  pv.position.set(p.x, p.y, p.z);
+  pv.rotation.y = player.facing;
+  const sp = Math.hypot(b.velocity.x, b.velocity.z);
+  player.walkPhase += sp * dt * 3.2;
+  const sw = player.grounded ? Math.sin(player.walkPhase) * Math.min(0.7, sp * 0.18) : 0.35;
+  legs[0].rotation.x = sw; legs[1].rotation.x = -sw;
+  torso.rotation.z = Math.sin(player.walkPhase) * Math.min(0.08, sp * 0.02);
+  torso.rotation.x = -Math.min(0.25, sp * 0.04);
+  head.position.y = 1.55 + Math.abs(Math.sin(player.walkPhase)) * 0.03;
+  const cf = Math.cos(player.facing), sf = Math.sin(player.facing);
+  for (const h of hands) {
+    const sh = new THREE.Vector3(p.x + cf * h.side * 0.33, p.y + 1.28, p.z - sf * h.side * 0.33);
+    let goal;
+    if (h.obj) { const w = h.obj.body.pointToWorldFrame(h.local); goal = tv(w); }
+    else if (wantGrab(h)) goal = h.target.clone();
+    else { // だらんと下げる
+      goal = new THREE.Vector3(p.x + cf * h.side * 0.38 - sf * Math.sin(player.walkPhase) * 0.15 * h.side, p.y + 0.62, p.z - sf * h.side * 0.38 - cf * Math.sin(player.walkPhase) * 0.15 * h.side);
+    }
+    h.vis.lerp(goal, Math.min(1, dt * 14));
+    const i = h.side < 0 ? 0 : 1;
+    setLimb(armMeshes[i], sh, h.vis);
+    handMeshes[i].position.copy(h.vis);
+    handMeshes[i].material = h.obj ? mat(0xffb347, { roughness: 0.6 }) : skin;
+  }
+  // 腕の力表示
+  for (const h of hands) {
+    const el = h.side < 0 ? $('armL') : $('armR');
+    const name = h.side < 0 ? '左手' : '右手';
+    el.textContent = h.obj ? `${name} ${h.force.toFixed(0)}N` : `${name} —`;
+    el.className = h.obj ? (h.maxed ? 'max' : 'on') : '';
+  }
+  if (toastT > 0) { toastT -= dt; if (toastT <= 0) $('toast').classList.remove('show'); }
+}
+let acc = 0, last = performance.now();
+function loop(now) {
+  requestAnimationFrame(loop);
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (state === 'play') {
+    acc += dt; let n = 0;
+    while (acc >= H && n < 8) { L.t += H; preStep(H); world.step(H); postStep(H); acc -= H; n++; }
+    if (n >= 8) acc = 0;
+  }
+  updateVisuals(dt);
+  updateCamera(dt);
+  renderer.render(scene, camera);
+}
+// 背景の山や雲
+{
+  const far = new THREE.Mesh(new THREE.CircleGeometry(300, 48), mat(0x9cc98a)); far.rotation.x = -Math.PI / 2; far.position.y = -12; far.receiveShadow = false; scene.add(far);
+  for (let i = 0; i < 18; i++) {
+    const a = i / 18 * Math.PI * 2, r = 90 + (i % 3) * 20;
+    const m = new THREE.Mesh(new THREE.ConeGeometry(18 + (i % 4) * 6, 30 + (i % 5) * 8, 6), mat(0x86b07a));
+    m.position.set(Math.cos(a) * r, 0, Math.sin(a) * r); scene.add(m);
+  }
+}
+window.__game = { L, player, hands, world, input, loadStage, play, LEVELS, get state() { return state; }, setView(y, p) { yaw = y; pitch = p; } };
+$('loading').classList.add('hidden');
+showMenu();
+requestAnimationFrame(loop);
+</script>
+<script>
+  // モジュールが読みこめなかったとき
+  setTimeout(function () {
+    var l = document.getElementById('loading');
+    if (l && !l.classList.contains('hidden')) l.innerHTML = '読み込みに失敗しました。<br>インターネット接続を確認して再読み込みしてください。';
+  }, 15000);
+</script>
+</body>
+</html>
