@@ -34,7 +34,7 @@ button { font-family: inherit; color: inherit; cursor: pointer; }
 #hStats { position: absolute; left: calc(var(--sal) + 12px); bottom: calc(var(--sab) + 10px); font-size: 13px; font-weight: 800; text-shadow: 0 1px 4px rgba(0,0,0,.6); }
 body.touch #hStats { bottom: auto; top: calc(var(--sat) + 56px); }
 #bPause { position: absolute; right: calc(var(--sar) + 10px); top: calc(var(--sat) + 10px); width: 44px; height: 40px; border-radius: 12px; border: 0;
-  background: rgba(10,16,40,.55); font-size: 18px; font-weight: 900; pointer-events: auto; }
+  background: rgba(10,16,40,.55); font-size: 18px; font-weight: 900; pointer-events: auto; z-index: 5; touch-action: manipulation; }
 #banner { position: absolute; left: 50%; top: 24%; transform: translate(-50%, -50%); text-align: center; opacity: 0; transition: opacity .5s; text-shadow: 0 3px 10px rgba(0,0,0,.6); }
 #banner.on { opacity: 1; }
 #banner small { display: block; font-size: 14px; font-weight: 800; letter-spacing: .3em; opacity: .9; }
@@ -117,7 +117,7 @@ body.hub #title { padding-top: calc(var(--sat) + 52px); }
   <div id="touch" class="off">
     <div id="stick"><i></i></div>
     <div id="tHint">左をなぞって移動・右をなぞって見回す</div>
-    <button class="tb" id="tRun">ダッシュ<br><small>固定</small></button>
+    <button class="tb" id="tRun">ダッシュ<br><small id="tRunS">OFF</small></button>
     <button class="tb" id="tJump">ジャンプ</button>
   </div>
 
@@ -167,8 +167,8 @@ body.hub #title { padding-top: calc(var(--sat) + 52px); }
   <div id="helpBox" class="scr dim hidden"><div class="panel help">
     <h2>あそびかた</h2>
     空に浮かぶガラクタの上を、ジャンプでつたって、いちばん上の「てっぺん」をめざします。足をすべらせると、下のほうまで落ちてしまうことも…。<br>
-    <b>パソコン</b>：WASD で移動、マウスで見回す（画面をクリックで固定）、スペースでジャンプ、Shift でダッシュ、ホイールでカメラのきょり、Esc でメニュー。<br>
-    <b>スマホ</b>：左をなぞって移動（いっぱいにたおすとダッシュ）、右をなぞって見回す、「ジャンプ」でジャンプ。「ダッシュ固定」をオンにすると、いつも走ります。<br>
+    <b>パソコン</b>：WASD で移動、マウスで見回す（画面をクリックで固定）、スペースでジャンプ、Shift でダッシュ、ホイールでカメラのきょり、Esc か P でメニュー（マウスが固定されているときは右上のボタンは押せません）。<br>
+    <b>スマホ</b>：左をなぞって移動、右をなぞって見回す、「ジャンプ」でジャンプ。「ダッシュ」ボタンを押すと ON（走る）と OFF（歩く）が切りかわります。<br>
     <b>セーブコード</b>：メニューの「いまの場所のコードを出す」で、立っている場所を20文字のコードにできます。メモしておけば「コードで続きから」でその場所にもどれます。ほかの人に教えれば、同じ場所から登れます。<br>
     <b>コツ</b>：遠い足場はダッシュしてから、ふちのぎりぎりでジャンプ。高いところへは、少し助走をつけて。
     <button class="btn main" id="helpDone">とじる</button>

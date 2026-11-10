@@ -164,7 +164,7 @@ addEventListener('keydown', e => {
   if (e.repeat) return;
   IN.keys.add(e.code);
   if (e.code === 'Space') { IN.jumpE = true; IN.jumpHeld = true; }
-  if (e.code === 'Escape' && (G.state === 'play' || G.state === 'pause')) togglePause(G.state === 'play');
+  if ((e.code === 'Escape' || e.code === 'KeyP') && (G.state === 'play' || G.state === 'pause')) togglePause(G.state === 'play');
 });
 addEventListener('keyup', e => { IN.keys.delete(e.code); if (e.code === 'Space') IN.jumpHeld = false; });
 addEventListener('blur', () => { IN.keys.clear(); IN.jumpHeld = false; });
@@ -176,8 +176,8 @@ function moveAxes() {
   const l = Math.hypot(x, y); if (l > 1) { x /= l; y /= l; }
   return [x, y];
 }
-// ダッシュ：Shift、またはスマホは棒をいっぱいにたおす／「ダッシュ固定」
-const sprinting = () => IN.keys.has('ShiftLeft') || IN.keys.has('ShiftRight') || SET.runLock || (IN.stick && Math.hypot(IN.stickX, IN.stickY) > .92);
+// ダッシュ：Shift、スマホは「ダッシュ」ボタンで ON/OFF
+const sprinting = () => IN.keys.has('ShiftLeft') || IN.keys.has('ShiftRight') || (IN.touchOn && !!SET.runLock);
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 canvas.addEventListener('mousedown', () => {
   AU.init();
@@ -195,8 +195,10 @@ document.addEventListener('pointerlockchange', () => { if (!document.pointerLock
   const jEnd = () => { jb.classList.remove('on'); IN.jumpHeld = false; };
   jb.addEventListener('pointerup', jEnd); jb.addEventListener('pointercancel', jEnd); jb.addEventListener('pointerleave', jEnd);
   const rb = $('tRun');
-  rb.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); SET.runLock = !SET.runLock; saveSet(); rb.classList.toggle('lock', SET.runLock); AU.click(); });
-  rb.classList.toggle('lock', !!SET.runLock);
+  const rShow = () => { rb.classList.toggle('lock', !!SET.runLock); $('tRunS').textContent = SET.runLock ? 'ON' : 'OFF'; };
+  rb.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); SET.runLock = !SET.runLock; saveSet(); rShow(); AU.init(); AU.click(); });
+  rb.addEventListener('click', e => e.stopPropagation());
+  rShow();
   layer.addEventListener('pointerdown', e => {
     IN.touchOn = true; document.body.classList.add('touch'); AU.init();
     const p = toStage(e.clientX, e.clientY);
