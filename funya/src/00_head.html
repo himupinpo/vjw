@@ -112,7 +112,7 @@ body.hub #title { padding-top: calc(var(--sat) + 52px); }
   <canvas id="c"></canvas>
   <div id="hud" class="hidden">
     <div id="cross"></div>
-    <div id="hTop"><div id="hH"><b id="hStage">1</b><small id="hStageN">/ 5</small></div><div id="hSub"><span id="hZone"></span></div></div>
+    <div id="hTop"><div id="hH"><b id="hStage">1</b><small id="hStageN">/ 10</small></div><div id="hSub"><span id="hZone"></span></div></div>
     <div id="hStats">⏱ <span id="hTime">0:00</span>　落ちた回数 <span id="hFalls">0</span></div>
     <div id="hands"><span id="hdL">左手</span><span id="hdR">右手</span></div>
     <button id="bPause" aria-label="メニュー">Ⅱ</button>
@@ -165,11 +165,12 @@ body.hub #title { padding-top: calc(var(--sat) + 52px); }
 
   <div id="helpBox" class="scr dim hidden"><div class="panel help">
     <h2>あそびかた</h2>
-    ぐにゃぐにゃの「もちお」を動かして、空に浮かぶ5つの島を通りぬけ、さいごの島の鐘を鳴らします。手は、いま見ている向きへのびます。<br>
+    ぐにゃぐにゃの「もちお」を動かして、空に浮かぶ10の島を通りぬけ、さいごの島の鐘を鳴らします。シーソー・トランポリン・横風・のぼり風・ロープウェイ・回る棒・くずれる足場など、いろいろなしかけがあります。手は、いま見ている向きへのびます。<br>
     <b>つかむ</b>：手をのばしたまま物にさわると、つかみます。はなすと手をはなします。箱は両手でつかむと運べます。<br>
     <b>のぼる</b>：かべのふちを（できれば両手で）つかんで、ジャンプを長押し。体を引き上げて、ふちの上へ乗りこえます。上を見ながら手をのばすと高いところにとどきます。<br>
     <b>パソコン</b>：WASD で移動、マウスで見回す（画面をクリックで固定）、左クリック＝左手、右クリック＝右手（押している間だけのばす）、スペースでジャンプ、ホイールでカメラのきょり（いちばん近づけると一人称）、V で一人称／三人称、Esc か P でメニュー。<br>
     <b>スマホ</b>：左をなぞって移動、右をなぞって見回す、2本指で広げる／すぼめるとカメラが近づく／遠ざかる。「左手」「右手」は押している間だけのばします。「両手 固定」を ON にすると、指をはなしても両手をのばしたまま（つかんだまま）になります。<br>
+    <b>ロープウェイ</b>：取っ手が駅に止まっているあいだに、上を見て両手でつかみます。向こうの島の上に着いたら手をはなします。<br>
     <b>落ちたら</b>：さいごにふれたチェックポイント（光る輪）からやり直します。物が落ちたときは元の場所にもどります。こまったらメニューの「この島をやり直す」。
     <button class="btn main" id="helpDone">とじる</button>
   </div></div>

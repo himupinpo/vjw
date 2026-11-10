@@ -69,6 +69,7 @@ function showOnly(id) { for (const k of ['title', 'pause', 'ask', 'setBox', 'hel
 function resetWorld() {
   for (const p of PROPS) resetProp(p);
   if (MECH.resetLever) MECH.resetLever();
+  if (MECH.resetTiles) MECH.resetTiles(); if (MECH.resetGate2) MECH.resetGate2(); if (MECH.resetRope) MECH.resetRope();
   if (BELL) { BELL.rung = false; BELL.t = 0; BELL.mesh.rotation.z = 0; }
 }
 function startAt(s) {
@@ -85,6 +86,7 @@ function startAt(s) {
 function retrySection() {
   for (const p of PROPS) if (p.sec === G.sec || p.sec === G.sec - 1) resetProp(p);
   if (G.sec <= 2 && MECH.resetLever) MECH.resetLever();
+  if (G.sec >= 8 && MECH.resetTiles) MECH.resetTiles(); if (G.sec === 9 && MECH.resetGate2) MECH.resetGate2();
   respawn(); togglePause(false);
 }
 function togglePause(on) {
