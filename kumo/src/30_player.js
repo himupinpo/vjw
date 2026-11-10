@@ -1,6 +1,6 @@
 // ================= のぼる子（動き・当たり・見た目・カメラ） =================
 const PR = .3, SPH = [.3, .85, 1.38];
-const GRAV = 24, JUMP_V = 8.6, WALK = 5.0, SPRINT = 7.6, GACC = 50, AACC = 16, MAXF = 52, WATER_Y = -.45;
+const GRAV = 24, JUMP_V = 8.6, WALK = 5.0, SPRINT = 7.6, MAXF = 52, WATER_Y = -.45;
 const START = { x: 0, y: 0, z: 13, yaw: Math.PI };
 const P = { pos: new T.Vector3(START.x, START.y, START.z), vel: new T.Vector3(), yaw: START.yaw, onGround: false, gN: new T.Vector3(0, 1, 0), gCol: null,
   coyote: 0, jumpBuf: 0, airTop: 0, airT: 0, best: 0, falls: 0, time: 0, stepT: 0, squash: 0, phase: 0, model: null, fallMsg: 0 };
@@ -55,15 +55,8 @@ function pstep(dt, inp) {
   const wasG = P.onGround, gc = P.gCol;
   const spd = (inp.sprint ? SPRINT : WALK) * Math.min(1, Math.hypot(inp.dx, inp.dz));
   const mag = Math.hypot(inp.dx, inp.dz), ux = mag > 1e-4 ? inp.dx / mag : 0, uz = mag > 1e-4 ? inp.dz / mag : 0;
-  if (P.onGround || mag > .05) {
-    const acc = (P.onGround ? GACC : AACC) * dt; let ex = ux * spd - P.vel.x, ez = uz * spd - P.vel.z; const el = Math.hypot(ex, ez);
-    if (el > acc) { ex *= acc / el; ez *= acc / el; }
-    if (!P.onGround) { // 空中：向きは変えられるが、勢いはあまりつけられない
-      const vx = P.vel.x + ex, vz = P.vel.z + ez, sp = Math.hypot(vx, vz), cap = Math.max(Math.hypot(P.vel.x, P.vel.z), spd);
-      if (sp > cap) { ex = vx * cap / sp - P.vel.x; ez = vz * cap / sp - P.vel.z; }
-    }
-    P.vel.x += ex; P.vel.z += ez;
-  }
+  // 慣性なし：地面でも空中でも、入力した向きと速さにすぐなる（はなせばすぐ止まる）
+  P.vel.x = ux * spd; P.vel.z = uz * spd;
   if (mag > .05) P.yaw += angD(Math.atan2(ux, uz) - P.yaw) * Math.min(1, dt * 14);
   // ジャンプ（少し早めに押しても、ふちから少し出てからでも跳べる）
   P.jumpBuf = inp.jumpE ? .14 : Math.max(0, P.jumpBuf - dt);
