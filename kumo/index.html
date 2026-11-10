@@ -1,0 +1,1405 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>雲のてっぺん</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=M+PLUS+Rounded+1c:wght@500;800;900&display=swap">
+<style>
+:root {
+  --f: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+  --d: "Dela Gothic One", "M PLUS Rounded 1c", "Hiragino Sans", sans-serif;
+  --ac: #ffcf4a; --ink: #1d2340; --card: rgba(22,28,52,.86); --line: rgba(255,255,255,.18);
+  --sat: env(safe-area-inset-top, 0px); --sab: env(safe-area-inset-bottom, 0px); --sal: env(safe-area-inset-left, 0px); --sar: env(safe-area-inset-right, 0px);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: #0b1024; color: #fff; font-family: var(--f);
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; overscroll-behavior: none; -webkit-tap-highlight-color: transparent; touch-action: none; }
+button { font-family: inherit; color: inherit; cursor: pointer; }
+#rot { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; transform-origin: 0 0; overflow: hidden; }
+#c { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.hidden { display: none !important; }
+
+/* ---------- HUD ---------- */
+#hud { position: absolute; inset: 0; pointer-events: none; }
+#hTop { position: absolute; top: calc(var(--sat) + 8px); left: 50%; transform: translateX(-50%); text-align: center; text-shadow: 0 2px 6px rgba(0,0,0,.5); }
+#hH { font-family: var(--d); font-size: 40px; line-height: 1; letter-spacing: .02em; }
+#hH small { font-size: 18px; margin-left: 3px; }
+#hSub { font-size: 13px; font-weight: 800; opacity: .92; margin-top: 2px; }
+#alt { position: absolute; right: calc(var(--sar) + 14px); top: calc(var(--sat) + 62px); bottom: calc(var(--sab) + 150px); width: 10px; border-radius: 6px;
+  background: linear-gradient(to top, #3a8fd0, #79c6ff 15%, #9be27a 28%, #f0d27a 42%, #f7b8e0 57%, #e0b070 71%, #ff8a5a 85%, #2a2a6a); box-shadow: 0 0 0 2px rgba(0,0,0,.25); opacity: .9; }
+#alt i { position: absolute; left: 50%; width: 20px; height: 20px; margin: -10px 0 0 -10px; border-radius: 50%; }
+#altMe { background: #fff; border: 3px solid #ff5a5a; box-shadow: 0 1px 4px rgba(0,0,0,.5); }
+#altBest { width: 22px !important; height: 4px !important; margin: -2px 0 0 -11px !important; border-radius: 2px !important; background: #ffe14a; box-shadow: 0 0 6px #ffe14a; }
+#alt b { position: absolute; right: 16px; font-size: 10px; font-weight: 800; white-space: nowrap; transform: translateY(50%); opacity: .8; text-shadow: 0 1px 3px #000; }
+#hStats { position: absolute; left: calc(var(--sal) + 12px); bottom: calc(var(--sab) + 10px); font-size: 13px; font-weight: 800; text-shadow: 0 1px 4px rgba(0,0,0,.6); }
+body.touch #hStats { bottom: auto; top: calc(var(--sat) + 56px); }
+#bPause { position: absolute; right: calc(var(--sar) + 10px); top: calc(var(--sat) + 10px); width: 44px; height: 40px; border-radius: 12px; border: 0;
+  background: rgba(10,16,40,.55); font-size: 18px; font-weight: 900; pointer-events: auto; }
+#banner { position: absolute; left: 50%; top: 24%; transform: translate(-50%, -50%); text-align: center; opacity: 0; transition: opacity .5s; text-shadow: 0 3px 10px rgba(0,0,0,.6); }
+#banner.on { opacity: 1; }
+#banner small { display: block; font-size: 14px; font-weight: 800; letter-spacing: .3em; opacity: .9; }
+#banner b { display: block; font-family: var(--d); font-size: 38px; letter-spacing: .06em; }
+#toast { position: absolute; left: 50%; top: 36%; transform: translateX(-50%); padding: 8px 18px; border-radius: 999px; background: rgba(8,12,30,.72); font-weight: 800; font-size: 16px;
+  opacity: 0; transition: opacity .3s; white-space: nowrap; }
+#toast.on { opacity: 1; }
+#cross { position: absolute; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px; border-radius: 50%; background: rgba(255,255,255,.7); }
+
+/* ---------- タッチ ---------- */
+#touch { position: absolute; inset: 0; }
+#touch.off { display: none; }
+#stick { position: absolute; width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%; border: 3px solid rgba(255,255,255,.35); background: rgba(255,255,255,.08); display: none; pointer-events: none; }
+#stick i { position: absolute; left: 50%; top: 50%; width: 50px; height: 50px; margin: -25px; border-radius: 50%; background: rgba(255,255,255,.55); }
+.tb { position: absolute; border-radius: 50%; border: 3px solid rgba(255,255,255,.55); background: rgba(10,16,40,.38); font-weight: 900; color: #fff; display: grid; place-items: center; touch-action: none; }
+.tb.on { background: rgba(255,207,74,.55); }
+#tJump { width: 92px; height: 92px; right: calc(var(--sar) + 22px); bottom: calc(var(--sab) + 26px); font-size: 17px; }
+#tRun { width: 64px; height: 64px; right: calc(var(--sar) + 128px); bottom: calc(var(--sab) + 34px); font-size: 12px; line-height: 1.15; text-align: center; white-space: nowrap; letter-spacing: -.02em; }
+#tRun.lock { background: rgba(120,220,255,.5); }
+#tHint { position: absolute; left: calc(var(--sal) + 18px); bottom: calc(var(--sab) + 14px); font-size: 11px; opacity: .55; pointer-events: none; }
+
+/* ---------- 画面（タイトル・メニュー） ---------- */
+.scr { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow-y: auto; touch-action: pan-y;
+  padding: calc(var(--sat) + 16px) calc(var(--sar) + 16px) calc(var(--sab) + 16px) calc(var(--sal) + 16px); }
+.scr.dim { background: rgba(6,10,26,.62); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+.scr > * { flex-shrink: 0; }
+.panel { width: min(440px, 100%); background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 18px 18px 16px; box-shadow: 0 18px 50px rgba(0,0,0,.45); }
+.panel h2 { margin: 0 0 12px; font-family: var(--d); font-weight: 400; font-size: 24px; text-align: center; letter-spacing: .04em; }
+.btn { display: block; width: 100%; margin: 8px 0; padding: 13px 14px; border-radius: 14px; border: 0; background: rgba(255,255,255,.12); font-size: 17px; font-weight: 900; }
+.btn:hover { background: rgba(255,255,255,.2); }
+.btn.main { background: linear-gradient(180deg, #ffd85a, #ffb52e); color: #3a2400; box-shadow: 0 4px 0 #b77a10; }
+.btn.main:active { transform: translateY(2px); box-shadow: 0 2px 0 #b77a10; }
+.btn small { display: block; font-size: 12px; font-weight: 800; opacity: .75; margin-top: 2px; }
+.btn:disabled { opacity: .4; cursor: default; }
+.row { display: flex; gap: 8px; }
+.row .btn { flex: 1; }
+.note { font-size: 13px; line-height: 1.6; opacity: .85; margin: 6px 2px; }
+#title { justify-content: flex-end; padding-bottom: calc(var(--sab) + 26px); background: linear-gradient(to bottom, rgba(10,20,50,.1) 20%, rgba(10,16,40,.78) 60%); }
+#title .btn:not(.main) { background: rgba(20,30,60,.62); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+#logo { position: absolute; top: calc(var(--sat) + 9%); left: 0; right: 0; text-align: center; pointer-events: none; }
+#logo b { display: block; font-family: var(--d); font-weight: 400; font-size: clamp(44px, 11vw, 92px); letter-spacing: .06em; color: #fff;
+  text-shadow: 0 4px 0 #2a4b8a, 0 8px 24px rgba(0,0,0,.45); }
+body.short #title { justify-content: center; padding-top: calc(var(--sat) + 8px); padding-bottom: calc(var(--sab) + 8px); }
+body.short #logo { position: static; margin-bottom: 6px; }
+body.short #logo b { font-size: 40px; }
+body.short #logo small { font-size: 12px; margin-top: 2px; }
+body.short #tMenu .btn { margin: 4px 0; padding: 8px 12px; font-size: 15px; }
+body.short #banner { top: 34%; }
+body.short #banner b { font-size: 30px; }
+#logo small { display: block; margin-top: 6px; font-size: clamp(13px, 2.6vw, 18px); font-weight: 900; letter-spacing: .2em; text-shadow: 0 2px 8px rgba(0,0,0,.6); }
+#tMenu { width: min(420px, 100%); }
+#recLine { font-size: 13px; font-weight: 800; opacity: .85; text-align: center; margin-top: 4px; text-shadow: 0 1px 4px #000; min-height: 1em; }
+#codeTx { width: 100%; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 22px; font-weight: 700; letter-spacing: .08em; text-align: center; padding: 14px 8px;
+  border-radius: 14px; border: 2px solid rgba(255,255,255,.25); background: rgba(0,0,0,.35); color: #fff; -webkit-user-select: text; user-select: text; touch-action: auto; text-transform: uppercase; }
+#codeMsg { min-height: 1.4em; font-size: 14px; font-weight: 800; text-align: center; color: #ffd27a; margin-top: 6px; }
+.set { display: flex; align-items: center; gap: 10px; margin: 12px 2px; font-weight: 800; font-size: 15px; }
+.set span { flex: 1; }
+.set input[type=range] { width: 52%; touch-action: pan-y; }
+.seg { display: flex; gap: 6px; }
+.seg button { padding: 8px 12px; border-radius: 10px; border: 0; background: rgba(255,255,255,.12); font-weight: 900; font-size: 14px; }
+.seg button.on { background: var(--ac); color: #3a2400; }
+.help { font-size: 14px; line-height: 1.75; }
+.help b { color: #ffe08a; }
+#clear .big { font-family: var(--d); font-size: 34px; text-align: center; margin: 4px 0 10px; color: #ffe14a; text-shadow: 0 0 18px rgba(255,220,80,.6); }
+.stat { display: flex; justify-content: space-between; font-weight: 800; font-size: 16px; padding: 6px 4px; border-bottom: 1px solid var(--line); }
+#load { position: absolute; inset: 0; display: grid; place-items: center; background: #0b1024; font-weight: 900; font-size: 18px; letter-spacing: .1em; }
+body.hub #title { padding-top: calc(var(--sat) + 52px); }
+</style></head><body>
+<div id="rot">
+  <canvas id="c"></canvas>
+  <div id="hud" class="hidden">
+    <div id="cross"></div>
+    <div id="hTop"><div id="hH"><b id="hHeight">0</b><small>m</small></div><div id="hSub"><span id="hZone"></span>・最高 <span id="hBest">0</span>m</div></div>
+    <div id="alt"><i id="altBest"></i><i id="altMe"></i></div>
+    <div id="hStats">⏱ <span id="hTime">0:00</span>　落ちた回数 <span id="hFalls">0</span></div>
+    <button id="bPause" aria-label="メニュー">Ⅱ</button>
+    <div id="banner"><small id="bnSub"></small><b id="bnTitle"></b></div>
+    <div id="toast"></div>
+  </div>
+  <div id="touch" class="off">
+    <div id="stick"><i></i></div>
+    <div id="tHint">左をなぞって移動・右をなぞって見回す</div>
+    <button class="tb" id="tRun">ダッシュ<br><small>固定</small></button>
+    <button class="tb" id="tJump">ジャンプ</button>
+  </div>
+
+  <div id="title" class="scr">
+    <div id="logo"><b>雲のてっぺん</b><small>空に浮かぶガラクタを、どこまでも登れ</small></div>
+    <div id="tMenu">
+      <button class="btn main" id="bStart">はじめから</button>
+      <button class="btn" id="bCont">つづきから<small id="contInfo"></small></button>
+      <div class="row"><button class="btn" id="bCodeIn">コードで続きから</button><button class="btn" id="bHelp">あそびかた</button></div>
+      <button class="btn" id="bSet">設定</button>
+      <div id="recLine"></div>
+    </div>
+  </div>
+
+  <div id="pause" class="scr dim hidden"><div class="panel">
+    <h2>メニュー</h2>
+    <button class="btn main" id="pBack">つづける</button>
+    <button class="btn" id="pCode">いまの場所のコードを出す<small>この場所から、あとで続けられます</small></button>
+    <button class="btn" id="pCodeIn">コードで続きから</button>
+    <div class="row"><button class="btn" id="pSet">設定</button><button class="btn" id="pHelp">あそびかた</button></div>
+    <button class="btn" id="pTitle">タイトルへ</button>
+  </div></div>
+
+  <div id="codeBox" class="scr dim hidden"><div class="panel">
+    <h2 id="codeTtl">セーブコード</h2>
+    <div class="note" id="codeNote"></div>
+    <input id="codeTx" maxlength="32" autocomplete="off" autocapitalize="characters" spellcheck="false">
+    <div id="codeMsg"></div>
+    <div class="row"><button class="btn main" id="codeAct">コピー</button><button class="btn" id="codeClose">とじる</button></div>
+  </div></div>
+
+  <div id="ask" class="scr dim hidden"><div class="panel">
+    <h2 id="askTtl">はじめから</h2>
+    <div class="note" id="askTx"></div>
+    <div class="row"><button class="btn main" id="askYes">はじめる</button><button class="btn" id="askNo">やめる</button></div>
+  </div></div>
+
+  <div id="setBox" class="scr dim hidden"><div class="panel">
+    <h2>設定</h2>
+    <div class="set"><span>見回す速さ</span><input type="range" id="sSens" min=".3" max="2.5" step=".05"><b id="sSensV"></b></div>
+    <div class="set"><span>カメラのきょり</span><input type="range" id="sCamD" min="3" max="9" step=".25"><b id="sCamDV"></b></div>
+    <div class="set"><span>上下を反転</span><div class="seg" id="sInv"><button data-v="0">しない</button><button data-v="1">する</button></div></div>
+    <div class="set"><span>画質</span><div class="seg" id="sQual"><button data-v="low">軽い</button><button data-v="mid">ふつう</button><button data-v="high">きれい</button></div></div>
+    <button class="btn main" id="setDone">とじる</button>
+  </div></div>
+
+  <div id="helpBox" class="scr dim hidden"><div class="panel help">
+    <h2>あそびかた</h2>
+    空に浮かぶガラクタの上を、ジャンプでつたって、いちばん上の「てっぺん」をめざします。足をすべらせると、下のほうまで落ちてしまうことも…。<br>
+    <b>パソコン</b>：WASD で移動、マウスで見回す（画面をクリックで固定）、スペースでジャンプ、Shift でダッシュ、ホイールでカメラのきょり、Esc でメニュー。<br>
+    <b>スマホ</b>：左をなぞって移動（いっぱいにたおすとダッシュ）、右をなぞって見回す、「ジャンプ」でジャンプ。「ダッシュ固定」をオンにすると、いつも走ります。<br>
+    <b>セーブコード</b>：メニューの「いまの場所のコードを出す」で、立っている場所を20文字のコードにできます。メモしておけば「コードで続きから」でその場所にもどれます。ほかの人に教えれば、同じ場所から登れます。<br>
+    <b>コツ</b>：遠い足場はダッシュしてから、ふちのぎりぎりでジャンプ。高いところへは、少し助走をつけて。
+    <button class="btn main" id="helpDone">とじる</button>
+  </div></div>
+
+  <div id="clear" class="scr dim hidden"><div class="panel">
+    <div class="big">てっぺんに着いた！</div>
+    <div class="stat"><span>かかった時間</span><b id="clTime"></b></div>
+    <div class="stat"><span>落ちた回数</span><b id="clFalls"></b></div>
+    <div class="stat"><span>これまでのベスト</span><b id="clBest"></b></div>
+    <div class="note" style="text-align:center;margin-top:10px">ここからの景色を、ゆっくり見ていってね。</div>
+    <div class="row"><button class="btn main" id="clStay">景色を見る</button><button class="btn" id="clTitle">タイトルへ</button></div>
+  </div></div>
+
+  <div id="load">読みこみ中…</div>
+</div>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+const T = THREE;
+const $ = id => document.getElementById(id);
+const TAU = Math.PI * 2;
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x)), lerp = (a, b, t) => a + (b - a) * t;
+const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+const angD = a => { a = (a + Math.PI) % TAU; if (a < 0) a += TAU; return a - Math.PI; };
+// 決まった並びの乱数（ステージはいつも同じ形になる。セーブコードの場所がずれないように）
+function mulberry(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+// ---------- セーブ（このゲームの分だけ：kumo.〜） ----------
+const SK = 'kumo.';
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(SK + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(SK + k, JSON.stringify(v)); } catch (e) { /* 保存できない環境 */ } },
+  del(k) { try { localStorage.removeItem(SK + k); } catch (e) { /* */ } }
+};
+const COARSE = matchMedia('(pointer: coarse)').matches;
+const SET = Object.assign({ sens: 1, invY: false, quality: COARSE ? 'mid' : 'high', camD: 5.5, runLock: false }, store.get('set', {}));
+const saveSet = () => store.set('set', SET);
+const REC = Object.assign({ best: 0, clears: 0, bestTime: 0, bestFalls: 0 }, store.get('rec', {}));
+const saveRec = () => store.set('rec', REC);
+
+// ---------- 3dgame のホームの中で動くとき（⚙ の横画面・音） ----------
+const HUB = { embedded: window.parent !== window, vol: 1, sound: true };
+if (HUB.embedded) document.body.classList.add('hub');
+const ROT = { on: false };
+const VW = () => (ROT.on ? innerHeight : innerWidth), VH = () => (ROT.on ? innerWidth : innerHeight);
+const toStage = (cx, cy) => (ROT.on ? { x: cy, y: innerWidth - cx } : { x: cx, y: cy });
+
+// ================= 描画の土台 =================
+const canvas = $('c');
+const renderer = new T.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+renderer.outputColorSpace = T.SRGBColorSpace;
+renderer.toneMapping = T.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap;
+const scene = new T.Scene();
+const camera = new T.PerspectiveCamera(62, 1, .08, 2600);
+const hemi = new T.HemisphereLight(0xdfefff, 0x6a5a70, .9);
+const sun = new T.DirectionalLight(0xffffff, 2.4);
+sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+{ const c = sun.shadow.camera; c.left = -30; c.right = 30; c.top = 30; c.bottom = -30; c.near = 1; c.far = 200; }
+sun.shadow.bias = -0.0005; sun.shadow.normalBias = .05;
+scene.add(hemi, sun, sun.target);
+scene.fog = new T.Fog(0xcfe8ff, 80, 640);
+
+// ---------- 空（高さで、夜明け → 朝 → 昼 → 夕方 → 夜 と変わっていく） ----------
+const SKYU = { uTop: { value: new T.Color() }, uHor: { value: new T.Color() }, uBot: { value: new T.Color() }, uSun: { value: new T.Vector3(0, 1, 0) }, uSunCol: { value: new T.Color() }, uStars: { value: 0 }, uTime: { value: 0 } };
+const skyMat = new T.ShaderMaterial({
+  uniforms: SKYU, side: T.BackSide, depthWrite: false, fog: false,
+  vertexShader: 'varying vec3 vD; void main(){ vD = position; vec4 p = projectionMatrix * modelViewMatrix * vec4(position, 1.); gl_Position = p.xyww; }',
+  fragmentShader: `uniform vec3 uTop, uHor, uBot, uSunCol, uSun; uniform float uStars, uTime; varying vec3 vD;
+    float hs(vec3 p){ p = fract(p * .3183099 + .1); p *= 17.; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+    void main(){ vec3 d = normalize(vD); float y = d.y;
+      vec3 c = y > 0. ? mix(uHor, uTop, pow(clamp(y, 0., 1.), .5)) : mix(uHor, uBot, pow(clamp(-y * 1.6, 0., 1.), .5));
+      float s = max(dot(d, normalize(uSun)), 0.);
+      c += uSunCol * (pow(s, 1200.) * 5. + pow(s, 14.) * .32 + pow(s, 3.) * .07);
+      if (uStars > .01 && y > -.05) { vec3 q = floor(d * 260.); float st = smoothstep(.9962, 1., hs(q)); float tw = .55 + .45 * sin(uTime * 2.5 + hs(q + 3.) * 50.); c += vec3(.9, .95, 1.) * st * tw * uStars * clamp(y * 4. + .3, 0., 1.); }
+      gl_FragColor = vec4(c, 1.);
+      #include <tonemapping_fragment>
+      #include <colorspace_fragment>
+    }`
+});
+const skyMesh = new T.Mesh(new T.SphereGeometry(1200, 32, 16), skyMat); skyMesh.frustumCulled = false; skyMesh.renderOrder = -10; scene.add(skyMesh);
+// 高さごとの空の色（h: 高さ、el: 太陽の高さ°、az: 太陽の向き°）
+const SKYK = [
+  { h: -10, top: 0x6c8fd8, hor: 0xffc9a8, bot: 0x40608a, el: 9, az: 70, sc: 0xffc9a0, si: 1.7, hs: 0xffd6c4, hg: 0x5a4a60, hi: .75, st: 0 },
+  { h: 80, top: 0x4e8fef, hor: 0xd4ebff, bot: 0x4a78a8, el: 34, az: 100, sc: 0xfff2dc, si: 2.4, hs: 0xdfefff, hg: 0x6a6070, hi: .9, st: 0 },
+  { h: 200, top: 0x2f78ef, hor: 0xbfe2ff, bot: 0x4a80b8, el: 62, az: 140, sc: 0xffffff, si: 2.7, hs: 0xe6f3ff, hg: 0x707080, hi: .95, st: 0 },
+  { h: 320, top: 0x4a7fd6, hor: 0xffe2a8, bot: 0x6a7aa0, el: 26, az: 200, sc: 0xffe4b8, si: 2.3, hs: 0xffeed4, hg: 0x6a5a60, hi: .85, st: 0 },
+  { h: 420, top: 0x3b3f8e, hor: 0xff9a62, bot: 0x5a4a78, el: 6, az: 235, sc: 0xffa070, si: 1.7, hs: 0xffc0a0, hg: 0x4a3a58, hi: .7, st: .05 },
+  { h: 500, top: 0x151a40, hor: 0x5a3f80, bot: 0x2a2450, el: 30, az: 300, sc: 0xa8b8ff, si: 1.0, hs: 0x8a98d8, hg: 0x2a2440, hi: .6, st: .7 },
+  { h: 600, top: 0x060a20, hor: 0x2c2c62, bot: 0x14143a, el: 42, az: 320, sc: 0xb8c6ff, si: .95, hs: 0x7a88c8, hg: 0x202040, hi: .55, st: 1 }
+];
+const _ca = new T.Color(), _cb = new T.Color();
+const SKYNOW = { fog: new T.Color(), sunDir: new T.Vector3(0, 1, 0), night: 0 };
+function applySky(h, t) {
+  let i = 0; while (i < SKYK.length - 2 && h > SKYK[i + 1].h) i++;
+  const A = SKYK[i], B = SKYK[i + 1], f = smooth(A.h, B.h, h);
+  const mix = (k, out) => out.copy(_ca.set(A[k])).lerp(_cb.set(B[k]), f);
+  mix('top', SKYU.uTop.value); mix('hor', SKYU.uHor.value); mix('bot', SKYU.uBot.value); mix('sc', SKYU.uSunCol.value);
+  const el = lerp(A.el, B.el, f) * Math.PI / 180, az = lerp(A.az, B.az, f) * Math.PI / 180;
+  SKYNOW.sunDir.set(Math.cos(el) * Math.cos(az), Math.sin(el), Math.cos(el) * Math.sin(az)).normalize();
+  SKYU.uSun.value.copy(SKYNOW.sunDir); SKYU.uStars.value = lerp(A.st, B.st, f); SKYU.uTime.value = t;
+  sun.color.copy(SKYU.uSunCol.value); sun.intensity = lerp(A.si, B.si, f);
+  mix('hs', hemi.color); mix('hg', hemi.groundColor); hemi.intensity = lerp(A.hi, B.hi, f);
+  SKYNOW.fog.copy(SKYU.uHor.value).lerp(SKYU.uTop.value, .18); scene.fog.color.copy(SKYNOW.fog);
+  SKYNOW.night = SKYU.uStars.value;
+}
+
+// ---------- 手づくりの模様（白黒の模様に、物ごとの色をかける） ----------
+function canvasTex(size, draw, rep = true) {
+  const c = document.createElement('canvas'); c.width = c.height = size; const g = c.getContext('2d'); draw(g, size);
+  const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; if (rep) { t.wrapS = t.wrapT = T.RepeatWrapping; } t.anisotropy = 4; return t;
+}
+const TRND = mulberry(9);
+const TEX = {
+  noise: canvasTex(128, (g, s) => { g.fillStyle = '#e8e8e8'; g.fillRect(0, 0, s, s); for (let i = 0; i < 900; i++) { const v = 200 + TRND() * 55 | 0; g.fillStyle = `rgb(${v},${v},${v})`; g.fillRect(TRND() * s, TRND() * s, 2 + TRND() * 3, 2 + TRND() * 3); } }),
+  wood: canvasTex(256, (g, s) => { g.fillStyle = '#d8d8d8'; g.fillRect(0, 0, s, s); for (let y = 0; y < s; y += 32) { g.fillStyle = `rgb(${190 + TRND() * 40 | 0},${190 + TRND() * 40 | 0},${190 + TRND() * 40 | 0})`; g.fillRect(0, y + 1, s, 30); g.fillStyle = 'rgba(80,80,80,.55)'; g.fillRect(0, y, s, 2);
+    for (let k = 0; k < 7; k++) { g.strokeStyle = 'rgba(120,120,120,.25)'; g.beginPath(); const yy = y + 4 + TRND() * 24; g.moveTo(0, yy); for (let x = 0; x <= s; x += 16) g.lineTo(x, yy + Math.sin(x * .05 + k) * 2); g.stroke(); } } }),
+  metal: canvasTex(128, (g, s) => { for (let x = 0; x < s; x++) { const v = 170 + Math.round(60 * (.5 + .5 * Math.sin(x / s * TAU * 8))); g.fillStyle = `rgb(${v},${v},${v})`; g.fillRect(x, 0, 1, s); } g.fillStyle = 'rgba(0,0,0,.06)'; for (let i = 0; i < 60; i++) g.fillRect(TRND() * s, TRND() * s, 6, 2); }),
+  stone: canvasTex(256, (g, s) => { g.fillStyle = '#9a9a9a'; g.fillRect(0, 0, s, s); const h = 64; for (let r = 0; r < 4; r++) for (let c = 0; c < 3; c++) { const x = c * 96 + (r % 2) * 48, y = r * h; const v = 200 + TRND() * 40 | 0; g.fillStyle = `rgb(${v},${v},${v})`; g.fillRect(x + 3, y + 3, 90, h - 6); g.fillRect(x + 3 - 288, y + 3, 90, h - 6); } for (let i = 0; i < 500; i++) { g.fillStyle = 'rgba(0,0,0,.05)'; g.fillRect(TRND() * s, TRND() * s, 3, 3); } }),
+  grass: canvasTex(128, (g, s) => { g.fillStyle = '#cfcfcf'; g.fillRect(0, 0, s, s); for (let i = 0; i < 1400; i++) { const v = 170 + TRND() * 85 | 0; g.fillStyle = `rgb(${v},${v},${v})`; g.fillRect(TRND() * s, TRND() * s, 1.5, 3 + TRND() * 4); } }),
+  paper: canvasTex(256, (g, s) => { g.fillStyle = '#f2f2f2'; g.fillRect(0, 0, s, s); g.fillStyle = 'rgba(90,120,200,.35)'; for (let y = 16; y < s; y += 16) g.fillRect(0, y, s, 1.5); g.fillStyle = 'rgba(220,90,90,.35)'; g.fillRect(28, 0, 1.5, s); }),
+  grid: canvasTex(128, (g, s) => { g.fillStyle = '#bdbdbd'; g.fillRect(0, 0, s, s); g.fillStyle = '#efefef'; for (let i = 0; i < 8; i++) for (let j = 0; j < 8; j++) g.fillRect(i * 16 + 2, j * 16 + 2, 12, 12); })
+};
+const matStd = (o) => new T.MeshStandardMaterial(Object.assign({ vertexColors: true, roughness: .78, metalness: .02 }, o));
+const MATS = {
+  plain: matStd({ map: TEX.noise }),
+  wood: matStd({ map: TEX.wood, roughness: .85 }),
+  metal: matStd({ map: TEX.metal, roughness: .45, metalness: .35 }),
+  stone: matStd({ map: TEX.stone, roughness: .9 }),
+  grass: matStd({ map: TEX.grass, roughness: .95 }),
+  paper: matStd({ map: TEX.paper, roughness: .9 }),
+  grid: matStd({ map: TEX.grid, roughness: .5, metalness: .4 }),
+  shiny: matStd({ roughness: .25, metalness: .1 }),
+  glow: new T.MeshStandardMaterial({ vertexColors: true, roughness: .3, emissive: 0xffffff, emissiveIntensity: .55, emissiveMap: null })
+};
+MATS.glow.onBeforeCompile = sh => { sh.fragmentShader = sh.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n totalEmissiveRadiance *= diffuseColor.rgb;'); };
+
+// ================= 音（その場で作る音） =================
+const AU = {
+  ctx: null, master: null, windG: null, windF: null,
+  init() {
+    if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
+    try { const C = window.AudioContext || window.webkitAudioContext; this.ctx = new C(); } catch (e) { return; }
+    const c = this.ctx; this.master = c.createGain(); this.master.connect(c.destination); this.applyVol();
+    const src = c.createBufferSource(); src.buffer = this.noiseBuf(2); src.loop = true;
+    const f = c.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 420; f.Q.value = .7;
+    const g = c.createGain(); g.gain.value = 0; src.connect(f); f.connect(g); g.connect(this.master); src.start();
+    this.windG = g; this.windF = f;
+  },
+  applyVol() { if (this.master) this.master.gain.value = HUB.sound ? HUB.vol * .9 : 0; },
+  noiseBuf(sec) { const c = this.ctx, b = c.createBuffer(1, c.sampleRate * sec | 0, c.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; return b; },
+  tone(f, t0, dur, type = 'sine', vol = .2, f2 = 0) {
+    const c = this.ctx; if (!c) return; const o = c.createOscillator(), g = c.createGain(), t = c.currentTime + t0;
+    o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + dur);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + .01); g.gain.exponentialRampToValueAtTime(.0008, t + dur);
+    o.connect(g); g.connect(this.master); o.start(t); o.stop(t + dur + .05);
+  },
+  noise(t0, dur, vol = .2, fq = 800, q = 1, type = 'bandpass') {
+    const c = this.ctx; if (!c) return; const s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain(), t = c.currentTime + t0;
+    s.buffer = this.nb || (this.nb = this.noiseBuf(1)); f.type = type; f.frequency.value = fq; f.Q.value = q;
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0008, t + dur);
+    s.connect(f); f.connect(g); g.connect(this.master); s.start(t); s.stop(t + dur + .05);
+  },
+  jump() { this.tone(330, 0, .14, 'triangle', .1, 620); this.noise(0, .08, .05, 1800, .8); },
+  land(v) { const k = clamp(v / 30, .08, 1); this.noise(0, .1 + k * .18, .12 + k * .3, 260 - k * 120, .8, 'lowpass'); if (k > .5) this.tone(70, 0, .25, 'sine', .25 * k, 40); },
+  step(k) { this.noise(0, .05, .035, k === 'metal' ? 2600 : k === 'wood' ? 900 : k === 'grass' ? 1400 : 1200, 1.2); },
+  splash() { this.noise(0, .7, .4, 900, .5); this.noise(.05, .5, .2, 3000, .6); },
+  chime() { [0, 4, 7, 12].forEach((n, i) => this.tone(523.25 * Math.pow(2, n / 12), i * .09, .9, 'sine', .09)); },
+  fanfare() { [0, 4, 7, 12, 16, 19, 24].forEach((n, i) => this.tone(392 * Math.pow(2, n / 12), i * .11, 1.2, 'triangle', .1)); },
+  click() { this.tone(900, 0, .05, 'square', .04); },
+  wind(level) { if (!this.windG) return; const t = this.ctx.currentTime; this.windG.gain.setTargetAtTime(clamp(level, 0, 1) * .16, t, .25); this.windF.frequency.setTargetAtTime(300 + level * 900, t, .3); }
+};
+
+// ================= 入力（キーボード・マウス・タッチ） =================
+const IN = { keys: new Set(), lookX: 0, lookY: 0, jumpE: false, jumpHeld: false, zoom: 0, touchOn: COARSE, stick: null, stickX: 0, stickY: 0, looks: new Map(), tJump: false };
+const GAME_KEYS = ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'ShiftLeft', 'ShiftRight'];
+addEventListener('keydown', e => {
+  if (GAME_KEYS.includes(e.code) && G.state === 'play') e.preventDefault();
+  if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+  if (e.repeat) return;
+  IN.keys.add(e.code);
+  if (e.code === 'Space') { IN.jumpE = true; IN.jumpHeld = true; }
+  if (e.code === 'Escape' && (G.state === 'play' || G.state === 'pause')) togglePause(G.state === 'play');
+});
+addEventListener('keyup', e => { IN.keys.delete(e.code); if (e.code === 'Space') IN.jumpHeld = false; });
+addEventListener('blur', () => { IN.keys.clear(); IN.jumpHeld = false; });
+function moveAxes() {
+  const k = IN.keys;
+  let x = (k.has('KeyD') || k.has('ArrowRight') ? 1 : 0) - (k.has('KeyA') || k.has('ArrowLeft') ? 1 : 0);
+  let y = (k.has('KeyW') || k.has('ArrowUp') ? 1 : 0) - (k.has('KeyS') || k.has('ArrowDown') ? 1 : 0);
+  if (IN.stick) { x += IN.stickX; y += IN.stickY; }
+  const l = Math.hypot(x, y); if (l > 1) { x /= l; y /= l; }
+  return [x, y];
+}
+// ダッシュ：Shift、またはスマホは棒をいっぱいにたおす／「ダッシュ固定」
+const sprinting = () => IN.keys.has('ShiftLeft') || IN.keys.has('ShiftRight') || SET.runLock || (IN.stick && Math.hypot(IN.stickX, IN.stickY) > .92);
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+canvas.addEventListener('mousedown', () => {
+  AU.init();
+  if (G.state === 'play' && !IN.touchOn && document.pointerLockElement !== canvas) { try { const r = canvas.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (er) { /* 固定できない */ } }
+});
+addEventListener('mousemove', e => { if (document.pointerLockElement === canvas) { IN.lookX += e.movementX; IN.lookY += e.movementY; } });
+canvas.addEventListener('wheel', e => { IN.zoom += Math.sign(e.deltaY); e.preventDefault(); }, { passive: false });
+document.addEventListener('pointerlockchange', () => { if (!document.pointerLockElement && G.state === 'play' && !IN.touchOn) togglePause(true); });
+
+// タッチ：左半分＝移動の棒、右半分＝見回す、ボタン＝ジャンプ・ダッシュ固定
+(function touchSetup() {
+  const layer = $('touch'), stickEl = $('stick'), knob = stickEl.querySelector('i');
+  const jb = $('tJump');
+  jb.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); jb.classList.add('on'); IN.jumpE = true; IN.jumpHeld = true; AU.init(); });
+  const jEnd = () => { jb.classList.remove('on'); IN.jumpHeld = false; };
+  jb.addEventListener('pointerup', jEnd); jb.addEventListener('pointercancel', jEnd); jb.addEventListener('pointerleave', jEnd);
+  const rb = $('tRun');
+  rb.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); SET.runLock = !SET.runLock; saveSet(); rb.classList.toggle('lock', SET.runLock); AU.click(); });
+  rb.classList.toggle('lock', !!SET.runLock);
+  layer.addEventListener('pointerdown', e => {
+    IN.touchOn = true; document.body.classList.add('touch'); AU.init();
+    const p = toStage(e.clientX, e.clientY);
+    if (p.x < VW() * .45 && !IN.stick) {
+      IN.stick = { id: e.pointerId, x: p.x, y: p.y }; IN.stickX = IN.stickY = 0;
+      stickEl.style.display = 'block'; stickEl.style.left = p.x + 'px'; stickEl.style.top = p.y + 'px'; knob.style.transform = '';
+    } else IN.looks.set(e.pointerId, p);
+  });
+  layer.addEventListener('pointermove', e => {
+    const p = toStage(e.clientX, e.clientY);
+    if (IN.stick && IN.stick.id === e.pointerId) {
+      const R = 56; let dx = p.x - IN.stick.x, dy = p.y - IN.stick.y; const l = Math.hypot(dx, dy); if (l > R) { dx *= R / l; dy *= R / l; }
+      IN.stickX = dx / R; IN.stickY = -dy / R; knob.style.transform = `translate(${dx}px,${dy}px)`;
+    } else if (IN.looks.has(e.pointerId)) {
+      const q = IN.looks.get(e.pointerId); IN.lookX += (p.x - q.x) * 2.1; IN.lookY += (p.y - q.y) * 2.1; IN.looks.set(e.pointerId, p);
+    }
+  });
+  const end = e => { if (IN.stick && IN.stick.id === e.pointerId) { IN.stick = null; IN.stickX = IN.stickY = 0; stickEl.style.display = 'none'; } IN.looks.delete(e.pointerId); };
+  layer.addEventListener('pointerup', end); layer.addEventListener('pointercancel', end);
+})();
+function takeEdge(k) { const v = IN[k]; IN[k] = false; return v; }
+// ================= 当たり（足場）と、見た目のまとめ =================
+// 当たり：t=0 箱（どの向きにも回せる） / t=1 たての円柱 / t=2 カプセル（横たわる棒など）
+const COLS = [], MOVCOLS = [], HASH = new Map(), HC = 6;
+let QID = 0;
+const hk = (i, j, k) => (i + 512) * 1048576 + (j + 64) * 1024 + (k + 512);
+function hashAdd(c) {
+  const a = c.bb;
+  for (let i = Math.floor(a[0] / HC); i <= Math.floor(a[3] / HC); i++) for (let j = Math.floor(a[1] / HC); j <= Math.floor(a[4] / HC); j++) for (let k = Math.floor(a[2] / HC); k <= Math.floor(a[5] / HC); k++) {
+    const key = hk(i, j, k); let l = HASH.get(key); if (!l) HASH.set(key, l = []); l.push(c);
+  }
+}
+function queryBox(x0, y0, z0, x1, y1, z1, out) {
+  QID++; out.length = 0;
+  for (let i = Math.floor(x0 / HC); i <= Math.floor(x1 / HC); i++) for (let j = Math.floor(y0 / HC); j <= Math.floor(y1 / HC); j++) for (let k = Math.floor(z0 / HC); k <= Math.floor(z1 / HC); k++) {
+    const l = HASH.get(hk(i, j, k)); if (!l) continue;
+    for (const c of l) { if (c.q === QID) continue; c.q = QID; const b = c.bb; if (b[0] <= x1 && b[3] >= x0 && b[1] <= y1 && b[4] >= y0 && b[2] <= z1 && b[5] >= z0) out.push(c); }
+  }
+  for (const c of MOVCOLS) { const b = c.bb; if (b[0] <= x1 && b[3] >= x0 && b[1] <= y1 && b[4] >= y0 && b[2] <= z1 && b[5] >= z0) out.push(c); }
+  return out;
+}
+function setBoxBB(c) {
+  const [hx, hy, hz] = c.h, R = c.R, [x, y, z] = c.c;
+  const ex = Math.abs(R[0]) * hx + Math.abs(R[3]) * hy + Math.abs(R[6]) * hz, ey = Math.abs(R[1]) * hx + Math.abs(R[4]) * hy + Math.abs(R[7]) * hz, ez = Math.abs(R[2]) * hx + Math.abs(R[5]) * hy + Math.abs(R[8]) * hz;
+  c.bb = [x - ex, y - ey, z - ez, x + ex, y + ey, z + ez]; c.top = c.bb[4]; c.flat = R[4] > .985;
+}
+const _eu = new T.Euler(), _mr = new T.Matrix4();
+function rotArr(yaw, pitch, roll) { _eu.set(pitch, yaw, roll, 'YXZ'); _mr.makeRotationFromEuler(_eu); const e = _mr.elements; return [e[0], e[1], e[2], e[4], e[5], e[6], e[8], e[9], e[10]]; }
+function cBox(x, y, z, sx, sy, sz, yaw = 0, pitch = 0, roll = 0, kind = 'plain') { const c = { t: 0, c: [x, y, z], h: [sx / 2, sy / 2, sz / 2], R: rotArr(yaw, pitch, roll), kind }; setBoxBB(c); return c; }
+function cCyl(x, y0, z, r, h, kind = 'plain') { const c = { t: 1, c: [x, y0, z], y1: y0 + h, r, kind, flat: true }; c.bb = [x - r, y0, z - r, x + r, y0 + h, z + r]; c.top = y0 + h; return c; }
+function cCap(ax, ay, az, bx, by, bz, r, kind = 'plain') { const c = { t: 2, a: [ax, ay, az], b: [bx, by, bz], r, kind }; c.bb = [Math.min(ax, bx) - r, Math.min(ay, by) - r, Math.min(az, bz) - r, Math.max(ax, bx) + r, Math.max(ay, by) + r, Math.max(az, bz) + r]; c.top = c.bb[4]; return c; }
+// 球（中心 p、半径 r）がめりこんでいたら、押し出す向きと量を out に入れて true
+function pushSphere(c, px, py, pz, r, out) {
+  if (c.t === 0) {
+    const R = c.R, dx = px - c.c[0], dy = py - c.c[1], dz = pz - c.c[2];
+    const lx = dx * R[0] + dy * R[1] + dz * R[2], ly = dx * R[3] + dy * R[4] + dz * R[5], lz = dx * R[6] + dy * R[7] + dz * R[8];
+    const hx = c.h[0], hy = c.h[1], hz = c.h[2];
+    const qx = clamp(lx, -hx, hx), qy = clamp(ly, -hy, hy), qz = clamp(lz, -hz, hz);
+    let nx = lx - qx, ny = ly - qy, nz = lz - qz; const d2 = nx * nx + ny * ny + nz * nz;
+    if (d2 > 1e-12) { if (d2 >= r * r) return false; const d = Math.sqrt(d2), k = (r - d) / d; nx *= k; ny *= k; nz *= k; }
+    else {
+      const ax = hx - Math.abs(lx), ay = hy - Math.abs(ly), az = hz - Math.abs(lz);
+      if (ay <= ax && ay <= az) { nx = 0; ny = (ly >= 0 ? 1 : -1) * (ay + r); nz = 0; } else if (ax <= az) { nx = (lx >= 0 ? 1 : -1) * (ax + r); ny = nz = 0; } else { nz = (lz >= 0 ? 1 : -1) * (az + r); nx = ny = 0; }
+    }
+    out.x = nx * R[0] + ny * R[3] + nz * R[6]; out.y = nx * R[1] + ny * R[4] + nz * R[7]; out.z = nx * R[2] + ny * R[5] + nz * R[8];
+    return true;
+  }
+  if (c.t === 1) {
+    const dx = px - c.c[0], dz = pz - c.c[2], rho = Math.hypot(dx, dz), y0 = c.c[1], y1 = c.y1, R0 = c.r;
+    if (rho > R0) {
+      const qx = c.c[0] + dx / rho * R0, qz = c.c[2] + dz / rho * R0, qy = clamp(py, y0, y1);
+      const nx = px - qx, ny = py - qy, nz = pz - qz, d2 = nx * nx + ny * ny + nz * nz; if (d2 >= r * r) return false;
+      const d = Math.sqrt(d2) || 1e-6, k = (r - d) / d; out.x = nx * k; out.y = ny * k; out.z = nz * k; return true;
+    }
+    if (py > y1) { if (py - y1 >= r) return false; out.x = 0; out.y = r - (py - y1); out.z = 0; return true; }
+    if (py < y0) { if (y0 - py >= r) return false; out.x = 0; out.y = -(r - (y0 - py)); out.z = 0; return true; }
+    const top = y1 - py, bot = py - y0, side = R0 - rho;
+    if (top <= bot && top <= side) { out.x = 0; out.y = top + r; out.z = 0; }
+    else if (bot <= side) { out.x = 0; out.y = -(bot + r); out.z = 0; }
+    else { const ux = rho > 1e-6 ? dx / rho : 1, uz = rho > 1e-6 ? dz / rho : 0; out.x = ux * (side + r); out.y = 0; out.z = uz * (side + r); }
+    return true;
+  }
+  const ax = c.a[0], ay = c.a[1], az = c.a[2], bx = c.b[0] - ax, by = c.b[1] - ay, bz = c.b[2] - az;
+  const t = clamp(((px - ax) * bx + (py - ay) * by + (pz - az) * bz) / (bx * bx + by * by + bz * bz), 0, 1);
+  const nx = px - (ax + bx * t), ny = py - (ay + by * t), nz = pz - (az + bz * t), d2 = nx * nx + ny * ny + nz * nz, RR = r + c.r;
+  if (d2 >= RR * RR) return false;
+  const d = Math.sqrt(d2); if (d < 1e-6) { out.x = 0; out.y = RR; out.z = 0; return true; }
+  const k = (RR - d) / d; out.x = nx * k; out.y = ny * k; out.z = nz * k; return true;
+}
+
+// ---------- 見た目：同じ素材をまとめて、少ない数の大きな形にする ----------
+const BUCKETS = new Map();
+let STAGE = null;   // 置けるかためしている物（置けなければ捨てる）
+const _col = new T.Color(), _E2 = new T.Euler(), _Q2 = new T.Quaternion(), _P2 = new T.Vector3(), _S2 = new T.Vector3(1, 1, 1), _M2 = new T.Matrix4();
+function place(geo, x, y, z, yaw = 0, pitch = 0, roll = 0) { _E2.set(pitch, yaw, roll, 'YXZ'); _Q2.setFromEuler(_E2); _M2.compose(_P2.set(x, y, z), _Q2, _S2); geo.applyMatrix4(_M2); return geo; }
+function addG(geo, mat, hex) {
+  const n = geo.attributes.position.count, a = new Float32Array(n * 3); _col.set(hex);
+  for (let i = 0; i < n; i++) { a[i * 3] = _col.r; a[i * 3 + 1] = _col.g; a[i * 3 + 2] = _col.b; }
+  geo.setAttribute('color', new T.BufferAttribute(a, 3));
+  if (geo.index === null) geo.setIndex([...Array(n).keys()]);
+  for (const k of Object.keys(geo.attributes)) if (!['position', 'normal', 'uv', 'color'].includes(k)) geo.deleteAttribute(k);
+  geo.clearGroups();
+  if (STAGE) STAGE.geos.push({ geo, mat }); else bucketAdd({ geo, mat });
+}
+function addC(c) { if (STAGE) STAGE.cols.push(c); else { COLS.push(c); hashAdd(c); } return c; }
+function bucketAdd(o) {
+  o.geo.computeBoundingBox(); const b = o.geo.boundingBox, slab = Math.floor((b.min.y + b.max.y) / 2 / 40), key = o.mat + '|' + slab;
+  let l = BUCKETS.get(key); if (!l) BUCKETS.set(key, l = []); l.push(o.geo);
+}
+// 長さに合わせて模様が伸びないように、面ごとに uv をかける
+function boxGeo(sx, sy, sz, tile = 1) {
+  const g = new T.BoxGeometry(sx, sy, sz), uv = g.attributes.uv, d = [[sz, sy], [sz, sy], [sx, sz], [sx, sz], [sx, sy], [sx, sy]];
+  for (let f = 0; f < 6; f++) for (let k = 0; k < 4; k++) { const i = f * 4 + k; uv.setXY(i, uv.getX(i) * d[f][0] / tile, uv.getY(i) * d[f][1] / tile); }
+  return g;
+}
+function cylGeo(rt, rb, h, seg = 16, tile = 1, open = false) {
+  const g = new T.CylinderGeometry(rt, rb, h, seg, 1, open), uv = g.attributes.uv, nSide = (seg + 1) * 2, c = Math.PI * (rt + rb);
+  for (let i = 0; i < uv.count; i++) { if (i < nSide) uv.setXY(i, uv.getX(i) * c / tile, uv.getY(i) * h / tile); else uv.setXY(i, uv.getX(i) * rt * 2 / tile, uv.getY(i) * rt * 2 / tile); }
+  return g;
+}
+// よく使う形（見た目＋当たり）
+function sBox(x, yTop, z, sx, sy, sz, yaw, mat, hex, tile = 1, kind) { addG(place(boxGeo(sx, sy, sz, tile), x, yTop - sy / 2, z, yaw), mat, hex); return addC(cBox(x, yTop - sy / 2, z, sx, sy, sz, yaw, 0, 0, kind || mat)); }
+function sCyl(x, yTop, z, r, h, mat, hex, seg = 18, tile = 1, kind) { addG(place(cylGeo(r, r, h, seg, tile), x, yTop - h / 2, z), mat, hex); return addC(cCyl(x, yTop - h, z, r, h, kind || mat)); }
+function dBox(x, y, z, sx, sy, sz, yaw, mat, hex, tile = 1, pitch = 0, roll = 0) { addG(place(boxGeo(sx, sy, sz, tile), x, y, z, yaw, pitch, roll), mat, hex); }
+function dCyl(x, y, z, rt, rb, h, mat, hex, seg = 14, yaw = 0, pitch = 0, roll = 0) { addG(place(cylGeo(rt, rb, h, seg), x, y, z, yaw, pitch, roll), mat, hex); }
+function dSph(x, y, z, r, mat, hex, sy = 1) { const g = new T.SphereGeometry(r, 12, 8); g.scale(1, sy, 1); addG(place(g, x, y, z), mat, hex); }
+// 横たわる棒（鉛筆・パイプ・丸太）：a から b、半径 r
+function sRod(ax, ay, az, bx, by, bz, r, mat, hex, seg = 12) {
+  const dx = bx - ax, dy = by - ay, dz = bz - az, L = Math.hypot(dx, dy, dz), yaw = Math.atan2(dx, dz), pitch = -Math.asin(dy / L);
+  const g = cylGeo(r, r, L, seg); g.rotateX(Math.PI / 2); addG(place(g, (ax + bx) / 2, (ay + by) / 2, (az + bz) / 2, yaw, pitch), mat, hex);
+  return addC(cCap(ax, ay, az, bx, by, bz, r, mat));
+}
+
+// ================= ゾーン（高さで7つ） =================
+const ZH = 80;
+const ZONES = [
+  { id: 'port', name: 'みなとの倉庫', sub: 'HARBOR', y0: 0, gap: [.8, 2.0], rise: [.35, .95], deco: 1 },
+  { id: 'garden', name: '空の庭', sub: 'SKY GARDEN', y0: ZH, gap: [1.0, 2.4], rise: [.4, 1.0], deco: 1 },
+  { id: 'rail', name: '雲の鉄道', sub: 'CLOUD RAILWAY', y0: ZH * 2, gap: [1.1, 2.7], rise: [.4, 1.05], deco: .9 },
+  { id: 'stat', name: 'ぶんぼうぐの嵐', sub: 'STATIONERY STORM', y0: ZH * 3, gap: [1.2, 2.9], rise: [.45, 1.1], deco: .9 },
+  { id: 'temple', name: '雲の神殿', sub: 'CLOUD TEMPLE', y0: ZH * 4, gap: [1.3, 3.0], rise: [.45, 1.1], deco: .8 },
+  { id: 'gear', name: '歯車の塔', sub: 'GEAR TOWER', y0: ZH * 5, gap: [1.4, 3.1], rise: [.45, 1.12], deco: .8 },
+  { id: 'star', name: '星のてっぺん', sub: 'STARRY SUMMIT', y0: ZH * 6, gap: [1.4, 3.2], rise: [.45, 1.12], deco: .7 }
+];
+ZONES.forEach((z, i) => { z.y1 = z.y0 + ZH; z.i = i; });
+const SUMMIT_Y = ZH * 7 + 2;
+const zoneAt = y => ZONES[clamp(Math.floor(y / ZH), 0, ZONES.length - 1)];
+
+// ---------- ゾーンごとの物（足場になる物） ----------
+const PAL = {
+  box: [0xc84a3a, 0x2f6fb8, 0x2f9e6b, 0xe08a2a, 0x7a52b0, 0xd8b42c, 0x2a8a9a],
+  drum: [0x3a6ec8, 0xd64532, 0x3aa35a, 0xe2b33a],
+  book: [0xd64545, 0x3a7ad8, 0x2fae6a, 0xe8a52a, 0x8a5ad0, 0xe05a9a, 0x3ab0b0],
+  car: [0x3a6ec8, 0xe05a3a, 0x2f9e6b, 0xf2c230, 0xe8e8e8],
+  crys: [0x7ad8ff, 0xc08aff, 0xff9ae0, 0x9affd0, 0xfff08a]
+};
+// 置く物：{ w: 出やすさ, size: 上の面の半分の大きさ [hx, hz], make(x, yTop, z, hx, hz, yaw, r) }
+const KIT = {
+  port: [
+    { w: 3, size: r => [1.2, 3.0], make(x, y, z, hx, hz, yaw, r) { const c = pick(r, PAL.box); sBox(x, y, z, 2.4, 2.6, 6, yaw, 'metal', c, 1.3);
+        const fx = Math.sin(yaw), fz = Math.cos(yaw); dBox(x + fx * 3.01, y - 1.3, z + fz * 3.01, 2.2, 2.4, .05, yaw, 'plain', shade(c, .75)); } },
+    { w: 3, size: r => { const s = .6 + r() * .35; return [s, s]; }, make(x, y, z, hx, hz, yaw, r) { const s = hx * 2, n = 1 + (r() * 2 | 0);
+        for (let i = 0; i < n; i++) sBox(x, y - i * s, z, s, s, s, yaw + i * .3, 'wood', 0xc49a62, .6); } },
+    { w: 2, size: r => [.5, .5], make(x, y, z, hx, hz, yaw, r) { const n = 1 + (r() * 3 | 0), c = pick(r, PAL.drum); for (let i = 0; i < n; i++) { sCyl(x, y - i * 1.02, z, .5, 1.0, 'metal', c, 16); dCyl(x, y - i * 1.02 - .3, z, .51, .51, .06, 'plain', shade(c, .7)); } } },
+    { w: 1.5, size: r => [.9, .7], make(x, y, z, hx, hz, yaw, r) { for (let i = 0; i < 4; i++) sBox(x, y - i * .32, z, 1.8, .14, 1.4, yaw, 'wood', 0xb8875a, .5); dBox(x, y - .7, z, 1.6, .9, 1.2, yaw, 'plain', 0x8a9aa8); } },
+    { w: 1, size: r => [.35, 2.6], make(x, y, z, hx, hz, yaw, r) { sBox(x, y, z, .7, .16, 5.2, yaw, 'metal', 0xe0a030, 1); dBox(x, y - .32, z, .14, .5, 5.2, yaw, 'metal', 0xe0a030); dBox(x, y - .6, z, .7, .12, 5.2, yaw, 'metal', 0xc08a28); addC(cBox(x, y - .4, z, .7, .6, 5.2, yaw, 0, 0, 'metal')); } }
+  ],
+  garden: [
+    { w: 3, size: r => { const s = 1.3 + r() * 1.4; return [s * .72, s * .72]; }, make(x, y, z, hx, hz, yaw, r) { const R = hx / .72; sCyl(x, y, z, R, .5, 'grass', 0x6cc24a, 20, 1.2); addG(place(cylGeo(R * .95, R * .25, R * 1.4, 10), x, y - .5 - R * .7, z), 'stone', 0x8a6a48); addC(cCyl(x, y - .5 - R * .9, z, R * .5, R * .9, 'stone'));
+        if (r() < .5) { const a = r() * TAU, d = R * .55; dCyl(x + Math.cos(a) * d, y + .6, z + Math.sin(a) * d, .12, .16, 1.2, 'wood', 0x7a5232); dSph(x + Math.cos(a) * d, y + 1.6, z + Math.sin(a) * d, .7, 'grass', 0x4f9e3a); } } },
+    { w: 2, size: r => { const s = .55 + r() * .3; return [s * .72, s * .72]; }, make(x, y, z, hx, hz, yaw, r) { const R = hx / .72; sCyl(x, y, z, R, 1.0, 'plain', 0xc8643c, 16); dCyl(x, y + .02, z, R * .9, R * .9, .05, 'grass', 0x5a3a24);
+        for (let i = 0; i < 3; i++) { const a = r() * TAU; dSph(x + Math.cos(a) * R * .75, y + .25, z + Math.sin(a) * R * .75, .16, 'plain', pick(r, [0xff6a8a, 0xffd23f, 0xffffff, 0xb08aff])); } } },
+    { w: 2, size: r => { const s = 1.0 + r() * .7; return [s * .72, s * .72]; }, make(x, y, z, hx, hz, yaw, r) { const R = hx / .72; sCyl(x, y, z, R, .5, 'plain', pick(r, [0xe04a4a, 0xe0a03a, 0xb070e0]), 20);
+        for (let i = 0; i < 5; i++) { const a = r() * TAU, d = r() * R * .7; dSph(x + Math.cos(a) * d, y + .01, z + Math.sin(a) * d, .14, 'plain', 0xffffff, .3); } sCyl(x, y - .5, z, .3, 2.2, 'plain', 0xf2e6c8, 12); } },
+    { w: 1.5, size: r => [.9, .45], make(x, y, z, hx, hz, yaw, r) { sBox(x, y, z, 1.8, .12, .9, yaw, 'wood', 0xa8784a, .5); const fx = Math.cos(yaw) * .75, fz = -Math.sin(yaw) * .75; for (const s of [-1, 1]) dBox(x + fx * s, y - .5, z + fz * s, .1, .9, .8, yaw, 'metal', 0x3a4a3a); addC(cBox(x, y - .5, z, 1.6, .9, .8, yaw, 0, 0, 'wood')); } },
+    { w: 1.5, size: r => { const s = .7 + r() * .4; return [s, s * .8]; }, make(x, y, z, hx, hz, yaw, r) { sBox(x, y, z, hx * 2, 1.0, hz * 2, yaw, 'grass', 0x3f8f3a, .8); } }
+  ],
+  rail: [
+    { w: 3, size: r => [.7, 2.2 + r() * 1.6], make(x, y, z, hx, hz, yaw, r) { const L = hz * 2; sBox(x, y - .1, z, 1.4, .4, L, yaw, 'stone', 0x7a6a5a, 1); const fx = Math.cos(yaw), fz = -Math.sin(yaw);
+        for (const s of [-.45, .45]) dBox(x + fx * s, y + .04, z + fz * s, .1, .12, L, yaw, 'metal', 0xc0c4cc);
+        for (let t = -L / 2 + .3; t < L / 2; t += .7) dBox(x + Math.sin(yaw) * t, y - .02, z + Math.cos(yaw) * t, 1.6, .08, .25, yaw, 'wood', 0x5a3a28); } },
+    { w: 2, size: r => [1.3, 3.5], make(x, y, z, hx, hz, yaw, r) { const c = pick(r, PAL.car); sBox(x, y, z, 2.6, 2.6, 7, yaw, 'plain', c, 1); const fx = Math.cos(yaw), fz = -Math.sin(yaw);
+        for (const s of [-1.31, 1.31]) for (let t = -2.6; t <= 2.6; t += 1.3) dBox(x + fx * s + Math.sin(yaw) * t, y - .9, z + fz * s + Math.cos(yaw) * t, .04, .7, .9, yaw, 'shiny', 0x2a3a50);
+        dBox(x, y - 2.5, z, 2.2, .3, 6.6, yaw, 'metal', 0x3a3a40); } },
+    { w: 1.5, size: r => [.9, .9], make(x, y, z, hx, hz, yaw, r) { sBox(x, y, z, 1.8, .25, 1.8, yaw, 'metal', 0xc03a3a, .8); dBox(x, y - 1.2, z, .25, 2.2, .25, yaw, 'metal', 0x8a2a2a); addC(cBox(x, y - 1.2, z, .25, 2.2, .25, yaw, 0, 0, 'metal')); } },
+    { w: 1.5, size: r => [1.5, 1.5], make(x, y, z, hx, hz, yaw, r) { sBox(x, y, z, 3, .5, 3, yaw, 'stone', 0xd8cfc0, 1); dBox(x, y + .02, z, 2.6, .02, .12, yaw, 'plain', 0xf2d23a); dBox(x, y - 1.6, z, 1.2, 2.6, 1.2, yaw, 'stone', 0xb0a698); } },
+    { w: 1, size: r => [.5, .5], make(x, y, z, hx, hz, yaw, r) { sBox(x, y, z, 1, .3, 1, yaw, 'metal', 0x4a4f5a); dCyl(x, y - 1.5, z, .08, .08, 2.8, 'metal', 0x3a3a40); dBox(x, y + .55, z, .5, .8, .3, yaw, 'plain', 0x222428); dSph(x, y + .75, z + .16, .1, 'glow', 0xff4a3a); } }
+  ],
+  stat: [
+    { w: 3, size: r => [.85 + r() * .3, 1.15 + r() * .35], make(x, y, z, hx, hz, yaw, r) { const n = 1 + (r() * 3 | 0); let yy = y;
+        for (let i = 0; i < n; i++) { const th = .3 + r() * .3, c = pick(r, PAL.book), w = hx * 2 * (1 + i * .05), d = hz * 2 * (1 + i * .05), yw = yaw + (r() - .5) * .3 * (i > 0 ? 1 : 0);
+          sBox(x, yy, z, w, th, d, yw, 'plain', c, 1); dBox(x + Math.cos(yw) * .04, yy - th / 2, z - Math.sin(yw) * .04, w - .1, th - .08, d - .04, yw, 'paper', 0xf6f2e6, .5); yy -= th; } } },
+    { w: 2, size: r => [.26, 2.0], make(x, y, z, hx, hz, yaw, r) { const L = hz * 2, fx = Math.sin(yaw) * L / 2, fz = Math.cos(yaw) * L / 2, cy = y - .26;
+        const g = cylGeo(.3, .3, L * .82, 6); g.rotateX(Math.PI / 2); addG(place(g, x - fx * .18, cy, z - fz * .18, yaw), 'plain', 0xf2c230);
+        const tip = new T.ConeGeometry(.3, L * .18, 6); tip.rotateX(Math.PI / 2); addG(place(tip, x + fx * .82, cy, z + fz * .82, yaw), 'wood', 0xe8c8a0);
+        const er = cylGeo(.3, .3, .35, 12); er.rotateX(Math.PI / 2); addG(place(er, x - fx * 1.02, cy, z - fz * 1.02, yaw), 'plain', 0xf08aa0);
+        addC(cCap(x - fx, cy, z - fz, x + fx * .9, cy, z + fz * .9, .3, 'wood')); } },
+    { w: 1.5, size: r => [.4, 2.6], make(x, y, z, hx, hz, yaw, r) { sBox(x, y, z, .8, .12, 5.2, yaw, 'paper', 0xe8e2c8, .5); } },
+    { w: 1.5, size: r => [.55, .95], make(x, y, z, hx, hz, yaw, r) { sBox(x, y, z, 1.1, .7, 1.9, yaw, 'plain', 0xf08aa0, 1); dBox(x, y - .5, z, 1.12, .3, 1.92, yaw, 'paper', 0x3a7ad8, 1); } },
+    { w: 1, size: r => [.6, .6], make(x, y, z, hx, hz, yaw, r) { sCyl(x, y, z, .85, 1.8, 'plain', 0x4a8ad8, 16); for (let i = 0; i < 3; i++) { const a = i * 2.1 + r(); dCyl(x + Math.cos(a) * .4, y + .5, z + Math.sin(a) * .4, .12, .12, 1.1, 'plain', pick(r, [0xf2c230, 0xe05a3a, 0x2fae6a]), 6, 0, .2 * Math.cos(a), .2 * Math.sin(a)); } } }
+  ],
+  temple: [
+    { w: 3, size: r => { const s = .55 + r() * .45; return [s * .72, s * .72]; }, make(x, y, z, hx, hz, yaw, r) { const R = hx / .72, h = 2.5 + r() * 5; sBox(x, y, z, R * 2.3, .4, R * 2.3, yaw, 'stone', 0xeae2d2, 1); sCyl(x, y - .4, z, R, h, 'stone', 0xe0d6c4, 20, 1.2);
+        for (let a = 0; a < 8; a++) dBox(x + Math.cos(a / 8 * TAU) * R * .98, y - .4 - h / 2, z + Math.sin(a / 8 * TAU) * R * .98, .08, h, .12, -a / 8 * TAU, 'stone', 0xcfc4b0); } },
+    { w: 2, size: r => [1.0, 1.0], make(x, y, z, hx, hz, yaw, r) { sBox(x, y, z, 2, .45, 2, yaw, 'stone', 0xd8ccb6, 1); dBox(x, y + .01, z, 1.4, .02, 1.4, yaw, 'plain', 0xe8c050); } },
+    { w: 1.5, size: r => [.8, 1.5], make(x, y, z, hx, hz, yaw, r) { sBox(x, y, z, 1.6, 1.0, 3, yaw, 'stone', 0xc8bca8, 1); } },
+    { w: 1.5, size: r => [.6, 2.2], make(x, y, z, hx, hz, yaw, r) { const fx = Math.sin(yaw), fz = Math.cos(yaw); sBox(x, y, z, 1.2, .6, 4.4, yaw, 'stone', 0xe8dcc6, 1);
+        for (const s of [-1.7, 1.7]) sCyl(x + fx * s, y - .6, z + fz * s, .45, 3.2, 'stone', 0xdcd0bc, 16); } },
+    { w: 1, size: r => [.75, .75], make(x, y, z, hx, hz, yaw, r) { sBox(x, y, z, 1.5, 1.5, 1.5, yaw + .2, 'stone', 0xbfb4a0, 1); for (let i = 0; i < 4; i++) { const a = yaw + .2 + i * Math.PI / 2 + Math.PI / 4; dSph(x + Math.cos(a) * .95, y - .75, z - Math.sin(a) * .95, .16, 'shiny', 0xe8c050); } } }
+  ],
+  gear: [
+    { w: 3, size: r => { const s = 1.0 + r() * .9; return [s * .72, s * .72]; }, make(x, y, z, hx, hz, yaw, r) { const R = hx / .72; gearMesh(x, y, z, R, null, r); addC(cCyl(x, y - .45, z, R, .45, 'metal')); } },
+    { w: 2, size: r => [.38, 2.2], make(x, y, z, hx, hz, yaw, r) { const L = hz * 2, fx = Math.sin(yaw) * L / 2, fz = Math.cos(yaw) * L / 2, cy = y - .38; sRod(x - fx, cy, z - fz, x + fx, cy, z + fz, .38, 'metal', 0xc07850, 14);
+        for (const s of [-1, 1]) dCyl(x + fx * s * .98, cy, z + fz * s * .98, .46, .46, .14, 'metal', 0x8a5a38, 14, yaw, Math.PI / 2); } },
+    { w: 2, size: r => [.9, .9], make(x, y, z, hx, hz, yaw, r) { sBox(x, y, z, 1.8, .14, 1.8, yaw, 'grid', 0x9aa4b4, .5); for (const [a, b] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) dBox(x + (Math.cos(yaw) * a + Math.sin(yaw) * b) * .82, y - .7, z + (-Math.sin(yaw) * a + Math.cos(yaw) * b) * .82, .1, 1.3, .1, yaw, 'metal', 0x5a6070); } },
+    { w: 1.5, size: r => [.7, .7], make(x, y, z, hx, hz, yaw, r) { sBox(x, y, z, 1.4, 1.4, 1.4, yaw, 'metal', 0x8a96a8, .7); dCyl(x, y + .1, z, .3, .3, .2, 'metal', 0xc8a050, 12); } },
+    { w: 1, size: r => [.55, .55], make(x, y, z, hx, hz, yaw, r) { sCyl(x, y, z, .55, 3.5, 'metal', 0xc8a050, 16); dCyl(x, y - 1.75, z, .6, .6, .2, 'metal', 0x8a6a30, 16); } }
+  ],
+  star: [
+    { w: 3, size: r => { const s = .5 + r() * .5; return [s * .8, s * .8]; }, make(x, y, z, hx, hz, yaw, r) { const R = hx / .8, h = 1.5 + r() * 3.5, c = pick(r, PAL.crys); addG(place(cylGeo(R, R * .85, h, 6), x, y - h / 2, z, yaw), 'glow', c); addC(cCyl(x, y - h, z, R * .9, h, 'glass'));
+        addG(place(new T.ConeGeometry(R * .85, R * 1.3, 6), x, y - h - R * .65, z, yaw, Math.PI), 'glow', shade(c, .8)); } },
+    { w: 2.5, size: r => { const s = .9 + r() * .8; return [s, s * (.7 + r() * .3)]; }, make(x, y, z, hx, hz, yaw, r) { sBox(x, y, z, hx * 2, .7, hz * 2, yaw, 'stone', 0x5a5a7a, 1.2);
+        addG(place(new T.DodecahedronGeometry(Math.min(hx, hz) * 1.1, 0), x, y - .9, z, yaw), 'stone', 0x4a4a6a); addC(cCyl(x, y - 1.6, z, Math.min(hx, hz) * .7, .9, 'stone')); } },
+    { w: 1.5, size: r => [.7, .7], make(x, y, z, hx, hz, yaw, r) { sBox(x, y, z, 1.4, .2, 1.4, yaw, 'shiny', 0xd8dce8, 1); dBox(x, y - .4, z, .6, .6, .6, yaw, 'metal', 0x8a8aa0); for (const s of [-1, 1]) dBox(x + Math.cos(yaw) * s * 1.6, y - .4, z - Math.sin(yaw) * s * 1.6, 1.8, .05, .9, yaw, 'shiny', 0x2a4a9a); } },
+    { w: 1, size: r => [.4, .4], make(x, y, z, hx, hz, yaw, r) { sCyl(x, y, z, .5, .5, 'glow', 0xfff08a, 10); addG(place(new T.OctahedronGeometry(.5), x, y + .9, z), 'glow', 0xfff6c0); } }
+  ]
+};
+function pick(r, a) { return a[Math.floor(r() * a.length)]; }
+function shade(hex, k) { _col.set(hex).multiplyScalar(k); return _col.getHex(); }
+function gearMesh(x, y, z, R, group, r) {
+  const g = cylGeo(R, R, .45, 28); place(g, x, y - .225, z);
+  const parts = [{ g, mat: 'metal', c: 0xc8a050 }];
+  const n = Math.max(8, Math.round(R * 7));
+  for (let i = 0; i < n; i++) { const a = i / n * TAU, t = boxGeo(.32, .34, .3); place(t, x + Math.cos(a) * (R + .1), y - .25, z + Math.sin(a) * (R + .1), -a); parts.push({ g: t, mat: 'metal', c: 0xb08a40 }); }
+  const hub = cylGeo(R * .28, R * .28, .1, 16); place(hub, x, y + .02, z); parts.push({ g: hub, mat: 'metal', c: 0x6a5a40 });
+  for (const p of parts) { if (group) { addGTo(group, p.g, p.mat, p.c); } else addG(p.g, p.mat, p.c); }
+}
+// 動く足場は、まとめずに自分の形を持つ
+function addGTo(group, geo, mat, hex) {
+  const n = geo.attributes.position.count, a = new Float32Array(n * 3); _col.set(hex);
+  for (let i = 0; i < n; i++) { a[i * 3] = _col.r; a[i * 3 + 1] = _col.g; a[i * 3 + 2] = _col.b; }
+  geo.setAttribute('color', new T.BufferAttribute(a, 3));
+  const m = new T.Mesh(geo, MATS[mat]); m.castShadow = m.receiveShadow = true; group.add(m);
+}
+
+// ================= ステージを作る =================
+const ROUTE = [];       // 登る道すじ（足場の上の面の中心）
+const KEEP = [];        // ここには物を置かない（ジャンプの通り道と頭の上）
+const MOVERS = [];
+let DOCK = null, SUMMIT = null;
+const _q = [], _pv = { x: 0, y: 0, z: 0 };
+function keepAdd(ax, ay, az, bx, by, bz, r) { KEEP.push({ a: [ax, ay, az], b: [bx, by, bz], r, y0: Math.min(ay, by) - r, y1: Math.max(ay, by) + r }); }
+// 置こうとしている物（STAGE）が、ほかの物や通り道にぶつからないか
+function stageBlocked(ignore, keepSkip) {
+  for (const c of STAGE.cols) {
+    const b = c.bb; queryBox(b[0] - .25, b[1] - .25, b[2] - .25, b[3] + .25, b[4] + .25, b[5] + .25, _q);
+    for (const o of _q) if (!ignore.includes(o) && !o.ground) return true;
+    for (let i = KEEP.length - 1; i >= 0; i--) {
+      const k = KEEP[i]; if (keepSkip && i >= KEEP.length - keepSkip) continue; if (k.y1 < b[1] || k.y0 > b[4]) continue;
+      const L = Math.hypot(k.b[0] - k.a[0], k.b[1] - k.a[1], k.b[2] - k.a[2]), n = Math.max(1, Math.ceil(L / .45));
+      for (let s = 0; s <= n; s++) { const t = s / n, x = lerp(k.a[0], k.b[0], t), y = lerp(k.a[1], k.b[1], t), z = lerp(k.a[2], k.b[2], t);
+        if (x > b[0] - k.r && x < b[3] + k.r && y > b[1] - k.r && y < b[4] + k.r && z > b[2] - k.r && z < b[5] + k.r) return true; }
+    }
+  }
+  return false;
+}
+// 頭の上と、ジャンプの通り道が空いているか（いまある物と）
+function pathClear(a, b, ignore) {
+  const L = Math.hypot(b.x - a.x, b.z - a.z), n = Math.max(2, Math.ceil(L / .5));
+  for (let s = 1; s < n; s++) { const t = s / n, x = lerp(a.x, b.x, t), z = lerp(a.z, b.z, t), y = lerp(a.y, b.y, t) + Math.sin(t * Math.PI) * 1.1;
+    queryBox(x - .45, y + .25, z - .45, x + .45, y + 1.8, z + .45, _q); for (const o of _q) if (!ignore.includes(o)) return false; }
+  queryBox(b.x - .6, b.y + .15, b.z - .6, b.x + .6, b.y + 2.2, b.z + .6, _q); for (const o of _q) if (!ignore.includes(o)) return false;
+  return true;
+}
+function stageBegin() { STAGE = { geos: [], cols: [] }; }
+function stageCommit() { const s = STAGE; STAGE = null; for (const g of s.geos) bucketAdd(g); for (const c of s.cols) { COLS.push(c); hashAdd(c); } return s.cols; }
+function stageDrop() { for (const g of STAGE.geos) g.geo.dispose(); STAGE = null; }
+
+function buildWorld() {
+  const r = mulberry(20261110);
+  const rr = (a, b) => a + (b - a) * r();
+  // ---------- 港（スタート） ----------
+  DOCK = sBox(0, 0, 8, 30, 3, 24, 0, 'wood', 0x9a7a5a, 2); DOCK.ground = true; DOCK.kind = 'wood';
+  dBox(0, -1.6, 8, 30.6, .4, 24.6, 0, 'stone', 0x6a6a70, 2);
+  for (let i = 0; i < 9; i++) { dCyl(-14 + i * 3.5, -2.2, -3.8, .35, .35, 3, 'wood', 0x5a4030); dCyl(-14 + i * 3.5, -2.2, 19.8, .35, .35, 3, 'wood', 0x5a4030); }
+  for (const [bx, bz] of [[-12, -3], [-4, -3], [4, -3], [12, -3], [-14, 10], [14, 10]]) { sCyl(bx, .6, bz, .28, .6, 'metal', 0x3a3a44, 12); dCyl(bx, .62, bz, .36, .36, .1, 'metal', 0x3a3a44); }
+  sBox(-9, 1.2, 15, 2.4, 1.2, 1.6, .3, 'wood', 0xc49a62, .6); sBox(-9.3, 2.2, 15.2, 1.2, 1.0, 1.2, .1, 'wood', 0xb8885a, .6);
+  sCyl(10, 1.0, 16, .5, 1.0, 'metal', 0x3a6ec8); sCyl(11.1, 1.0, 16.3, .5, 1.0, 'metal', 0xd64532); sCyl(10.5, 2.02, 16.1, .5, 1.0, 'metal', 0x3aa35a);
+  // 灯台
+  const LH = [-26, 0, 22]; dCyl(LH[0], -1, LH[2], 3.2, 3.6, 4, 'stone', 0x8a8a90); for (let i = 0; i < 6; i++) dCyl(LH[0], 2 + i * 2.6 + 1.3, LH[2], 1.6 - i * .08, 1.65 - i * .08, 2.6, 'plain', i % 2 ? 0xd83a3a : 0xf2f2f2);
+  dCyl(LH[0], 18.4, LH[2], 1.2, 1.2, 1.6, 'shiny', 0x9ad8ff); dSph(LH[0], 18.4, LH[2], .6, 'glow', 0xfff2a0); dCyl(LH[0], 19.6, LH[2], .1, 1.5, 1, 'metal', 0x3a3a44);
+  // 船
+  for (const [sx, sz, yw, c] of [[22, 30, .6, 0xe0e4ea], [-30, -14, -.4, 0xd8483a], [34, -6, 1.8, 0x3a6ec8]]) {
+    dBox(sx, -.2, sz, 4, 1.6, 11, yw, 'plain', c); dBox(sx, 1.4, sz, 3, 1.6, 4, yw, 'plain', 0xf2f2f2); dCyl(sx, 4, sz, .1, .1, 4, 'metal', 0x6a6a70);
+  }
+  // 大きなクレーン（目じるし）
+  for (const [cx, cz, yw] of [[30, 12, -.5], [-34, 6, .7]]) { for (const [a, b] of [[-1.4, -1.4], [1.4, -1.4], [-1.4, 1.4], [1.4, 1.4]]) dBox(cx + a, 14, cz + b, .4, 28, .4, 0, 'metal', 0xe0a030);
+    dBox(cx, 28.5, cz, 3.4, 1.2, 3.4, 0, 'metal', 0xe0a030); dBox(cx + Math.sin(yw) * 9, 30, cz + Math.cos(yw) * 9, 1, 1, 26, yw, 'metal', 0xe0a030); dBox(cx, 30.8, cz, 2.4, 1.8, 2.4, 0, 'plain', 0x3a4a5a); }
+
+  // ---------- 道すじ ----------
+  let cur = { x: 0, y: 0, z: -2.6, rho: 2.2, cols: [DOCK], zone: 0, kind: 'dock' };
+  ROUTE.push(cur);
+  let ang = Math.atan2(cur.z, cur.x), spin = 1, Rrad = 9;
+  const ZY = z => z.y1;
+  // 進む向き：接線（spin の向き）に、半径を保つためのかたむきと、ゆらぎを足す
+  function travelDir(rg, tryN = 0) {
+    const a = Math.atan2(cur.z, cur.x), rad = Math.hypot(cur.x, cur.z);
+    const bias = rad < 9 ? .45 : rad > 18 ? -.45 : 0, dev = clamp(bias + (rg() - .5) * (tryN > 10 ? 1.6 : .9), -1.1, 1.1);
+    const tx = -Math.sin(a) * spin, tz = Math.cos(a) * spin, ox = Math.cos(a), oz = Math.sin(a);
+    return [tx * Math.cos(dev) + ox * Math.sin(dev), tz * Math.cos(dev) + oz * Math.sin(dev)];
+  }
+  // つぎの足場を置く（ふつうの1つ）
+  function stepTo(Z, opt = {}) {
+    const kit = KIT[Z.id];
+    for (let tryN = 0; tryN < 26; tryN++) {
+      const relax = tryN > 18;
+      const it = opt.item || wpick(r, kit), [hx, hz] = it.size(r), rho = Math.min(hx, hz);
+      let rise = opt.rise ?? rr(Z.rise[0], Z.rise[1]);
+      if (rho < .5) rise = Math.min(rise, .7);   // 細い足場（パイプ・棒）には高く跳ばせない
+      const gmax = Math.max(Z.gap[0] + .15, Z.gap[1] - .9 * Math.max(0, rise - .45));
+      const gap = opt.gap ?? rr(Z.gap[0], gmax);
+      const D = cur.rho + gap + rho;
+      // まわりを回るように：円の接線の向きに進み、内・外へ少しふらつく（中心から 6.5〜22m におさめる）
+      const [ux, uz] = travelDir(r, tryN), nx = cur.x + ux * D, nz = cur.z + uz * D, ny = cur.y + rise;
+      const yaw = opt.yaw ?? (r() * TAU);
+      const nxt = { x: nx, y: ny, z: nz }, nrad = Math.hypot(nx, nz);
+      if (nrad > 24 || nrad < 5.5) continue;
+      if (tryN === 13) spin = -spin;
+      if (!relax && !pathClear(cur, nxt, cur.cols)) continue;
+      stageBegin(); it.make(nx, ny, nz, hx, hz, yaw, r);
+      if (!relax && stageBlocked(cur.cols, 0)) { stageDrop(); continue; }
+      const cols = stageCommit();
+      keepAdd(cur.x, cur.y + 1.0, cur.z, nx, ny + 1.0, nz, .95);
+      keepAdd(nx, ny + .9, nz, nx, ny + 1.6, nz, Math.min(rho, 1.1) * .9);
+      cur = { x: nx, y: ny, z: nz, rho, cols, zone: Z.i, kind: 'step', hx, hz, yaw };
+      ROUTE.push(cur); return true;
+    }
+    spin = -spin; return false;
+  }
+  // 階段：同じ種類の小さな台を、少しずつ高く並べる
+  function stairs(Z) {
+    const n = 4 + (r() * 4 | 0), a0 = Math.atan2(cur.z, cur.x) + spin * .2, rNow = Math.hypot(cur.x, cur.z);
+    const tx = -Math.sin(a0) * spin, tz = Math.cos(a0) * spin;   // まわる向き
+    const mats = { port: ['wood', 0xc49a62], garden: ['grass', 0x6cc24a], rail: ['stone', 0xb0a698], stat: ['plain', pick(r, PAL.book)], temple: ['stone', 0xe0d6c4], gear: ['grid', 0x9aa4b4], star: ['glow', pick(r, PAL.crys)] }[Z.id];
+    let x = cur.x + tx * (cur.rho + .95), z = cur.z + tz * (cur.rho + .95), y = cur.y + .42;
+    if (Math.hypot(x, z) > 23 || Math.hypot(x, z) < 6) return false;
+    stageBegin(); const tops = [];
+    for (let i = 0; i < n; i++) { const yaw = Math.atan2(tx, tz); sBox(x, y, z, 1.3, .42 + .4, .9, yaw, mats[0], mats[1], .6); tops.push({ x, y, z }); x += tx * .86; z += tz * .86; y += .42; }
+    if (stageBlocked(cur.cols, 2)) { stageDrop(); return false; }
+    const cols = stageCommit(), last = tops[tops.length - 1];
+    keepAdd(cur.x, cur.y + 1, cur.z, last.x, last.y + 1, last.z, .9); keepAdd(last.x, last.y + .9, last.z, last.x, last.y + 1.6, last.z, .5);
+    tops.forEach((t, i) => ROUTE.push({ x: t.x, y: t.y, z: t.z, rho: .42, cols: [cols[i]], zone: Z.i, kind: 'stair' }));
+    cur = Object.assign({}, ROUTE[ROUTE.length - 1], { rho: .42 }); return true;
+  }
+  // 細長い一本道（梁・定規・パイプ…）：坂を登っていく
+  function beam(Z) {
+    const L = rr(5, 8.5), up = rr(.6, 1.6), a0 = Math.atan2(cur.z, cur.x), tx = -Math.sin(a0) * spin, tz = Math.cos(a0) * spin;
+    const sx = cur.x + tx * (cur.rho + .1), sz = cur.z + tz * (cur.rho + .1), ex = sx + tx * L, ez = sz + tz * L;
+    if (Math.hypot(ex, ez) > 23.5 || Math.hypot(ex, ez) < 5.5) return false;
+    const w = { port: .7, garden: .8, rail: .9, stat: .6, temple: .7, gear: .6, star: .55 }[Z.id], mc = { port: ['metal', 0xe0a030], garden: ['wood', 0x8a6a48], rail: ['metal', 0xc03a3a], stat: ['paper', 0xe8e2c8], temple: ['stone', 0xe8dcc6], gear: ['grid', 0x9aa4b4], star: ['shiny', 0xb8c0e0] }[Z.id];
+    const mx = (sx + ex) / 2, mz = (sz + ez) / 2, my = cur.y + up / 2 - .12, yaw = Math.atan2(tx, tz), pitch = -Math.atan2(up, L);
+    stageBegin(); addG(place(boxGeo(w, .24, L + .2, .8), mx, my, mz, yaw, pitch), mc[0], mc[1]); addC(cBox(mx, my, mz, w, .24, L + .2, yaw, pitch, 0, mc[0]));
+    if (stageBlocked(cur.cols, 2)) { stageDrop(); return false; }
+    const cols = stageCommit();
+    keepAdd(sx, cur.y + 1, sz, ex, cur.y + up + 1, ez, .9);
+    ROUTE.push({ x: mx, y: cur.y + up / 2, z: mz, rho: w / 2, cols, zone: Z.i, kind: 'beam' });
+    cur = { x: ex, y: cur.y + up, z: ez, rho: w / 2, cols, zone: Z.i, kind: 'beam' };
+    ROUTE.push(cur); return true;
+  }
+  // 回る円盤（歯車）／上下するリフト
+  function mover(Z, type) {
+    const a0 = Math.atan2(cur.z, cur.x), tx = -Math.sin(a0) * spin, tz = Math.cos(a0) * spin;
+    if (type === 'spin') {
+      const R = rr(1.7, 2.3), gap = rr(1.0, 1.6), x = cur.x + tx * (cur.rho + gap + R), z = cur.z + tz * (cur.rho + gap + R), y = cur.y + rr(.3, .8);
+      if (Math.hypot(x, z) > 23 || Math.hypot(x, z) < 6) return false;
+      stageBegin(); STAGE.cols.push(cCyl(x, y - .45, z, R, .45, 'metal')); if (stageBlocked(cur.cols, 2)) { stageDrop(); return false; } STAGE = null;
+      const m = makeMover('spin', x, y, z, { R, w: rr(.45, .8) * (r() < .5 ? -1 : 1) }, grp => gearMesh(0, 0, 0, R, grp, r));
+      const c = m.addCol(cCyl(0, -.45, 0, R, .45, 'metal'));
+      keepAdd(cur.x, cur.y + 1, cur.z, x, y + 1, z, .95); keepAdd(x, y + .3, z, x, y + 2, z, R);
+      cur = { x, y, z, rho: Math.min(R, 1.2), cols: [c], zone: Z.i, kind: 'spin', mover: m }; ROUTE.push(cur); return true;
+    }
+    // リフト：となりで上下する。上についたら、つぎの足場へ
+    const H = rr(4, 7), x = cur.x + tx * (cur.rho + 1.1 + 1.0), z = cur.z + tz * (cur.rho + 1.1 + 1.0), yLow = cur.y - .1;
+    if (Math.hypot(x, z) > 23 || Math.hypot(x, z) < 6) return false;
+    stageBegin(); STAGE.cols.push(cBox(x, yLow + H / 2, z, 2, H + .4, 2)); if (stageBlocked(cur.cols, 2)) { stageDrop(); return false; } STAGE = null;
+    const m = makeMover('lift', x, yLow, z, { H, per: rr(6, 8) }, grp => { addGTo(grp, place(boxGeo(2, .3, 2, .5), 0, -.15, 0), 'grid', 0x9aa4b4); addGTo(grp, place(boxGeo(2.1, .1, 2.1), 0, -.33, 0), 'metal', 0xe0a030); });
+    const c = m.addCol(cBox(0, -.15, 0, 2, .3, 2, 0, 0, 0, 'metal'));
+    for (const [a, b] of [[-1.2, -1.2], [1.2, 1.2]]) dBox(x + a, yLow + H / 2, z + b, .14, H + 1, .14, 0, 'metal', 0x5a6070);
+    keepAdd(cur.x, cur.y + 1, cur.z, x, yLow + 1, z, .9); keepAdd(x, yLow + .3, z, x, yLow + H + 2.2, z, 1.5);
+    ROUTE.push({ x, y: yLow, z, rho: 1, cols: [c], zone: Z.i, kind: 'liftLow', mover: m });
+    cur = { x, y: yLow + H, z, rho: 1.0, cols: [c], zone: Z.i, kind: 'liftTop', mover: m }; ROUTE.push(cur); return true;
+  }
+  // ゾーンの入り口：広い台と看板
+  function gate(Z) {
+    for (let tryN = 0; tryN < 30; tryN++) {
+      const rise = rr(.5, .9), gap = rr(1.0, 1.6), R = 2.6, rNow = Math.hypot(cur.x, cur.z), D = cur.rho + gap + R;
+      let rT = clamp(rNow + rr(-2, 2), 8, 20); const cosd = clamp((rNow * rNow + rT * rT - D * D) / (2 * rNow * rT), -1, 1);
+      const a1 = Math.atan2(cur.z, cur.x) + spin * Math.acos(cosd) + rr(-.2, .2) * (tryN > 6 ? 2 : 0) * (tryN > 18 ? 3 : 1), x = Math.cos(a1) * rT, z = Math.sin(a1) * rT, y = cur.y + rise;
+      if (!pathClear(cur, { x, y, z }, cur.cols)) continue;
+      stageBegin();
+      const mat = { garden: ['grass', 0x7ad05a], rail: ['stone', 0xd8cfc0], stat: ['paper', 0xf6f2e6], temple: ['stone', 0xf0e8d8], gear: ['grid', 0xa8b0c0], star: ['glow', 0x8ad8ff] }[Z.id] || ['wood', 0x9a7a5a];
+      sCyl(x, y, z, R, .6, mat[0], mat[1], 28, 1.2); addG(place(cylGeo(R * .9, R * .3, 2.4, 14), x, y - 1.8, z), 'stone', 0x7a7a8a); addC(cCyl(x, y - 3, z, R * .5, 2.4, 'stone'));
+      if (stageBlocked(cur.cols, 0)) { stageDrop(); continue; }
+      const cols = stageCommit();
+      SIGNS.push({ x: x + Math.cos(a1) * (R - .5), y, z: z + Math.sin(a1) * (R - .5), yaw: Math.atan2(-Math.cos(a1), -Math.sin(a1)), Z });
+      keepAdd(cur.x, cur.y + 1, cur.z, x, y + 1, z, .95); keepAdd(x, y + .9, z, x, y + 1.6, z, 1.6);
+      cur = { x, y, z, rho: R * .8, cols, zone: Z.i, kind: 'gate' }; ROUTE.push(cur); return true;
+    }
+    return false;
+  }
+  for (const Z of ZONES) {
+    if (Z.i > 0) for (let g = 0; g < 30 && !gate(Z); g++) stepTo(ZONES[Z.i - 1], { rise: rr(.1, .4) });
+    let guard = 0;
+    while (cur.y < ZY(Z) - .5 && guard++ < 900) {
+      const p = r();
+      if (cur.kind === 'stair' || cur.kind === 'beam') { stepTo(Z, { gap: rr(Z.gap[0], Math.min(Z.gap[1], 2.0)) }); continue; }
+      if (cur.kind === 'liftTop' || cur.kind === 'spin' || cur.kind === 'gate') { stepTo(Z); continue; }
+      if (p < .08 && stairs(Z)) continue;
+      if (p < .17 && beam(Z)) continue;
+      if (Z.i >= 4 && p < .23 && mover(Z, r() < .5 ? 'spin' : 'lift')) continue;
+      if (Z.i === 3 && p < .2 && mover(Z, 'lift')) continue;
+      stepTo(Z);
+      if (r() < .045) spin = -spin;   // ときどき回る向きを変える
+    }
+  }
+  // ---------- てっぺん ----------
+  for (let tryN = 0; tryN < 20; tryN++) {
+    const R = 4.4, rNow = Math.hypot(cur.x, cur.z), D = cur.rho + 1.4 + R, rT = clamp(rNow, 10, 18), cosd = clamp((rNow * rNow + rT * rT - D * D) / (2 * rNow * rT), -1, 1);
+    const a1 = Math.atan2(cur.z, cur.x) + spin * Math.acos(cosd) + (tryN ? r() - .5 : 0), x = Math.cos(a1) * rT, z = Math.sin(a1) * rT, y = cur.y + .6;
+    stageBegin(); sCyl(x, y, z, R, .8, 'stone', 0xf0ecff, 36, 1.4);
+    if (tryN < 18 && stageBlocked(cur.cols, 0)) { stageDrop(); continue; }
+    const cols = stageCommit();
+    addG(place(cylGeo(R * .95, .6, 9, 24), x, y - 5.3, z), 'stone', 0x4a4a6a);
+    dCyl(x, y + .9, z, 1.1, 1.3, 1.8, 'stone', 0xe8e4f0, 20); addC(cCyl(x, y, z, 1.25, 1.8, 'stone'));
+    STAR_POS.set(x, y + 3.6, z);
+    dCyl(x + 2.6, y + 2.6, z, .06, .06, 5.2, 'metal', 0xd8d8e0); dBox(x + 3.4, y + 4.6, z, 1.6, 1.0, .04, 0, 'plain', 0xff5a6a);
+    SUMMIT = { x, y, z, R, cols }; ROUTE.push({ x, y, z, rho: R - 1.5, cols, zone: 6, kind: 'summit' });
+    break;
+  }
+  // ---------- 飾り（落ちたときに受け止めてくれることもある） ----------
+  for (const Z of ZONES) {
+    const kit = KIT[Z.id], N = Math.round(150 * Z.deco);
+    for (let i = 0; i < N; i++) {
+      for (let tryN = 0; tryN < 4; tryN++) {
+        const it = wpick(r, kit), [hx, hz] = it.size(r), a = r() * TAU, rad = rr(3, 34), x = Math.cos(a) * rad, z = Math.sin(a) * rad, y = rr(Z.y0 + 3, Z.y1 + 2);
+        stageBegin(); it.make(x, y, z, hx, hz, r() * TAU, r);
+        if (stageBlocked([], 0)) { stageDrop(); continue; }
+        stageCommit(); break;
+      }
+    }
+  }
+  landmarks(r);
+  meshFromBuckets();
+}
+function wpick(r, kit) { let s = 0; for (const k of kit) s += k.w; let v = r() * s; for (const k of kit) { v -= k.w; if (v <= 0) return k; } return kit[0]; }
+const SIGNS = [];
+const STAR_POS = new T.Vector3();
+
+// ---------- 遠くに見える目じるし（当たりなし） ----------
+function landmarks(r) {
+  const far = (a, d) => [Math.cos(a) * d, Math.sin(a) * d];
+  // 空の庭：大きな浮き島と木
+  { const [x, z] = far(1.2, 70), y = 130; dCyl(x, y, z, 14, 4, 18, 'stone', 0x8a6a48, 14); dCyl(x, y + 9.3, z, 14.5, 14.5, 1.2, 'grass', 0x6cc24a, 28); dCyl(x, y + 16, z, 1.2, 1.8, 12, 'wood', 0x7a5232); dSph(x, y + 24, z, 8, 'grass', 0x4f9e3a, .8); dSph(x + 4, y + 21, z + 3, 5, 'grass', 0x5aae44); }
+  // 雲の鉄道：長い橋
+  { const [x, z] = far(3.6, 62), y = 215; for (let i = -4; i <= 4; i++) { dBox(x + i * 9 * Math.sin(3.6), y - 8, z + i * 9 * Math.cos(3.6), 1.2, 16, 1.2, 0, 'metal', 0xc03a3a); }
+    dBox(x, y, z, 2.4, 1.2, 84, 3.6, 'metal', 0xc03a3a); dBox(x, y + .9, z, 1.6, .5, 84, 3.6, 'stone', 0x7a6a5a); dBox(x + 2 * Math.cos(3.6), y + 2.6, z - 2 * Math.sin(3.6), 2.6, 2.8, 8, 3.6, 'plain', 0x3a6ec8); }
+  // ぶんぼうぐ：開いた大きな本
+  { const [x, z] = far(5.4, 66), y = 300; dBox(x - 6, y, z, 12, .6, 16, .2, 'paper', 0xf6f2e6, 1.2, 0, .18); dBox(x + 6, y, z, 12, .6, 16, .2, 'paper', 0xf6f2e6, 1.2, 0, -.18); dBox(x, y - .6, z, 25, .4, 16.6, .2, 'plain', 0xd64545); dCyl(x + 8, y + 9, z, .8, .8, 20, 'plain', 0xf2c230, 6, .2, 0, .5); }
+  // 神殿：門
+  { const [x, z] = far(.4, 64), y = 385; for (const s of [-7, 7]) dCyl(x + s * Math.cos(.4), y, z - s * Math.sin(.4), 1.6, 1.8, 20, 'stone', 0xe8e0d0, 20); dBox(x, y + 11, z, 19, 2.2, 3, -.4 + Math.PI / 2, 'stone', 0xd8ccb6); dBox(x, y + 13, z, 21, 1, 3.6, -.4 + Math.PI / 2, 'plain', 0xc05a4a); }
+  // 歯車の塔：大きな時計
+  { const [x, z] = far(2.4, 66), y = 470; const g = cylGeo(14, 14, 1.5, 48); g.rotateX(Math.PI / 2); addG(place(g, x, y, z, 2.4 + Math.PI), 'plain', 0xf2ead8);
+    const g2 = cylGeo(15, 15, 1.2, 48); g2.rotateX(Math.PI / 2); addG(place(g2, x - Math.sin(2.4) * .3, y, z - Math.cos(2.4) * .3, 2.4 + Math.PI), 'metal', 0xc8a050);
+    for (let i = 0; i < 12; i++) { const a = i / 12 * TAU; dBox(x + Math.cos(2.4) * Math.cos(a) * 11.5 + .0, y + Math.sin(a) * 11.5, z - Math.sin(2.4) * Math.cos(a) * 11.5, 1.2, 1.2, .3, 2.4 + Math.PI / 2, 'plain', 0x3a3a40); } }
+  // 星：大きな月
+  { const [x, z] = far(4.4, 220), y = 640; dSph(x, y, z, 26, 'glow', 0xfff4d0); }
+}
+
+// ---------- 雲・海・看板・てっぺんの星 ----------
+const FX = { water: null, sheets: [], star: null, clouds: [] };
+function buildScenery() {
+  // 海
+  const wt = canvasTex(256, (g, s) => { g.fillStyle = '#7a7a7a'; g.fillRect(0, 0, s, s); for (let i = 0; i < 180; i++) { g.strokeStyle = `rgba(255,255,255,${.12 + Math.random() * .25})`; g.lineWidth = 1 + Math.random() * 2; g.beginPath(); const x = Math.random() * s, y = Math.random() * s, l = 10 + Math.random() * 30; g.moveTo(x, y); g.quadraticCurveTo(x + l / 2, y - 3, x + l, y); g.stroke(); } });
+  wt.repeat.set(60, 60);
+  const wm = new T.MeshStandardMaterial({ color: 0x2b7fb8, map: wt, roughness: .25, metalness: .05 });
+  FX.water = new T.Mesh(new T.PlaneGeometry(2400, 2400), wm); FX.water.rotation.x = -Math.PI / 2; FX.water.position.y = -.6; FX.water.receiveShadow = true; scene.add(FX.water);
+  // 雲（ふんわりした板を、ところどころの高さに）
+  const ct = canvasTex(256, (g, s) => { g.clearRect(0, 0, s, s); for (let i = 0; i < 26; i++) { const x = s / 2 + (Math.random() - .5) * s * .55, y = s / 2 + (Math.random() - .5) * s * .3, rr = s * (.1 + Math.random() * .16); const gr = g.createRadialGradient(x, y, 0, x, y, rr); gr.addColorStop(0, 'rgba(255,255,255,.95)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, s, s); } }, false);
+  const cr = mulberry(77);
+  for (let i = 0; i < 140; i++) {
+    const m = new T.SpriteMaterial({ map: ct, transparent: true, depthWrite: false, opacity: .85, fog: true });
+    const s = new T.Sprite(m), a = cr() * TAU, d = 45 + cr() * 260, h = -10 + cr() * 640, sz = 30 + cr() * 70;
+    s.position.set(Math.cos(a) * d, h, Math.sin(a) * d); s.scale.set(sz, sz * .45, 1); s.renderOrder = -1; scene.add(s); FX.clouds.push(s);
+  }
+  // 雲の層（通りぬけるときに白くなる）
+  const st = canvasTex(512, (g, s) => { g.clearRect(0, 0, s, s); for (let i = 0; i < 160; i++) { const x = Math.random() * s, y = Math.random() * s, rr = 20 + Math.random() * 60; const gr = g.createRadialGradient(x, y, 0, x, y, rr); gr.addColorStop(0, 'rgba(255,255,255,.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(x - rr, y - rr, rr * 2, rr * 2); } });
+  st.repeat.set(3, 3);
+  for (const h of [ZH - 2, ZH * 3 - 2, ZH * 5 - 2]) {
+    const m = new T.MeshBasicMaterial({ map: st, transparent: true, opacity: .5, depthWrite: false, side: T.DoubleSide, fog: true });
+    const p = new T.Mesh(new T.PlaneGeometry(900, 900), m); p.rotation.x = -Math.PI / 2; p.position.y = h; p.renderOrder = 2; scene.add(p); FX.sheets.push(p);
+  }
+  // ゾーンの看板
+  for (const s of SIGNS) {
+    const c = document.createElement('canvas'); c.width = 512; c.height = 256; const g = c.getContext('2d');
+    g.fillStyle = '#f8f2e2'; g.fillRect(0, 0, 512, 256); g.strokeStyle = '#6a4a2a'; g.lineWidth = 14; g.strokeRect(7, 7, 498, 242);
+    g.fillStyle = '#3a2a1a'; g.textAlign = 'center'; g.font = '900 64px "M PLUS Rounded 1c", sans-serif'; g.fillText(s.Z.name, 256, 120);
+    g.font = '800 34px "M PLUS Rounded 1c", sans-serif'; g.fillStyle = '#8a5a2a'; g.fillText(`${s.Z.y0} m`, 256, 190);
+    const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace;
+    const grp = new T.Group(); grp.position.set(s.x, s.y, s.z); grp.rotation.y = s.yaw;
+    const post = new T.Mesh(new T.CylinderGeometry(.07, .07, 1.6, 8), new T.MeshStandardMaterial({ color: 0x6a4a2a })); post.position.y = .8; grp.add(post);
+    const board = new T.Mesh(new T.PlaneGeometry(1.6, .8), new T.MeshStandardMaterial({ map: t, side: T.DoubleSide })); board.position.y = 1.7; grp.add(board);
+    scene.add(grp);
+  }
+  // てっぺんの星
+  const sg = new T.Group(), sh = new T.Shape(); for (let i = 0; i < 10; i++) { const a = i / 10 * TAU - Math.PI / 2, rr = i % 2 ? .55 : 1.3; if (i) sh.lineTo(Math.cos(a) * rr, -Math.sin(a) * rr); else sh.moveTo(Math.cos(a) * rr, -Math.sin(a) * rr); }
+  const sgeo = new T.ExtrudeGeometry(sh, { depth: .35, bevelEnabled: true, bevelSize: .08, bevelThickness: .08, bevelSegments: 1 }); sgeo.center();
+  const smat = new T.MeshStandardMaterial({ color: 0xffe14a, emissive: 0xffc81a, emissiveIntensity: .9, roughness: .3, metalness: .4 });
+  const star = new T.Mesh(sgeo, smat); star.castShadow = true; sg.add(star); sg.position.copy(STAR_POS); scene.add(sg); FX.star = sg;
+  const pl = new T.PointLight(0xffe08a, 30, 26, 1.6); pl.position.copy(STAR_POS); scene.add(pl);
+}
+// ---------- まとめた形を作る ----------
+function meshFromBuckets() {
+  for (const [key, list] of BUCKETS) {
+    const mat = key.split('|')[0], g = mergeGeometries(list, false);
+    if (!g) continue;
+    g.computeBoundingSphere();
+    const m = new T.Mesh(g, MATS[mat]); m.castShadow = mat !== 'glow'; m.receiveShadow = true; m.matrixAutoUpdate = false; m.updateMatrix(); scene.add(m);
+    for (const x of list) x.dispose();
+  }
+  BUCKETS.clear();
+}
+
+// ================= 動く足場 =================
+// type 'spin'：その場で回る / 'lift'：上下する。当たりは、足場の中の位置で持っておき、毎回まわりへ置きなおす
+function makeMover(type, x, y, z, p, build) {
+  const grp = new T.Group(); grp.position.set(x, y, z); build(grp); scene.add(grp);
+  const m = { type, x, y, z, p, grp, cols: [], ang: 0, off: 0, dAng: 0, dOff: 0, t: 0 };
+  m.addCol = c => { c.local = JSON.parse(JSON.stringify({ c: c.c, R: c.R, a: c.a, b: c.b, y1: c.y1 })); c.mv = m; m.cols.push(c); MOVCOLS.push(c); moverPlace(m); return c; };
+  MOVERS.push(m); return m;
+}
+function moverPlace(m) {
+  const ca = Math.cos(m.ang), sa = Math.sin(m.ang), ox = m.x, oy = m.y + m.off, oz = m.z;
+  for (const c of m.cols) {
+    const L = c.local;
+    if (c.t === 0) { const [lx, ly, lz] = L.c; c.c = [ox + lx * ca + lz * sa, oy + ly, oz - lx * sa + lz * ca]; const R0 = L.R, Ry = [ca, 0, -sa, 0, 1, 0, sa, 0, ca];
+      // R = Ry * R0（列ごと）
+      c.R = []; for (let col = 0; col < 3; col++) { const v = [R0[col * 3], R0[col * 3 + 1], R0[col * 3 + 2]]; c.R.push(Ry[0] * v[0] + Ry[3] * v[1] + Ry[6] * v[2], Ry[1] * v[0] + Ry[4] * v[1] + Ry[7] * v[2], Ry[2] * v[0] + Ry[5] * v[1] + Ry[8] * v[2]); }
+      setBoxBB(c); }
+    else if (c.t === 1) { const [lx, ly0, lz] = L.c; c.c = [ox + lx * ca + lz * sa, oy + ly0, oz - lx * sa + lz * ca]; c.y1 = c.c[1] + (L.y1 - ly0); c.bb = [c.c[0] - c.r, c.c[1], c.c[2] - c.r, c.c[0] + c.r, c.y1, c.c[2] + c.r]; c.top = c.y1; }
+  }
+  m.grp.position.set(ox, oy, oz); m.grp.rotation.y = m.ang;
+}
+// 時間 t の位置へ。のっている人を運ぶために、前回からの動きも覚える
+function moverTick(m, t) {
+  const a0 = m.ang, o0 = m.off;
+  if (m.type === 'spin') m.ang = t * m.p.w;
+  else m.off = (1 - Math.cos(t / m.p.per * TAU)) / 2 * m.p.H;
+  m.dAng = angD(m.ang - a0); m.dOff = m.off - o0; moverPlace(m);
+}
+// ================= のぼる子（動き・当たり・見た目・カメラ） =================
+const PR = .3, SPH = [.3, .85, 1.38];
+const GRAV = 24, JUMP_V = 8.6, WALK = 5.0, SPRINT = 7.6, GACC = 50, AACC = 16, MAXF = 52, WATER_Y = -.45;
+const START = { x: 0, y: 0, z: 13, yaw: Math.PI };
+const P = { pos: new T.Vector3(START.x, START.y, START.z), vel: new T.Vector3(), yaw: START.yaw, onGround: false, gN: new T.Vector3(0, 1, 0), gCol: null,
+  coyote: 0, jumpBuf: 0, airTop: 0, airT: 0, best: 0, falls: 0, time: 0, stepT: 0, squash: 0, phase: 0, model: null, fallMsg: 0 };
+const _o = { x: 0, y: 0, z: 0 }, _cand = [];
+const EV = { landed: 0, landV: 0, drop: 0, splash: false };   // このコマで起きたこと（HUD・音のため）
+
+function collidePlayer() {
+  queryBox(P.pos.x - .7, P.pos.y - .5, P.pos.z - .7, P.pos.x + .7, P.pos.y + 2.1, P.pos.z + .7, _cand);
+  let block = null;
+  for (let it = 0; it < 4; it++) {
+    let any = false;
+    for (let si = 0; si < 3; si++) {
+      for (const c of _cand) {
+        if (!pushSphere(c, P.pos.x, P.pos.y + SPH[si], P.pos.z, PR, _o)) continue;
+        const len = Math.hypot(_o.x, _o.y, _o.z); if (len < 1e-7) continue;
+        const nx = _o.x / len, ny = _o.y / len, nz = _o.z / len;
+        P.pos.x += _o.x; P.pos.y += _o.y; P.pos.z += _o.z; any = true;
+        const vn = P.vel.x * nx + P.vel.y * ny + P.vel.z * nz;
+        if (vn < 0) { P.vel.x -= vn * nx; P.vel.y -= vn * ny; P.vel.z -= vn * nz; }
+        if (ny > .62) { P.onGround = true; P.gN.set(nx, ny, nz); P.gCol = c; }
+        else if (ny < -.6 && P.vel.y > 0) P.vel.y = 0;
+        else if (Math.abs(ny) < .35 && si < 2) block = c;
+      }
+    }
+    if (!any) break;
+  }
+  return block;
+}
+// 足の下に地面があるか（なければ -1、あれば距離）
+function groundBelow(maxD) {
+  queryBox(P.pos.x - .6, P.pos.y - maxD - .4, P.pos.z - .6, P.pos.x + .6, P.pos.y + .8, P.pos.z + .6, _cand);
+  for (let d = 0; d <= maxD + 1e-6; d += .04) {
+    for (const c of _cand) if (pushSphere(c, P.pos.x, P.pos.y - d + PR - .015, P.pos.z, PR, _o) && _o.y > .55 * Math.hypot(_o.x, _o.y, _o.z)) return d;
+  }
+  return -1;
+}
+// その場所に体がおさまるか（めりこまないか）
+function fits(x, y, z) {
+  queryBox(x - .5, y - .1, z - .5, x + .5, y + 1.9, z + .5, _cand);
+  for (const c of _cand) for (let si = 0; si < 3; si++) if (pushSphere(c, x, y + SPH[si], z, PR - .02, _o)) return false;
+  return true;
+}
+
+// 1回分の動き（dt は 1/120 秒くらい）。inp = { dx, dz（行きたい向き・長さ1まで）, sprint, jumpE }
+function pstep(dt, inp) {
+  // 動く足場にのっていたら、いっしょに動く
+  if (P.onGround && P.gCol && P.gCol.mv) {
+    const m = P.gCol.mv;
+    if (m.dAng) { const dx = P.pos.x - m.x, dz = P.pos.z - m.z, c = Math.cos(m.dAng), s = Math.sin(m.dAng); P.pos.x = m.x + dx * c + dz * s; P.pos.z = m.z - dx * s + dz * c; P.yaw += m.dAng; }
+    if (m.dOff) P.pos.y += m.dOff;
+  }
+  const wasG = P.onGround, gc = P.gCol;
+  const spd = (inp.sprint ? SPRINT : WALK) * Math.min(1, Math.hypot(inp.dx, inp.dz));
+  const mag = Math.hypot(inp.dx, inp.dz), ux = mag > 1e-4 ? inp.dx / mag : 0, uz = mag > 1e-4 ? inp.dz / mag : 0;
+  if (P.onGround || mag > .05) {
+    const acc = (P.onGround ? GACC : AACC) * dt; let ex = ux * spd - P.vel.x, ez = uz * spd - P.vel.z; const el = Math.hypot(ex, ez);
+    if (el > acc) { ex *= acc / el; ez *= acc / el; }
+    if (!P.onGround) { // 空中：向きは変えられるが、勢いはあまりつけられない
+      const vx = P.vel.x + ex, vz = P.vel.z + ez, sp = Math.hypot(vx, vz), cap = Math.max(Math.hypot(P.vel.x, P.vel.z), spd);
+      if (sp > cap) { ex = vx * cap / sp - P.vel.x; ez = vz * cap / sp - P.vel.z; }
+    }
+    P.vel.x += ex; P.vel.z += ez;
+  }
+  if (mag > .05) P.yaw += angD(Math.atan2(ux, uz) - P.yaw) * Math.min(1, dt * 14);
+  // ジャンプ（少し早めに押しても、ふちから少し出てからでも跳べる）
+  P.jumpBuf = inp.jumpE ? .14 : Math.max(0, P.jumpBuf - dt);
+  P.coyote = P.onGround ? .11 : Math.max(0, P.coyote - dt);
+  let jumped = false;
+  if (P.jumpBuf > 0 && P.coyote > 0) {
+    P.vel.y = JUMP_V + (gc && gc.mv && gc.mv.type === 'lift' ? Math.max(0, gc.mv.dOff / dt) : 0);
+    P.onGround = false; P.coyote = 0; P.jumpBuf = 0; jumped = true; P.airTop = P.pos.y; P.airT = 0; AU.jump();
+  }
+  P.vel.y = Math.max(-MAXF, P.vel.y - GRAV * dt);
+  const vy0 = P.vel.y;
+  P.pos.addScaledVector(P.vel, dt);
+  P.onGround = false; P.gCol = null;
+  const block = collidePlayer();
+  // 小さな段は、そのまま上がる（0.55m まで）
+  if (!P.onGround && wasG && block && block.flat && !jumped) {
+    const up = block.top - P.pos.y;
+    if (up > .02 && up < .56 && fits(P.pos.x, block.top + .01, P.pos.z)) { P.pos.y = block.top + .01; P.vel.y = 0; P.onGround = true; P.gCol = block; }
+  } else if (P.onGround && block && block.flat && !jumped && mag > .05) {
+    const up = block.top - P.pos.y, bx = P.pos.x + ux * .2, bz = P.pos.z + uz * .2;
+    if (up > .02 && up < .56 && fits(bx, block.top + .01, bz)) { P.pos.set(bx, block.top + .01, bz); P.gCol = block; }
+  }
+  // 下り坂や段を下りるとき、地面からはなれないように
+  if (!P.onGround && wasG && !jumped && P.vel.y <= 0) { const d = groundBelow(.36); if (d >= 0) { P.pos.y -= d; P.onGround = true; P.gCol = gc; collidePlayer(); P.onGround = true; } }
+  if (P.onGround) {
+    if (P.vel.y < 0) P.vel.y = 0;
+    if (!wasG) { // 着地
+      const drop = P.airTop - P.pos.y; EV.landed = 1; EV.landV = -vy0; EV.drop = drop; P.squash = clamp(-vy0 / 22, .12, .5); AU.land(-vy0);
+    }
+  } else {
+    if (wasG && !jumped) { P.airTop = P.pos.y; P.airT = 0; }
+    P.airTop = Math.max(P.airTop, P.pos.y); P.airT += dt;
+  }
+  // 足音
+  const hs = Math.hypot(P.vel.x, P.vel.z);
+  if (P.onGround && hs > 1) { P.stepT -= dt * hs / 2.3; if (P.stepT <= 0) { P.stepT = 1; AU.step(P.gCol && P.gCol.kind); } }
+  // 海に落ちた
+  if (P.pos.y < WATER_Y) { EV.splash = true; AU.splash(); respawnStart(); }
+}
+function respawnStart() { P.pos.set(START.x, START.y + .02, START.z); P.vel.set(0, 0, 0); P.yaw = START.yaw; P.onGround = false; P.airTop = P.pos.y; CAM.yaw = START.yaw; }
+
+// ---------- 見た目：赤いニット帽に黄色い雨がっぱ、青緑のリュックの子 ----------
+function buildPlayer() {
+  const M = (c, o) => new T.MeshStandardMaterial(Object.assign({ color: c, roughness: .7 }, o));
+  const skin = M(0xffd9b8), coat = M(0xf2c230, { roughness: .55 }), pants = M(0x2b3550), hat = M(0xe04a3a, { roughness: .9 }), pack = M(0x2aa69a), shoe = M(0x8a4a2a), dark = M(0x1e1e24), white = M(0xffffff, { roughness: .9 });
+  const root = new T.Group(), body = new T.Group(); root.add(body);
+  const mk = (geo, mat, x, y, z, par = body) => { const m = new T.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; par.add(m); return m; };
+  mk(new T.CylinderGeometry(.2, .25, .55, 14), coat, 0, 1.0, 0);
+  mk(new T.SphereGeometry(.25, 14, 10), coat, 0, .74, 0).scale.set(1, .45, 1);
+  const head = new T.Group(); head.position.set(0, 1.42, 0); body.add(head);
+  mk(new T.SphereGeometry(.25, 18, 14), skin, 0, 0, 0, head);
+  mk(new T.SphereGeometry(.262, 18, 12, 0, TAU, 0, Math.PI * .52), hat, 0, .03, 0, head);
+  mk(new T.CylinderGeometry(.265, .265, .07, 18), M(0xc03a2a), 0, .02, 0, head);
+  mk(new T.SphereGeometry(.07, 10, 8), white, 0, .3, 0, head);
+  for (const s of [-1, 1]) { mk(new T.SphereGeometry(.032, 8, 6), dark, s * .085, -.03, .225, head); mk(new T.SphereGeometry(.045, 8, 6), M(0xff9a9a), s * .14, -.09, .19, head).scale.set(1, .6, .4); }
+  mk(new T.BoxGeometry(.36, .42, .2), pack, 0, 1.02, -.26); mk(new T.CylinderGeometry(.08, .08, .4, 10), M(0x6a8a3a), 0, 1.28, -.26).rotation.z = Math.PI / 2;
+  const scarf = mk(new T.BoxGeometry(.12, .3, .04), M(0x2aa69a), .1, 1.08, .2); scarf.geometry.translate(0, -.15, 0); scarf.position.y = 1.24;
+  mk(new T.TorusGeometry(.17, .05, 8, 16), M(0x2aa69a), 0, 1.25, 0).rotation.x = Math.PI / 2;
+  const limb = (x, y, len, r, mat, endMat, endGeo) => { const g = new T.Group(); g.position.set(x, y, 0); body.add(g); const m = mk(new T.CylinderGeometry(r, r * .9, len, 10), mat, 0, -len / 2, 0, g); if (endGeo) mk(endGeo, endMat, 0, -len, endGeo.type === 'BoxGeometry' ? .05 : 0, g); return g; };
+  const armL = limb(-.29, 1.2, .42, .065, coat, skin, new T.SphereGeometry(.07, 8, 6)), armR = limb(.29, 1.2, .42, .065, coat, skin, new T.SphereGeometry(.07, 8, 6));
+  const legL = limb(-.11, .72, .5, .085, pants, shoe, new T.BoxGeometry(.15, .1, .26)), legR = limb(.11, .72, .5, .085, pants, shoe, new T.BoxGeometry(.15, .1, .26));
+  root.traverse(o => { if (o.isMesh) o.receiveShadow = false; });
+  scene.add(root);
+  P.model = { root, body, head, armL, armR, legL, legR, scarf };
+}
+function animPlayer(dt, t) {
+  const m = P.model; if (!m) return;
+  m.root.position.copy(P.pos); m.root.rotation.y = P.yaw;
+  const hs = Math.hypot(P.vel.x, P.vel.z), k = clamp(hs / 7, 0, 1);
+  if (P.onGround) P.phase += dt * (3 + hs * 1.6);
+  const s = Math.sin(P.phase);
+  let aL = 0, aR = 0, lL = 0, lR = 0, lean = 0, armOut = 0;
+  if (P.onGround) { lL = s * .95 * k; lR = -s * .95 * k; aL = -s * .8 * k; aR = s * .8 * k; lean = .16 * k; m.body.position.y = Math.abs(Math.cos(P.phase)) * .05 * k + Math.sin(t * 2) * .006 * (1 - k); }
+  else if (P.vel.y > -9) { lL = -.7; lR = .35; aL = -2.3; aR = -2.0; lean = .05; armOut = .2; m.body.position.y = 0; }
+  else { const f = Math.sin(t * 16); aL = -2.6 + f * .5; aR = -2.6 - f * .5; lL = .4 + f * .4; lR = .4 - f * .4; lean = -.15; armOut = .5; m.body.position.y = 0; }
+  const sm = Math.min(1, dt * 14);
+  m.legL.rotation.x += (lL - m.legL.rotation.x) * sm; m.legR.rotation.x += (lR - m.legR.rotation.x) * sm;
+  m.armL.rotation.x += (aL - m.armL.rotation.x) * sm; m.armR.rotation.x += (aR - m.armR.rotation.x) * sm;
+  m.armL.rotation.z += (-armOut - m.armL.rotation.z) * sm; m.armR.rotation.z += (armOut - m.armR.rotation.z) * sm;
+  m.body.rotation.x += (lean - m.body.rotation.x) * sm;
+  m.scarf.rotation.x = -.3 - k * .8 - (P.onGround ? 0 : clamp(-P.vel.y / 20, 0, 1) * 1.6) + Math.sin(t * 12) * .1 * (k + (P.onGround ? 0 : 1));
+  P.squash = Math.max(0, P.squash - dt * 2.5); const q = 1 - P.squash * .5;
+  m.body.scale.set(1 + (1 - q) * .5, q, 1 + (1 - q) * .5);
+}
+
+// ---------- カメラ（後ろから。物にめりこまないように近づく） ----------
+const CAM = { yaw: START.yaw, pitch: -.22, cur: SET.camD };
+const _piv = new T.Vector3(), _dir = new T.Vector3();
+function updCam(dt) {
+  const sens = .0024 * SET.sens;
+  CAM.yaw -= IN.lookX * sens; CAM.pitch = clamp(CAM.pitch - IN.lookY * sens * (SET.invY ? -1 : 1), -1.3, 1.05); IN.lookX = IN.lookY = 0;
+  if (IN.zoom) { SET.camD = clamp(SET.camD + IN.zoom * .5, 3, 9); IN.zoom = 0; saveSet(); }
+  _piv.set(P.pos.x, P.pos.y + 1.5, P.pos.z);
+  const cp = Math.cos(CAM.pitch); _dir.set(Math.sin(CAM.yaw) * cp, Math.sin(CAM.pitch), Math.cos(CAM.yaw) * cp);
+  // めりこみ：頭の位置からカメラへ、少しずつ進んで調べる
+  let allow = SET.camD;
+  queryBox(Math.min(_piv.x, _piv.x - _dir.x * SET.camD) - .4, Math.min(_piv.y, _piv.y - _dir.y * SET.camD) - .4, Math.min(_piv.z, _piv.z - _dir.z * SET.camD) - .4,
+    Math.max(_piv.x, _piv.x - _dir.x * SET.camD) + .4, Math.max(_piv.y, _piv.y - _dir.y * SET.camD) + .4, Math.max(_piv.z, _piv.z - _dir.z * SET.camD) + .4, _cand);
+  if (_cand.length) {
+    outer: for (let d = .3; d <= SET.camD; d += .18) {
+      const x = _piv.x - _dir.x * d, y = _piv.y - _dir.y * d, z = _piv.z - _dir.z * d;
+      for (const c of _cand) if (pushSphere(c, x, y, z, .2, _o)) { allow = Math.max(.35, d - .22); break outer; }
+    }
+  }
+  CAM.cur = allow < CAM.cur ? allow : CAM.cur + (allow - CAM.cur) * Math.min(1, dt * 3);
+  camera.position.set(_piv.x - _dir.x * CAM.cur, _piv.y - _dir.y * CAM.cur, _piv.z - _dir.z * CAM.cur);
+  camera.lookAt(_piv.x + _dir.x * 2, _piv.y + _dir.y * 2, _piv.z + _dir.z * 2);
+  if (P.model) P.model.root.visible = CAM.cur > .8;
+}
+// ================= ゲームの進み（タイトル・あそぶ・メニュー・クリア） =================
+const G = { state: 'boot', t: 0, acc: 0, zoneSeen: -1, saveT: 0, toastT: 0, bannerT: 0, cleared: false, titleT: 0, mvT: 0 };
+const STEP = 1 / 120;
+function update(dt) {
+  G.t += dt;
+  if (G.state === 'play') {
+    const [ax, ay] = moveAxes(), fx = Math.sin(CAM.yaw), fz = Math.cos(CAM.yaw);
+    const inp = { dx: fx * ay - fz * ax, dz: fz * ay + fx * ax, sprint: sprinting(), jumpE: takeEdge('jumpE') };
+    G.acc += Math.min(dt, .1);
+    let n = 0;
+    while (G.acc >= STEP && n < 12) { G.acc -= STEP; n++; G.mvT += STEP; for (const m of MOVERS) moverTick(m, G.mvT); pstep(STEP, inp); inp.jumpE = false; }
+    P.time += dt;
+    afterStep(dt);
+  } else {
+    G.mvT += dt; for (const m of MOVERS) moverTick(m, G.mvT); IN.jumpE = false;
+  }
+}
+// 1コマのあとで：最高の高さ・ゾーン・落ちた・てっぺん・自動セーブ
+function afterStep(dt) {
+  if (P.onGround && P.pos.y > P.best) P.best = P.pos.y;
+  const zi = zoneAt(P.pos.y).i;
+  if (P.onGround && zi > G.zoneSeen) { G.zoneSeen = zi; if (zi > 0 || P.time > 2) banner(ZONES[zi].name, `${ZONES[zi].y0} m　${ZONES[zi].sub}`); AU.chime(); }
+  if (EV.landed) {
+    EV.landed = 0;
+    if (EV.drop > 12) { toast(`${Math.round(EV.drop)} m 落ちた…`); if (EV.drop > 25) P.falls++; }
+  }
+  if (EV.splash) { EV.splash = false; P.falls++; toast('ドボン！ 海に落ちた… 港からやりなおし'); }
+  // てっぺん
+  if (SUMMIT && !G.cleared && P.onGround && P.pos.y >= SUMMIT.y - .3 && Math.hypot(P.pos.x - SUMMIT.x, P.pos.z - SUMMIT.z) < SUMMIT.R + .2) clearGame();
+  // 自動セーブ（止まっている足場に立っているとき）
+  G.saveT -= dt;
+  if (G.saveT <= 0 && P.onGround && !(P.gCol && P.gCol.mv)) { G.saveT = 2.5; store.set('save', snap()); }
+  // 風の音：高いほど、速く落ちるほど強い
+  AU.wind(clamp(P.pos.y / 600, 0, .6) + clamp(-P.vel.y / 40, 0, 1) * .8);
+}
+function snap() { return { v: 1, x: +P.pos.x.toFixed(2), y: +P.pos.y.toFixed(2), z: +P.pos.z.toFixed(2), yaw: +CAM.yaw.toFixed(3), best: Math.round(P.best), falls: P.falls, time: Math.round(P.time) }; }
+
+// ---------- 描く ----------
+function render(dt) {
+  if (G.state === 'title' || G.state === 'boot') {
+    G.titleT += dt; const a = G.titleT * .05 + .6, h = 26 + Math.sin(G.titleT * .07) * 10;
+    camera.position.set(Math.cos(a) * 75, h, Math.sin(a) * 75); camera.lookAt(0, h + 22, 0); applySky(h, G.t);
+  } else { updCam(dt); applySky(camera.position.y, G.t); }
+  // 太陽の影は自分のまわりだけ
+  const fx = G.state === 'title' ? 0 : P.pos.x, fy = G.state === 'title' ? 20 : P.pos.y, fz = G.state === 'title' ? 0 : P.pos.z;
+  sun.position.set(fx + SKYNOW.sunDir.x * 90, fy + SKYNOW.sunDir.y * 90, fz + SKYNOW.sunDir.z * 90); sun.target.position.set(fx, fy, fz); sun.target.updateMatrixWorld();
+  skyMesh.position.copy(camera.position);
+  if (FX.water) { FX.water.material.map.offset.x = G.t * .004; FX.water.material.map.offset.y = G.t * .002; FX.water.position.x = Math.round(camera.position.x / 50) * 50; FX.water.position.z = Math.round(camera.position.z / 50) * 50; }
+  for (const s of FX.sheets) { s.material.map.offset.x = G.t * .003; s.material.opacity = .5 * clamp(Math.abs(camera.position.y - s.position.y) / 6, .15, 1); }
+  if (FX.star) { FX.star.rotation.y = G.t * .8; FX.star.position.y = STAR_POS.y + Math.sin(G.t * 1.5) * .25; }
+  animPlayer(dt, G.t);
+  renderer.render(scene, camera);
+}
+
+// ---------- HUD ----------
+let altMarks = false;
+function hud(dt) {
+  if (G.state !== 'play' && G.state !== 'pause') return;
+  $('hHeight').textContent = Math.max(0, Math.round(P.pos.y));
+  $('hBest').textContent = Math.round(P.best);
+  $('hZone').textContent = zoneAt(P.pos.y).name;
+  const t = Math.floor(P.time); $('hTime').textContent = Math.floor(t / 3600) ? `${Math.floor(t / 3600)}:${String(Math.floor(t / 60) % 60).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}` : `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+  $('hFalls').textContent = P.falls;
+  const H = SUMMIT ? SUMMIT.y : ZH * 7;
+  $('altMe').style.bottom = clamp(P.pos.y / H, 0, 1) * 100 + '%'; $('altMe').style.top = 'auto';
+  $('altBest').style.bottom = clamp(P.best / H, 0, 1) * 100 + '%'; $('altBest').style.top = 'auto';
+  if (!altMarks) { altMarks = true; const a = $('alt'); for (const Z of ZONES) { const b = document.createElement('b'); b.textContent = Z.y0 ? Z.y0 + 'm' : ''; b.style.bottom = Z.y0 / H * 100 + '%'; a.appendChild(b); } }
+  if (G.toastT > 0) { G.toastT -= dt; if (G.toastT <= 0) $('toast').classList.remove('on'); }
+  if (G.bannerT > 0) { G.bannerT -= dt; if (G.bannerT <= 0) $('banner').classList.remove('on'); }
+}
+function toast(s, t = 2.2) { const e = $('toast'); e.textContent = s; e.classList.add('on'); G.toastT = t; }
+function banner(title, sub) { $('bnTitle').textContent = title; $('bnSub').textContent = sub; $('banner').classList.add('on'); G.bannerT = 2.8; }
+
+// ---------- はじめる・やめる ----------
+function showOnly(id) { for (const s of ['title', 'pause', 'codeBox', 'setBox', 'helpBox', 'clear', 'ask']) $(s).classList.toggle('hidden', s !== id); }
+function startAt(s) {
+  // s があれば、その続きから（コードや自動セーブ）。なければ港から
+  P.vel.set(0, 0, 0); P.onGround = false; P.squash = 0; G.cleared = false;
+  if (s) {
+    P.best = s.best || 0; P.falls = s.falls || 0; P.time = s.time || 0;
+    placeSafe(s.x, s.y, s.z); CAM.yaw = s.yaw ?? START.yaw;
+  } else { P.best = 0; P.falls = 0; P.time = 0; respawnStart(); }
+  P.airTop = P.pos.y; CAM.pitch = -.22; CAM.cur = SET.camD; P.yaw = CAM.yaw;
+  G.zoneSeen = zoneAt(P.pos.y).i; G.state = 'play'; G.acc = 0; G.saveT = 1;
+  showOnly(null); $('hud').classList.remove('hidden'); $('touch').classList.toggle('off', !IN.touchOn);
+  banner(zoneAt(P.pos.y).name, `${Math.round(P.pos.y)} m から`);
+  if (!IN.touchOn) { try { const r = canvas.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (e) { /* */ } }
+}
+// コードの場所に立たせる。足もとに何もなければ、いちばん近い足場の上へ
+function placeSafe(x, y, z) {
+  P.pos.set(x, y + .04, z);
+  if (fits(P.pos.x, P.pos.y, P.pos.z) && groundBelow(1.5) >= 0) { P.pos.y -= groundBelow(1.5); return; }
+  let best = null, bd = 1e9;
+  for (const n of ROUTE) { const d = Math.hypot(n.x - x, (n.y - y) * 1.5, n.z - z); if (d < bd && !n.mover) { bd = d; best = n; } }
+  if (best) P.pos.set(best.x, best.y + .05, best.z); else respawnStart();
+}
+function togglePause(on) {
+  if (on && G.state === 'play') { G.state = 'pause'; showOnly('pause'); store.set('save', snap()); try { document.exitPointerLock(); } catch (e) { /* */ } }
+  else if (!on && G.state === 'pause') { G.state = 'play'; showOnly(null); if (!IN.touchOn) { try { const r = canvas.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (e) { /* */ } } }
+}
+function toTitle() {
+  if (G.state === 'play' || G.state === 'pause') store.set('save', snap());
+  G.state = 'title'; G.titleT = 0; showOnly('title'); $('hud').classList.add('hidden'); $('touch').classList.add('off');
+  try { document.exitPointerLock(); } catch (e) { /* */ }
+  drawTitle();
+}
+function drawTitle() {
+  const s = store.get('save', null);
+  $('bCont').disabled = !s; $('contInfo').textContent = s ? `${Math.round(s.y)} m・最高 ${s.best} m・${fmtTime(s.time)}` : 'まだ記録がありません';
+  $('recLine').textContent = REC.clears ? `てっぺん ${REC.clears} 回・ベスト ${fmtTime(REC.bestTime)}（落ちた回数 ${REC.bestFalls}）` : REC.best ? `これまでの最高 ${REC.best} m` : '';
+}
+const fmtTime = s => { s = Math.round(s || 0); const h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, ss = s % 60; return h ? `${h}時間${m}分` : `${m}分${String(ss).padStart(2, '0')}秒`; };
+function clearGame() {
+  G.cleared = true; AU.fanfare();
+  const first = !REC.clears || P.time < REC.bestTime;
+  REC.clears++; REC.best = Math.max(REC.best, Math.round(P.best)); if (first) { REC.bestTime = Math.round(P.time); REC.bestFalls = P.falls; } saveRec();
+  $('clTime').textContent = fmtTime(P.time); $('clFalls').textContent = P.falls + ' 回'; $('clBest').textContent = fmtTime(REC.bestTime) + (first ? '（新記録！）' : '');
+  G.state = 'pause'; showOnly('clear'); try { document.exitPointerLock(); } catch (e) { /* */ }
+}
+
+// ================= セーブコード（20文字：場所・向き・最高・落ちた回数・時間＋まちがいチェック） =================
+// 0〜9 と A〜Z（まぎらわしい I・L・O・U をのぞく）。打つときの O は 0、I と L は 1 とみなす
+const ABC = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+const CODE_VER = 1n;
+function hash24(n) { let h = 0x811c9dc5; for (let i = 0; i < 10; i++) { h ^= Number((n >> BigInt(i * 8)) & 255n); h = Math.imul(h, 0x01000193) >>> 0; } h ^= 0x5a17c3; h = Math.imul(h ^ (h >>> 13), 0x5bd1e995) >>> 0; return BigInt((h ^ (h >>> 15)) & 0xffffff); }
+function maskOf(k) { let m = 0n, s = Number(k) | 1; for (let i = 0; i < 4; i++) { s = Math.imul(s ^ (s >>> 15), 0x2c1b3c6d) >>> 0; s = (s ^ (s >>> 12)) >>> 0; m = (m << 19n) | BigInt(s & 0x7ffff); } return m & ((1n << 76n) - 1n); }
+function makeCode(s) {
+  const q = (v, lo, step, bits) => BigInt(clamp(Math.round((v - lo) / step), 0, (1 << bits) - 1));
+  const yawN = ((s.yaw % TAU) + TAU) % TAU;
+  let p = CODE_VER;
+  p = (p << 12n) | q(s.x, -204.8, .1, 12); p = (p << 13n) | q(s.y, -10, .1, 13); p = (p << 12n) | q(s.z, -204.8, .1, 12);
+  p = (p << 5n) | BigInt(Math.round(yawN / TAU * 32) & 31); p = (p << 10n) | q(s.best, 0, 1, 10); p = (p << 10n) | q(s.falls, 0, 1, 10); p = (p << 11n) | q(s.time / 60, 0, 1, 11);
+  // p は 3+12+13+12+5+10+10+11 = 76 bit
+  const h = hash24(p), x = p ^ maskOf(h), all = (h << 76n) | x;   // 100 bit
+  let out = ''; for (let i = 19; i >= 0; i--) out += ABC[Number((all >> BigInt(i * 5)) & 31n)];
+  return out.match(/.{5}/g).join('-');
+}
+function readCode(str) {
+  const t = String(str || '').toUpperCase().replace(/O/g, '0').replace(/[IL]/g, '1').replace(/[^0-9A-Z]/g, '');
+  if (t.length !== 20) return { err: '20文字のコードを入れてください（いま ' + t.length + ' 文字）' };
+  let all = 0n; for (const ch of t) { const v = ABC.indexOf(ch); if (v < 0) return { err: '使えない文字があります：' + ch }; all = (all << 5n) | BigInt(v); }
+  const h = all >> 76n, p = (all & ((1n << 76n) - 1n)) ^ maskOf(h);
+  if (hash24(p) !== h) return { err: 'コードがちがうようです。打ちまちがいがないか見てください' };
+  let v = p; const take = bits => { const r = v & ((1n << BigInt(bits)) - 1n); v >>= BigInt(bits); return Number(r); };
+  const time = take(11) * 60, falls = take(10), best = take(10), yaw = take(5) / 32 * TAU, z = take(12) * .1 - 204.8, y = take(13) * .1 - 10, x = take(12) * .1 - 204.8, ver = take(3);
+  if (ver !== Number(CODE_VER)) return { err: 'このコードは使えない版のものです' };
+  return { s: { x, y, z, yaw, best, falls, time } };
+}
+// ================= メニューのボタン =================
+let codeMode = 'out', codeFrom = 'title';
+const back = () => { if (codeFrom === 'pause' && G.state === 'pause') showOnly(G.cleared ? 'clear' : 'pause'); else if (G.state === 'title') showOnly('title'); else showOnly(null); };
+function openCode(mode, from) {
+  codeMode = mode; codeFrom = from; showOnly('codeBox'); const tx = $('codeTx'); $('codeMsg').textContent = '';
+  if (mode === 'out') {
+    $('codeTtl').textContent = 'いまの場所のコード';
+    if (!(P.onGround && !(P.gCol && P.gCol.mv))) { tx.value = ''; $('codeNote').textContent = 'コードは、止まっている足場の上に立っているときに作れます。'; $('codeAct').textContent = 'もどる'; return; }
+    tx.value = makeCode(snap()); tx.readOnly = true;
+    $('codeNote').textContent = `この場所（${Math.round(P.pos.y)} m）のコードです。メモしておくと、「コードで続きから」でこの場所にもどれます。最高の高さ・落ちた回数・時間も入っています。`;
+    $('codeAct').textContent = 'コピーする';
+  } else {
+    $('codeTtl').textContent = 'コードで続きから'; tx.value = ''; tx.readOnly = false;
+    $('codeNote').textContent = 'とっておいたコード（20文字）を入れて「この場所へ」を押してください。いまの続きは、そのコードの場所に変わります。';
+    $('codeAct').textContent = 'この場所へ'; setTimeout(() => { try { tx.focus(); } catch (e) { /* */ } }, 60);
+  }
+}
+$('codeAct').onclick = async () => {
+  AU.init(); AU.click(); const tx = $('codeTx');
+  if (codeMode === 'out') {
+    if (!tx.value) { back(); return; }
+    let okc = false; try { await navigator.clipboard.writeText(tx.value); okc = true; } catch (e) { /* コピーできない環境 */ }
+    if (!okc) { try { tx.readOnly = false; tx.select(); okc = document.execCommand('copy'); tx.readOnly = true; } catch (e) { /* */ } }
+    $('codeMsg').textContent = okc ? 'コピーしました！' : 'コピーできませんでした。長押しして選んでコピーしてください';
+    return;
+  }
+  const r = readCode(tx.value);
+  if (r.err) { $('codeMsg').textContent = r.err; return; }
+  $('codeMsg').textContent = '';
+  startAt(r.s); toast(`${Math.round(r.s.y)} m から続けます`);
+};
+$('codeClose').onclick = () => { AU.click(); back(); };
+$('codeTx').addEventListener('keydown', e => { if (e.key === 'Enter') $('codeAct').click(); e.stopPropagation(); });
+$('codeTx').addEventListener('input', () => { if (codeMode === 'in') { const t = $('codeTx').value.toUpperCase().replace(/[^0-9A-Z]/g, ''); $('codeMsg').textContent = t.length ? `${t.length} / 20 文字` : ''; } });
+
+$('bStart').onclick = () => {
+  AU.init(); AU.click(); const s = store.get('save', null);
+  if (s && s.y > 3) { $('askTtl').textContent = 'はじめから'; $('askTx').textContent = `いまの続き（${Math.round(s.y)} m・最高 ${s.best} m）は消えて、港からになります。続きをとっておきたいときは、先に「つづきから」でメニューを開き、コードを出しておいてください。`; showOnly('ask'); }
+  else startAt(null);
+};
+$('askYes').onclick = () => { AU.click(); store.del('save'); startAt(null); };
+$('askNo').onclick = () => { AU.click(); showOnly('title'); };
+$('bCont').onclick = () => { AU.init(); AU.click(); const s = store.get('save', null); if (s) startAt(s); };
+$('bCodeIn').onclick = () => { AU.init(); AU.click(); openCode('in', 'title'); };
+$('bHelp').onclick = () => { AU.click(); showOnly('helpBox'); helpFrom = 'title'; };
+$('bSet').onclick = () => { AU.click(); openSet('title'); };
+$('bPause').onclick = () => { AU.init(); AU.click(); togglePause(true); };
+$('pBack').onclick = () => { AU.click(); togglePause(false); };
+$('pCode').onclick = () => { AU.click(); openCode('out', 'pause'); };
+$('pCodeIn').onclick = () => { AU.click(); openCode('in', 'pause'); };
+$('pSet').onclick = () => { AU.click(); openSet('pause'); };
+$('pHelp').onclick = () => { AU.click(); showOnly('helpBox'); helpFrom = 'pause'; };
+$('pTitle').onclick = () => { AU.click(); toTitle(); };
+let helpFrom = 'title', setFrom = 'title';
+$('helpDone').onclick = () => { AU.click(); showOnly(helpFrom === 'pause' ? 'pause' : 'title'); };
+$('clStay').onclick = () => { AU.click(); G.state = 'play'; showOnly(null); if (!IN.touchOn) { try { const r = canvas.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (e) { /* */ } } };
+$('clTitle').onclick = () => { AU.click(); store.del('save'); G.cleared = false; toTitle(); };
+
+// ---------- 設定 ----------
+function openSet(from) {
+  setFrom = from; showOnly('setBox');
+  $('sSens').value = SET.sens; $('sSensV').textContent = SET.sens.toFixed(2); $('sCamD').value = SET.camD; $('sCamDV').textContent = SET.camD.toFixed(1) + 'm';
+  for (const b of $('sInv').children) b.classList.toggle('on', (b.dataset.v === '1') === !!SET.invY);
+  for (const b of $('sQual').children) b.classList.toggle('on', b.dataset.v === SET.quality);
+}
+$('sSens').oninput = () => { SET.sens = +$('sSens').value; $('sSensV').textContent = SET.sens.toFixed(2); saveSet(); };
+$('sCamD').oninput = () => { SET.camD = +$('sCamD').value; $('sCamDV').textContent = SET.camD.toFixed(1) + 'm'; saveSet(); };
+for (const b of $('sInv').children) b.onclick = () => { SET.invY = b.dataset.v === '1'; saveSet(); openSet(setFrom); AU.click(); };
+for (const b of $('sQual').children) b.onclick = () => { SET.quality = b.dataset.v; saveSet(); applyQuality(); openSet(setFrom); AU.click(); };
+$('setDone').onclick = () => { AU.click(); showOnly(setFrom === 'pause' ? 'pause' : 'title'); };
+function applyQuality() {
+  const q = SET.quality, dpr = Math.min(devicePixelRatio || 1, 2);
+  renderer.setPixelRatio(q === 'low' ? Math.min(1, dpr) * .75 : q === 'high' ? dpr : Math.min(1.5, dpr));
+  const sh = q !== 'low'; renderer.shadowMap.enabled = sh; sun.castShadow = sh;
+  const sz = q === 'high' ? 2048 : 1024; if (sun.shadow.mapSize.x !== sz) { sun.shadow.mapSize.set(sz, sz); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; } }
+  scene.fog.far = q === 'low' ? 420 : 640; camera.far = q === 'low' ? 1600 : 2600; camera.updateProjectionMatrix();
+  scene.traverse(o => { if (o.material && o.material.needsUpdate !== undefined) o.material.needsUpdate = true; });
+}
+
+// ---------- 画面の大きさ・横画面 ----------
+function onResize() {
+  const w = VW(), h = VH(), r = $('rot');
+  r.style.width = w + 'px'; r.style.height = h + 'px'; r.style.transform = ROT.on ? 'rotate(90deg) translateY(-100%)' : 'none';
+  document.body.classList.toggle('short', h < 500);
+  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+addEventListener('resize', onResize);
+function applyHome(S) {
+  if (!S || typeof S !== 'object') return;
+  if (typeof S.land === 'boolean' && S.land !== ROT.on) { ROT.on = S.land; onResize(); }
+  if (typeof S.sound === 'boolean') HUB.sound = S.sound;
+  if (typeof S.vol === 'number') HUB.vol = clamp(S.vol, 0, 1);
+  if (typeof S.sens === 'number') HUB.sens = S.sens;
+  AU.applyVol();
+}
+// ================= はじまり =================
+let last = performance.now(), hold = false;
+function loop(now) {
+  requestAnimationFrame(loop);
+  const dt = Math.min(.1, Math.max(0, (now - last) / 1000)); last = now;
+  if (hold) return;
+  try { update(dt); hud(dt); render(dt); } catch (e) { if ((loop.err = (loop.err || 0) + 1) <= 3) console.error(e); }
+}
+const nextFrame = () => new Promise(r => requestAnimationFrame(() => r()));
+async function boot() {
+  if (HUB.embedded) {
+    try { applyHome(JSON.parse(localStorage.getItem('3dame-settings'))); } catch (e) { /* ホームの設定なし */ }
+    addEventListener('message', e => { if (e.data && e.data.h3dSet) applyHome(e.data.h3dSet); });
+  }
+  onResize(); applyQuality();
+  try { await Promise.race([document.fonts.load('400 20px "Dela Gothic One"', '雲のてっぺん'), document.fonts.load('900 20px "M PLUS Rounded 1c"', '港'), new Promise(r => setTimeout(r, 2500))]); } catch (e) { /* 文字が読めなくてもつづける */ }
+  $('load').textContent = '空にガラクタを積んでいます…'; await nextFrame();
+  buildWorld(); buildScenery(); buildPlayer();
+  respawnStart(); applySky(0, 0);
+  if (IN.touchOn) document.body.classList.add('touch');
+  $('load').classList.add('hidden');
+  toTitle();
+  requestAnimationFrame(loop);
+  addEventListener('pointerdown', () => AU.init(), { once: true });
+}
+// テスト用
+window.__K = {
+  G, P, CAM, ROUTE, ZONES, COLS, MOVERS, KEEP, IN, SET, store, makeCode, readCode, startAt, togglePause, toTitle, pstep, update, render, groundBelow, fits, queryBox, pushSphere, placeSafe,
+  camera, scene, renderer, get SUMMIT() { return SUMMIT; }, STEP, moverTick, collidePlayer,
+  hold(v) { hold = !!v; },
+  step(sec, dt = 1 / 60, draw = false) { for (let t = 0; t < sec; t += dt) { update(dt); hud(dt); } if (draw) render(1 / 60); }
+};
+boot();
+</script>
+</body></html>
