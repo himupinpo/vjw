@@ -144,13 +144,27 @@ function animPlayer(dt, t) {
 
 // ---------- カメラ（後ろから。物にめりこまないように近づく） ----------
 const CAM = { yaw: START.yaw, pitch: -.22, cur: SET.camD };
+// カメラのきょり：0〜12m。FP_D より近いと一人称（ホイール・ピンチ・設定・V キー）
+const FP_D = .9, CAM_MAX = 12;
+let camBack = SET.camD >= FP_D ? SET.camD : 5.5;
+function setCamD(d) { SET.camD = clamp(d, 0, CAM_MAX); if (SET.camD >= FP_D) camBack = SET.camD; saveSet(); viewShow(); }
+function toggleView() { setCamD(SET.camD < FP_D ? Math.max(3, camBack) : 0); }
+function viewShow() { const b = document.getElementById('bView'); if (b) b.textContent = SET.camD < FP_D ? '3人称' : '1人称'; const c = document.getElementById('cross'); if (c) c.classList.toggle('fp', SET.camD < FP_D); }
 const _piv = new T.Vector3(), _dir = new T.Vector3();
 function updCam(dt) {
   const sens = .0024 * SET.sens;
-  CAM.yaw -= IN.lookX * sens; CAM.pitch = clamp(CAM.pitch - IN.lookY * sens * (SET.invY ? -1 : 1), -1.3, 1.05); IN.lookX = IN.lookY = 0;
-  if (IN.zoom) { SET.camD = clamp(SET.camD + IN.zoom * .5, 3, 9); IN.zoom = 0; saveSet(); }
-  _piv.set(P.pos.x, P.pos.y + 1.5, P.pos.z);
+  const fp = SET.camD < FP_D;
+  CAM.yaw -= IN.lookX * sens; CAM.pitch = clamp(CAM.pitch - IN.lookY * sens * (SET.invY ? -1 : 1), fp ? -1.45 : -1.3, fp ? 1.45 : 1.05); IN.lookX = IN.lookY = 0;
+  if (IN.zoom) { setCamD(SET.camD + IN.zoom); IN.zoom = 0; }
   const cp = Math.cos(CAM.pitch); _dir.set(Math.sin(CAM.yaw) * cp, Math.sin(CAM.pitch), Math.cos(CAM.yaw) * cp);
+  // 一人称：目の位置から見る。体はカメラの向きを向く
+  if (fp) {
+    CAM.cur = 0; P.yaw = CAM.yaw; if (P.model) { P.model.root.rotation.y = P.yaw; P.model.root.visible = false; }
+    camera.position.set(P.pos.x, P.pos.y + 1.52, P.pos.z);
+    camera.lookAt(P.pos.x + _dir.x * 2, P.pos.y + 1.52 + _dir.y * 2, P.pos.z + _dir.z * 2);
+    return;
+  }
+  _piv.set(P.pos.x, P.pos.y + 1.5, P.pos.z);
   // めりこみ：頭の位置からカメラへ、少しずつ進んで調べる
   let allow = SET.camD;
   queryBox(Math.min(_piv.x, _piv.x - _dir.x * SET.camD) - .4, Math.min(_piv.y, _piv.y - _dir.y * SET.camD) - .4, Math.min(_piv.z, _piv.z - _dir.z * SET.camD) - .4,
@@ -161,7 +175,7 @@ function updCam(dt) {
       for (const c of _cand) if (pushSphere(c, x, y, z, .2, _o)) { allow = Math.max(.35, d - .22); break outer; }
     }
   }
-  CAM.cur = allow < CAM.cur ? allow : CAM.cur + (allow - CAM.cur) * Math.min(1, dt * 3);
+  CAM.cur = allow < CAM.cur || CAM.cur < FP_D ? allow : CAM.cur + (allow - CAM.cur) * Math.min(1, dt * 3);
   camera.position.set(_piv.x - _dir.x * CAM.cur, _piv.y - _dir.y * CAM.cur, _piv.z - _dir.z * CAM.cur);
   camera.lookAt(_piv.x + _dir.x * 2, _piv.y + _dir.y * 2, _piv.z + _dir.z * 2);
   if (P.model) P.model.root.visible = CAM.cur > .8;

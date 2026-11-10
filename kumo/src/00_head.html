@@ -42,6 +42,8 @@ body.touch #hStats { bottom: auto; top: calc(var(--sat) + 56px); }
 #toast { position: absolute; left: 50%; top: 36%; transform: translateX(-50%); padding: 8px 18px; border-radius: 999px; background: rgba(8,12,30,.72); font-weight: 800; font-size: 16px;
   opacity: 0; transition: opacity .3s; white-space: nowrap; }
 #toast.on { opacity: 1; }
+#bView { position: absolute; right: calc(var(--sar) + 62px); top: calc(var(--sat) + 10px); height: 40px; padding: 0 10px; border-radius: 12px; border: 0; background: rgba(10,16,40,.55); font-size: 13px; font-weight: 900; pointer-events: auto; z-index: 5; touch-action: manipulation; }
+#cross.fp { width: 6px; height: 6px; margin: -3px; background: #fff; box-shadow: 0 0 0 2px rgba(0,0,0,.35); }
 #cross { position: absolute; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px; border-radius: 50%; background: rgba(255,255,255,.7); }
 
 /* ---------- タッチ ---------- */
@@ -111,6 +113,7 @@ body.hub #title { padding-top: calc(var(--sat) + 52px); }
     <div id="alt"><i id="altBest"></i><i id="altMe"></i></div>
     <div id="hStats">⏱ <span id="hTime">0:00</span>　落ちた回数 <span id="hFalls">0</span></div>
     <button id="bPause" aria-label="メニュー">Ⅱ</button>
+    <button id="bView" aria-label="視点の切りかえ">1人称</button>
     <div id="banner"><small id="bnSub"></small><b id="bnTitle"></b></div>
     <div id="toast"></div>
   </div>
@@ -158,7 +161,7 @@ body.hub #title { padding-top: calc(var(--sat) + 52px); }
   <div id="setBox" class="scr dim hidden"><div class="panel">
     <h2>設定</h2>
     <div class="set"><span>見回す速さ</span><input type="range" id="sSens" min=".3" max="2.5" step=".05"><b id="sSensV"></b></div>
-    <div class="set"><span>カメラのきょり</span><input type="range" id="sCamD" min="3" max="9" step=".25"><b id="sCamDV"></b></div>
+    <div class="set"><span>カメラのきょり</span><input type="range" id="sCamD" min="0" max="12" step=".25"><b id="sCamDV"></b></div>
     <div class="set"><span>上下を反転</span><div class="seg" id="sInv"><button data-v="0">しない</button><button data-v="1">する</button></div></div>
     <div class="set"><span>画質</span><div class="seg" id="sQual"><button data-v="low">軽い</button><button data-v="mid">ふつう</button><button data-v="high">きれい</button></div></div>
     <button class="btn main" id="setDone">とじる</button>
@@ -167,8 +170,8 @@ body.hub #title { padding-top: calc(var(--sat) + 52px); }
   <div id="helpBox" class="scr dim hidden"><div class="panel help">
     <h2>あそびかた</h2>
     空に浮かぶガラクタの上を、ジャンプでつたって、いちばん上の「てっぺん」をめざします。足をすべらせると、下のほうまで落ちてしまうことも…。<br>
-    <b>パソコン</b>：WASD で移動、マウスで見回す（画面をクリックで固定）、スペースでジャンプ、Shift でダッシュ、ホイールでカメラのきょり、Esc か P でメニュー（マウスが固定されているときは右上のボタンは押せません）。<br>
-    <b>スマホ</b>：左をなぞって移動、右をなぞって見回す、「ジャンプ」でジャンプ。「ダッシュ」ボタンを押すと ON（走る）と OFF（歩く）が切りかわります。<br>
+    <b>パソコン</b>：WASD で移動、マウスで見回す（画面をクリックで固定）、スペースでジャンプ、Shift でダッシュ、ホイールでカメラのきょり（いちばん近づけると一人称）、V で一人称と三人称の切りかえ、Esc か P でメニュー（マウスが固定されているときは右上のボタンは押せません）。<br>
+    <b>スマホ</b>：左をなぞって移動、右をなぞって見回す、右側を2本指で広げる／すぼめるとカメラが近づく／遠ざかる（いちばん近いと一人称）、右上の「1人称」ボタンでも切りかえ、「ジャンプ」でジャンプ。「ダッシュ」ボタンを押すと ON（走る）と OFF（歩く）が切りかわります。<br>
     <b>セーブコード</b>：メニューの「いまの場所のコードを出す」で、立っている場所を20文字のコードにできます。メモしておけば「コードで続きから」でその場所にもどれます。ほかの人に教えれば、同じ場所から登れます。<br>
     <b>コツ</b>：遠い足場はダッシュしてから、ふちのぎりぎりでジャンプ。動きに慣性はないので、手をはなせば空中でもすぐ止まります（行きすぎたら空中で引きもどせる）。
     <button class="btn main" id="helpDone">とじる</button>

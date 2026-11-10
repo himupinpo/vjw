@@ -164,6 +164,7 @@ addEventListener('keydown', e => {
   if (e.repeat) return;
   IN.keys.add(e.code);
   if (e.code === 'Space') { IN.jumpE = true; IN.jumpHeld = true; }
+  if (e.code === 'KeyV' && G.state === 'play') toggleView();
   if ((e.code === 'Escape' || e.code === 'KeyP') && (G.state === 'play' || G.state === 'pause')) togglePause(G.state === 'play');
 });
 addEventListener('keyup', e => { IN.keys.delete(e.code); if (e.code === 'Space') IN.jumpHeld = false; });
@@ -184,7 +185,7 @@ canvas.addEventListener('mousedown', () => {
   if (G.state === 'play' && !IN.touchOn && document.pointerLockElement !== canvas) { try { const r = canvas.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (er) { /* 固定できない */ } }
 });
 addEventListener('mousemove', e => { if (document.pointerLockElement === canvas) { IN.lookX += e.movementX; IN.lookY += e.movementY; } });
-canvas.addEventListener('wheel', e => { IN.zoom += Math.sign(e.deltaY); e.preventDefault(); }, { passive: false });
+canvas.addEventListener('wheel', e => { IN.zoom += clamp(e.deltaY * .01, -1.2, 1.2); e.preventDefault(); }, { passive: false });
 document.addEventListener('pointerlockchange', () => { if (!document.pointerLockElement && G.state === 'play' && !IN.touchOn) togglePause(true); });
 
 // タッチ：左半分＝移動の棒、右半分＝見回す、ボタン＝ジャンプ・ダッシュ固定
@@ -205,18 +206,23 @@ document.addEventListener('pointerlockchange', () => { if (!document.pointerLock
     if (p.x < VW() * .45 && !IN.stick) {
       IN.stick = { id: e.pointerId, x: p.x, y: p.y }; IN.stickX = IN.stickY = 0;
       stickEl.style.display = 'block'; stickEl.style.left = p.x + 'px'; stickEl.style.top = p.y + 'px'; knob.style.transform = '';
-    } else IN.looks.set(e.pointerId, p);
+    } else { IN.looks.set(e.pointerId, p); pinchStart(); }
   });
+  // 2本指でつまむ：広げると近づく（いちばん近いと一人称）、すぼめると遠ざかる
+  let pinch = null;
+  const pinchD = () => { const v = [...IN.looks.values()]; return Math.hypot(v[0].x - v[1].x, v[0].y - v[1].y) || 1; };
+  function pinchStart() { if (IN.looks.size >= 2 && !pinch) pinch = { d: pinchD(), cam: SET.camD }; }
   layer.addEventListener('pointermove', e => {
     const p = toStage(e.clientX, e.clientY);
     if (IN.stick && IN.stick.id === e.pointerId) {
       const R = 56; let dx = p.x - IN.stick.x, dy = p.y - IN.stick.y; const l = Math.hypot(dx, dy); if (l > R) { dx *= R / l; dy *= R / l; }
       IN.stickX = dx / R; IN.stickY = -dy / R; knob.style.transform = `translate(${dx}px,${dy}px)`;
     } else if (IN.looks.has(e.pointerId)) {
-      const q = IN.looks.get(e.pointerId); IN.lookX += (p.x - q.x) * 2.1; IN.lookY += (p.y - q.y) * 2.1; IN.looks.set(e.pointerId, p);
+      const q = IN.looks.get(e.pointerId); if (!pinch) { IN.lookX += (p.x - q.x) * 2.1; IN.lookY += (p.y - q.y) * 2.1; } IN.looks.set(e.pointerId, p);
+      if (pinch && IN.looks.size >= 2) { const r = pinch.d / pinchD(); setCamD(Math.max(pinch.cam, .6) * r - (r < 1 ? (1 - r) * 1.5 : 0)); }
     }
   });
-  const end = e => { if (IN.stick && IN.stick.id === e.pointerId) { IN.stick = null; IN.stickX = IN.stickY = 0; stickEl.style.display = 'none'; } IN.looks.delete(e.pointerId); };
+  const end = e => { if (IN.stick && IN.stick.id === e.pointerId) { IN.stick = null; IN.stickX = IN.stickY = 0; stickEl.style.display = 'none'; } IN.looks.delete(e.pointerId); if (IN.looks.size < 2) pinch = null; };
   layer.addEventListener('pointerup', end); layer.addEventListener('pointercancel', end);
 })();
 function takeEdge(k) { const v = IN[k]; IN[k] = false; return v; }

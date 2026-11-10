@@ -80,7 +80,7 @@ function startAt(s) {
     P.best = s.best || 0; P.falls = s.falls || 0; P.time = s.time || 0;
     placeSafe(s.x, s.y, s.z); CAM.yaw = s.yaw ?? START.yaw;
   } else { P.best = 0; P.falls = 0; P.time = 0; respawnStart(); }
-  P.airTop = P.pos.y; CAM.pitch = -.22; CAM.cur = SET.camD; P.yaw = CAM.yaw;
+  P.airTop = P.pos.y; CAM.pitch = -.22; CAM.cur = SET.camD; P.yaw = CAM.yaw; viewShow();
   G.zoneSeen = zoneAt(P.pos.y).i; G.state = 'play'; G.acc = 0; G.saveT = 1;
   showOnly(null); $('hud').classList.remove('hidden'); $('touch').classList.toggle('off', !IN.touchOn);
   banner(zoneAt(P.pos.y).name, `${Math.round(P.pos.y)} m から`);

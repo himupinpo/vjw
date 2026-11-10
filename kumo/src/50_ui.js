@@ -44,6 +44,7 @@ $('bCont').onclick = () => { AU.init(); AU.click(); const s = store.get('save', 
 $('bCodeIn').onclick = () => { AU.init(); AU.click(); openCode('in', 'title'); };
 $('bHelp').onclick = () => { AU.click(); showOnly('helpBox'); helpFrom = 'title'; };
 $('bSet').onclick = () => { AU.click(); openSet('title'); };
+$('bView').onclick = () => { AU.init(); AU.click(); toggleView(); };
 $('bPause').onclick = () => { AU.init(); AU.click(); togglePause(true); };
 $('pBack').onclick = () => { AU.click(); togglePause(false); };
 $('pCode').onclick = () => { AU.click(); openCode('out', 'pause'); };
@@ -59,12 +60,12 @@ $('clTitle').onclick = () => { AU.click(); store.del('save'); G.cleared = false;
 // ---------- 設定 ----------
 function openSet(from) {
   setFrom = from; showOnly('setBox');
-  $('sSens').value = SET.sens; $('sSensV').textContent = SET.sens.toFixed(2); $('sCamD').value = SET.camD; $('sCamDV').textContent = SET.camD.toFixed(1) + 'm';
+  $('sSens').value = SET.sens; $('sSensV').textContent = SET.sens.toFixed(2); $('sCamD').value = SET.camD; $('sCamDV').textContent = SET.camD < FP_D ? '一人称' : SET.camD.toFixed(1) + 'm';
   for (const b of $('sInv').children) b.classList.toggle('on', (b.dataset.v === '1') === !!SET.invY);
   for (const b of $('sQual').children) b.classList.toggle('on', b.dataset.v === SET.quality);
 }
 $('sSens').oninput = () => { SET.sens = +$('sSens').value; $('sSensV').textContent = SET.sens.toFixed(2); saveSet(); };
-$('sCamD').oninput = () => { SET.camD = +$('sCamD').value; $('sCamDV').textContent = SET.camD.toFixed(1) + 'm'; saveSet(); };
+$('sCamD').oninput = () => { setCamD(+$('sCamD').value); $('sCamDV').textContent = SET.camD < FP_D ? '一人称' : SET.camD.toFixed(1) + 'm'; };
 for (const b of $('sInv').children) b.onclick = () => { SET.invY = b.dataset.v === '1'; saveSet(); openSet(setFrom); AU.click(); };
 for (const b of $('sQual').children) b.onclick = () => { SET.quality = b.dataset.v; saveSet(); applyQuality(); openSet(setFrom); AU.click(); };
 $('setDone').onclick = () => { AU.click(); showOnly(setFrom === 'pause' ? 'pause' : 'title'); };

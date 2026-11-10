@@ -42,6 +42,8 @@ body.touch #hStats { bottom: auto; top: calc(var(--sat) + 56px); }
 #toast { position: absolute; left: 50%; top: 36%; transform: translateX(-50%); padding: 8px 18px; border-radius: 999px; background: rgba(8,12,30,.72); font-weight: 800; font-size: 16px;
   opacity: 0; transition: opacity .3s; white-space: nowrap; }
 #toast.on { opacity: 1; }
+#bView { position: absolute; right: calc(var(--sar) + 62px); top: calc(var(--sat) + 10px); height: 40px; padding: 0 10px; border-radius: 12px; border: 0; background: rgba(10,16,40,.55); font-size: 13px; font-weight: 900; pointer-events: auto; z-index: 5; touch-action: manipulation; }
+#cross.fp { width: 6px; height: 6px; margin: -3px; background: #fff; box-shadow: 0 0 0 2px rgba(0,0,0,.35); }
 #cross { position: absolute; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px; border-radius: 50%; background: rgba(255,255,255,.7); }
 
 /* ---------- タッチ ---------- */
@@ -111,6 +113,7 @@ body.hub #title { padding-top: calc(var(--sat) + 52px); }
     <div id="alt"><i id="altBest"></i><i id="altMe"></i></div>
     <div id="hStats">⏱ <span id="hTime">0:00</span>　落ちた回数 <span id="hFalls">0</span></div>
     <button id="bPause" aria-label="メニュー">Ⅱ</button>
+    <button id="bView" aria-label="視点の切りかえ">1人称</button>
     <div id="banner"><small id="bnSub"></small><b id="bnTitle"></b></div>
     <div id="toast"></div>
   </div>
@@ -158,7 +161,7 @@ body.hub #title { padding-top: calc(var(--sat) + 52px); }
   <div id="setBox" class="scr dim hidden"><div class="panel">
     <h2>設定</h2>
     <div class="set"><span>見回す速さ</span><input type="range" id="sSens" min=".3" max="2.5" step=".05"><b id="sSensV"></b></div>
-    <div class="set"><span>カメラのきょり</span><input type="range" id="sCamD" min="3" max="9" step=".25"><b id="sCamDV"></b></div>
+    <div class="set"><span>カメラのきょり</span><input type="range" id="sCamD" min="0" max="12" step=".25"><b id="sCamDV"></b></div>
     <div class="set"><span>上下を反転</span><div class="seg" id="sInv"><button data-v="0">しない</button><button data-v="1">する</button></div></div>
     <div class="set"><span>画質</span><div class="seg" id="sQual"><button data-v="low">軽い</button><button data-v="mid">ふつう</button><button data-v="high">きれい</button></div></div>
     <button class="btn main" id="setDone">とじる</button>
@@ -167,8 +170,8 @@ body.hub #title { padding-top: calc(var(--sat) + 52px); }
   <div id="helpBox" class="scr dim hidden"><div class="panel help">
     <h2>あそびかた</h2>
     空に浮かぶガラクタの上を、ジャンプでつたって、いちばん上の「てっぺん」をめざします。足をすべらせると、下のほうまで落ちてしまうことも…。<br>
-    <b>パソコン</b>：WASD で移動、マウスで見回す（画面をクリックで固定）、スペースでジャンプ、Shift でダッシュ、ホイールでカメラのきょり、Esc か P でメニュー（マウスが固定されているときは右上のボタンは押せません）。<br>
-    <b>スマホ</b>：左をなぞって移動、右をなぞって見回す、「ジャンプ」でジャンプ。「ダッシュ」ボタンを押すと ON（走る）と OFF（歩く）が切りかわります。<br>
+    <b>パソコン</b>：WASD で移動、マウスで見回す（画面をクリックで固定）、スペースでジャンプ、Shift でダッシュ、ホイールでカメラのきょり（いちばん近づけると一人称）、V で一人称と三人称の切りかえ、Esc か P でメニュー（マウスが固定されているときは右上のボタンは押せません）。<br>
+    <b>スマホ</b>：左をなぞって移動、右をなぞって見回す、右側を2本指で広げる／すぼめるとカメラが近づく／遠ざかる（いちばん近いと一人称）、右上の「1人称」ボタンでも切りかえ、「ジャンプ」でジャンプ。「ダッシュ」ボタンを押すと ON（走る）と OFF（歩く）が切りかわります。<br>
     <b>セーブコード</b>：メニューの「いまの場所のコードを出す」で、立っている場所を20文字のコードにできます。メモしておけば「コードで続きから」でその場所にもどれます。ほかの人に教えれば、同じ場所から登れます。<br>
     <b>コツ</b>：遠い足場はダッシュしてから、ふちのぎりぎりでジャンプ。動きに慣性はないので、手をはなせば空中でもすぐ止まります（行きすぎたら空中で引きもどせる）。
     <button class="btn main" id="helpDone">とじる</button>
@@ -358,6 +361,7 @@ addEventListener('keydown', e => {
   if (e.repeat) return;
   IN.keys.add(e.code);
   if (e.code === 'Space') { IN.jumpE = true; IN.jumpHeld = true; }
+  if (e.code === 'KeyV' && G.state === 'play') toggleView();
   if ((e.code === 'Escape' || e.code === 'KeyP') && (G.state === 'play' || G.state === 'pause')) togglePause(G.state === 'play');
 });
 addEventListener('keyup', e => { IN.keys.delete(e.code); if (e.code === 'Space') IN.jumpHeld = false; });
@@ -378,7 +382,7 @@ canvas.addEventListener('mousedown', () => {
   if (G.state === 'play' && !IN.touchOn && document.pointerLockElement !== canvas) { try { const r = canvas.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (er) { /* 固定できない */ } }
 });
 addEventListener('mousemove', e => { if (document.pointerLockElement === canvas) { IN.lookX += e.movementX; IN.lookY += e.movementY; } });
-canvas.addEventListener('wheel', e => { IN.zoom += Math.sign(e.deltaY); e.preventDefault(); }, { passive: false });
+canvas.addEventListener('wheel', e => { IN.zoom += clamp(e.deltaY * .01, -1.2, 1.2); e.preventDefault(); }, { passive: false });
 document.addEventListener('pointerlockchange', () => { if (!document.pointerLockElement && G.state === 'play' && !IN.touchOn) togglePause(true); });
 
 // タッチ：左半分＝移動の棒、右半分＝見回す、ボタン＝ジャンプ・ダッシュ固定
@@ -399,18 +403,23 @@ document.addEventListener('pointerlockchange', () => { if (!document.pointerLock
     if (p.x < VW() * .45 && !IN.stick) {
       IN.stick = { id: e.pointerId, x: p.x, y: p.y }; IN.stickX = IN.stickY = 0;
       stickEl.style.display = 'block'; stickEl.style.left = p.x + 'px'; stickEl.style.top = p.y + 'px'; knob.style.transform = '';
-    } else IN.looks.set(e.pointerId, p);
+    } else { IN.looks.set(e.pointerId, p); pinchStart(); }
   });
+  // 2本指でつまむ：広げると近づく（いちばん近いと一人称）、すぼめると遠ざかる
+  let pinch = null;
+  const pinchD = () => { const v = [...IN.looks.values()]; return Math.hypot(v[0].x - v[1].x, v[0].y - v[1].y) || 1; };
+  function pinchStart() { if (IN.looks.size >= 2 && !pinch) pinch = { d: pinchD(), cam: SET.camD }; }
   layer.addEventListener('pointermove', e => {
     const p = toStage(e.clientX, e.clientY);
     if (IN.stick && IN.stick.id === e.pointerId) {
       const R = 56; let dx = p.x - IN.stick.x, dy = p.y - IN.stick.y; const l = Math.hypot(dx, dy); if (l > R) { dx *= R / l; dy *= R / l; }
       IN.stickX = dx / R; IN.stickY = -dy / R; knob.style.transform = `translate(${dx}px,${dy}px)`;
     } else if (IN.looks.has(e.pointerId)) {
-      const q = IN.looks.get(e.pointerId); IN.lookX += (p.x - q.x) * 2.1; IN.lookY += (p.y - q.y) * 2.1; IN.looks.set(e.pointerId, p);
+      const q = IN.looks.get(e.pointerId); if (!pinch) { IN.lookX += (p.x - q.x) * 2.1; IN.lookY += (p.y - q.y) * 2.1; } IN.looks.set(e.pointerId, p);
+      if (pinch && IN.looks.size >= 2) { const r = pinch.d / pinchD(); setCamD(Math.max(pinch.cam, .6) * r - (r < 1 ? (1 - r) * 1.5 : 0)); }
     }
   });
-  const end = e => { if (IN.stick && IN.stick.id === e.pointerId) { IN.stick = null; IN.stickX = IN.stickY = 0; stickEl.style.display = 'none'; } IN.looks.delete(e.pointerId); };
+  const end = e => { if (IN.stick && IN.stick.id === e.pointerId) { IN.stick = null; IN.stickX = IN.stickY = 0; stickEl.style.display = 'none'; } IN.looks.delete(e.pointerId); if (IN.looks.size < 2) pinch = null; };
   layer.addEventListener('pointerup', end); layer.addEventListener('pointercancel', end);
 })();
 function takeEdge(k) { const v = IN[k]; IN[k] = false; return v; }
@@ -1098,13 +1107,27 @@ function animPlayer(dt, t) {
 
 // ---------- カメラ（後ろから。物にめりこまないように近づく） ----------
 const CAM = { yaw: START.yaw, pitch: -.22, cur: SET.camD };
+// カメラのきょり：0〜12m。FP_D より近いと一人称（ホイール・ピンチ・設定・V キー）
+const FP_D = .9, CAM_MAX = 12;
+let camBack = SET.camD >= FP_D ? SET.camD : 5.5;
+function setCamD(d) { SET.camD = clamp(d, 0, CAM_MAX); if (SET.camD >= FP_D) camBack = SET.camD; saveSet(); viewShow(); }
+function toggleView() { setCamD(SET.camD < FP_D ? Math.max(3, camBack) : 0); }
+function viewShow() { const b = document.getElementById('bView'); if (b) b.textContent = SET.camD < FP_D ? '3人称' : '1人称'; const c = document.getElementById('cross'); if (c) c.classList.toggle('fp', SET.camD < FP_D); }
 const _piv = new T.Vector3(), _dir = new T.Vector3();
 function updCam(dt) {
   const sens = .0024 * SET.sens;
-  CAM.yaw -= IN.lookX * sens; CAM.pitch = clamp(CAM.pitch - IN.lookY * sens * (SET.invY ? -1 : 1), -1.3, 1.05); IN.lookX = IN.lookY = 0;
-  if (IN.zoom) { SET.camD = clamp(SET.camD + IN.zoom * .5, 3, 9); IN.zoom = 0; saveSet(); }
-  _piv.set(P.pos.x, P.pos.y + 1.5, P.pos.z);
+  const fp = SET.camD < FP_D;
+  CAM.yaw -= IN.lookX * sens; CAM.pitch = clamp(CAM.pitch - IN.lookY * sens * (SET.invY ? -1 : 1), fp ? -1.45 : -1.3, fp ? 1.45 : 1.05); IN.lookX = IN.lookY = 0;
+  if (IN.zoom) { setCamD(SET.camD + IN.zoom); IN.zoom = 0; }
   const cp = Math.cos(CAM.pitch); _dir.set(Math.sin(CAM.yaw) * cp, Math.sin(CAM.pitch), Math.cos(CAM.yaw) * cp);
+  // 一人称：目の位置から見る。体はカメラの向きを向く
+  if (fp) {
+    CAM.cur = 0; P.yaw = CAM.yaw; if (P.model) { P.model.root.rotation.y = P.yaw; P.model.root.visible = false; }
+    camera.position.set(P.pos.x, P.pos.y + 1.52, P.pos.z);
+    camera.lookAt(P.pos.x + _dir.x * 2, P.pos.y + 1.52 + _dir.y * 2, P.pos.z + _dir.z * 2);
+    return;
+  }
+  _piv.set(P.pos.x, P.pos.y + 1.5, P.pos.z);
   // めりこみ：頭の位置からカメラへ、少しずつ進んで調べる
   let allow = SET.camD;
   queryBox(Math.min(_piv.x, _piv.x - _dir.x * SET.camD) - .4, Math.min(_piv.y, _piv.y - _dir.y * SET.camD) - .4, Math.min(_piv.z, _piv.z - _dir.z * SET.camD) - .4,
@@ -1115,7 +1138,7 @@ function updCam(dt) {
       for (const c of _cand) if (pushSphere(c, x, y, z, .2, _o)) { allow = Math.max(.35, d - .22); break outer; }
     }
   }
-  CAM.cur = allow < CAM.cur ? allow : CAM.cur + (allow - CAM.cur) * Math.min(1, dt * 3);
+  CAM.cur = allow < CAM.cur || CAM.cur < FP_D ? allow : CAM.cur + (allow - CAM.cur) * Math.min(1, dt * 3);
   camera.position.set(_piv.x - _dir.x * CAM.cur, _piv.y - _dir.y * CAM.cur, _piv.z - _dir.z * CAM.cur);
   camera.lookAt(_piv.x + _dir.x * 2, _piv.y + _dir.y * 2, _piv.z + _dir.z * 2);
   if (P.model) P.model.root.visible = CAM.cur > .8;
@@ -1202,7 +1225,7 @@ function startAt(s) {
     P.best = s.best || 0; P.falls = s.falls || 0; P.time = s.time || 0;
     placeSafe(s.x, s.y, s.z); CAM.yaw = s.yaw ?? START.yaw;
   } else { P.best = 0; P.falls = 0; P.time = 0; respawnStart(); }
-  P.airTop = P.pos.y; CAM.pitch = -.22; CAM.cur = SET.camD; P.yaw = CAM.yaw;
+  P.airTop = P.pos.y; CAM.pitch = -.22; CAM.cur = SET.camD; P.yaw = CAM.yaw; viewShow();
   G.zoneSeen = zoneAt(P.pos.y).i; G.state = 'play'; G.acc = 0; G.saveT = 1;
   showOnly(null); $('hud').classList.remove('hidden'); $('touch').classList.toggle('off', !IN.touchOn);
   banner(zoneAt(P.pos.y).name, `${Math.round(P.pos.y)} m から`);
@@ -1314,6 +1337,7 @@ $('bCont').onclick = () => { AU.init(); AU.click(); const s = store.get('save', 
 $('bCodeIn').onclick = () => { AU.init(); AU.click(); openCode('in', 'title'); };
 $('bHelp').onclick = () => { AU.click(); showOnly('helpBox'); helpFrom = 'title'; };
 $('bSet').onclick = () => { AU.click(); openSet('title'); };
+$('bView').onclick = () => { AU.init(); AU.click(); toggleView(); };
 $('bPause').onclick = () => { AU.init(); AU.click(); togglePause(true); };
 $('pBack').onclick = () => { AU.click(); togglePause(false); };
 $('pCode').onclick = () => { AU.click(); openCode('out', 'pause'); };
@@ -1329,12 +1353,12 @@ $('clTitle').onclick = () => { AU.click(); store.del('save'); G.cleared = false;
 // ---------- 設定 ----------
 function openSet(from) {
   setFrom = from; showOnly('setBox');
-  $('sSens').value = SET.sens; $('sSensV').textContent = SET.sens.toFixed(2); $('sCamD').value = SET.camD; $('sCamDV').textContent = SET.camD.toFixed(1) + 'm';
+  $('sSens').value = SET.sens; $('sSensV').textContent = SET.sens.toFixed(2); $('sCamD').value = SET.camD; $('sCamDV').textContent = SET.camD < FP_D ? '一人称' : SET.camD.toFixed(1) + 'm';
   for (const b of $('sInv').children) b.classList.toggle('on', (b.dataset.v === '1') === !!SET.invY);
   for (const b of $('sQual').children) b.classList.toggle('on', b.dataset.v === SET.quality);
 }
 $('sSens').oninput = () => { SET.sens = +$('sSens').value; $('sSensV').textContent = SET.sens.toFixed(2); saveSet(); };
-$('sCamD').oninput = () => { SET.camD = +$('sCamD').value; $('sCamDV').textContent = SET.camD.toFixed(1) + 'm'; saveSet(); };
+$('sCamD').oninput = () => { setCamD(+$('sCamD').value); $('sCamDV').textContent = SET.camD < FP_D ? '一人称' : SET.camD.toFixed(1) + 'm'; };
 for (const b of $('sInv').children) b.onclick = () => { SET.invY = b.dataset.v === '1'; saveSet(); openSet(setFrom); AU.click(); };
 for (const b of $('sQual').children) b.onclick = () => { SET.quality = b.dataset.v; saveSet(); applyQuality(); openSet(setFrom); AU.click(); };
 $('setDone').onclick = () => { AU.click(); showOnly(setFrom === 'pause' ? 'pause' : 'title'); };
